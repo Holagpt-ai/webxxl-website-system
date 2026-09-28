@@ -62,16 +62,16 @@ export function SiteHeader({ locale }: { locale: Locale }) {
         </Link>
         <HeaderNav items={items} label={dict.nav.mainNav} />
         <div className="flex items-center gap-2">
-          <LanguageSwitcher locale={locale} label={dict.common.language} className="hidden md:flex" />
+          <LanguageSwitcher locale={locale} label={dict.common.language} className="hidden xl:flex" />
           {isEnabled('clientLogin') && (
-            <Link href={login.href} className="hidden h-9 items-center rounded-md px-3 text-sm font-medium text-foreground/80 hover:bg-muted xl:inline-flex">
+            <Link href={login.href} className="hidden h-9 items-center whitespace-nowrap rounded-md px-3 text-sm font-medium text-foreground/80 hover:bg-muted 2xl:inline-flex">
               {login.label}
             </Link>
           )}
           {isEnabled('strategyCall') && (
             <Link
               href={bookCall.href}
-              className="hidden h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 sm:inline-flex"
+              className="hidden h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 sm:inline-flex"
             >
               <Calendar className="size-4" aria-hidden="true" />
               {bookCall.label}

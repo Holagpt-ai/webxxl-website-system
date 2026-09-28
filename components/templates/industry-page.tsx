@@ -44,7 +44,6 @@ export function IndustryPage({ industry, locale }: { industry: Industry; locale:
       <PageHero
         locale={locale}
         crumbs={[
-          { label: dict.common.home, href: '/' },
           { label: dict.nav.industries, href: '/industries' },
           { label: name, href: routes.industry(industry.slug) },
         ]}

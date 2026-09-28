@@ -40,7 +40,7 @@ export const homePage = {
     { icon: 'globe', title: l('Domain Management', 'Gestión de dominios'), description: l('Registration, DNS & renewals', 'Registro, DNS y renovaciones') },
     { icon: 'mail', title: l('Business Email', 'Correo empresarial'), description: l('Professional email @yourdomain', 'Correo profesional @tudominio') },
     { icon: 'wrench', title: l('Ongoing Maintenance', 'Mantenimiento continuo'), description: l('Updates, backups & security', 'Actualizaciones, respaldos y seguridad') },
-    { icon: 'headset', title: l('Expert Support', 'Soporte experto'), description: l('Real people, here to help', 'Personas reales, listas para ayudar') },
+    { icon: 'headphones', title: l('Expert Support', 'Soporte experto'), description: l('Real people, here to help', 'Personas reales, listas para ayudar') },
   ] satisfies FeatureItem[],
   caseStudiesDescription: l(
     'See how WebXXL helps local businesses grow with better websites, built-in CRM, and ongoing support.',
@@ -108,12 +108,12 @@ export const pricingPage = {
   ),
   includedTitle: l('Included in every plan', 'Incluido en todos los planes'),
   included: [
-    { icon: 'layout', title: l('Custom website', 'Sitio web a medida'), description: l('Designed for your industry and optimized for leads.', 'Diseñado para tu industria y optimizado para captar clientes.') },
+    { icon: 'template', title: l('Custom website', 'Sitio web a medida'), description: l('Designed for your industry and optimized for leads.', 'Diseñado para tu industria y optimizado para captar clientes.') },
     { icon: 'users', title: l('Built-in CRM', 'CRM integrado'), description: l('Every lead lands in one organized place.', 'Cada prospecto llega a un solo lugar organizado.') },
     { icon: 'server', title: l('Managed hosting', 'Hosting gestionado'), description: l('Fast, secure and monitored for you.', 'Rápido, seguro y monitoreado por nosotros.') },
     { icon: 'globe', title: l('Domain management', 'Gestión de dominio'), description: l('DNS, renewals and email records handled.', 'DNS, renovaciones y registros de correo gestionados.') },
     { icon: 'shield', title: l('Security & backups', 'Seguridad y respaldos'), description: l('SSL, updates and routine backups.', 'SSL, actualizaciones y respaldos periódicos.') },
-    { icon: 'headset', title: l('Real support', 'Soporte real'), description: l('A team that knows your business.', 'Un equipo que conoce tu negocio.') },
+    { icon: 'headphones', title: l('Real support', 'Soporte real'), description: l('A team that knows your business.', 'Un equipo que conoce tu negocio.') },
   ] satisfies FeatureItem[],
   faq: [
     { question: l('Are there long-term contracts?', '¿Hay contratos a largo plazo?'), answer: l('No. Plans are month-to-month after launch. We earn your business every month.', 'No. Los planes son mes a mes después del lanzamiento. Nos ganamos tu confianza cada mes.') },

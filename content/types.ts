@@ -2,7 +2,7 @@ import type { IconName } from '@/lib/icons'
 import type { Localized } from '@/lib/i18n/localize'
 
 /** Shorthand for an English + Spanish pair. */
-export function l(en: string, es: string): Localized {
+export function l<T = string>(en: T, es: T): Localized<T> {
   return { en, es }
 }
 

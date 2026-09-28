@@ -33,7 +33,7 @@ export function ServicePage({ service, locale, parent }: { service: Service; loc
   const related = getServicesBySlugs(service.relatedServices).slice(0, 3)
   const studies = getCaseStudiesForService(service.slug).slice(0, 3)
   const process = service.process ?? dict.process.map((p) => ({ title: { en: p.title }, description: { en: p.description } }))
-  const crumbs = [{ label: dict.common.home, href: '/' }, ...(parent ? [parent] : []), { label: name, href: routes.service(service.slug) }]
+  const crumbs = [...(parent ? [parent] : []), { label: name, href: routes.service(service.slug) }]
 
   return (
     <>

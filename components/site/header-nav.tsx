@@ -43,7 +43,7 @@ export function HeaderNav({ items, label }: { items: HeaderItem[]; label: string
         {items.map((item) => {
           const active = isActive(item.match)
           const linkClass = cn(
-            'inline-flex h-9 items-center gap-1 rounded-md px-3 text-sm font-medium transition-colors',
+            'inline-flex h-9 items-center gap-1 whitespace-nowrap rounded-md px-2 text-sm font-medium transition-colors xl:px-3',
             active ? 'text-primary' : 'text-foreground/80 hover:bg-muted hover:text-foreground',
           )
           if (item.type === 'link') {
