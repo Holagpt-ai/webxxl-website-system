@@ -35,6 +35,7 @@ export default async function LoginPage({ params }: Props) {
               submit: dict.login.submit,
               forgot: dict.login.forgot,
               unavailable: dict.login.unavailable,
+              invalid: dict.login.invalid,
               requiredError: dict.forms.requiredError,
             }}
           />

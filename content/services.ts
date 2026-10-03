@@ -210,6 +210,42 @@ export const services: Service[] = [
     ],
   },
   {
+    slug: 'social-scheduler',
+    icon: 'megaphone',
+    enabled: true,
+    name: l('Social Scheduler', 'Programador social'),
+    shortDescription: l('Plan, schedule and publish to every social network from one calendar.', 'Planifica, programa y publica en todas tus redes desde un solo calendario.'),
+    eyebrow: l('Social scheduler', 'Programador social'),
+    heroTitle: l('Your social media, scheduled a month ahead.', 'Tus redes sociales, programadas con un mes de adelanto.'),
+    heroDescription: l(
+      'WebXXL hosts your own private scheduling app — connect TikTok, Instagram, YouTube and Facebook once, then draft posts and let the scheduler publish for you.',
+      'WebXXL hospeda tu propia app privada de programación — conecta TikTok, Instagram, YouTube y Facebook una vez, crea borradores y deja que el programador publique por ti.',
+    ),
+    visual: 'campaigns',
+    benefits: [
+      { title: l('One calendar, every network', 'Un calendario, todas las redes'), description: l('Draft once, publish to TikTok, Instagram, YouTube and Facebook.', 'Crea una vez, publica en TikTok, Instagram, YouTube y Facebook.') },
+      { title: l('Your own private app', 'Tu propia app privada'), description: l('Hosted by WebXXL on your own subdomain — no per-seat fees.', 'Hospedada por WebXXL en tu propio subdominio, sin cargos por usuario.') },
+      { title: l('Set it and forget it', 'Configúralo y olvídalo'), description: l('Queue a month of content in one sitting.', 'Encola un mes de contenido en una sola sesión.') },
+    ],
+    problems: [
+      { title: l('Posting every day eats hours', 'Publicar a diario consume horas'), description: l('Manual posting steals time from running the business.', 'Publicar manualmente roba tiempo de operar el negocio.') },
+      { title: l('Inconsistent presence', 'Presencia inconsistente'), description: l('Busy weeks mean silent feeds and lost momentum.', 'Las semanas ocupadas significan redes silenciosas y impulso perdido.') },
+      { title: l('Per-seat SaaS bills', 'Facturas SaaS por usuario'), description: l('Scheduler tools charge for every team member.', 'Las herramientas cobran por cada miembro del equipo.') },
+    ],
+    features: [
+      { icon: 'calendar', title: l('Visual calendar', 'Calendario visual'), description: l('Drag, drop and reschedule posts across networks.', 'Arrastra y reprograma publicaciones entre redes.') },
+      { icon: 'users', title: l('Unlimited users', 'Usuarios ilimitados'), description: l('Your whole team, no per-seat fees.', 'Todo tu equipo, sin cargos por usuario.') },
+      { icon: 'chart', title: l('Post analytics', 'Analíticas'), description: l('See what published and when, in one view.', 'Ve qué se publicó y cuándo, en una vista.') },
+      { icon: 'shield', title: l('Private & managed', 'Privado y gestionado'), description: l('Hosted and maintained by WebXXL for you.', 'Hospedado y mantenido por WebXXL para ti.') },
+    ],
+    industries: ['med-spas', 'restaurants', 'dental', 'automotive', 'hvac'],
+    relatedServices: ['campaigns', 'analytics', 'crm'],
+    faq: [
+      { question: l('Which networks are supported?', '¿Qué redes son compatibles?'), answer: l('TikTok, Instagram, YouTube and Facebook at launch, with more on the way.', 'TikTok, Instagram, YouTube y Facebook al inicio, con más en camino.') },
+      { question: l('Do I keep my accounts?', '¿Mantengo mis cuentas?'), answer: l('Yes. You connect your own accounts with one click each — we never hold your passwords.', 'Sí. Conectas tus propias cuentas con un clic cada una; nunca guardamos tus contraseñas.') },
+    ],
+  },
+  {
     slug: 'hosting',
     icon: 'server',
     enabled: true,

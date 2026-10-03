@@ -6,7 +6,7 @@ import { signIn } from '@/lib/integrations/portal'
 import { Button } from '@/components/ui/button'
 import { TextField } from './fields'
 
-type Labels = { email: string; password: string; submit: string; forgot: string; unavailable: string; requiredError: string }
+type Labels = { email: string; password: string; submit: string; forgot: string; unavailable: string; invalid: string; requiredError: string }
 
 export function LoginForm({ labels }: { labels: Labels }) {
   const [email, setEmail] = useState('')
@@ -23,7 +23,7 @@ export function LoginForm({ labels }: { labels: Labels }) {
         startTransition(async () => {
           const result = await signIn({ email, password })
           if (result.ok) window.location.assign(result.redirectTo)
-          else setMessage(labels.unavailable)
+          else setMessage(result.reason === 'invalid' ? labels.invalid : labels.unavailable)
         })
       }}
     >
