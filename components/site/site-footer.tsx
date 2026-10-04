@@ -55,9 +55,11 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             <Logo tone="inverse" />
           </Link>
           <p className="max-w-xs text-sm leading-relaxed text-inverse-muted">{dict.footer.tagline}</p>
-          <a href={`mailto:${siteConfig.email}`} className="text-sm font-medium text-inverse-foreground hover:underline">
-            {siteConfig.email}
-          </a>
+          {siteConfig.email && (
+            <a href={`mailto:${siteConfig.email}`} className="text-sm font-medium text-inverse-foreground hover:underline">
+              {siteConfig.email}
+            </a>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:col-span-6">
           <FooterColumn title={dict.footer.solutions} links={solutions} />
@@ -75,6 +77,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
                 placeholder: dict.forms.newsletterPlaceholder,
                 submit: dict.forms.newsletterSubmit,
                 success: dict.forms.newsletterSuccess,
+                unavailable: dict.forms.newsletterUnavailable,
                 error: dict.forms.errorBody,
                 emailLabel: dict.forms.email,
               }}

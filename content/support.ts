@@ -17,7 +17,7 @@ export const supportCategories: SupportCategory[] = [
     title: l('Getting started', 'Primeros pasos'),
     description: l('Onboarding, timelines and what to prepare.', 'Incorporación, plazos y qué preparar.'),
     faq: [
-      { question: l('What happens after I submit a project?', '¿Qué pasa después de enviar un proyecto?'), answer: l('We review your details and contact you within one business day to schedule a strategy call.', 'Revisamos tus datos y te contactamos en un día hábil para agendar una llamada estratégica.') },
+      { question: l('What happens after I submit a project?', '¿Qué pasa después de enviar un proyecto?'), answer: l('We review your details and contact you to schedule a strategy call.', 'Revisamos tus datos y te contactamos para agendar una llamada estratégica.') },
       { question: l('What should I prepare?', '¿Qué debo preparar?'), answer: l('Your logo, services list, service areas and any photos you want to use. We will guide you through the rest.', 'Tu logo, lista de servicios, zonas y fotos que quieras usar. Te guiaremos con el resto.') },
     ],
   },

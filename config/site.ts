@@ -4,10 +4,11 @@ export const siteConfig = {
   name: 'WebXXL',
   /** Set NEXT_PUBLIC_SITE_URL in production; used for canonical URLs, sitemap and Open Graph. */
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.webxxl.com').replace(/\/$/, ''),
-  /** Placeholder contact address — replace once the production inbox is confirmed. */
-  email: 'hello@webxxl.com',
-  responseTime: { en: 'We reply within one business day.', es: 'Respondemos en un día hábil.' } as Localized,
-  hours: { en: 'Monday–Friday, 9am–6pm', es: 'Lunes a viernes, 9am–6pm' } as Localized,
+  /**
+   * Public contact address. Only rendered when NEXT_PUBLIC_CONTACT_EMAIL is set to a confirmed inbox.
+   * Operating hours and response-time commitments are intentionally absent until approved.
+   */
+  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() || undefined,
   defaultTitle: {
     en: 'WebXXL — Websites that grow your business, with CRM built in',
     es: 'WebXXL — Sitios web que hacen crecer tu negocio, con CRM integrado',

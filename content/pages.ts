@@ -154,8 +154,8 @@ export const contactPage = {
   eyebrow: l('Contact', 'Contacto'),
   title: l('Let’s talk about your business.', 'Hablemos de tu negocio.'),
   description: l(
-    'Questions about a project, pricing or support? Send us a message and a real person will respond within one business day.',
-    '¿Preguntas sobre un proyecto, precios o soporte? Envíanos un mensaje y una persona real te responderá en un día hábil.',
+    'Questions about a project, pricing or support? Send us a message and a real person from the WebXXL team will follow up.',
+    '¿Preguntas sobre un proyecto, precios o soporte? Envíanos un mensaje y una persona real del equipo WebXXL te dará seguimiento.',
   ),
   formTitle: l('Send us a message', 'Envíanos un mensaje'),
   directTitle: l('Other ways to reach us', 'Otras formas de contactarnos'),
@@ -170,8 +170,8 @@ export const getStartedPage = {
   eyebrow: l('Get Started', 'Comenzar'),
   sideTitle: l('What happens next', 'Qué sigue'),
   sideSteps: l(
-    ['We review your details within one business day.', 'You get a strategy call invite at a time that works for you.', 'We share a clear plan, timeline and price — no obligation.'],
-    ['Revisamos tus datos en un día hábil.', 'Recibes una invitación a una llamada estratégica en el horario que prefieras.', 'Te compartimos un plan, plazos y precio claros, sin compromiso.'],
+    ['We review your project details.', 'You get a strategy call invite at a time that works for you.', 'We share a clear plan, timeline and price — no obligation.'],
+    ['Revisamos los detalles de tu proyecto.', 'Recibes una invitación a una llamada estratégica en el horario que prefieras.', 'Te compartimos un plan, plazos y precio claros, sin compromiso.'],
   ),
 }
 

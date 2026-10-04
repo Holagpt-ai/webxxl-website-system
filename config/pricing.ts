@@ -1,7 +1,9 @@
 import type { Localized } from '@/lib/i18n/localize'
 
 /**
- * PRICING IS NOT FINAL. All amounts below are visual placeholders.
+ * PRICING IS NOT FINAL. All amounts below are unapproved drafts and are hidden publicly
+ * while pricingSettings.showPublicAmounts is false. To publish real prices: set the approved
+ * amounts on each plan, then set showPublicAmounts to true.
  * Change prices, plans, badges and promotions here — no component changes needed.
  *
  * priceModel:
@@ -35,6 +37,8 @@ export type PricingPlan = {
 
 export const pricingSettings = {
   currency: 'USD',
+  /** When false, numeric amounts are never rendered; cards show "Pricing being finalized". */
+  showPublicAmounts: false,
   showPreliminaryNotice: true,
 }
 

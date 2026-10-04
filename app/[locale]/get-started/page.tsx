@@ -60,13 +60,13 @@ export default async function GetStartedPage({ params, searchParams }: Props) {
                 </li>
               ))}
             </ol>
-            <p className="border-t pt-4 text-sm text-muted-foreground">
-              <a href={`mailto:${siteConfig.email}`} className="font-semibold text-foreground hover:text-primary">
-                {siteConfig.email}
-              </a>
-              <br />
-              {t(siteConfig.responseTime, locale)}
-            </p>
+            {siteConfig.email && (
+              <p className="border-t pt-4 text-sm text-muted-foreground">
+                <a href={`mailto:${siteConfig.email}`} className="font-semibold text-foreground hover:text-primary">
+                  {siteConfig.email}
+                </a>
+              </p>
+            )}
           </aside>
         </div>
       </Container>

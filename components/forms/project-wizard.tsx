@@ -61,7 +61,7 @@ export function ProjectWizard({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [honeypot, setHoneypot] = useState('')
   const [reference, setReference] = useState<string | null>(null)
-  const [failed, setFailed] = useState(false)
+  const [failed, setFailed] = useState<false | 'error' | 'unavailable'>(false)
   const [pending, startTransition] = useTransition()
   const headingRef = useRef<HTMLHeadingElement>(null)
   const [s, setS] = useState<State>({
@@ -125,7 +125,7 @@ export function ProjectWizard({
         website_url: honeypot,
       })
       if (result.ok) setReference(result.reference)
-      else setFailed(true)
+      else setFailed(result.error === 'unavailable' ? 'unavailable' : 'error')
     })
   }
 
@@ -244,10 +244,16 @@ export function ProjectWizard({
         )}
 
         <Honeypot value={honeypot} onChange={setHoneypot} />
-        {failed && (
+        {failed === 'error' && (
           <p role="alert" className="text-sm text-destructive">
             {f.errorBody}
           </p>
+        )}
+        {failed === 'unavailable' && (
+          <div role="alert" className="flex flex-col gap-1 rounded-lg border bg-muted p-4 text-sm">
+            <p className="font-semibold">{f.unavailableTitle}</p>
+            <p className="leading-relaxed text-muted-foreground">{f.unavailableBody}</p>
+          </div>
         )}
 
         <div className="flex items-center justify-between gap-3 border-t pt-6">

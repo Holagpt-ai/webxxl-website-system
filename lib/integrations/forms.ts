@@ -2,12 +2,16 @@
 
 /**
  * INTEGRATION BOUNDARY — Public form submissions (owned by Cursor).
- * These server actions validate input and return a result, but DO NOT persist anything.
- * Replace each TODO with a call to the WebXXL backend / CRM API. Keep the signatures stable
- * so the UI does not need to change.
+ * These server actions validate input but DO NOT persist or deliver anything yet.
+ * Until the matching flag in config/integrations.ts is true, each returns
+ * `{ ok: false, error: 'unavailable' }` so the UI never claims a submission was received.
+ * Replace each TODO with a call to the WebXXL backend / CRM API, then flip its readiness flag.
+ * Keep the signatures stable so the UI does not need to change.
  */
 
-export type SubmitResult = { ok: true; reference: string } | { ok: false; error: 'invalid' | 'spam' | 'server' }
+import { integrationReadiness } from '@/config/integrations'
+
+export type SubmitResult = { ok: true; reference: string } | { ok: false; error: 'invalid' | 'spam' | 'server' | 'unavailable' }
 
 export type ContactPayload = {
   name: string
@@ -43,24 +47,24 @@ export type StrategyCallPayload = { name: string; email: string; phone?: string;
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-function reference(prefix: string): string {
-  return `${prefix}-${Date.now().toString(36).toUpperCase()}`
-}
+const NOT_CONNECTED: SubmitResult = { ok: false, error: 'unavailable' }
 
 export async function submitContact(payload: ContactPayload): Promise<SubmitResult> {
   if (payload.website_url) return { ok: false, error: 'spam' }
   if (!payload.name?.trim() || !EMAIL.test(payload.email ?? '') || !payload.message?.trim()) {
     return { ok: false, error: 'invalid' }
   }
-  // TODO(cursor): POST to backend contact endpoint / create CRM lead.
-  return { ok: true, reference: reference('MSG') }
+  if (!integrationReadiness.contact) return NOT_CONNECTED
+  // TODO(cursor): POST to backend contact endpoint / create CRM lead, return its reference.
+  return NOT_CONNECTED
 }
 
 export async function submitLead(payload: LeadPayload): Promise<SubmitResult> {
   if (payload.website_url) return { ok: false, error: 'spam' }
   if (!EMAIL.test(payload.email ?? '')) return { ok: false, error: 'invalid' }
-  // TODO(cursor): subscribe to newsletter / create CRM lead with payload.source.
-  return { ok: true, reference: reference('LEAD') }
+  if (!integrationReadiness.newsletter) return NOT_CONNECTED
+  // TODO(cursor): subscribe to newsletter / create CRM lead with payload.source, return its reference.
+  return NOT_CONNECTED
 }
 
 export async function submitProjectIntake(payload: ProjectIntakePayload): Promise<SubmitResult> {
@@ -68,12 +72,14 @@ export async function submitProjectIntake(payload: ProjectIntakePayload): Promis
   if (!payload.business?.name?.trim() || !payload.contact?.name?.trim() || !EMAIL.test(payload.contact?.email ?? '')) {
     return { ok: false, error: 'invalid' }
   }
-  // TODO(cursor): create project intake record + CRM lead, notify sales.
-  return { ok: true, reference: reference('WX') }
+  if (!integrationReadiness.projectIntake) return NOT_CONNECTED
+  // TODO(cursor): create project intake record + CRM lead, notify sales, return its reference.
+  return NOT_CONNECTED
 }
 
 export async function requestStrategyCall(payload: StrategyCallPayload): Promise<SubmitResult> {
   if (!payload.name?.trim() || !EMAIL.test(payload.email ?? '')) return { ok: false, error: 'invalid' }
-  // TODO(cursor): create booking request / scheduling integration.
-  return { ok: true, reference: reference('CALL') }
+  if (!integrationReadiness.strategyCall) return NOT_CONNECTED
+  // TODO(cursor): create booking request / scheduling integration, return its reference.
+  return NOT_CONNECTED
 }

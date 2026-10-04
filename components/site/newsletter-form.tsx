@@ -4,10 +4,10 @@ import { useState, useTransition } from 'react'
 import { ArrowRight, Check } from 'lucide-react'
 import { submitLead } from '@/lib/integrations/forms'
 
-type Labels = { placeholder: string; submit: string; success: string; error: string; emailLabel: string }
+type Labels = { placeholder: string; submit: string; success: string; error: string; unavailable: string; emailLabel: string }
 
 export function NewsletterForm({ locale, labels }: { locale: string; labels: Labels }) {
-  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [status, setStatus] = useState<'idle' | 'success' | 'error' | 'unavailable'>('idle')
   const [pending, startTransition] = useTransition()
 
   if (status === 'success') {
@@ -32,7 +32,7 @@ export function NewsletterForm({ locale, labels }: { locale: string; labels: Lab
             source: 'footer-newsletter',
             locale,
           })
-          setStatus(result.ok ? 'success' : 'error')
+          setStatus(result.ok ? 'success' : result.error === 'unavailable' ? 'unavailable' : 'error')
         })
       }}
     >
@@ -59,9 +59,9 @@ export function NewsletterForm({ locale, labels }: { locale: string; labels: Lab
           <ArrowRight className="size-4" aria-hidden="true" />
         </button>
       </div>
-      {status === 'error' && (
+      {(status === 'error' || status === 'unavailable') && (
         <p role="alert" className="text-xs text-inverse-muted">
-          {labels.error}
+          {status === 'unavailable' ? labels.unavailable : labels.error}
         </p>
       )}
     </form>

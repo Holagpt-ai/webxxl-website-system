@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Clock, Mail } from 'lucide-react'
+import { Mail } from 'lucide-react'
 import { ctas } from '@/config/ctas'
 import { siteConfig } from '@/config/site'
 import { contactPage } from '@/content/pages'
@@ -43,30 +43,24 @@ export default async function ContactPage({ params }: Props) {
             />
           </div>
           <aside className="flex flex-col gap-6">
-            <div className="flex flex-col gap-5 rounded-2xl border bg-muted p-6">
-              <h2 className="text-lg font-bold">{t(contactPage.directTitle, locale)}</h2>
-              <dl className="flex flex-col gap-4 text-sm">
-                <div className="flex items-start gap-3">
-                  <Mail className="mt-0.5 size-5 text-primary" aria-hidden="true" />
-                  <div>
-                    <dt className="text-muted-foreground">{t(contactPage.emailLabel, locale)}</dt>
-                    <dd>
-                      <a href={`mailto:${siteConfig.email}`} className="font-semibold hover:text-primary">
-                        {siteConfig.email}
-                      </a>
-                    </dd>
+            {siteConfig.email && (
+              <div className="flex flex-col gap-5 rounded-2xl border bg-muted p-6">
+                <h2 className="text-lg font-bold">{t(contactPage.directTitle, locale)}</h2>
+                <dl className="flex flex-col gap-4 text-sm">
+                  <div className="flex items-start gap-3">
+                    <Mail className="mt-0.5 size-5 text-primary" aria-hidden="true" />
+                    <div>
+                      <dt className="text-muted-foreground">{t(contactPage.emailLabel, locale)}</dt>
+                      <dd>
+                        <a href={`mailto:${siteConfig.email}`} className="font-semibold hover:text-primary">
+                          {siteConfig.email}
+                        </a>
+                      </dd>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Clock className="mt-0.5 size-5 text-primary" aria-hidden="true" />
-                  <div>
-                    <dt className="text-muted-foreground">{t(contactPage.hoursLabel, locale)}</dt>
-                    <dd className="font-semibold">{t(siteConfig.hours, locale)}</dd>
-                    <dd className="text-muted-foreground">{t(siteConfig.responseTime, locale)}</dd>
-                  </div>
-                </div>
-              </dl>
-            </div>
+                </dl>
+              </div>
+            )}
             <div className="flex flex-col items-start gap-3 rounded-2xl bg-primary p-6 text-primary-foreground">
               <h2 className="text-lg font-bold">{t(contactPage.startTitle, locale)}</h2>
               <p className="text-sm leading-relaxed opacity-90">{t(contactPage.startBody, locale)}</p>

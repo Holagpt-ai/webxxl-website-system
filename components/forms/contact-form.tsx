@@ -26,7 +26,7 @@ export function ContactForm({
   const [values, setValues] = useState<Values>(empty)
   const [honeypot, setHoneypot] = useState('')
   const [errors, setErrors] = useState<Partial<Record<keyof Values, string>>>({})
-  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [status, setStatus] = useState<'idle' | 'success' | 'error' | 'unavailable'>('idle')
   const [pending, startTransition] = useTransition()
 
   const set = (key: keyof Values) => (v: string) => setValues((prev) => ({ ...prev, [key]: v }))
@@ -59,7 +59,7 @@ export function ContactForm({
         if (!validate()) return
         startTransition(async () => {
           const result = await submitContact({ ...values, locale, website_url: honeypot })
-          setStatus(result.ok ? 'success' : 'error')
+          setStatus(result.ok ? 'success' : result.error === 'unavailable' ? 'unavailable' : 'error')
         })
       }}
     >
@@ -77,6 +77,12 @@ export function ContactForm({
         <p role="alert" className="text-sm text-destructive">
           {labels.errorBody}
         </p>
+      )}
+      {status === 'unavailable' && (
+        <div role="alert" className="flex flex-col gap-1 rounded-lg border bg-muted p-4 text-sm">
+          <p className="font-semibold">{labels.unavailableTitle}</p>
+          <p className="leading-relaxed text-muted-foreground">{labels.unavailableBody}</p>
+        </div>
       )}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">{labels.privacyNote}</p>

@@ -43,7 +43,7 @@ export default async function HomePage({ params }: Props) {
           '@type': 'Organization',
           name: siteConfig.name,
           url: siteConfig.url,
-          email: siteConfig.email,
+          ...(siteConfig.email ? { email: siteConfig.email } : {}),
           description: t(siteConfig.defaultDescription, locale),
         }}
       />

@@ -13,8 +13,10 @@ function money(amount: number, currency: string, locale: Locale) {
 
 function PlanPrice({ plan, locale }: { plan: PricingPlan; locale: Locale }) {
   const dict = getDictionary(locale)
-  if (plan.displayPrice) return <p className="text-3xl font-extrabold">{t(plan.displayPrice, locale)}</p>
-  if (plan.priceModel === 'contact' || plan.priceMonthly == null) return <p className="text-3xl font-extrabold">{dict.pricing.contactForPrice}</p>
+  if (plan.displayPrice && (pricingSettings.showPublicAmounts || plan.priceModel === 'contact')) return <p className="text-3xl font-extrabold">{t(plan.displayPrice, locale)}</p>
+  if (plan.priceModel === 'contact') return <p className="text-3xl font-extrabold">{dict.pricing.contactForPrice}</p>
+  if (!pricingSettings.showPublicAmounts) return <p className="text-2xl font-extrabold tracking-tight">{dict.pricing.beingFinalized}</p>
+  if (plan.priceMonthly == null) return <p className="text-3xl font-extrabold">{dict.pricing.contactForPrice}</p>
   if (plan.priceModel === 'free') return <p className="text-4xl font-extrabold">{dict.pricing.free}</p>
   return (
     <div className="flex flex-col gap-1">
