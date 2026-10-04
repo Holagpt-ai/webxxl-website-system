@@ -1,36 +1,49 @@
 import type { Localized } from '@/lib/i18n/localize'
 
 /**
- * PRICING IS NOT FINAL. All amounts below are unapproved drafts and are hidden publicly
- * while pricingSettings.showPublicAmounts is false. To publish real prices: set the approved
- * amounts on each plan, then set showPublicAmounts to true.
- * Change prices, plans, badges and promotions here — no component changes needed.
+ * TEMPORARY PRICING — V1. NOT FINAL.
+ * The Startup ($99) and Elite ($999) one-time website build packages below are a temporary
+ * business configuration and are subject to future revision. To change prices, packages or
+ * features, edit this file only — no component changes are needed.
  *
- * priceModel:
- *  - fixed      → "$X /mo"
- *  - startingAt → "Starting at $X /mo"
- *  - contact    → "Custom pricing" (uses displayPrice if provided)
+ * billingType (how the amount is charged):
+ *  - oneTime → "$X one-time"   (current website build packages)
+ *  - monthly → "$X /mo"        (future: hosting, CRM, maintenance, SEO, etc.)
+ *  - annual  → "$X /yr"
+ *  - custom  → "Custom pricing" (uses displayPrice if provided)
+ *
+ * priceModel (how the amount is presented):
+ *  - fixed      → exact amount
+ *  - startingAt → "Starting at $X"
+ *  - contact    → no amount, "Custom pricing"
  *  - free       → "Free"
+ *
+ * Recurring services must be added as their own plans — never folded into a one-time build price.
  */
+export type BillingType = 'oneTime' | 'monthly' | 'annual' | 'custom'
 export type PriceModel = 'fixed' | 'startingAt' | 'contact' | 'free'
+export type PlanStatus = 'draft' | 'active' | 'retired'
 
 export type PricingPlan = {
   id: string
   slug: string
   name: Localized
   description: Localized
+  billingType: BillingType
   priceModel: PriceModel
-  priceMonthly?: number | null
-  priceAnnual?: number | null
+  priceAmount?: number | null
   setupFee?: number | null
   displayPrice?: Localized
   currency: string
   features: Localized<string[]>
+  /** Footnote shown under the feature list, e.g. explaining items marked with "*". */
+  footnote?: Localized
   highlighted?: boolean
   badge?: Localized
   promotion?: Localized
   enabled: boolean
   showOnHome: boolean
+  status: PlanStatus
   ctaLabel: Localized
   ctaHref?: string
 }
@@ -38,87 +51,169 @@ export type PricingPlan = {
 export const pricingSettings = {
   currency: 'USD',
   /** When false, numeric amounts are never rendered; cards show "Pricing being finalized". */
-  showPublicAmounts: false,
-  showPreliminaryNotice: true,
+  showPublicAmounts: true,
+  showPreliminaryNotice: false,
+}
+
+const conditionsFootnote: Localized = {
+  en: '*Subject to WebXXL terms and project scope. Third-party services may require separate accounts or fees.',
+  es: '*Sujeto a los términos de WebXXL y al alcance del proyecto. Los servicios de terceros pueden requerir cuentas o tarifas aparte.',
 }
 
 export const pricingPlans: PricingPlan[] = [
   {
-    id: 'plan_starter',
-    slug: 'starter',
-    name: { en: 'Starter', es: 'Inicial' },
-    description: { en: 'Perfect for small businesses.', es: 'Ideal para negocios pequeños.' },
+    id: 'plan_startup_website',
+    slug: 'startup',
+    name: { en: 'Startup Website', es: 'Sitio Web Startup' },
+    description: {
+      en: 'A fast, professional website for startups and small businesses.',
+      es: 'Un sitio web rápido y profesional para startups y pequeños negocios.',
+    },
+    billingType: 'oneTime',
     priceModel: 'fixed',
-    priceMonthly: 199,
-    priceAnnual: null,
+    priceAmount: 99,
     currency: 'USD',
     features: {
-      en: ['Website (up to 5 pages)', 'Built-in CRM', 'Hosting & domain management', 'Lead capture forms', 'Email support'],
-      es: ['Sitio web (hasta 5 páginas)', 'CRM integrado', 'Gestión de hosting y dominio', 'Formularios de captación', 'Soporte por correo'],
+      en: [
+        'Up to 5-page website',
+        'Fully mobile responsive',
+        'Basic chatbot integration',
+        'Up to 25 industry-specific stock images',
+        'Contact / lead capture form',
+        'Up to 3 custom banner or hero graphics',
+        'SEO-friendly XML sitemap',
+        'Standards-compliant semantic HTML',
+        'Basic on-page SEO setup',
+        'Vercel deployment',
+        'Typical turnaround: 48–72 hours after required content and assets are received',
+        'Custom design tailored to the business',
+        'Satisfaction guarantee*',
+        'Money-back guarantee*',
+      ],
+      es: [
+        'Sitio web de hasta 5 páginas',
+        'Totalmente adaptable a móviles',
+        'Integración básica de chatbot',
+        'Hasta 25 imágenes de stock específicas de tu industria',
+        'Formulario de contacto / captación de prospectos',
+        'Hasta 3 gráficos personalizados de banner o portada',
+        'Mapa del sitio XML optimizado para SEO',
+        'HTML semántico conforme a estándares',
+        'Configuración básica de SEO on-page',
+        'Despliegue en Vercel',
+        'Entrega típica: 48–72 horas después de recibir el contenido y los recursos requeridos',
+        'Diseño personalizado para tu negocio',
+        'Garantía de satisfacción*',
+        'Garantía de devolución de dinero*',
+      ],
     },
+    footnote: conditionsFootnote,
     enabled: true,
     showOnHome: true,
+    status: 'active',
     ctaLabel: { en: 'Get Started', es: 'Comenzar' },
   },
   {
-    id: 'plan_growth',
-    slug: 'growth',
-    name: { en: 'Growth', es: 'Crecimiento' },
-    description: { en: 'For growing local businesses.', es: 'Para negocios locales en crecimiento.' },
+    id: 'plan_elite_website',
+    slug: 'elite',
+    name: { en: 'Elite Website', es: 'Sitio Web Elite' },
+    description: {
+      en: 'A larger custom website for established businesses that need advanced functionality.',
+      es: 'Un sitio web a medida más amplio para negocios establecidos que necesitan funciones avanzadas.',
+    },
+    billingType: 'oneTime',
     priceModel: 'fixed',
-    priceMonthly: 299,
-    priceAnnual: null,
+    priceAmount: 999,
     currency: 'USD',
     features: {
-      en: ['Everything in Starter', 'Advanced CRM & pipelines', 'SMS & email campaigns', 'Analytics & reporting', 'Priority support'],
-      es: ['Todo lo de Inicial', 'CRM avanzado y embudos', 'Campañas por SMS y correo', 'Analítica e informes', 'Soporte prioritario'],
+      en: [
+        'Up to 25 custom pages',
+        'Fully mobile responsive',
+        'CMS / Admin Panel',
+        'Premium custom UI/UX',
+        'Interactive animations and hover effects',
+        'Appointment / reservation integration*',
+        'Payment gateway integration*',
+        'Book-a-call CTA integration',
+        'Custom contact forms',
+        'Advanced lead capture forms and CTAs',
+        'Newsletter signup integration',
+        'Blog / news publishing capability',
+        'Social media integration',
+        'Multiple licensed stock images',
+        'Custom unique banner designs',
+        'Interactive sliders and carousels',
+        'Google Search Console setup',
+        'XML sitemap submission',
+        'On-page SEO',
+        'Technical SEO',
+        'AEO / AI-search optimization foundation',
+        'Standards-compliant semantic HTML',
+        'Performance optimization',
+        'Complete Vercel deployment',
+        'Typical turnaround: 7–14 business days after required content and assets are received',
+        'Custom design tailored to the business',
+        'Satisfaction guarantee*',
+      ],
+      es: [
+        'Hasta 25 páginas personalizadas',
+        'Totalmente adaptable a móviles',
+        'CMS / Panel de administración',
+        'UI/UX premium personalizada',
+        'Animaciones interactivas y efectos al pasar el cursor',
+        'Integración de citas / reservaciones*',
+        'Integración de pasarela de pago*',
+        'Integración de CTA para agendar llamada',
+        'Formularios de contacto personalizados',
+        'Formularios y CTAs avanzados de captación de prospectos',
+        'Integración de suscripción al boletín',
+        'Capacidad de publicación de blog / noticias',
+        'Integración con redes sociales',
+        'Múltiples imágenes de stock con licencia',
+        'Diseños de banner únicos y personalizados',
+        'Sliders y carruseles interactivos',
+        'Configuración de Google Search Console',
+        'Envío del mapa del sitio XML',
+        'SEO on-page',
+        'SEO técnico',
+        'Base de optimización AEO / búsqueda con IA',
+        'HTML semántico conforme a estándares',
+        'Optimización de rendimiento',
+        'Despliegue completo en Vercel',
+        'Entrega típica: 7–14 días hábiles después de recibir el contenido y los recursos requeridos',
+        'Diseño personalizado para tu negocio',
+        'Garantía de satisfacción*',
+      ],
     },
+    footnote: conditionsFootnote,
     highlighted: true,
     badge: { en: 'Most popular', es: 'Más popular' },
     enabled: true,
     showOnHome: true,
-    ctaLabel: { en: 'Get Started', es: 'Comenzar' },
+    status: 'active',
+    ctaLabel: { en: 'Start My Project', es: 'Iniciar mi proyecto' },
   },
   {
-    id: 'plan_scale',
-    slug: 'scale',
-    name: { en: 'Scale', es: 'Escala' },
-    description: { en: 'For larger or multi-location businesses.', es: 'Para negocios grandes o con varias sedes.' },
-    priceModel: 'fixed',
-    priceMonthly: 499,
-    priceAnnual: null,
-    currency: 'USD',
-    features: {
-      en: ['Everything in Growth', 'Advanced automation tools', 'Multi-location support', 'Custom integrations', 'Dedicated account manager'],
-      es: ['Todo lo de Crecimiento', 'Herramientas de automatización avanzadas', 'Soporte para varias sedes', 'Integraciones personalizadas', 'Gerente de cuenta dedicado'],
-    },
-    enabled: true,
-    showOnHome: true,
-    ctaLabel: { en: 'Get Started', es: 'Comenzar' },
-  },
-  {
+    // Retained for future use; disabled so only the two temporary packages are public.
     id: 'plan_custom',
     slug: 'custom',
     name: { en: 'Custom', es: 'Personalizado' },
     description: { en: 'Agencies, franchises and complex builds.', es: 'Agencias, franquicias y proyectos complejos.' },
+    billingType: 'custom',
     priceModel: 'contact',
     currency: 'USD',
     features: {
-      en: ['Custom scope & roadmap', 'Multiple websites or brands', 'Custom CRM configuration', 'Migration assistance', 'Tailored support agreement'],
-      es: ['Alcance y hoja de ruta a medida', 'Varios sitios o marcas', 'Configuración de CRM personalizada', 'Asistencia de migración', 'Acuerdo de soporte a medida'],
+      en: ['Custom scope & roadmap', 'Multiple websites or brands', 'Migration assistance', 'Tailored support agreement'],
+      es: ['Alcance y hoja de ruta a medida', 'Varios sitios o marcas', 'Asistencia de migración', 'Acuerdo de soporte a medida'],
     },
-    enabled: true,
+    enabled: false,
     showOnHome: false,
+    status: 'draft',
     ctaLabel: { en: 'Contact WebXXL', es: 'Contactar a WebXXL' },
     ctaHref: '/contact?reason=custom-plan',
   },
 ]
 
-export const includedInEveryPlan: Localized<string[]> = {
-  en: ['Mobile-friendly website', 'WebXXL CRM access', 'Managed hosting & SSL', 'Domain management', 'Security updates', 'Real human support', 'No long-term contracts'],
-  es: ['Sitio adaptado a móviles', 'Acceso a WebXXL CRM', 'Hosting gestionado y SSL', 'Gestión de dominio', 'Actualizaciones de seguridad', 'Soporte humano real', 'Sin contratos a largo plazo'],
-}
-
 export function getPlans(options: { homeOnly?: boolean } = {}): PricingPlan[] {
-  return pricingPlans.filter((p) => p.enabled && (!options.homeOnly || p.showOnHome))
+  return pricingPlans.filter((p) => p.enabled && p.status === 'active' && (!options.homeOnly || p.showOnHome))
 }

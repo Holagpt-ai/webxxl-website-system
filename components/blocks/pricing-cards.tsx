@@ -16,14 +16,15 @@ function PlanPrice({ plan, locale }: { plan: PricingPlan; locale: Locale }) {
   if (plan.displayPrice && (pricingSettings.showPublicAmounts || plan.priceModel === 'contact')) return <p className="text-3xl font-extrabold">{t(plan.displayPrice, locale)}</p>
   if (plan.priceModel === 'contact') return <p className="text-3xl font-extrabold">{dict.pricing.contactForPrice}</p>
   if (!pricingSettings.showPublicAmounts) return <p className="text-2xl font-extrabold tracking-tight">{dict.pricing.beingFinalized}</p>
-  if (plan.priceMonthly == null) return <p className="text-3xl font-extrabold">{dict.pricing.contactForPrice}</p>
   if (plan.priceModel === 'free') return <p className="text-4xl font-extrabold">{dict.pricing.free}</p>
+  if (plan.billingType === 'custom' || plan.priceAmount == null) return <p className="text-3xl font-extrabold">{dict.pricing.contactForPrice}</p>
+  const periodLabel = { oneTime: dict.pricing.oneTime, monthly: dict.pricing.perMonth, annual: dict.pricing.perYear }[plan.billingType]
   return (
     <div className="flex flex-col gap-1">
       {plan.priceModel === 'startingAt' && <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{dict.pricing.startingAt}</span>}
-      <p className="flex items-baseline gap-1">
-        <span className="text-4xl font-extrabold tracking-tight md:text-5xl">{money(plan.priceMonthly, plan.currency, locale)}</span>
-        <span className="text-muted-foreground">{dict.pricing.perMonth}</span>
+      <p className="flex items-baseline gap-1.5">
+        <span className="text-4xl font-extrabold tracking-tight md:text-5xl">{money(plan.priceAmount, plan.currency, locale)}</span>
+        <span className="text-muted-foreground">{periodLabel}</span>
       </p>
       {plan.setupFee ? <span className="text-sm text-muted-foreground">{format(dict.pricing.setupFee, { amount: money(plan.setupFee, plan.currency, locale) })}</span> : null}
     </div>
@@ -55,6 +56,7 @@ export function PricingCards({ plans, locale }: { plans: PricingPlan[]; locale: 
             <PlanPrice plan={plan} locale={locale} />
             {plan.promotion && <p className="rounded-lg bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground">{t(plan.promotion, locale)}</p>}
             <CheckList items={t(plan.features, locale)} className="text-sm" />
+            {plan.footnote && <p className="text-xs leading-relaxed text-muted-foreground">{t(plan.footnote, locale)}</p>}
             <ButtonLink
               locale={locale}
               href={getPlanActionHref(plan)}

@@ -134,6 +134,7 @@ export const es: Dictionary = {
     billingPeriod: 'Periodo de facturación',
     perMonth: '/mes',
     perYear: '/año',
+    oneTime: 'pago único',
     startingAt: 'Desde',
     contactForPrice: 'Precio personalizado',
     beingFinalized: 'Precios en preparación',

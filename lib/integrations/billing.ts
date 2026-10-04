@@ -6,11 +6,9 @@ import type { PricingPlan } from '@/config/pricing'
  * Once billing exists, change getPlanActionHref to return a provider-agnostic checkout route
  * (e.g. /checkout?plan=growth) implemented by the backend.
  */
-export type BillingPeriod = 'monthly' | 'annual'
-
-export function getPlanActionHref(plan: PricingPlan, period: BillingPeriod = 'monthly'): string {
+export function getPlanActionHref(plan: PricingPlan): string {
   if (plan.ctaHref) return plan.ctaHref
   const params = new URLSearchParams({ plan: plan.slug })
-  if (period === 'annual') params.set('billing', 'annual')
+  if (plan.billingType === 'monthly' || plan.billingType === 'annual') params.set('billing', plan.billingType)
   return `/get-started?${params.toString()}`
 }

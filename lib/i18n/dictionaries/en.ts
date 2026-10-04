@@ -133,6 +133,7 @@ export const en = {
     billingPeriod: 'Billing period',
     perMonth: '/mo',
     perYear: '/yr',
+    oneTime: 'one-time',
     startingAt: 'Starting at',
     contactForPrice: 'Custom pricing',
     beingFinalized: 'Pricing being finalized',
