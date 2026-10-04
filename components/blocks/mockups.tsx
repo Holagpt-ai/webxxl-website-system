@@ -411,3 +411,58 @@ export function ServiceVisualMockup({ visual, locale, className }: { visual: Ser
       return <BrowserMockup locale={locale} className={className} />
   }
 }
+
+export type IndustrySiteMockupProps = {
+  brand: Localized
+  headline: Localized
+  subhead: Localized
+  primaryCta: Localized
+  secondaryCta: Localized
+  badges: Localized<string[]>
+  image?: string
+  imageAlt?: Localized
+}
+
+/** Browser-framed example website concept for an industry. All copy comes from industry data. */
+export function IndustrySiteMockup({ locale, className, demoLabel, ...site }: IndustrySiteMockupProps & { locale: Locale; className?: string; demoLabel: string }) {
+  const brand = t(site.brand, locale)
+  return (
+    <Frame className={className} label={`${demoLabel}: ${brand}`}>
+      <div className="flex items-center gap-1.5 border-b bg-muted px-3 py-2">
+        <span className="size-2 rounded-full bg-destructive/70" />
+        <span className="size-2 rounded-full bg-chart-4/70" />
+        <span className="size-2 rounded-full bg-success/70" />
+        <span className="ml-3 h-4 flex-1 rounded bg-background" />
+        <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-primary">{demoLabel}</span>
+      </div>
+      <div className="flex items-center justify-between px-4 py-2.5">
+        <span className="flex items-center gap-1.5 text-xs font-extrabold leading-none text-foreground">
+          <span className="inline-flex size-5 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground">{brand.charAt(0)}</span>
+          {brand}
+        </span>
+        <span className="rounded-md bg-primary px-2.5 py-1 text-[10px] font-semibold text-primary-foreground">{t(site.primaryCta, locale)}</span>
+      </div>
+      <div className="relative min-h-56 overflow-hidden bg-foreground md:min-h-64">
+        {site.image && (
+          <Image src={site.image} alt={site.imageAlt ? t(site.imageAlt, locale) : ''} fill sizes="(min-width: 1024px) 560px, 100vw" className="object-cover opacity-60" priority />
+        )}
+        <div className="relative flex max-w-xs flex-col gap-2 p-5 text-background md:p-6">
+          <p className="text-balance text-xl font-extrabold leading-tight md:text-2xl">{t(site.headline, locale)}</p>
+          <p className="text-pretty text-xs leading-relaxed text-background/85">{t(site.subhead, locale)}</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <span className="rounded-md bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground">{t(site.primaryCta, locale)}</span>
+            <span className="rounded-md border border-background/60 px-3 py-1.5 text-[11px] font-semibold text-background">{t(site.secondaryCta, locale)}</span>
+          </div>
+        </div>
+      </div>
+      <ul className="grid grid-cols-3 divide-x border-t text-center">
+        {t(site.badges, locale).slice(0, 3).map((badge) => (
+          <li key={badge} className="flex items-center justify-center gap-1.5 px-2 py-2.5 text-[10px] font-semibold text-foreground md:text-[11px]">
+            <ShieldCheck className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
+            <span className="text-pretty">{badge}</span>
+          </li>
+        ))}
+      </ul>
+    </Frame>
+  )
+}

@@ -1,6 +1,7 @@
 import type { IconName } from '@/lib/icons'
 import type { Localized } from '@/lib/i18n/localize'
-import { l, type ContentItem, type FaqItem, type Seo } from './types'
+import { industryProfiles } from './industry-profiles'
+import { l, type ContentItem, type FaqItem, type FeatureItem, type Seo } from './types'
 
 export type IndustryGroup = 'home' | 'health' | 'professional' | 'hospitality'
 
@@ -29,13 +30,56 @@ export type Industry = {
   painPoints?: ContentItem[]
   faq?: FaqItem[]
   seo?: Seo
+} & IndustryProfile
+
+/**
+ * Hero visual for an industry page. Rendered by the shared template — never chosen by slug in code.
+ *  - image          → a photo with alt text
+ *  - industryMockup → a browser-framed example website concept built from these fields
+ *  - websiteMockup  → the generic WebXXL example site (default when omitted)
+ */
+export type IndustryHeroVisual =
+  | { type: 'image'; src: string; alt: Localized }
+  | {
+      type: 'industryMockup'
+      brand: Localized
+      headline: Localized
+      subhead: Localized
+      primaryCta: Localized
+      secondaryCta: Localized
+      badges: Localized<string[]>
+      image?: string
+      imageAlt?: Localized
+    }
+  | { type: 'websiteMockup' }
+
+export type IndustrySectionList = { title: Localized; description?: Localized; items: Localized<string[]> }
+
+/** Optional industry-specific content. Any omitted field falls back to the shared template copy. */
+export type IndustryProfile = {
+  painPoints?: ContentItem[]
+  faq?: FaqItem[]
+  seo?: Seo
+  hero?: { title?: Localized; description?: Localized }
+  heroVisual?: IndustryHeroVisual
+  conversionGoals?: Localized<string[]>
+  websiteFeatures?: FeatureItem[]
+  leadCapture?: IndustrySectionList
+  crmFeatures?: Localized<string[]>
+  campaigns?: { title: Localized; description?: Localized; items: ContentItem[] }
+  localSeo?: IndustrySectionList
+  trustPoints?: Localized<string[]>
+  integrations?: Localized<string[]>
+  ctas?: { primary?: Localized; secondary?: Localized; bandTitle?: Localized; bandDescription?: Localized }
+  promotion?: { title: Localized; description: Localized }
+  relatedIndustries?: string[]
 }
 
 /**
  * Add an industry by appending an object. The shared IndustryPageTemplate renders
  * /industries/{slug} and /es/industries/{slug} from this data.
  */
-export const industries: Industry[] = [
+const baseIndustries: Industry[] = [
   {
     slug: 'hvac', icon: 'snowflake', group: 'home', enabled: true, featured: true,
     name: l('HVAC', 'HVAC'), inlineName: l('HVAC', 'climatización'), tagline: l('Heating & cooling', 'Calefacción y aire'),
@@ -178,6 +222,9 @@ export const industries: Industry[] = [
   },
 ]
 
+/** Base industry data merged with its optional profile from content/industry-profiles.ts. */
+export const industries: Industry[] = baseIndustries.map((i) => ({ ...i, ...industryProfiles[i.slug] }))
+
 export function getIndustries(): Industry[] {
   return industries.filter((i) => i.enabled)
 }
@@ -191,6 +238,10 @@ export function getIndustriesBySlugs(slugs: string[]): Industry[] {
 }
 
 export function getRelatedIndustries(industry: Industry, count = 4): Industry[] {
+  if (industry.relatedIndustries?.length) {
+    const picked = getIndustriesBySlugs(industry.relatedIndustries).filter((i) => i.slug !== industry.slug)
+    if (picked.length) return picked.slice(0, count)
+  }
   const same = getIndustries().filter((i) => i.slug !== industry.slug && i.group === industry.group)
   const others = getIndustries().filter((i) => i.slug !== industry.slug && i.group !== industry.group)
   return [...same, ...others].slice(0, count)
