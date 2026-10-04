@@ -2,7 +2,7 @@ import type { Localized } from '@/lib/i18n/localize'
 
 /**
  * TEMPORARY PRICING — V1. NOT FINAL.
- * The Startup ($99) and Elite ($999) one-time website build packages below are a temporary
+ * The Startup ($99), Business ($399) and Elite ($999) one-time website build packages below are a temporary
  * business configuration and are subject to future revision. To change prices, packages or
  * features, edit this file only — no component changes are needed.
  *
@@ -114,6 +114,72 @@ export const pricingPlans: PricingPlan[] = [
     ctaLabel: { en: 'Get Started', es: 'Comenzar' },
   },
   {
+    id: 'plan_business_website',
+    slug: 'business',
+    name: { en: 'Business Website', es: 'Sitio Web Business' },
+    description: {
+      en: 'A more complete website for growing businesses that need stronger lead generation and marketing capabilities.',
+      es: 'Un sitio web más completo para negocios en crecimiento que necesitan mayor captación de prospectos y capacidades de marketing.',
+    },
+    billingType: 'oneTime',
+    priceModel: 'fixed',
+    priceAmount: 399,
+    currency: 'USD',
+    features: {
+      en: [
+        'Up to 10 custom pages',
+        'Fully mobile responsive',
+        'Everything in Startup',
+        'Enhanced custom UI/UX',
+        'CRM-ready lead capture',
+        'Advanced contact / quote forms',
+        'Appointment / booking integration',
+        'Blog or news section',
+        'Social media integration',
+        'Google Analytics integration',
+        'Google Search Console setup',
+        'SEO-friendly XML sitemap',
+        'On-page SEO setup',
+        'Technical SEO foundation',
+        'AEO / AI-search optimization foundation',
+        'Custom calls-to-action',
+        'Additional custom graphics',
+        'Vercel deployment',
+        'Typical turnaround: 5–7 business days after required content and assets are received',
+        'Satisfaction guarantee*',
+      ],
+      es: [
+        'Hasta 10 páginas personalizadas',
+        'Totalmente adaptable a móviles',
+        'Todo lo incluido en Startup',
+        'UI/UX personalizada mejorada',
+        'Captación de prospectos lista para CRM',
+        'Formularios avanzados de contacto / cotización',
+        'Integración de citas / reservaciones',
+        'Sección de blog o noticias',
+        'Integración con redes sociales',
+        'Integración con Google Analytics',
+        'Configuración de Google Search Console',
+        'Mapa del sitio XML optimizado para SEO',
+        'Configuración de SEO on-page',
+        'Base de SEO técnico',
+        'Base de optimización AEO / búsqueda con IA',
+        'Llamados a la acción personalizados',
+        'Gráficos personalizados adicionales',
+        'Despliegue en Vercel',
+        'Entrega típica: 5–7 días hábiles después de recibir el contenido y los recursos requeridos',
+        'Garantía de satisfacción*',
+      ],
+    },
+    footnote: conditionsFootnote,
+    highlighted: true,
+    badge: { en: 'Most Popular', es: 'Más popular' },
+    enabled: true,
+    showOnHome: true,
+    status: 'active',
+    ctaLabel: { en: 'Get Started', es: 'Comenzar' },
+  },
+  {
     id: 'plan_elite_website',
     slug: 'elite',
     name: { en: 'Elite Website', es: 'Sitio Web Elite' },
@@ -186,15 +252,13 @@ export const pricingPlans: PricingPlan[] = [
       ],
     },
     footnote: conditionsFootnote,
-    highlighted: true,
-    badge: { en: 'Most popular', es: 'Más popular' },
     enabled: true,
     showOnHome: true,
     status: 'active',
     ctaLabel: { en: 'Start My Project', es: 'Iniciar mi proyecto' },
   },
   {
-    // Retained for future use; disabled so only the two temporary packages are public.
+    // Retained for future use; disabled so only the temporary website packages are public.
     id: 'plan_custom',
     slug: 'custom',
     name: { en: 'Custom', es: 'Personalizado' },
