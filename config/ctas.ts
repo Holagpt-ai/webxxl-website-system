@@ -11,7 +11,7 @@ export type Cta = {
 /** Every major call to action lives here so wording and destinations stay consistent. */
 export const ctas = {
   bookCall: {
-    label: { en: 'Book a Strategy Call', es: 'Agenda una llamada' },
+    label: { en: 'Get a Free Quote', es: 'Solicita una cotización gratis' },
     href: '/get-started?intent=strategy-call',
     icon: 'calendar',
   },

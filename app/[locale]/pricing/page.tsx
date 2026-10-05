@@ -44,6 +44,28 @@ export default async function PricingPage({ params }: Props) {
           <FeatureGrid items={pricingPage.included} locale={locale} columns={3} />
         </div>
       </Section>
+      <Section labelledBy="addons-title">
+        <SectionHeader
+          id="addons-title"
+          eyebrow={t(pricingPage.addonsEyebrow, locale)}
+          title={t(pricingPage.addonsTitle, locale)}
+          description={t(pricingPage.addonsDescription, locale)}
+        />
+        <div className="mt-10">
+          <FeatureGrid items={pricingPage.addons} locale={locale} columns={3} />
+        </div>
+      </Section>
+      <Section tone="muted" labelledBy="labs-title">
+        <SectionHeader
+          id="labs-title"
+          eyebrow={t(pricingPage.labsEyebrow, locale)}
+          title={t(pricingPage.labsTitle, locale)}
+          description={t(pricingPage.labsDescription, locale)}
+        />
+        <div className="mt-10">
+          <FeatureGrid items={pricingPage.labs} locale={locale} columns={3} />
+        </div>
+      </Section>
       <FaqSection
         eyebrow={dict.sections.faqEyebrow}
         title={dict.sections.faqTitle}
