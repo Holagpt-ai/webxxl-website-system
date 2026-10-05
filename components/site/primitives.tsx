@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, Check } from 'lucide-react'
+import { ArrowRight, Check, Info } from 'lucide-react'
 import { icons, type IconName } from '@/lib/icons'
 import { localizePath } from '@/lib/i18n/localize'
 import type { Locale } from '@/lib/i18n/config'
@@ -146,7 +146,7 @@ export function ButtonLink({
   )
 }
 
-export function CheckList({ items, className, tone = 'default' }: { items: string[]; className?: string; tone?: 'default' | 'inverse' }) {
+export function CheckList({ items, tooltips, className, tone = 'default' }: { items: string[]; tooltips?: Record<string, string>; className?: string; tone?: 'default' | 'inverse' }) {
   return (
     <ul className={cn('flex flex-col gap-3', className)}>
       {items.map((item) => (
@@ -159,10 +159,37 @@ export function CheckList({ items, className, tone = 'default' }: { items: strin
           >
             <Check className="size-3" strokeWidth={3} aria-hidden="true" />
           </span>
-          <span>{item}</span>
+          <span>
+            {item}
+            {tooltips?.[item] ? <FeatureTip text={tooltips[item]} label={item} /> : null}
+          </span>
         </li>
       ))}
     </ul>
+  )
+}
+
+/**
+ * Info dot with a hover/tap tooltip that explains a feature in plain language.
+ * Pure CSS: appears on hover, keyboard focus, and tap (tap focuses the button).
+ */
+function FeatureTip({ text, label }: { text: string; label: string }) {
+  return (
+    <span className="group/tip relative ml-1.5 inline-flex align-middle">
+      <button
+        type="button"
+        aria-label={`What does "${label}" include?`}
+        className="inline-flex size-4 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <Info className="size-3.5" aria-hidden="true" />
+      </button>
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute left-0 top-full z-30 mt-2 w-64 max-w-[75vw] rounded-xl border bg-card p-3 text-xs font-normal leading-relaxed text-card-foreground shadow-elevated opacity-0 transition-opacity duration-150 group-hover/tip:opacity-100 group-focus-within/tip:opacity-100"
+      >
+        {text}
+      </span>
+    </span>
   )
 }
 

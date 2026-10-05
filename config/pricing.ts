@@ -64,7 +64,7 @@ export const pricingPlans: PricingPlan[] = [
         '10-page custom website',
         'Hosting + free SSL included',
         'Social media scheduler included',
-        'Mobile-friendly + SEO-ready',
+        'Mobile-friendly + SEO-ready + AEO',
         'Google Business Profile setup',
         '30 days of done-for-you edits',
         'Email support',
@@ -73,7 +73,7 @@ export const pricingPlans: PricingPlan[] = [
         'Sitio web personalizado de 10 páginas',
         'Hosting + SSL gratis incluidos',
         'Programador de redes sociales incluido',
-        'Optimizado para móviles y SEO',
+        'Optimizado para móviles, SEO y AEO',
         'Configuración de Google Business Profile',
         '30 días de ediciones hechas por nosotros',
         'Soporte por correo',
@@ -156,6 +156,89 @@ export const pricingPlans: PricingPlan[] = [
     ctaLabel: { en: 'Get Started', es: 'Comenzar' },
   },
 ]
+
+/**
+ * Plain-language explanations shown in hover/tap tooltips on pricing
+ * feature bullets. Keyed by the exact feature string per locale —
+ * features without an entry simply show no info icon.
+ */
+export const featureTooltips: Localized<Record<string, string>> = {
+  en: {
+    '10-page custom website':
+      'A professionally designed, done-for-you website with up to 10 pages — Home, Services, About, Contact and more. We write the words and build the pages.',
+    'Hosting + free SSL included':
+      'Fast, secure hosting on our servers plus the HTTPS padlock Google requires. Included in your plan — nothing extra to buy or configure.',
+    'Social media scheduler included':
+      'Connect your YouTube, Instagram, Facebook and TikTok. Plan a month of posts in one sitting and the scheduler publishes them automatically — autonomous social media, all done for you.',
+    'Mobile-friendly + SEO-ready + AEO':
+      'Mobile-friendly: your site looks perfect on phones, where most customers browse. SEO-ready: Google-friendly structure, fast loading and sitemaps so you show up in search. AEO: structured so AI assistants like ChatGPT and Google AI Overviews can quote your business in their answers.',
+    'Google Business Profile setup':
+      'We create and verify your Google Business listing so you appear on Google Maps and local search — with your hours, photos, services and reviews.',
+    '30 days of done-for-you edits':
+      'Just email or text us the change — new hours, a new photo, a new service — and we update your site for you. No DIY, no logins to figure out.',
+    'Email support': 'Real human help by email whenever you need it.',
+    'Up to 20 pages': 'Room to grow — up to 20 pages for service areas, galleries, team bios and more.',
+    'Google Business Profile managed & optimized':
+      'We manage your Google listing month after month: fresh posts and offers, new photos, review responses and ranking optimization.',
+    'Advanced SEO':
+      'Keyword research, optimized titles and descriptions, local SEO, speed tuning and ongoing tweaks to climb Google rankings and stay there.',
+    'Unlimited done-for-you edits':
+      'Unlimited changes, done for you. Text or email us anytime — new photos, prices, pages — and we handle it, usually within one business day.',
+    'Lead capture forms + live chat':
+      'Quote and contact forms that email you every lead instantly, plus live chat on your site so visitors turn into customers while they browse.',
+    'Monthly performance report':
+      'A plain-English email every month: visitors, calls, form fills and exactly what we improved. No confusing dashboards.',
+    'Priority support': 'Jump the queue — your requests get handled first, by the same team that built your site.',
+    'Unlimited pages': 'Add as many pages as your business needs — new services, locations, case studies. Never pay per page again.',
+    'Built-in CRM & pipelines':
+      'Every lead lands in your own CRM automatically. Track calls, follow-ups and deals in simple visual pipelines — no sticky notes, no lost leads.',
+    'SMS & email campaigns (monthly credits included)':
+      'Send promotions straight to customer phones and inboxes. Monthly sending credits are included, and we can run the campaigns for you.',
+    'Online booking':
+      'Customers book appointments online 24/7, synced to your calendar with automatic reminders. Fewer no-shows, no phone tag.',
+    'Ecommerce': 'Sell products online with secure checkout, card payments and automatic order emails.',
+    'Dedicated account manager':
+      'One person who knows your business — strategy, updates and priority help whenever you need it.',
+  },
+  es: {
+    'Sitio web personalizado de 10 páginas':
+      'Un sitio web profesional hecho por nosotros con hasta 10 páginas: Inicio, Servicios, Nosotros, Contacto y más. Escribimos los textos y construimos las páginas.',
+    'Hosting + SSL gratis incluidos':
+      'Hosting rápido y seguro en nuestros servidores más el candado HTTPS que exige Google. Incluido en tu plan, sin nada extra que comprar o configurar.',
+    'Programador de redes sociales incluido':
+      'Conecta tu YouTube, Instagram, Facebook y TikTok. Planifica un mes de publicaciones de una vez y el programador las publica automáticamente: redes sociales autónomas, todo hecho por nosotros.',
+    'Optimizado para móviles, SEO y AEO':
+      'Móviles: tu sitio se ve perfecto en teléfonos, donde navega la mayoría de tus clientes. SEO: estructura optimizada para Google, carga rápida y sitemaps para aparecer en búsquedas. AEO: estructurado para que asistentes de IA como ChatGPT y Google AI Overviews citen tu negocio en sus respuestas.',
+    'Configuración de Google Business Profile':
+      'Creamos y verificamos tu ficha de Google Business para que aparezcas en Google Maps y búsquedas locales, con horario, fotos, servicios y reseñas.',
+    '30 días de ediciones hechas por nosotros':
+      'Solo envíanos el cambio por correo o mensaje — nuevo horario, nueva foto, nuevo servicio — y actualizamos tu sitio en un día hábil. Sin hacerlo tú mismo.',
+    'Soporte por correo': 'Ayuda humana real por correo electrónico cuando la necesites.',
+    'Hasta 20 páginas': 'Espacio para crecer: hasta 20 páginas para áreas de servicio, galerías, equipo y más.',
+    'Google Business Profile gestionado y optimizado':
+      'Gestionamos tu ficha de Google mes a mes: publicaciones y ofertas, fotos nuevas, respuestas a reseñas y optimización de posicionamiento.',
+    'SEO avanzado':
+      'Investigación de palabras clave, títulos y descripciones optimizados, SEO local, velocidad y ajustes continuos para subir en Google y mantenerte ahí.',
+    'Ediciones ilimitadas hechas por nosotros':
+      'Cambios ilimitados, hechos por nosotros. Escríbenos cuando quieras — fotos, precios, páginas nuevas — y lo resolvemos, normalmente en un día hábil.',
+    'Formularios de captación + chat en vivo':
+      'Formularios de contacto y cotización que te avisan cada lead al instante, más chat en vivo en tu sitio para convertir visitantes en clientes.',
+    'Informe mensual de rendimiento':
+      'Un correo mensual en lenguaje simple: visitas, llamadas, formularios y lo que mejoramos. Sin paneles confusos.',
+    'Soporte prioritario': 'Tus solicitudes van primero, atendidas por el mismo equipo que construyó tu sitio.',
+    'Páginas ilimitadas':
+      'Agrega todas las páginas que necesite tu negocio: servicios, ubicaciones, casos de éxito. Nunca más pagues por página.',
+    'CRM integrado y embudos':
+      'Cada lead llega automáticamente a tu CRM. Sigue llamadas y oportunidades en embudos visuales simples: sin notas adhesivas ni leads perdidos.',
+    'Campañas por SMS y correo (créditos mensuales incluidos)':
+      'Envía promociones directo al teléfono y correo de tus clientes. Incluye créditos mensuales de envío, y podemos manejar las campañas por ti.',
+    'Reservas en línea':
+      'Tus clientes reservan citas en línea 24/7, sincronizado con tu calendario y con recordatorios automáticos. Menos ausencias, sin llamadas perdidas.',
+    'Tienda en línea': 'Vende productos en línea con pago seguro, tarjetas y correos automáticos de pedido.',
+    'Gerente de cuenta dedicado':
+      'Una persona que conoce tu negocio: estrategia, actualizaciones y ayuda prioritaria cuando la necesites.',
+  },
+}
 
 export const includedInEveryPlan: Localized<string[]> = {
   en: [
