@@ -45,7 +45,7 @@ export type PricingPlan = {
 
 export const pricingSettings = {
   currency: 'USD',
-  showPreliminaryNotice: true,
+  showPreliminaryNotice: false,
 }
 
 export const pricingPlans: PricingPlan[] = [
