@@ -3,9 +3,9 @@ import type { Localized } from '@/lib/i18n/localize'
 export const siteConfig = {
   name: 'WebXXL',
   /** Set NEXT_PUBLIC_SITE_URL in production; used for canonical URLs, sitemap and Open Graph. */
-  url: (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.webxxl.com').replace(/\/$/, ''),
+  url: (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.webbxxl.com').replace(/\/$/, ''),
   /** Placeholder contact address — replace once the production inbox is confirmed. */
-  email: 'hello@webxxl.com',
+  email: 'hello@webbxxl.com',
   responseTime: { en: 'We reply within one business day.', es: 'Respondemos en un día hábil.' } as Localized,
   hours: { en: 'Monday–Friday, 9am–6pm', es: 'Lunes a viernes, 9am–6pm' } as Localized,
   defaultTitle: {
