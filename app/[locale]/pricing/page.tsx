@@ -38,7 +38,17 @@ export default async function PricingPage({ params }: Props) {
         </h2>
         <PricingCards plans={getPlans()} locale={locale} />
       </Section>
-      <Section tone="muted" labelledBy="included-title">
+      <Section tone="muted" labelledBy="guarantee-title">
+        <SectionHeader
+          id="guarantee-title"
+          eyebrow={t(pricingPage.guaranteeEyebrow, locale)}
+          title={t(pricingPage.guaranteeTitle, locale)}
+        />
+        <div className="mt-10">
+          <FeatureGrid items={pricingPage.guarantee} locale={locale} columns={3} />
+        </div>
+      </Section>
+      <Section labelledBy="included-title">
         <SectionHeader id="included-title" title={t(pricingPage.includedTitle, locale)} />
         <div className="mt-10">
           <FeatureGrid items={pricingPage.included} locale={locale} columns={3} />

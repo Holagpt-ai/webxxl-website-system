@@ -66,7 +66,7 @@ export const pricingPlans: PricingPlan[] = [
         'Social media scheduler included',
         'Mobile-friendly + SEO-ready + AEO',
         'Google Business Profile setup',
-        '30 days of done-for-you edits',
+        '30 days of done-for-you edits (1-day turnaround)',
         'Email support',
       ],
       es: [
@@ -75,7 +75,7 @@ export const pricingPlans: PricingPlan[] = [
         'Programador de redes sociales incluido',
         'Optimizado para móviles, SEO y AEO',
         'Configuración de Google Business Profile',
-        '30 días de ediciones hechas por nosotros',
+        '30 días de ediciones hechas por nosotros (entrega en 1 día)',
         'Soporte por correo',
       ],
     },
@@ -99,7 +99,7 @@ export const pricingPlans: PricingPlan[] = [
         'Up to 20 pages',
         'Google Business Profile managed & optimized',
         'Advanced SEO',
-        'Unlimited done-for-you edits',
+        'Unlimited done-for-you edits (1-day turnaround)',
         'Lead capture forms + live chat',
         'Monthly performance report',
         'Priority support',
@@ -109,7 +109,7 @@ export const pricingPlans: PricingPlan[] = [
         'Hasta 20 páginas',
         'Google Business Profile gestionado y optimizado',
         'SEO avanzado',
-        'Ediciones ilimitadas hechas por nosotros',
+        'Ediciones ilimitadas hechas por nosotros (entrega en 1 día)',
         'Formularios de captación + chat en vivo',
         'Informe mensual de rendimiento',
         'Soporte prioritario',
@@ -174,16 +174,16 @@ export const featureTooltips: Localized<Record<string, string>> = {
       'Mobile-friendly: your site looks perfect on phones, where most customers browse. SEO-ready: Google-friendly structure, fast loading and sitemaps so you show up in search. AEO: structured so AI assistants like ChatGPT and Google AI Overviews can quote your business in their answers.',
     'Google Business Profile setup':
       'We create and verify your Google Business listing so you appear on Google Maps and local search — with your hours, photos, services and reviews.',
-    '30 days of done-for-you edits':
-      'Just email or text us the change — new hours, a new photo, a new service — and we update your site for you. No DIY, no logins to figure out.',
+    '30 days of done-for-you edits (1-day turnaround)':
+      'Just email or text us the change — new hours, a new photo, a new service — and we update your site within one business day. No DIY, no logins to figure out.',
     'Email support': 'Real human help by email whenever you need it.',
     'Up to 20 pages': 'Room to grow — up to 20 pages for service areas, galleries, team bios and more.',
     'Google Business Profile managed & optimized':
       'We manage your Google listing month after month: fresh posts and offers, new photos, review responses and ranking optimization.',
     'Advanced SEO':
-      'Keyword research, optimized titles and descriptions, local SEO, speed tuning and ongoing tweaks to climb Google rankings and stay there.',
-    'Unlimited done-for-you edits':
-      'Unlimited changes, done for you. Text or email us anytime — new photos, prices, pages — and we handle it, usually within one business day.',
+      'Keyword research with 15 tracked keywords, on-page optimization for up to 10 pages — titles, meta descriptions, sitemaps — Google Business Profile tuning, local citations, broken-link fixes and a plain-English monthly report.',
+    'Unlimited done-for-you edits (1-day turnaround)':
+      'Unlimited changes, done for you within one business day. Text or email us anytime — new photos, prices, pages — and we handle it.',
     'Lead capture forms + live chat':
       'Quote and contact forms that email you every lead instantly, plus live chat on your site so visitors turn into customers while they browse.',
     'Monthly performance report':
@@ -196,7 +196,8 @@ export const featureTooltips: Localized<Record<string, string>> = {
       'Send promotions straight to customer phones and inboxes. Monthly sending credits are included, and we can run the campaigns for you.',
     'Online booking':
       'Customers book appointments online 24/7, synced to your calendar with automatic reminders. Fewer no-shows, no phone tag.',
-    'Ecommerce': 'Sell products online with secure checkout, card payments and automatic order emails.',
+    'Ecommerce':
+      'Sell products online — Ecommerce Pro included (an $80/mo value): up to 500 products and 20 categories, secure checkout, payment and shipping integration, discount codes and coupons, product variations, filtered search, ratings and reviews, guest checkout and automatic order emails.',
     'Dedicated account manager':
       'One person who knows your business — strategy, updates and priority help whenever you need it.',
   },
@@ -211,16 +212,16 @@ export const featureTooltips: Localized<Record<string, string>> = {
       'Móviles: tu sitio se ve perfecto en teléfonos, donde navega la mayoría de tus clientes. SEO: estructura optimizada para Google, carga rápida y sitemaps para aparecer en búsquedas. AEO: estructurado para que asistentes de IA como ChatGPT y Google AI Overviews citen tu negocio en sus respuestas.',
     'Configuración de Google Business Profile':
       'Creamos y verificamos tu ficha de Google Business para que aparezcas en Google Maps y búsquedas locales, con horario, fotos, servicios y reseñas.',
-    '30 días de ediciones hechas por nosotros':
+    '30 días de ediciones hechas por nosotros (entrega en 1 día)':
       'Solo envíanos el cambio por correo o mensaje — nuevo horario, nueva foto, nuevo servicio — y actualizamos tu sitio en un día hábil. Sin hacerlo tú mismo.',
     'Soporte por correo': 'Ayuda humana real por correo electrónico cuando la necesites.',
     'Hasta 20 páginas': 'Espacio para crecer: hasta 20 páginas para áreas de servicio, galerías, equipo y más.',
     'Google Business Profile gestionado y optimizado':
       'Gestionamos tu ficha de Google mes a mes: publicaciones y ofertas, fotos nuevas, respuestas a reseñas y optimización de posicionamiento.',
     'SEO avanzado':
-      'Investigación de palabras clave, títulos y descripciones optimizados, SEO local, velocidad y ajustes continuos para subir en Google y mantenerte ahí.',
-    'Ediciones ilimitadas hechas por nosotros':
-      'Cambios ilimitados, hechos por nosotros. Escríbenos cuando quieras — fotos, precios, páginas nuevas — y lo resolvemos, normalmente en un día hábil.',
+      'Investigación de palabras clave (15 keywords), optimización on-page de hasta 10 páginas — títulos, meta descripciones, sitemaps —, ajuste de Google Business Profile, citas locales, corrección de enlaces rotos e informe mensual en lenguaje simple.',
+    'Ediciones ilimitadas hechas por nosotros (entrega en 1 día)':
+      'Cambios ilimitados, hechos por nosotros en un día hábil. Escríbenos cuando quieras — fotos, precios, páginas nuevas — y lo resolvemos.',
     'Formularios de captación + chat en vivo':
       'Formularios de contacto y cotización que te avisan cada lead al instante, más chat en vivo en tu sitio para convertir visitantes en clientes.',
     'Informe mensual de rendimiento':
@@ -234,7 +235,8 @@ export const featureTooltips: Localized<Record<string, string>> = {
       'Envía promociones directo al teléfono y correo de tus clientes. Incluye créditos mensuales de envío, y podemos manejar las campañas por ti.',
     'Reservas en línea':
       'Tus clientes reservan citas en línea 24/7, sincronizado con tu calendario y con recordatorios automáticos. Menos ausencias, sin llamadas perdidas.',
-    'Tienda en línea': 'Vende productos en línea con pago seguro, tarjetas y correos automáticos de pedido.',
+    'Tienda en línea':
+      'Vende en línea con Ecommerce Pro incluido (valor de $80/mes): hasta 500 productos y 20 categorías, pago seguro, integración de pagos y envíos, códigos de descuento y cupones, variaciones de producto, búsqueda con filtros, calificaciones y reseñas, compra como invitado y correos automáticos de pedido.',
     'Gerente de cuenta dedicado':
       'Una persona que conoce tu negocio: estrategia, actualizaciones y ayuda prioritaria cuando la necesites.',
   },
@@ -295,6 +297,24 @@ export const pricingAddons: PricingAddon[] = [
       es: 'Agrega otra ubicación de tu negocio con sus propias páginas y listados.',
     },
   },
+  {
+    id: 'addon_ecommerce_starter',
+    name: { en: 'Ecommerce Starter', es: 'Tienda Inicial' },
+    price: { en: '$40/mo', es: '$40/mes' },
+    description: {
+      en: 'Sell online: up to 50 products, secure checkout and order emails. Perfect for a first store.',
+      es: 'Vende en línea: hasta 50 productos, pago seguro y correos de pedido. Perfecta para tu primera tienda.',
+    },
+  },
+  {
+    id: 'addon_ecommerce_pro',
+    name: { en: 'Ecommerce Pro', es: 'Tienda Pro' },
+    price: { en: '$80/mo', es: '$80/mes' },
+    description: {
+      en: 'Up to 500 products and 20 categories, coupons, reviews, promo banners and filtered search. For serious sellers.',
+      es: 'Hasta 500 productos y 20 categorías, cupones, reseñas, banners promocionales y búsqueda con filtros. Para vendedores serios.',
+    },
+  },
 ]
 
 /** Done-for-you services ("Labs") — our team runs your marketing. */
@@ -324,6 +344,15 @@ export const pricingLabs: PricingAddon[] = [
     description: {
       en: 'Video, photography and AI-accelerated content for your brand.',
       es: 'Video, fotografía y contenido acelerado con IA para tu marca.',
+    },
+  },
+  {
+    id: 'lab_shopify',
+    name: { en: 'Shopify store build & migration', es: 'Tienda Shopify y migración' },
+    price: { en: 'Custom quote', es: 'Cotización personalizada' },
+    description: {
+      en: 'Custom Shopify theme, app integrations, and full migration from your current platform — products, customers and SEO redirects handled.',
+      es: 'Tema Shopify a medida, integración de apps y migración completa desde tu plataforma actual: productos, clientes y redirecciones SEO.',
     },
   },
 ]

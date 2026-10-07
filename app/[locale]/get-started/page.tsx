@@ -7,7 +7,7 @@ import { getPageContext, resolveLocale } from '@/lib/i18n/server'
 import { t } from '@/lib/i18n/localize'
 import { getDictionary } from '@/lib/i18n/dictionaries'
 import { buildMetadata } from '@/lib/seo'
-import { Container, Eyebrow } from '@/components/site/primitives'
+import { Container, Eyebrow, LocaleLink } from '@/components/site/primitives'
 import { Breadcrumbs } from '@/components/blocks/breadcrumbs'
 import { ProjectWizard } from '@/components/forms/project-wizard'
 
@@ -38,6 +38,22 @@ export default async function GetStartedPage({ params, searchParams }: Props) {
           <Eyebrow>{t(getStartedPage.eyebrow, locale)}</Eyebrow>
           <h1 className="text-balance text-4xl font-extrabold leading-tight tracking-tight md:text-5xl">{dict.wizard.title}</h1>
           <p className="text-pretty text-lg leading-relaxed text-muted-foreground">{dict.wizard.description}</p>
+        </div>
+        <div className="flex flex-col gap-4">
+          <h2 className="text-xl font-bold">{t(getStartedPage.quizTitle, locale)}</h2>
+          <div className="grid gap-4 md:grid-cols-3">
+            {getStartedPage.quiz.map((q) => (
+              <LocaleLink
+                key={q.project}
+                locale={locale}
+                href={`/get-started?project=${q.project}`}
+                className="group flex flex-col gap-2 rounded-2xl border bg-card p-5 shadow-card transition-shadow hover:shadow-elevated"
+              >
+                <span className="font-bold leading-snug group-hover:text-primary">{t(q.title, locale)}</span>
+                <span className="text-sm leading-relaxed text-muted-foreground">{t(q.description, locale)}</span>
+              </LocaleLink>
+            ))}
+          </div>
         </div>
         <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
           <ProjectWizard
