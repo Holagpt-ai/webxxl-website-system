@@ -103,8 +103,8 @@ export const pricingPage = {
   eyebrow: l('Pricing', 'Precios'),
   title: l('Simple, affordable pricing.', 'Precios simples y accesibles.'),
   description: l(
-    'Start at $20/mo with hosting, our social media scheduler and real support included. Add apps and done-for-you services as you grow — no long-term contracts, 30-day money-back guarantee.',
-    'Comienza por $20/mes con hosting, nuestro programador de redes sociales y soporte real incluidos. Agrega aplicaciones y servicios hechos por nosotros a medida que creces, sin contratos a largo plazo y con garantía de 30 días.',
+    'Start at $20/mo — managed hosting and SSL included free forever, plus our social media scheduler and real human support. Add apps and done-for-you services as you grow — no long-term contracts, 30-day money-back guarantee.',
+    'Comienza por $20/mes: hosting gestionado y SSL incluidos gratis para siempre, más nuestro programador de redes sociales y soporte humano real. Agrega aplicaciones y servicios hechos por nosotros a medida que creces, sin contratos a largo plazo y con garantía de 30 días.',
   ),
   includedTitle: l('Included in every plan', 'Incluido en todos los planes'),
   included: [
@@ -122,6 +122,8 @@ export const pricingPage = {
     { icon: 'globe', title: l('Domain registration', 'Registro de dominio'), description: l('$20/yr — We register and manage your domain. Own one? We connect it free.', '$20/año — Registramos y gestionamos tu dominio. ¿Ya tienes uno? Lo conectamos gratis.') },
     { icon: 'mail', title: l('Business email', 'Correo empresarial'), description: l('$5/mo — Professional email @yourdomain.', '$5/mes — Correo profesional @tudominio.') },
     { icon: 'building', title: l('Extra location', 'Ubicación adicional'), description: l('$40/mo — Its own pages and listings.', '$40/mes — Sus propias páginas y listados.') },
+    { icon: 'cart', title: l('Ecommerce Starter', 'Tienda Inicial'), description: l('$40/mo — Up to 50 products, secure checkout, order emails.', '$40/mes — Hasta 50 productos, pago seguro, correos de pedido.') },
+    { icon: 'cart', title: l('Ecommerce Pro', 'Tienda Pro'), description: l('$80/mo — Up to 500 products, coupons, reviews, promo banners.', '$80/mes — Hasta 500 productos, cupones, reseñas, banners.') },
   ] satisfies FeatureItem[],
   labsEyebrow: l('Labs', 'Labs'),
   labsTitle: l('Done for you, by our team', 'Hecho por nosotros, para ti'),
@@ -130,14 +132,22 @@ export const pricingPage = {
     { icon: 'search', title: l('SEO service', 'Servicio SEO'), description: l('From $290/mo — Optimization that compounds monthly.', 'Desde $290/mes — Optimización que crece cada mes.') },
     { icon: 'megaphone', title: l('Social media management', 'Gestión de redes sociales'), description: l('From $190/mo — We create, schedule and manage it all.', 'Desde $190/mes — Creamos, programamos y gestionamos todo.') },
     { icon: 'sparkles', title: l('Content & video', 'Contenido y video'), description: l('Custom quote — Video, photography, AI content.', 'Cotización personalizada — Video, fotografía, contenido con IA.') },
+    { icon: 'cart', title: l('Shopify store build & migration', 'Tienda Shopify y migración'), description: l('Custom quote — Custom theme, app integrations, full migration handled.', 'Cotización personalizada — Tema a medida, apps y migración completa.') },
+  ] satisfies FeatureItem[],
+  guaranteeEyebrow: l('Our promise', 'Nuestra promesa'),
+  guaranteeTitle: l('The WebXXL guarantee', 'La garantía WebXXL'),
+  guarantee: [
+    { icon: 'smile', title: l('100% satisfaction', '100% satisfacción'), description: l('Love your new site or we keep working until you do.', 'Ama tu nuevo sitio o seguimos trabajando hasta que lo ames.') },
+    { icon: 'shield', title: l('30-day money-back', 'Devolución de 30 días'), description: l('Full refund in the first 30 days. No questions, no hassle.', 'Reembolso completo en los primeros 30 días. Sin preguntas ni complicaciones.') },
+    { icon: 'key', title: l('You own it', 'Es tuyo'), description: l('After 12 paid months your site is 100% yours — design, content, everything. Rent-to-own, then it\u2019s free and clear.', 'Después de 12 meses pagados, tu sitio es 100% tuyo: diseño, contenido, todo. Réntalo y luego es tuyo sin ataduras.') },
   ] satisfies FeatureItem[],
   faq: [
     { question: l('Are there long-term contracts?', '¿Hay contratos a largo plazo?'), answer: l('No. Plans are month-to-month. We earn your business every month.', 'No. Los planes son mes a mes. Nos ganamos tu confianza cada mes.') },
-    { question: l('Is there a setup fee?', '¿Hay una tarifa inicial?'), answer: l('A one-time $79 setup applies to all plans — waived when you pay annually or during launch promotions.', 'Aplica una tarifa única de $79 en todos los planes, exenta con pago anual o promociones de lanzamiento.') },
+    { question: l('Is there a setup fee?', '¿Hay una tarifa inicial?'), answer: l('A one-time $79 setup applies to all plans — waived when you pay annually, and annual plans also include a free domain registration for the first year.', 'Aplica una tarifa única de $79 en todos los planes, exenta con pago anual; los planes anuales además incluyen el registro de dominio gratis el primer año.') },
     { question: l('Can I change plans later?', '¿Puedo cambiar de plan después?'), answer: l('Yes. Upgrade, downgrade or add apps as your business grows.', 'Sí. Mejora, reduce o agrega apps a medida que crece tu negocio.') },
-    { question: l('Is my domain included?', '¿Mi dominio está incluido?'), answer: l('Bring your own domain and we connect it free, or we register one for you at $20/year.', 'Trae tu propio dominio y lo conectamos gratis, o lo registramos por ti por $20/año.') },
+    { question: l('Is my domain included?', '¿Mi dominio está incluido?'), answer: l('Bring your own domain and we connect it free, or we register one for you at $20/year — free for the first year on annual plans.', 'Trae tu propio dominio y lo conectamos gratis, o lo registramos por ti por $20/año, gratis el primer año en planes anuales.') },
     { question: l('What are Apps and Labs?', '¿Qué son Apps y Labs?'), answer: l('Apps are monthly add-ons — email, extra locations and more — that plug into any plan. Labs are done-for-you services like SEO and social media management.', 'Apps son complementos mensuales — correo, ubicaciones extra y más — que se integran a cualquier plan. Labs son servicios hechos por nosotros como SEO y gestión de redes sociales.') },
-    { question: l('Do I own my website?', '¿Soy dueño de mi sitio web?'), answer: l('Yes. After 12 months of paid subscription the site is 100% yours — design, content and all.', 'Sí. Después de 12 meses de suscripción pagada, el sitio es 100% tuyo: diseño, contenido y todo.') },
+    { question: l('Do I own my website?', '¿Soy dueño de mi sitio web?'), answer: l('Yes — it\u2019s rent-to-own. After 12 months of paid subscription the site is 100% yours: design, content and everything, free and clear.', 'Sí: es renta con opción a compra. Después de 12 meses de suscripción pagada, el sitio es 100% tuyo: diseño, contenido y todo, sin ataduras.') },
   ] satisfies FaqItem[],
 }
 
@@ -186,6 +196,24 @@ export const contactPage = {
 
 export const getStartedPage = {
   eyebrow: l('Get Started', 'Comenzar'),
+  quizTitle: l('Which sounds like you?', '¿Cuál es tu caso?'),
+  quiz: [
+    {
+      title: l('I just launched and need to get online fast', 'Acabo de lanzar y necesito presencia en línea ya'),
+      description: l('A complete website, launched for you in days — not months.', 'Un sitio web completo, lanzado por nosotros en días, no meses.'),
+      project: 'new-website',
+    },
+    {
+      title: l('My website looks dated and isn\u2019t bringing customers', 'Mi sitio se ve anticuado y no trae clientes'),
+      description: l('We rebuild it into a modern site that turns visitors into calls.', 'Lo reconstruimos en un sitio moderno que convierte visitas en llamadas.'),
+      project: 'redesign',
+    },
+    {
+      title: l('I want to sell products online', 'Quiero vender productos en línea'),
+      description: l('A full online store — products, checkout, payments, all done for you.', 'Una tienda en línea completa: productos, pago y cobros, todo hecho por nosotros.'),
+      project: 'store',
+    },
+  ],
   sideTitle: l('What happens next', 'Qué sigue'),
   sideSteps: l(
     ['We review your details within one business day.', 'You get a strategy call invite at a time that works for you.', 'We share a clear plan, timeline and price — no obligation.'],
