@@ -6,9 +6,14 @@ import { getLocaleConfig } from '@/lib/i18n/config'
 import { getDictionary } from '@/lib/i18n/dictionaries'
 import { localeStaticParams, resolveLocale } from '@/lib/i18n/server'
 import { buildMetadata } from '@/lib/seo'
+import { headers } from 'next/headers'
 import { SiteHeader } from '@/components/site/site-header'
 import { SiteFooter } from '@/components/site/site-footer'
 import '../globals.css'
+
+function isPortalPath(pathname: string): boolean {
+  return pathname === '/dashboard' || pathname.startsWith('/dashboard/') || pathname.includes('/dashboard/')
+}
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta', display: 'swap' })
 
@@ -49,6 +54,8 @@ export default async function LocaleLayout({
 }) {
   const locale = await resolveLocale(params)
   const dict = getDictionary(locale)
+  const pathname = (await headers()).get('x-pathname') ?? ''
+  const portal = isPortalPath(pathname)
 
   return (
     <html lang={getLocaleConfig(locale).htmlLang} className={`${jakarta.variable} bg-background`}>
@@ -59,9 +66,9 @@ export default async function LocaleLayout({
         >
           {dict.common.skipToContent}
         </a>
-        <SiteHeader locale={locale} />
+        {!portal && <SiteHeader locale={locale} />}
         <main id="main">{children}</main>
-        <SiteFooter locale={locale} />
+        {!portal && <SiteFooter locale={locale} />}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
