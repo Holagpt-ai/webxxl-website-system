@@ -1,0 +1,460 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  STAFF
+  ADMIN
+}
+
+enum CustomerAccountStatus {
+  ACTIVE
+  ONBOARDING
+  PAUSED
+  CLOSED
+}
+
+enum MembershipRole {
+  OWNER
+  MEMBER
+}
+
+enum ProjectType {
+  WEBSITE
+  REDESIGN
+  ECOMMERCE
+  LANDING
+  CRM
+  OTHER
+}
+
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  DONE
+  CANCELLED
+}
+
+enum AssignedSide {
+  WEBXXL
+  CUSTOMER
+}
+
+enum DependencyStatus {
+  REQUESTED
+  IN_PROGRESS
+  RESOLVED
+  CANCELLED
+}
+
+enum CommentVisibility {
+  CUSTOMER
+  INTERNAL
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  CHANGES_REQUESTED
+}
+
+enum ChangeRequestStatus {
+  SUBMITTED
+  REVIEWING
+  APPROVED
+  SCHEDULED
+  COMPLETED
+  DECLINED
+}
+
+enum ChangeRequestPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum SupportRequestStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_ON_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+enum SupportPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum CustomerServiceStatus {
+  ACTIVE
+  PENDING
+  INACTIVE
+}
+
+enum ProjectFileCategory {
+  BRAND
+  PHOTO
+  DOCUMENT
+  OTHER
+}
+
+enum ProjectActivityEventType {
+  PROJECT_CREATED
+  MILESTONE_STARTED
+  MILESTONE_COMPLETED
+  TASK_COMPLETED
+  DEPENDENCY_REQUESTED
+  DEPENDENCY_RESOLVED
+  FILE_UPLOADED
+  COMMENT_POSTED
+  APPROVAL_REQUESTED
+  APPROVAL_APPROVED
+  CHANGES_REQUESTED
+  CHANGE_REQUEST_SUBMITTED
+  SUPPORT_REQUEST_CREATED
+}
+
+enum NotificationType {
+  DEPENDENCY_REQUESTED
+  APPROVAL_REQUESTED
+  PROJECT_MESSAGE
+  CHANGE_REQUEST_UPDATE
+  MILESTONE_UPDATE
+  GENERAL
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  role          UserRole  @default(CUSTOMER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts           Account[]
+  sessions           Session[]
+  memberships        CustomerMembership[]
+  comments           ProjectComment[]
+  uploadedFiles      ProjectFile[]
+  approvalsResponded ProjectApproval[] @relation("ApprovalResponder")
+  changeRequests     ChangeRequest[]
+  notifications      Notification[]
+  activities         ProjectActivity[] @relation("ActivityActor")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model CustomerAccount {
+  id                  String                @id @default(cuid())
+  businessName        String
+  slug                String                @unique
+  status              CustomerAccountStatus @default(ONBOARDING)
+  primaryContactName  String?
+  primaryContactEmail String?
+  locale              String                @default("en")
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  memberships     CustomerMembership[]
+  projects        Project[]
+  supportRequests SupportRequest[]
+  services        CustomerService[]
+  notifications   Notification[]
+}
+
+model CustomerMembership {
+  id                String         @id @default(cuid())
+  userId            String
+  customerAccountId String
+  role              MembershipRole @default(MEMBER)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, customerAccountId])
+  @@index([customerAccountId])
+}
+
+model Project {
+  id                      String        @id @default(cuid())
+  customerAccountId       String
+  name                    String
+  type                    ProjectType   @default(WEBSITE)
+  status                  ProjectStatus @default(ACTIVE)
+  progressPercent         Int           @default(0)
+  startDate               DateTime?
+  targetDate              DateTime?
+  estimatedCompletionDate DateTime?
+  completedAt             DateTime?
+  summary                 String?       @db.Text
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  customerAccount CustomerAccount     @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  milestones      ProjectMilestone[]
+  tasks           ProjectTask[]
+  dependencies    ProjectDependency[]
+  activities      ProjectActivity[]
+  comments        ProjectComment[]
+  files           ProjectFile[]
+  approvals       ProjectApproval[]
+  changeRequests  ChangeRequest[]
+  supportRequests SupportRequest[]
+
+  @@index([customerAccountId])
+}
+
+model ProjectMilestone {
+  id             String          @id @default(cuid())
+  projectId      String
+  title          String
+  description    String?         @db.Text
+  sortOrder      Int             @default(0)
+  status         MilestoneStatus @default(PENDING)
+  progressWeight Int             @default(10)
+  targetDate     DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  project      Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks        ProjectTask[]
+  dependencies ProjectDependency[]
+
+  @@index([projectId])
+}
+
+model ProjectTask {
+  id           String       @id @default(cuid())
+  projectId    String
+  milestoneId  String?
+  title        String
+  description  String?      @db.Text
+  status       TaskStatus   @default(TODO)
+  assignedSide AssignedSide @default(WEBXXL)
+  dueDate      DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  milestone ProjectMilestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+}
+
+model ProjectDependency {
+  id                      String           @id @default(cuid())
+  projectId               String
+  milestoneId             String?
+  title                   String
+  description             String?          @db.Text
+  status                  DependencyStatus @default(REQUESTED)
+  requestedFromCustomerAt DateTime         @default(now())
+  dueDate                 DateTime?
+  resolvedAt              DateTime?
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  milestone ProjectMilestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+}
+
+model ProjectActivity {
+  id          String                   @id @default(cuid())
+  projectId   String
+  actorUserId String?
+  eventType   ProjectActivityEventType
+  summary     String
+  metadata    Json?
+  createdAt   DateTime                 @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  actor   User?   @relation("ActivityActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, createdAt])
+}
+
+model ProjectComment {
+  id           String            @id @default(cuid())
+  projectId    String
+  authorUserId String
+  body         String            @db.Text
+  visibility   CommentVisibility @default(CUSTOMER)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorUserId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+}
+
+model ProjectFile {
+  id           String              @id @default(cuid())
+  projectId    String
+  uploadedById String
+  originalName String
+  storageKey   String
+  mimeType     String
+  size         Int
+  category     ProjectFileCategory @default(OTHER)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploadedBy User    @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model ProjectApproval {
+  id            String         @id @default(cuid())
+  projectId     String
+  title         String
+  description   String?        @db.Text
+  status        ApprovalStatus @default(PENDING)
+  requestedAt   DateTime       @default(now())
+  respondedAt   DateTime?
+  respondedById String?
+  responseNotes String?        @db.Text
+
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  respondedBy User?   @relation("ApprovalResponder", fields: [respondedById], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+}
+
+model ChangeRequest {
+  id            String                @id @default(cuid())
+  projectId     String
+  submittedById String
+  title         String
+  description   String                @db.Text
+  status        ChangeRequestStatus   @default(SUBMITTED)
+  priority      ChangeRequestPriority @default(NORMAL)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  submittedBy User    @relation(fields: [submittedById], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model SupportRequest {
+  id                String               @id @default(cuid())
+  customerAccountId String
+  projectId         String?
+  subject           String
+  message           String               @db.Text
+  status            SupportRequestStatus @default(OPEN)
+  priority          SupportPriority      @default(NORMAL)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  project         Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([customerAccountId])
+}
+
+model CustomerService {
+  id                String                @id @default(cuid())
+  customerAccountId String
+  serviceKey        String
+  status            CustomerServiceStatus @default(PENDING)
+  externalUrl       String?
+  metadata          Json?
+  activatedAt       DateTime?
+  deactivatedAt     DateTime?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([customerAccountId, serviceKey])
+}
+
+model Notification {
+  id                String           @id @default(cuid())
+  userId            String
+  customerAccountId String?
+  type              NotificationType
+  title             String
+  body              String           @db.Text
+  readAt            DateTime?
+  actionUrl         String?
+  createdAt         DateTime         @default(now())
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customerAccount CustomerAccount? @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)
+
+  @@index([userId, readAt])
+}

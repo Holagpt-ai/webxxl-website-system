@@ -29,13 +29,15 @@ export default async function LoginPage({ params }: Props) {
         <div className="flex w-full max-w-md flex-col gap-6 justify-self-center rounded-2xl border bg-card p-8 shadow-sm lg:justify-self-end">
           <Logo />
           <LoginForm
+            callbackUrl={locale === 'es' ? '/es/dashboard' : '/dashboard'}
             labels={{
               email: dict.forms.email,
-              password: dict.forms.password,
               submit: dict.login.submit,
-              forgot: dict.login.forgot,
               unavailable: dict.login.unavailable,
               requiredError: dict.forms.requiredError,
+              magicLinkHint: dict.login.magicLinkHint,
+              checkEmail: dict.login.checkEmail,
+              emailRequired: dict.login.emailRequired,
             }}
           />
           <p className="border-t pt-5 text-center text-sm text-muted-foreground">
