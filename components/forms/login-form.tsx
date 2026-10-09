@@ -16,7 +16,7 @@ type Labels = {
   emailRequired: string
 }
 
-export function LoginForm({ labels, callbackUrl }: { labels: Labels; callbackUrl: string }) {
+export function LoginForm({ labels, redirectTo }: { labels: Labels; redirectTo: string }) {
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [sent, setSent] = useState(false)
@@ -29,7 +29,7 @@ export function LoginForm({ labels, callbackUrl }: { labels: Labels; callbackUrl
         e.preventDefault()
         if (!email) return setMessage(labels.emailRequired)
         startTransition(async () => {
-          const result = await requestMagicLinkAction(email, callbackUrl)
+          const result = await requestMagicLinkAction(email, redirectTo)
           if (result.ok) {
             setSent(true)
             setMessage(labels.checkEmail)
