@@ -7,6 +7,7 @@ import { buildMetadata } from '@/lib/seo'
 import { CheckList, Container, LocaleLink } from '@/components/site/primitives'
 import { Logo } from '@/components/site/logo'
 import { LoginForm } from '@/components/forms/login-form'
+import { magicLinkRedirectForLocale } from '@/lib/portal/auth-redirect'
 
 type Props = { params: Promise<{ locale: string }> }
 
@@ -29,7 +30,7 @@ export default async function LoginPage({ params }: Props) {
         <div className="flex w-full max-w-md flex-col gap-6 justify-self-center rounded-2xl border bg-card p-8 shadow-sm lg:justify-self-end">
           <Logo />
           <LoginForm
-            callbackUrl={locale === 'es' ? '/es/dashboard' : '/dashboard'}
+            redirectTo={magicLinkRedirectForLocale(locale)}
             labels={{
               email: dict.forms.email,
               submit: dict.login.submit,
