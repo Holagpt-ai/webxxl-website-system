@@ -8,10 +8,12 @@ import { requireStaff } from '@/lib/portal/authz'
 import { resolveLocale } from '@/lib/i18n/server'
 import {
   ApproveSiteChangeButton,
+  RetryAbmedApprovalHandoffButton,
   ManagedSiteCapabilityForm,
   ManagedSiteConnectionForm,
   ManagedSiteProfileForm,
 } from '@/components/managed-sites/admin-forms'
+import { isAbmedApprovalRecoveryResultMetadata } from '@/lib/managed-sites/abmed/recovery'
 
 export const dynamic = 'force-dynamic'
 
@@ -95,6 +97,9 @@ export default async function AdminSiteDetailPage({ params }: { params: Promise<
                     </p>
                   )}
                   {change.status === 'AWAITING_APPROVAL' && <ApproveSiteChangeButton changeId={change.id} />}
+                  {change.status === 'APPROVED' && isAbmedApprovalRecoveryResultMetadata(change.resultMetadata) && (
+                    <RetryAbmedApprovalHandoffButton changeId={change.id} />
+                  )}
                 </li>
               ))}
             </ul>

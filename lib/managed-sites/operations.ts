@@ -14,7 +14,9 @@ import {
   SITE_STATUSES,
   type AdapterKey,
 } from '@/lib/managed-sites/domain'
+import { retryAbmedApprovalHandoff } from '@/lib/managed-sites/abmed/adapter'
 import { parseAbmedCampaignStructuredPayload } from '@/lib/managed-sites/abmed/campaign-payload'
+import { parseAbmedApprovalRecovery } from '@/lib/managed-sites/abmed/recovery'
 import { routeManagedSiteRequest } from '@/lib/managed-sites/routing'
 import type {
   CapabilityExecutionMode,
@@ -227,7 +229,7 @@ export async function approveManagedSiteChange(input: {
         approvedById: input.actorUserId,
         approvedAt: new Date(),
         appliedAt: null,
-        resultMetadata: { executed: false, reason: applied.reason },
+        resultMetadata: { executed: false, reason: applied.reason, ...(applied.metadata ?? {}) },
       },
     })
     return { ok: false, error: applied.reason, applied: false, status: 'APPROVED' }
@@ -239,6 +241,59 @@ export async function approveManagedSiteChange(input: {
       status: 'APPLIED',
       approvedById: input.actorUserId,
       approvedAt: new Date(),
+      appliedAt: new Date(),
+      resultMetadata: { executed: true, ...(applied.metadata ?? {}) },
+    },
+  })
+  return { ok: true, applied: true, status: 'APPLIED' }
+}
+
+export async function retryManagedSiteApprovalHandoff(input: {
+  actorUserId: string
+  change: {
+    id: string
+    status: ManagedSiteChangeStatus
+    managedSiteId: string
+    resultMetadata?: unknown
+  }
+  site: SiteSnapshot
+}): Promise<SiteMutationResult> {
+  if (input.change.status !== 'APPROVED') {
+    return { ok: false, error: 'not_approved', applied: false, status: input.change.status }
+  }
+  if (input.change.managedSiteId !== input.site.id) return { ok: false, error: 'not_found', applied: false }
+  const recovery = parseAbmedApprovalRecovery(input.change.resultMetadata)
+  if (!recovery) return { ok: false, error: 'not_recoverable', applied: false, status: 'APPROVED' }
+  if (input.site.adapterKey !== 'abmed') return { ok: false, error: 'unavailable', applied: false, status: 'APPROVED' }
+
+  const applied = await retryAbmedApprovalHandoff(siteContext(input.site), {
+    actorUserId: input.actorUserId,
+    remoteCampaignId: recovery.remoteCampaignId,
+    remoteVersion: recovery.remoteVersion,
+    remoteStatus: recovery.remoteStatus,
+  })
+  if (!applied.ok) {
+    await prisma.managedSiteChange.update({
+      where: { id: input.change.id },
+      data: {
+        appliedAt: null,
+        resultMetadata: {
+          executed: false,
+          reason: applied.reason,
+          ...(applied.metadata ?? recovery),
+          draftApplied: true,
+          requestedApproval: false,
+          recoveryStage: 'request_approval',
+        },
+      },
+    })
+    return { ok: false, error: applied.reason, applied: false, status: 'APPROVED' }
+  }
+
+  await prisma.managedSiteChange.update({
+    where: { id: input.change.id },
+    data: {
+      status: 'APPLIED',
       appliedAt: new Date(),
       resultMetadata: { executed: true, ...(applied.metadata ?? {}) },
     },

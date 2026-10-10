@@ -108,9 +108,14 @@ export async function updateAbmedRemoteDraft(
   })
 }
 
-export async function requestAbmedRemoteApproval(site: AbmedCampaignSiteSlug, actorUserId: string, campaignId: string) {
+export async function requestAbmedRemoteApproval(
+  site: AbmedCampaignSiteSlug,
+  actorUserId: string,
+  campaignId: string,
+  expectedVersion: number,
+) {
   return abmedControlFetch<{ campaign: AbmedRemoteCampaign }>(
     `/api/integrations/webxxl/campaigns/${campaignId}/request-approval?site=${encodeURIComponent(site)}`,
-    { site, actorUserId, method: 'POST', body: {} },
+    { site, actorUserId, method: 'POST', body: { expectedVersion } },
   )
 }

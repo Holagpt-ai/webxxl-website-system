@@ -18,7 +18,7 @@ export type ManagedSiteContext = {
 
 export type AdapterResult =
   | { ok: true; metadata?: Record<string, unknown> }
-  | { ok: false; reason: 'unavailable' | 'invalid' | 'not_connected' | 'version_conflict' }
+  | { ok: false; reason: 'unavailable' | 'invalid' | 'not_connected' | 'version_conflict'; metadata?: Record<string, unknown> }
 
 export interface ManagedSiteAdapter {
   key: string

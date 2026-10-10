@@ -7,6 +7,7 @@ import {
   requestAbmedRemoteApproval,
   updateAbmedRemoteDraft,
 } from '@/lib/managed-sites/abmed/control-client'
+import type { AbmedApprovalRecoveryMetadata } from '@/lib/managed-sites/abmed/recovery'
 import { resolveAbmedCampaignSiteSlug } from '@/lib/managed-sites/abmed/site-slug'
 
 const VIEW_CAPABILITIES = new Set(['campaigns.view', 'popups.view'])
@@ -19,6 +20,61 @@ function siteSlug(site: ManagedSiteContext) {
 function actorFromPayload(payload: Record<string, unknown> | null): string {
   const actor = payload?.actorUserId
   return typeof actor === 'string' && actor.trim() ? actor.trim().slice(0, 120) : 'webxxl-system'
+}
+
+function approvalFailure(
+  reason: 'unavailable' | 'version_conflict',
+  recovery: AbmedApprovalRecoveryMetadata,
+): AdapterResult {
+  return {
+    ok: false,
+    reason,
+    metadata: {
+      ...recovery,
+      requestedApproval: false,
+      recoveryStage: 'request_approval',
+    },
+  }
+}
+
+async function requestRemoteApproval(
+  slug: NonNullable<ReturnType<typeof siteSlug>>,
+  actorUserId: string,
+  campaignId: string,
+  expectedVersion: number,
+  recovery: AbmedApprovalRecoveryMetadata,
+): Promise<AdapterResult> {
+  const approval = await requestAbmedRemoteApproval(slug, actorUserId, campaignId, expectedVersion)
+  if (!approval.ok) {
+    return approvalFailure(approval.code === 'version_conflict' ? 'version_conflict' : 'unavailable', recovery)
+  }
+  return {
+    ok: true,
+    metadata: {
+      remoteCampaignId: campaignId,
+      remoteVersion: approval.data.campaign.currentVersion ?? expectedVersion,
+      remoteStatus: approval.data.campaign.status ?? recovery.remoteStatus,
+      draftApplied: true,
+      requestedApproval: true,
+    },
+  }
+}
+
+export async function retryAbmedApprovalHandoff(
+  site: ManagedSiteContext,
+  input: { actorUserId: string; remoteCampaignId: string; remoteVersion: number; remoteStatus?: string },
+): Promise<AdapterResult> {
+  const slug = siteSlug(site)
+  if (!slug || !isAbmedControlConfigured()) return { ok: false, reason: 'unavailable' }
+  const recovery: AbmedApprovalRecoveryMetadata = {
+    remoteCampaignId: input.remoteCampaignId,
+    remoteVersion: input.remoteVersion,
+    remoteStatus: input.remoteStatus ?? 'draft',
+    draftApplied: true,
+    requestedApproval: false,
+    recoveryStage: 'request_approval',
+  }
+  return requestRemoteApproval(slug, input.actorUserId, input.remoteCampaignId, input.remoteVersion, recovery)
 }
 
 export const abmedCampaignAdapter: ManagedSiteAdapter = {
@@ -87,19 +143,14 @@ export const abmedCampaignAdapter: ManagedSiteAdapter = {
       campaignId = updated.data.campaign.id
     }
 
-    const approval = await requestAbmedRemoteApproval(slug, actorUserId, campaignId!)
-    if (!approval.ok) {
-      return { ok: false, reason: approval.code === 'version_conflict' ? 'version_conflict' : 'unavailable' }
+    const recovery: AbmedApprovalRecoveryMetadata = {
+      remoteCampaignId: campaignId!,
+      remoteVersion: remoteVersion!,
+      remoteStatus,
+      draftApplied: true,
+      requestedApproval: false,
+      recoveryStage: 'request_approval',
     }
-
-    return {
-      ok: true,
-      metadata: {
-        remoteCampaignId: campaignId,
-        remoteVersion: approval.data.campaign.currentVersion ?? remoteVersion,
-        remoteStatus: approval.data.campaign.status ?? remoteStatus,
-        requestedApproval: true,
-      },
-    }
+    return requestRemoteApproval(slug, actorUserId, campaignId!, remoteVersion!, recovery)
   },
 }

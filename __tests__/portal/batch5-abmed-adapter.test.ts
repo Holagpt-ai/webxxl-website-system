@@ -33,8 +33,9 @@ describe('ABMED adapter wiring', () => {
   })
 
   it('maps production connectionRef values to ABMED site slugs', () => {
+    expect(resolveAbmedCampaignSiteSlug('aesthetics')).toBe('aesthetics')
+    expect(resolveAbmedCampaignSiteSlug('physicians')).toBe('physicians')
     expect(resolveAbmedCampaignSiteSlug('managed-site-abmed-aesthetics')).toBe('aesthetics')
-    expect(resolveAbmedCampaignSiteSlug('managed-site-abmed-physicians')).toBe('physicians')
     expect(resolveAbmedCampaignSiteSlug('unknown-ref')).toBeNull()
   })
 
