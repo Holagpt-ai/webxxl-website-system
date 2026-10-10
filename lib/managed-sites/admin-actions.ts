@@ -5,6 +5,7 @@ import { requireAdmin, requireManagedSiteStaffAccess, requireStaff } from '@/lib
 import { prisma } from '@/lib/db'
 import {
   approveManagedSiteChange,
+  retryManagedSiteApprovalHandoff,
   registerManagedSite,
   setManagedSiteCapability,
   updateManagedSiteConnection,
@@ -124,6 +125,36 @@ export async function setManagedSiteCapabilityAction(
     if (!updated.ok) return updated
     revalidateSites()
     return { ok: true }
+  } catch {
+    return { ok: false, error: 'unauthorized' }
+  }
+}
+
+export async function retryManagedSiteApprovalHandoffAction(
+  changeId: string,
+): Promise<AdminSiteActionResult & { applied?: boolean; status?: string }> {
+  try {
+    const staff = await requireStaff()
+    const change = await prisma.managedSiteChange.findUnique({ where: { id: changeId } })
+    if (!change) return { ok: false, error: 'not_found' }
+    const { site } = await requireManagedSiteStaffAccess(change.managedSiteId)
+    const result = await retryManagedSiteApprovalHandoff({
+      actorUserId: staff.id,
+      change,
+      site: {
+        id: site.id,
+        name: site.name,
+        domain: site.domain,
+        projectId: site.projectId,
+        customerAccountId: site.customerAccountId,
+        adapterKey: site.adapterKey,
+        connectionType: site.connectionType,
+        connectionRef: site.connectionRef,
+      },
+    })
+    revalidateSites()
+    if (!result.ok) return { ok: false, error: result.error }
+    return { ok: true, applied: result.applied, status: result.status }
   } catch {
     return { ok: false, error: 'unauthorized' }
   }

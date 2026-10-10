@@ -7,6 +7,7 @@ import { CAPABILITY_DEFINITIONS } from '@/lib/managed-sites/capabilities'
 import {
   approveManagedSiteChangeAction,
   createManagedSiteAction,
+  retryManagedSiteApprovalHandoffAction,
   setManagedSiteCapabilityAction,
   updateManagedSiteConnectionAction,
   updateManagedSiteProfileAction,
@@ -265,6 +266,39 @@ export function ManagedSiteCapabilityForm({
   )
 }
 
+export function RetryAbmedApprovalHandoffButton({ changeId }: { changeId: string }) {
+  const [pending, startTransition] = useTransition()
+  const [message, setMessage] = useState<string | null>(null)
+  return (
+    <div className="flex flex-col items-start gap-1">
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={pending}
+        onClick={() =>
+          startTransition(async () => {
+            const result = await retryManagedSiteApprovalHandoffAction(changeId)
+            if (!result.ok) {
+              setMessage(
+                result.error === 'version_conflict'
+                  ? 'This campaign changed since it was opened. Refresh before trying again.'
+                  : result.error === 'unavailable'
+                    ? 'ABMED approval handoff is still unavailable.'
+                    : result.error,
+              )
+              return
+            }
+            setMessage(result.applied ? 'Applied to ABMED' : 'Retry completed')
+          })
+        }
+      >
+        Retry ABMED approval handoff
+      </Button>
+      {message && <p className="text-xs text-muted-foreground">{message}</p>}
+    </div>
+  )
+}
+
 export function ApproveSiteChangeButton({ changeId }: { changeId: string }) {
   const [pending, startTransition] = useTransition()
   const [message, setMessage] = useState<string | null>(null)
@@ -278,7 +312,13 @@ export function ApproveSiteChangeButton({ changeId }: { changeId: string }) {
           startTransition(async () => {
             const result = await approveManagedSiteChangeAction(changeId)
             if (!result.ok) {
-              setMessage(result.error === 'unavailable' ? 'Approved. Live publish is not connected.' : result.error)
+              setMessage(
+                result.error === 'unavailable'
+                  ? 'Approved. Live publish is not connected.'
+                  : result.error === 'version_conflict'
+                    ? 'This campaign changed since it was opened. Refresh before approving again.'
+                    : result.error,
+              )
               return
             }
             setMessage(result.applied ? 'Applied' : 'Approved')

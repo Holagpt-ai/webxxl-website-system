@@ -14,6 +14,9 @@ import {
   SITE_STATUSES,
   type AdapterKey,
 } from '@/lib/managed-sites/domain'
+import { retryAbmedApprovalHandoff } from '@/lib/managed-sites/abmed/adapter'
+import { parseAbmedCampaignStructuredPayload } from '@/lib/managed-sites/abmed/campaign-payload'
+import { parseAbmedApprovalRecovery } from '@/lib/managed-sites/abmed/recovery'
 import { routeManagedSiteRequest } from '@/lib/managed-sites/routing'
 import type {
   CapabilityExecutionMode,
@@ -152,6 +155,47 @@ export async function submitManagedSiteChange(input: {
   return { ok: true, applied: true, status: 'APPLIED', changeId: change.id }
 }
 
+export async function submitManagedSiteCampaignDraft(input: {
+  actorUserId: string
+  actor: 'customer' | 'staff'
+  site: SiteSnapshot
+  assignments: CapabilityAssignment[]
+  capabilityKey: string
+  structuredPayload: Record<string, unknown>
+  requestText?: string
+}): Promise<SiteMutationResult> {
+  const structured = parseAbmedCampaignStructuredPayload(input.structuredPayload)
+  if (!structured) return { ok: false, error: 'invalid', applied: false }
+
+  const assignment = input.assignments.find((item) => item.capabilityKey === input.capabilityKey) ?? null
+  const decision = routeManagedSiteRequest({
+    capabilityKey: input.capabilityKey,
+    assignment,
+    actor: input.actor,
+  })
+  if (!decision.capability || decision.mode === 'UNAVAILABLE' || decision.mode === 'READ_ONLY') {
+    return { ok: false, error: decision.reason === 'unknown' ? 'unknown' : decision.reason, applied: false }
+  }
+  if (decision.mode !== 'SELF_SERVICE') {
+    return { ok: false, error: 'unsupported_mode', applied: false }
+  }
+
+  const requestText = (input.requestText ?? '').trim()
+  const change = await prisma.managedSiteChange.create({
+    data: {
+      managedSiteId: input.site.id,
+      requestedById: input.actorUserId,
+      capabilityKey: input.capabilityKey,
+      executionMode: decision.capability.executionMode,
+      status: 'AWAITING_APPROVAL',
+      requestText: requestText || null,
+      structuredPayload: structured,
+      resultMetadata: { executed: false },
+    },
+  })
+  return { ok: true, applied: false, status: 'AWAITING_APPROVAL', changeId: change.id }
+}
+
 export async function approveManagedSiteChange(input: {
   actorUserId: string
   change: {
@@ -159,6 +203,7 @@ export async function approveManagedSiteChange(input: {
     status: ManagedSiteChangeStatus
     capabilityKey: string
     managedSiteId: string
+    structuredPayload?: unknown
   }
   site: SiteSnapshot
 }): Promise<SiteMutationResult> {
@@ -167,7 +212,15 @@ export async function approveManagedSiteChange(input: {
   }
   if (input.change.managedSiteId !== input.site.id) return { ok: false, error: 'not_found', applied: false }
 
-  const applied = await getManagedSiteAdapter(input.site.adapterKey).applyChange(siteContext(input.site), input.change.capabilityKey, null)
+  const payload =
+    input.change.structuredPayload && typeof input.change.structuredPayload === 'object'
+      ? { ...(input.change.structuredPayload as Record<string, unknown>), actorUserId: input.actorUserId }
+      : null
+  const applied = await getManagedSiteAdapter(input.site.adapterKey).applyChange(
+    siteContext(input.site),
+    input.change.capabilityKey,
+    payload,
+  )
   if (!applied.ok) {
     await prisma.managedSiteChange.update({
       where: { id: input.change.id },
@@ -176,7 +229,7 @@ export async function approveManagedSiteChange(input: {
         approvedById: input.actorUserId,
         approvedAt: new Date(),
         appliedAt: null,
-        resultMetadata: { executed: false, reason: applied.reason },
+        resultMetadata: { executed: false, reason: applied.reason, ...(applied.metadata ?? {}) },
       },
     })
     return { ok: false, error: applied.reason, applied: false, status: 'APPROVED' }
@@ -189,7 +242,60 @@ export async function approveManagedSiteChange(input: {
       approvedById: input.actorUserId,
       approvedAt: new Date(),
       appliedAt: new Date(),
-      resultMetadata: { executed: true },
+      resultMetadata: { executed: true, ...(applied.metadata ?? {}) },
+    },
+  })
+  return { ok: true, applied: true, status: 'APPLIED' }
+}
+
+export async function retryManagedSiteApprovalHandoff(input: {
+  actorUserId: string
+  change: {
+    id: string
+    status: ManagedSiteChangeStatus
+    managedSiteId: string
+    resultMetadata?: unknown
+  }
+  site: SiteSnapshot
+}): Promise<SiteMutationResult> {
+  if (input.change.status !== 'APPROVED') {
+    return { ok: false, error: 'not_approved', applied: false, status: input.change.status }
+  }
+  if (input.change.managedSiteId !== input.site.id) return { ok: false, error: 'not_found', applied: false }
+  const recovery = parseAbmedApprovalRecovery(input.change.resultMetadata)
+  if (!recovery) return { ok: false, error: 'not_recoverable', applied: false, status: 'APPROVED' }
+  if (input.site.adapterKey !== 'abmed') return { ok: false, error: 'unavailable', applied: false, status: 'APPROVED' }
+
+  const applied = await retryAbmedApprovalHandoff(siteContext(input.site), {
+    actorUserId: input.actorUserId,
+    remoteCampaignId: recovery.remoteCampaignId,
+    remoteVersion: recovery.remoteVersion,
+    remoteStatus: recovery.remoteStatus,
+  })
+  if (!applied.ok) {
+    await prisma.managedSiteChange.update({
+      where: { id: input.change.id },
+      data: {
+        appliedAt: null,
+        resultMetadata: {
+          executed: false,
+          reason: applied.reason,
+          ...(applied.metadata ?? recovery),
+          draftApplied: true,
+          requestedApproval: false,
+          recoveryStage: 'request_approval',
+        },
+      },
+    })
+    return { ok: false, error: applied.reason, applied: false, status: 'APPROVED' }
+  }
+
+  await prisma.managedSiteChange.update({
+    where: { id: input.change.id },
+    data: {
+      status: 'APPLIED',
+      appliedAt: new Date(),
+      resultMetadata: { executed: true, ...(applied.metadata ?? {}) },
     },
   })
   return { ok: true, applied: true, status: 'APPLIED' }

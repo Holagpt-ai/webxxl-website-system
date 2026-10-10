@@ -7,6 +7,8 @@ import { getManagedSiteAdapter } from '@/lib/managed-sites/adapters'
 import { isPublicHttpUrl } from '@/lib/managed-sites/domain'
 import { PageTitle, SectionCard, StatusBadge } from '@/components/dashboard/primitives'
 import { SiteCapabilityRequestForm } from '@/components/managed-sites/request-form'
+import { SiteCampaignPanel } from '@/components/managed-sites/site-campaign-panel'
+import { listAbmedCampaignSummariesForSite } from '@/lib/managed-sites/abmed/queries'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,6 +20,8 @@ export default async function ManagedSiteDetailPage({ params }: { params: Promis
   if (!site) notFound()
   const d = dict.dashboard
   const connection = await getManagedSiteAdapter(site.adapterKey).connectionStatus(site)
+  const remoteCampaigns =
+    site.adapterKey === 'abmed' ? await listAbmedCampaignSummariesForSite(site) : { ok: false as const, campaigns: [] }
   const capabilities = getCustomerVisibleCapabilities(site.capabilities)
   const groups = {
     SELF_SERVICE: capabilities.filter((item) => item.executionMode === 'SELF_SERVICE'),
@@ -51,11 +55,77 @@ export default async function ManagedSiteDetailPage({ params }: { params: Promis
           </a>
         </p>
       )}
+      {(site.capabilities.some((item) => item.enabled && ['campaigns.view', 'popups.view'].includes(item.capabilityKey)) ||
+        remoteCampaigns.ok) && (
+        <SectionCard title={d.abmedCampaignsTitle}>
+          {!remoteCampaigns.ok ? (
+            <p className="text-sm text-muted-foreground">{d.abmedCampaignsUnavailable}</p>
+          ) : (
+            <ul className="flex flex-col gap-2 text-sm">
+              {remoteCampaigns.campaigns.map((campaign) => (
+                <li key={campaign.id} className="rounded-md border p-3">
+                  <p className="font-medium">{campaign.name}</p>
+                  <p className="text-muted-foreground">
+                    {campaign.status} · {campaign.derivedState} · v{campaign.currentVersion} · {campaign.site}
+                  </p>
+                  <p className="mt-1">{campaign.headline}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {campaign.startAt ?? '—'} → {campaign.endAt ?? '—'} · {campaign.updatedAt}
+                  </p>
+                </li>
+              ))}
+              {remoteCampaigns.campaigns.length === 0 && (
+                <p className="text-sm text-muted-foreground">{d.abmedCampaignsEmpty}</p>
+              )}
+            </ul>
+          )}
+        </SectionCard>
+      )}
       <div className="grid gap-4">
-        <CapabilityGroup title={d.directChanges} items={groups.SELF_SERVICE} locale={locale} siteId={site.id} d={d} messages={messages} allowRequest />
-        <CapabilityGroup title={d.aiChanges} items={groups.AI_ASSISTED} locale={locale} siteId={site.id} d={d} messages={messages} allowRequest />
-        <CapabilityGroup title={d.humanChanges} items={groups.HUMAN_REQUIRED} locale={locale} siteId={site.id} d={d} messages={messages} allowRequest />
-        <CapabilityGroup title={d.viewOnly} items={groups.READ_ONLY} locale={locale} siteId={site.id} d={d} messages={messages} allowRequest={false} />
+        <CapabilityGroup
+          title={d.directChanges}
+          items={groups.SELF_SERVICE}
+          locale={locale}
+          siteId={site.id}
+          d={d}
+          messages={messages}
+          allowRequest
+          connected={connection.state === 'connected'}
+          campaigns={remoteCampaigns.campaigns}
+        />
+        <CapabilityGroup
+          title={d.aiChanges}
+          items={groups.AI_ASSISTED}
+          locale={locale}
+          siteId={site.id}
+          d={d}
+          messages={messages}
+          allowRequest
+          connected={connection.state === 'connected'}
+          campaigns={remoteCampaigns.campaigns}
+        />
+        <CapabilityGroup
+          title={d.humanChanges}
+          items={groups.HUMAN_REQUIRED}
+          locale={locale}
+          siteId={site.id}
+          d={d}
+          messages={messages}
+          allowRequest
+          connected={connection.state === 'connected'}
+          campaigns={remoteCampaigns.campaigns}
+        />
+        <CapabilityGroup
+          title={d.viewOnly}
+          items={groups.READ_ONLY}
+          locale={locale}
+          siteId={site.id}
+          d={d}
+          messages={messages}
+          allowRequest={false}
+          connected={connection.state === 'connected'}
+          campaigns={remoteCampaigns.campaigns}
+        />
       </div>
       {site.changes.length > 0 && (
         <div className="mt-6">
@@ -95,12 +165,37 @@ function CapabilityGroup({
   d,
   messages,
   allowRequest,
+  connected,
+  campaigns,
 }: {
   title: string
   items: { key: string; label: { en: string; es: string }; description: { en: string; es: string }; executionMode: string }[]
   locale: string
   siteId: string
-  d: { requestChange: string; siteRequestPlaceholder: string }
+  d: {
+    requestChange: string
+    siteRequestPlaceholder: string
+    abmedCampaignsTitle: string
+    abmedCampaignsEmpty: string
+    abmedCampaignsUnavailable: string
+    abmedCampaignDraftTitle: string
+    abmedCampaignDraftHint: string
+    abmedCampaignCreateDraft: string
+    abmedCampaignEditDraft: string
+    abmedCampaignDraftSaved: string
+    abmedCampaignVersionConflict: string
+    abmedCampaignFieldName: string
+    abmedCampaignFieldSlug: string
+    abmedCampaignFieldHeadline: string
+    abmedCampaignFieldBody: string
+    abmedCampaignFieldCtaText: string
+    abmedCampaignFieldCtaDestination: string
+    abmedCampaignFieldStartAt: string
+    abmedCampaignFieldEndAt: string
+    abmedCampaignFieldDelayMs: string
+    abmedCampaignFieldFrequencyDays: string
+    abmedCampaignFieldDeviceTargeting: string
+  }
   messages: {
     saved: string
     unavailable: string
@@ -110,6 +205,8 @@ function CapabilityGroup({
     failed: string
   }
   allowRequest: boolean
+  connected: boolean
+  campaigns: import('@/lib/managed-sites/abmed/control-client').AbmedRemoteCampaign[]
 }) {
   if (items.length === 0) return null
   const language = locale === 'es' ? 'es' : 'en'
@@ -120,14 +217,24 @@ function CapabilityGroup({
           <li key={item.key} className="border-b pb-4 last:border-b-0 last:pb-0">
             <p className="font-medium">{item.label[language]}</p>
             <p className="mt-1 text-sm text-muted-foreground">{item.description[language]}</p>
-            {allowRequest && (
-              <SiteCapabilityRequestForm
+            {allowRequest && (item.key === 'popups.manage' || item.key === 'campaigns.manage') ? (
+              <SiteCampaignPanel
                 siteId={siteId}
-                capabilityKey={item.key}
-                submitLabel={d.requestChange}
-                placeholder={d.siteRequestPlaceholder}
-                messages={messages}
+                capabilityKey={item.key as 'popups.manage' | 'campaigns.manage'}
+                campaigns={campaigns}
+                connected={connected}
+                dict={d}
               />
+            ) : (
+              allowRequest && (
+                <SiteCapabilityRequestForm
+                  siteId={siteId}
+                  capabilityKey={item.key}
+                  submitLabel={d.requestChange}
+                  placeholder={d.siteRequestPlaceholder}
+                  messages={messages}
+                />
+              )
             )}
           </li>
         ))}
