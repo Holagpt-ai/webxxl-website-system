@@ -2,6 +2,7 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/db'
 import type { CustomerAccount, CustomerMembership, Project, User } from '@prisma/client'
 import { canAccessProject } from '@/lib/portal/access-rules'
+import { isAdminRole, isStaffRole } from '@/lib/admin/roles'
 
 export class AuthError extends Error {
   constructor(message = 'Unauthorized') {
@@ -17,6 +18,18 @@ export async function requireUser(): Promise<User> {
   if (!session?.user?.id) throw new AuthError()
   const user = await prisma.user.findUnique({ where: { id: session.user.id } })
   if (!user) throw new AuthError()
+  return user
+}
+
+export async function requireStaff(): Promise<User> {
+  const user = await requireUser()
+  if (!isStaffRole(user.role)) throw new AuthError('Staff access required')
+  return user
+}
+
+export async function requireAdmin(): Promise<User> {
+  const user = await requireUser()
+  if (!isAdminRole(user.role)) throw new AuthError('Admin access required')
   return user
 }
 
