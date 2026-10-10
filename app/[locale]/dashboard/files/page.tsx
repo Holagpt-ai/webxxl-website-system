@@ -3,12 +3,13 @@ import { requireCustomerMembership, getActiveProject } from '@/lib/portal/authz'
 import { prisma } from '@/lib/db'
 import { PageTitle, SectionCard, EmptyState } from '@/components/dashboard/primitives'
 import { FileUploadForm } from '@/components/dashboard/forms'
+import { ProjectFileList } from '@/components/files/project-file-list'
 import { isStorageConfigured } from '@/lib/integrations/storage'
 
 export const dynamic = 'force-dynamic'
 
 export default async function FilesPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { dict } = await getPageContext(params)
+  const { locale, dict } = await getPageContext(params)
   const portal = await requireCustomerMembership()
   const project = await getActiveProject(portal.customerAccount.id)
   const d = dict.dashboard
@@ -25,29 +26,60 @@ export default async function FilesPage({ params }: { params: Promise<{ locale: 
   const files = await prisma.projectFile.findMany({
     where: { projectId: project.id },
     orderBy: { createdAt: 'desc' },
+    include: { uploadedBy: { select: { name: true, email: true } } },
   })
+  const storageReady = isStorageConfigured()
+  const categoryLabel = (category: string) => {
+    if (category === 'BRAND') return d.categoryBrand
+    if (category === 'PHOTO') return d.categoryPhoto
+    if (category === 'DOCUMENT') return d.categoryDocument
+    return d.categoryOther
+  }
 
   return (
     <>
       <PageTitle title={d.filesTitle} description={d.filesDescription} />
-      <SectionCard title="Upload">
-        {!isStorageConfigured() && <p className="mb-3 text-sm text-muted-foreground">{d.storageNotConfigured}</p>}
-        <FileUploadForm projectId={project.id} submitLabel={d.submit} notConfiguredMessage={d.storageNotConfigured} />
+      {!storageReady && (
+        <div className="mb-6">
+          <EmptyState title={d.storageNotConfigured} body={d.uploadHint} />
+        </div>
+      )}
+      <SectionCard title={d.uploadTitle}>
+        <FileUploadForm
+          projectId={project.id}
+          submitLabel={d.submit}
+          categoryLabel={d.category}
+          categoryNames={{
+            BRAND: d.categoryBrand,
+            PHOTO: d.categoryPhoto,
+            DOCUMENT: d.categoryDocument,
+            OTHER: d.categoryOther,
+          }}
+          hint={d.uploadHint}
+          storageReady={storageReady}
+          errors={{
+            notConfigured: d.storageNotConfigured,
+            tooLarge: d.fileTooLarge,
+            invalid: d.fileTypeRejected,
+            failed: d.uploadFailed,
+          }}
+        />
       </SectionCard>
-      <SectionCard title={d.recentFiles}>
-        {files.length === 0 ? (
-          <p className="text-sm text-muted-foreground">—</p>
-        ) : (
-          <ul className="flex flex-col gap-2 text-sm">
-            {files.map((f) => (
-              <li key={f.id} className="flex justify-between gap-4 border-b pb-2">
-                <span>{f.originalName}</span>
-                <span className="text-muted-foreground">{f.mimeType}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </SectionCard>
+      <div className="mt-6">
+        <SectionCard title={d.recentFiles}>
+          {files.length === 0 ? (
+            <EmptyState title={d.emptyFiles} body={d.emptyFilesBody} />
+          ) : (
+            <ProjectFileList
+              files={files}
+              locale={locale}
+              storageReady={storageReady}
+              downloadLabel={d.download}
+              categoryLabel={categoryLabel}
+            />
+          )}
+        </SectionCard>
+      </div>
     </>
   )
 }

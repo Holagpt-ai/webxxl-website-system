@@ -7,6 +7,9 @@ import { writeProjectActivity, formatActivitySummary } from '@/lib/portal/activi
 import { notificationHooks } from '@/lib/portal/notifications'
 import { syncProjectProgressFromEta } from '@/lib/admin/sync-project-eta'
 import { notifyCustomerAccountMembers } from '@/lib/admin/notify-customers'
+import { buildStaffCommentWrite } from '@/lib/files/comments'
+import { canDeleteProjectFile } from '@/lib/files/access'
+import { deleteStoredProjectFile, linkProjectFiles, readUploadFromFormData, uploadProjectFile } from '@/lib/files/operations'
 import { isRegistryEntitlementServiceKey } from '@/lib/admin/service-keys'
 import { parseProgressPercent, resolveProjectCompletedAt, resolveTaskCompletedAt } from '@/lib/admin/validation'
 import type {
@@ -26,7 +29,17 @@ export type AdminActionResult = { ok: true } | { ok: false; error: string }
 
 function revalidateAdmin() {
   revalidatePath('/admin', 'layout')
+  revalidatePath('/es/admin', 'layout')
   revalidatePath('/dashboard', 'layout')
+  revalidatePath('/es/dashboard', 'layout')
+}
+
+async function bestEffort(task: Promise<unknown>) {
+  try {
+    await task
+  } catch {
+    // Domain write already succeeded.
+  }
 }
 
 async function loadProjectForStaff(projectId: string) {
@@ -479,6 +492,135 @@ export async function createApprovalRequestAction(
     const member = memberships[0]
     if (member) {
       await notificationHooks.onApprovalRequested(member.userId, project.customerAccountId, t, '/dashboard/approvals')
+    }
+    revalidateAdmin()
+    return { ok: true }
+  } catch (e) {
+    if (e instanceof Error && e.message === 'not_found') return { ok: false, error: 'not_found' }
+    return { ok: false, error: 'unauthorized' }
+  }
+}
+
+export async function uploadStaffProjectFileAction(formData: FormData): Promise<AdminActionResult> {
+  try {
+    const staff = await requireStaff()
+    const parsed = await readUploadFromFormData(formData)
+    if (!parsed.ok) return parsed
+    const project = await loadProjectForStaff(parsed.projectId)
+    const uploaded = await uploadProjectFile({
+      actorUserId: staff.id,
+      projectId: project.id,
+      originalName: parsed.originalName,
+      mimeType: parsed.mimeType,
+      size: parsed.size,
+      bytes: parsed.bytes,
+      category: parsed.category,
+    })
+    if (!uploaded.ok) return uploaded
+    await bestEffort(
+      notifyCustomerAccountMembers({
+        customerAccountId: project.customerAccountId,
+        type: 'GENERAL',
+        title: 'A file was added to your project',
+        body: parsed.originalName,
+        actionUrl: '/dashboard/files',
+      }),
+    )
+    revalidateAdmin()
+    return { ok: true }
+  } catch (e) {
+    if (e instanceof Error && e.message === 'not_found') return { ok: false, error: 'not_found' }
+    return { ok: false, error: 'unauthorized' }
+  }
+}
+
+export async function deleteProjectFileAction(projectId: string, fileId: string): Promise<AdminActionResult> {
+  try {
+    const staff = await requireStaff()
+    if (!canDeleteProjectFile(staff.role)) return { ok: false, error: 'unauthorized' }
+    const project = await loadProjectForStaff(projectId)
+    const removed = await deleteStoredProjectFile({
+      actorUserId: staff.id,
+      projectId: project.id,
+      fileId,
+    })
+    if (!removed.ok) return removed
+    revalidateAdmin()
+    return { ok: true }
+  } catch (e) {
+    if (e instanceof Error && e.message === 'not_found') return { ok: false, error: 'not_found' }
+    return { ok: false, error: 'unauthorized' }
+  }
+}
+
+export async function postStaffProjectCommentAction(
+  projectId: string,
+  body: string,
+  visibility: string,
+): Promise<AdminActionResult> {
+  try {
+    const staff = await requireStaff()
+    const project = await loadProjectForStaff(projectId)
+    const write = buildStaffCommentWrite({
+      projectId: project.id,
+      authorUserId: staff.id,
+      body,
+      visibility,
+    })
+    if (!write.ok) return { ok: false, error: write.error === 'invalid_visibility' ? 'invalid' : write.error }
+    await prisma.projectComment.create({ data: write.data })
+    await writeProjectActivity({
+      projectId: project.id,
+      actorUserId: staff.id,
+      eventType: 'COMMENT_POSTED',
+      summary: formatActivitySummary('COMMENT_POSTED', write.data.body.slice(0, 80)),
+    })
+    if (write.data.visibility === 'CUSTOMER') {
+      await bestEffort(
+        notifyCustomerAccountMembers({
+          customerAccountId: project.customerAccountId,
+          type: 'PROJECT_MESSAGE',
+          title: 'New project message',
+          body: write.data.body.slice(0, 120),
+          actionUrl: '/dashboard/messages',
+        }),
+      )
+    }
+    revalidateAdmin()
+    return { ok: true }
+  } catch (e) {
+    if (e instanceof Error && e.message === 'not_found') return { ok: false, error: 'not_found' }
+    return { ok: false, error: 'unauthorized' }
+  }
+}
+
+export async function attachApprovalFilesAction(
+  projectId: string,
+  approvalId: string,
+  fileIds: string[],
+): Promise<AdminActionResult> {
+  try {
+    const project = await loadProjectForStaff(projectId)
+    const approval = await prisma.projectApproval.findFirst({
+      where: { id: approvalId, projectId: project.id },
+    })
+    if (!approval) return { ok: false, error: 'not_found' }
+    const linked = await linkProjectFiles({
+      targetProjectId: project.id,
+      fileIds,
+      approvalId: approval.id,
+    })
+    if (!linked.ok) return linked
+    if (fileIds.length > 0) {
+      await bestEffort(
+        notifyCustomerAccountMembers({
+          customerAccountId: project.customerAccountId,
+          type: 'APPROVAL_REQUESTED',
+          title: 'Review files added',
+          body: approval.title,
+          actionUrl: '/dashboard/approvals',
+        }),
+      )
     }
     revalidateAdmin()
     return { ok: true }

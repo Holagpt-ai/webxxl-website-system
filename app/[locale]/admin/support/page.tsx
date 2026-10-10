@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { listSupportQueue } from '@/lib/admin/queries'
+import { LinkedFileList } from '@/components/files/project-file-list'
+import { isStorageConfigured } from '@/lib/integrations/storage'
 import { PageTitle, EmptyState, StatusBadge } from '@/components/dashboard/primitives'
 import { requireStaff } from '@/lib/portal/authz'
 import { resolveLocale } from '@/lib/i18n/server'
@@ -12,6 +14,7 @@ export default async function AdminSupportPage({ params }: { params: Promise<{ l
   const locale = await resolveLocale(params)
   const tickets = await listSupportQueue()
   const prefix = locale === 'es' ? '/es' : ''
+  const storageReady = isStorageConfigured()
 
   return (
     <>
@@ -31,6 +34,11 @@ export default async function AdminSupportPage({ params }: { params: Promise<{ l
                   </p>
                   <StatusBadge label={sr.status} />
                   <p className="mt-2 line-clamp-4 text-muted-foreground">{sr.message}</p>
+                  <LinkedFileList
+                    files={sr.fileLinks.map((link) => link.projectFile)}
+                    storageReady={storageReady}
+                    downloadLabel="Download"
+                  />
                   {sr.projectId && (
                     <Link href={`${prefix}/admin/projects/${sr.projectId}`} className="mt-2 inline-block text-primary hover:underline">
                       Project

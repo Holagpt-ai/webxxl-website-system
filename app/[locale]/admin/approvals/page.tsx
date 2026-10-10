@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { listPendingApprovals } from '@/lib/admin/queries'
+import { LinkedFileList } from '@/components/files/project-file-list'
+import { isStorageConfigured } from '@/lib/integrations/storage'
 import { PageTitle, EmptyState, StatusBadge } from '@/components/dashboard/primitives'
 import { requireStaff } from '@/lib/portal/authz'
 import { resolveLocale } from '@/lib/i18n/server'
@@ -11,6 +13,7 @@ export default async function AdminApprovalsPage({ params }: { params: Promise<{
   const locale = await resolveLocale(params)
   const approvals = await listPendingApprovals()
   const prefix = locale === 'es' ? '/es' : ''
+  const storageReady = isStorageConfigured()
 
   return (
     <>
@@ -26,6 +29,11 @@ export default async function AdminApprovalsPage({ params }: { params: Promise<{
                 {a.project.customerAccount.businessName} · {a.project.name}
               </p>
               <StatusBadge label={a.status} />
+              <LinkedFileList
+                files={a.fileLinks.map((link) => link.projectFile)}
+                storageReady={storageReady}
+                downloadLabel="Download"
+              />
               <p className="mt-2">
                 <Link href={`${prefix}/admin/projects/${a.projectId}`} className="text-primary hover:underline">
                   Manage project

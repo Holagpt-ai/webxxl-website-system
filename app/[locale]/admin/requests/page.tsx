@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { listChangeRequestQueue } from '@/lib/admin/queries'
+import { LinkedFileList } from '@/components/files/project-file-list'
+import { isStorageConfigured } from '@/lib/integrations/storage'
 import { PageTitle, EmptyState, StatusBadge } from '@/components/dashboard/primitives'
 import { requireStaff } from '@/lib/portal/authz'
 import { resolveLocale } from '@/lib/i18n/server'
@@ -12,6 +14,7 @@ export default async function AdminChangeRequestsPage({ params }: { params: Prom
   const locale = await resolveLocale(params)
   const requests = await listChangeRequestQueue()
   const prefix = locale === 'es' ? '/es' : ''
+  const storageReady = isStorageConfigured()
 
   return (
     <>
@@ -30,6 +33,11 @@ export default async function AdminChangeRequestsPage({ params }: { params: Prom
                   </p>
                   <StatusBadge label={cr.status} />
                   <p className="mt-2 line-clamp-3 text-muted-foreground">{cr.description}</p>
+                  <LinkedFileList
+                    files={cr.fileLinks.map((link) => link.projectFile)}
+                    storageReady={storageReady}
+                    downloadLabel="Download"
+                  />
                   <Link href={`${prefix}/admin/projects/${cr.projectId}`} className="mt-2 inline-block text-primary hover:underline">
                     Project
                   </Link>
