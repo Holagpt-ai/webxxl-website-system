@@ -142,6 +142,44 @@ enum ProjectActivityEventType {
   SUPPORT_REQUEST_CREATED
 }
 
+enum ManagedSiteStatus {
+  ACTIVE
+  SETUP
+  DISCONNECTED
+  PAUSED
+}
+
+enum ManagedSitePlatform {
+  NEXTJS
+  WORDPRESS
+  CUSTOM
+  OTHER
+}
+
+enum ManagedSiteConnectionType {
+  WEBXXL_NATIVE
+  API
+  EXTERNAL_ADMIN
+  MANUAL
+}
+
+enum CapabilityExecutionMode {
+  SELF_SERVICE
+  AI_ASSISTED
+  HUMAN_REQUIRED
+  READ_ONLY
+}
+
+enum ManagedSiteChangeStatus {
+  DRAFT
+  AWAITING_APPROVAL
+  APPROVED
+  APPLIED
+  FAILED
+  CANCELLED
+  ESCALATED
+}
+
 enum NotificationType {
   DEPENDENCY_REQUESTED
   APPROVAL_REQUESTED
@@ -170,6 +208,8 @@ model User {
   changeRequests     ChangeRequest[]
   notifications      Notification[]
   activities         ProjectActivity[] @relation("ActivityActor")
+  siteChangesRequested ManagedSiteChange[] @relation("ManagedSiteChangeRequester")
+  siteChangesApproved  ManagedSiteChange[] @relation("ManagedSiteChangeApprover")
 }
 
 model Account {
@@ -223,6 +263,7 @@ model CustomerAccount {
   supportRequests SupportRequest[]
   services        CustomerService[]
   notifications   Notification[]
+  managedSites    ManagedSite[]
 }
 
 model CustomerMembership {
@@ -265,6 +306,7 @@ model Project {
   approvals       ProjectApproval[]
   changeRequests  ChangeRequest[]
   supportRequests SupportRequest[]
+  managedSites    ManagedSite[]
 
   @@index([customerAccountId])
 }
@@ -429,8 +471,13 @@ model ChangeRequest {
   project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   submittedBy User              @relation(fields: [submittedById], references: [id], onDelete: Cascade)
   fileLinks   ProjectFileLink[]
+  managedSite ManagedSite?      @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  siteChanges ManagedSiteChange[]
+
+  managedSiteId String?
 
   @@index([projectId])
+  @@index([managedSiteId])
 }
 
 model SupportRequest {
@@ -483,4 +530,76 @@ model Notification {
   customerAccount CustomerAccount? @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)
 
   @@index([userId, readAt])
+}
+
+model ManagedSite {
+  id                String                    @id @default(cuid())
+  customerAccountId String
+  projectId         String?
+  name              String
+  domain            String                    @unique
+  canonicalUrl      String
+  status            ManagedSiteStatus         @default(SETUP)
+  platform          ManagedSitePlatform       @default(OTHER)
+  locale            String                    @default("en")
+  connectionType    ManagedSiteConnectionType @default(MANUAL)
+  adapterKey        String
+  externalAdminUrl  String?
+  /// Opaque pointer to a secret stored outside the database. Never a token or password.
+  connectionRef     String?
+  metadata          Json?
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+
+  customerAccount CustomerAccount          @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  project         Project?                 @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  capabilities    ManagedSiteCapability[]
+  changes         ManagedSiteChange[]
+  changeRequests  ChangeRequest[]
+
+  @@index([customerAccountId])
+  @@index([projectId])
+}
+
+model ManagedSiteCapability {
+  id             String                   @id @default(cuid())
+  managedSiteId  String
+  capabilityKey  String
+  enabled        Boolean                  @default(false)
+  executionMode  CapabilityExecutionMode?
+  config         Json?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+
+  managedSite ManagedSite @relation(fields: [managedSiteId], references: [id], onDelete: Cascade)
+
+  @@unique([managedSiteId, capabilityKey])
+  @@index([managedSiteId])
+}
+
+model ManagedSiteChange {
+  id                String                   @id @default(cuid())
+  managedSiteId     String
+  requestedById     String
+  capabilityKey     String
+  executionMode     CapabilityExecutionMode
+  status            ManagedSiteChangeStatus  @default(DRAFT)
+  requestText       String?                  @db.Text
+  structuredPayload Json?
+  previewPayload    Json?
+  resultMetadata    Json?
+  changeRequestId   String?
+  approvedById      String?
+  approvedAt        DateTime?
+  appliedAt         DateTime?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+
+  managedSite   ManagedSite    @relation(fields: [managedSiteId], references: [id], onDelete: Cascade)
+  requestedBy   User           @relation("ManagedSiteChangeRequester", fields: [requestedById], references: [id], onDelete: Cascade)
+  approvedBy    User?          @relation("ManagedSiteChangeApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  changeRequest ChangeRequest? @relation(fields: [changeRequestId], references: [id], onDelete: SetNull)
+
+  @@index([managedSiteId, createdAt])
+  @@index([changeRequestId])
 }

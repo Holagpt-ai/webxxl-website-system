@@ -30,6 +30,7 @@ export default async function AdminChangeRequestsPage({ params }: { params: Prom
                   <p className="font-semibold">{cr.title}</p>
                   <p className="text-muted-foreground">
                     {cr.project.customerAccount.businessName} · {cr.priority}
+                    {cr.managedSite ? ` · ${cr.managedSite.domain}` : ''}
                   </p>
                   <StatusBadge label={cr.status} />
                   <p className="mt-2 line-clamp-3 text-muted-foreground">{cr.description}</p>
