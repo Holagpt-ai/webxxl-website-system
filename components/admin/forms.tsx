@@ -425,7 +425,13 @@ export function StaffFileUploadForm({ projectId, storageReady }: { projectId: st
           setError(null)
           const result = await uploadStaffProjectFileAction(data)
           if (!result.ok) {
-            setError(result.error === 'not_configured' ? 'File storage is not configured.' : result.error)
+            setError(
+              result.error === 'not_configured'
+                ? 'File storage is not configured.'
+                : result.error === 'too_large'
+                  ? 'Maximum file size: 4 MB.'
+                  : result.error,
+            )
             return
           }
           form.reset()
@@ -440,6 +446,7 @@ export function StaffFileUploadForm({ projectId, storageReady }: { projectId: st
         ))}
       </select>
       <Input name="file" type="file" required accept={allowedUploadAccept()} disabled={!storageReady || pending} />
+      <p className="text-xs text-muted-foreground">Maximum file size: 4 MB.</p>
       {error && <p className="text-sm text-destructive">{error}</p>}
       <Button type="submit" size="sm" disabled={pending || !storageReady}>
         Upload file

@@ -50,9 +50,10 @@ describe('file validation policy', () => {
     expect(validateUploadFile('logo.png', 'text/html', 100)).toBe('invalid')
   })
 
-  it('rejects oversized files', () => {
-    expect(validateUploadFile('logo.png', 'image/png', MAX_UPLOAD_BYTES + 1)).toBe('too_large')
-    expect(validateUploadFile('logo.png', 'image/png', MAX_UPLOAD_BYTES)).toBe('ok')
+  it('accepts exactly 4 MB and rejects anything larger', () => {
+    expect(MAX_UPLOAD_BYTES).toBe(4 * 1024 * 1024)
+    expect(validateUploadFile('logo.png', 'image/png', 4 * 1024 * 1024)).toBe('ok')
+    expect(validateUploadFile('logo.png', 'image/png', 4 * 1024 * 1024 + 1)).toBe('too_large')
   })
 
   it('builds a server-side key and ignores path traversal in the filename', () => {

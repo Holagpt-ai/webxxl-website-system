@@ -2,7 +2,8 @@
 const nextConfig = {
   experimental: {
     serverActions: {
-      bodySizeLimit: '16mb',
+      // Above the 4 MB file cap, under the 4.5 MB platform request ceiling.
+      bodySizeLimit: '4.25mb',
     },
   },
   typescript: {

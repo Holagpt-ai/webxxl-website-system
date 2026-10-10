@@ -1,7 +1,12 @@
 import type { ProjectFileCategory } from '@prisma/client'
 
-/** V1 upload ceiling for website project assets. */
-export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024
+/**
+ * V1 server-action upload ceiling. Multipart overhead must stay under the platform request body.
+ * Files larger than this should later use a direct-to-object-storage signed upload so the bytes
+ * bypass the function request body. That flow is not implemented; StorageProvider and ProjectFile
+ * remain the integration points.
+ */
+export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024
 
 export const PROJECT_FILE_CATEGORIES = ['BRAND', 'PHOTO', 'DOCUMENT', 'OTHER'] as const satisfies readonly ProjectFileCategory[]
 
