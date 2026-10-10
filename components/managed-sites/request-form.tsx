@@ -11,6 +11,8 @@ export function SiteCapabilityRequestForm({
   submitLabel,
   placeholder,
   messages,
+  disabled,
+  disabledMessage,
 }: {
   siteId: string
   capabilityKey: string
@@ -24,6 +26,8 @@ export function SiteCapabilityRequestForm({
     projectRequired: string
     failed: string
   }
+  disabled?: boolean
+  disabledMessage?: string
 }) {
   const [text, setText] = useState('')
   const [message, setMessage] = useState<string | null>(null)
@@ -48,11 +52,21 @@ export function SiteCapabilityRequestForm({
         })
       }}
     >
-      <Textarea value={text} onChange={(event) => setText(event.target.value)} required rows={3} placeholder={placeholder} />
-      {message && <p className="text-sm text-muted-foreground">{message}</p>}
-      <Button type="submit" size="sm" disabled={pending}>
-        {submitLabel}
-      </Button>
+      {disabled && disabledMessage ? (
+        <p className="text-sm text-muted-foreground">{disabledMessage}</p>
+      ) : (
+        <>
+          <Textarea value={text} onChange={(event) => setText(event.target.value)} required rows={3} placeholder={placeholder} />
+          {message && (
+            <p className="text-sm text-muted-foreground" role="status">
+              {message}
+            </p>
+          )}
+          <Button type="submit" size="sm" disabled={pending}>
+            {submitLabel}
+          </Button>
+        </>
+      )}
     </form>
   )
 }
