@@ -200,7 +200,7 @@ describe('managed site changes', () => {
       change: { id: 'chg-1', status: 'AWAITING_APPROVAL', capabilityKey: 'popups.manage', managedSiteId: site.id },
       site,
     })
-    expect(result).toMatchObject({ ok: false, applied: false, error: 'unavailable', status: 'APPROVED' })
+    expect(result).toMatchObject({ ok: false, applied: false, error: 'invalid', status: 'APPROVED' })
     expect(hoisted.prisma.managedSiteChange.update).toHaveBeenCalledWith({
       where: { id: 'chg-1' },
       data: expect.objectContaining({ status: 'APPROVED', appliedAt: null }),
@@ -325,7 +325,7 @@ describe('ABMED profile and adapter', () => {
       'abmedphysiciansgroup.com',
     ])
     const adapter = getManagedSiteAdapter('abmed')
-    await expect(adapter.applyChange(site, 'popups.manage', null)).resolves.toEqual({ ok: false, reason: 'unavailable' })
+    await expect(adapter.applyChange(site, 'popups.manage', null)).resolves.toEqual({ ok: false, reason: 'invalid' })
     await expect(adapter.connectionStatus(site)).resolves.toMatchObject({ state: 'not_connected' })
   })
 

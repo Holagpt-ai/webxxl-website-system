@@ -1,4 +1,5 @@
 import type { ManagedSiteConnectionType } from '@prisma/client'
+import { abmedCampaignAdapter } from '@/lib/managed-sites/abmed/adapter'
 
 export type AdapterConnectionState = 'connected' | 'not_connected' | 'manual'
 
@@ -15,7 +16,9 @@ export type ManagedSiteContext = {
   connectionRef: string | null
 }
 
-export type AdapterResult = { ok: true; metadata?: Record<string, unknown> } | { ok: false; reason: 'unavailable' | 'invalid' | 'not_connected' }
+export type AdapterResult =
+  | { ok: true; metadata?: Record<string, unknown> }
+  | { ok: false; reason: 'unavailable' | 'invalid' | 'not_connected' | 'version_conflict' }
 
 export interface ManagedSiteAdapter {
   key: string
@@ -52,18 +55,9 @@ function unavailableAdapter(key: string, detail: string): ManagedSiteAdapter {
 
 export const manualAdapter = unavailableAdapter('manual', 'This site is managed manually. Remote changes are not connected.')
 
-/**
- * Known ABMED sites use this adapter. No campaign-control contract is present in this repository,
- * so writes stay unavailable instead of calling a guessed endpoint.
- */
-export const abmedAdapter = unavailableAdapter(
-  'abmed',
-  'No live campaign-control contract is configured. Use the existing site admin until the adapter is connected.',
-)
-
 const ADAPTERS: Record<string, ManagedSiteAdapter> = {
   manual: manualAdapter,
-  abmed: abmedAdapter,
+  abmed: abmedCampaignAdapter,
   'webxxl-native': unavailableAdapter('webxxl-native', 'The native site adapter is not connected yet.'),
   wordpress: unavailableAdapter('wordpress', 'The WordPress adapter is not connected yet.'),
   'custom-api': unavailableAdapter('custom-api', 'The custom API adapter is not connected yet.'),

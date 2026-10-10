@@ -278,7 +278,13 @@ export function ApproveSiteChangeButton({ changeId }: { changeId: string }) {
           startTransition(async () => {
             const result = await approveManagedSiteChangeAction(changeId)
             if (!result.ok) {
-              setMessage(result.error === 'unavailable' ? 'Approved. Live publish is not connected.' : result.error)
+              setMessage(
+                result.error === 'unavailable'
+                  ? 'Approved. Live publish is not connected.'
+                  : result.error === 'version_conflict'
+                    ? 'This campaign changed since it was opened. Refresh before approving again.'
+                    : result.error,
+              )
               return
             }
             setMessage(result.applied ? 'Applied' : 'Approved')

@@ -1,7 +1,7 @@
 /**
  * Known ABMED websites. This is profile metadata only.
  * It does not insert database rows and contains no credentials.
- * No campaign API from either site is defined in this repository, so the adapter cannot publish changes.
+ * Remote reads and draft requests use the ABMED WebXXL integration API when server env is configured.
  */
 
 export type AbmedManagedSiteProfile = {

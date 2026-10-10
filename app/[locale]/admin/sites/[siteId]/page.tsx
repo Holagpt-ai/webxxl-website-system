@@ -89,6 +89,11 @@ export default async function AdminSiteDetailPage({ params }: { params: Promise<
                     {change.capabilityKey} · {change.executionMode} · <StatusBadge label={change.status} />
                   </p>
                   {change.requestText && <p className="mt-1 text-muted-foreground">{change.requestText}</p>}
+                  {change.resultMetadata && typeof change.resultMetadata === 'object' && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {JSON.stringify(change.resultMetadata)}
+                    </p>
+                  )}
                   {change.status === 'AWAITING_APPROVAL' && <ApproveSiteChangeButton changeId={change.id} />}
                 </li>
               ))}
