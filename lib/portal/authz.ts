@@ -1,6 +1,8 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/db'
 import type { CustomerAccount, CustomerMembership, Project, User } from '@prisma/client'
+import { customerOwnsManagedSite } from '@/lib/managed-sites/domain'
+import { routeManagedSiteRequest } from '@/lib/managed-sites/routing'
 import { canCustomerAccessProjectFile } from '@/lib/files/access'
 import { canAccessProject } from '@/lib/portal/access-rules'
 import { isAdminRole, isStaffRole } from '@/lib/admin/roles'
@@ -92,6 +94,42 @@ export async function authorizeProjectFileRead(fileId: string) {
     throw new AuthError('File access denied')
   }
   return { user, file }
+}
+
+export async function requireManagedSiteCustomerAccess(siteId: string) {
+  const portal = await requireCustomerMembership()
+  const site = await prisma.managedSite.findUnique({
+    where: { id: siteId },
+    include: { capabilities: true },
+  })
+  if (!site || !customerOwnsManagedSite(portal.customerAccount.id, site.customerAccountId)) {
+    throw new AuthError('Site access denied')
+  }
+  return { portal, site }
+}
+
+export async function requireManagedSiteStaffAccess(siteId: string) {
+  const staff = await requireStaff()
+  const site = await prisma.managedSite.findUnique({
+    where: { id: siteId },
+    include: { capabilities: true },
+  })
+  if (!site) throw new AuthError('Site not found')
+  return { staff, site }
+}
+
+export async function requireCapabilityAccess(siteId: string, capabilityKey: string) {
+  const access = await requireManagedSiteCustomerAccess(siteId)
+  const assignment = access.site.capabilities.find((item) => item.capabilityKey === capabilityKey) ?? null
+  const decision = routeManagedSiteRequest({
+    capabilityKey,
+    assignment,
+    actor: 'customer',
+  })
+  if (decision.mode === 'UNAVAILABLE' || !decision.capability) {
+    throw new AuthError(decision.reason)
+  }
+  return { ...access, capability: decision.capability }
 }
 
 /** Resolve active project for the customer account (first active, else most recent). */

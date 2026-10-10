@@ -2,6 +2,7 @@ import type { IconName } from '@/lib/icons'
 
 export type PortalModuleKey =
   | 'project'
+  | 'sites'
   | 'files'
   | 'messages'
   | 'approvals'
@@ -31,6 +32,7 @@ export type PortalModule = {
 
 const REGISTRY: PortalModule[] = [
   { key: 'project', navLabel: 'project', route: '/dashboard/project', icon: 'kanban', enabled: true, statusSource: 'project' },
+  { key: 'sites', navLabel: 'sites', route: '/dashboard/sites', icon: 'globe', enabled: true },
   { key: 'files', navLabel: 'files', route: '/dashboard/files', icon: 'file', enabled: true },
   { key: 'messages', navLabel: 'messages', route: '/dashboard/messages', icon: 'message', enabled: true },
   { key: 'approvals', navLabel: 'approvals', route: '/dashboard/approvals', icon: 'shield', enabled: true },
@@ -58,7 +60,7 @@ export function getDashboardNavModules(): PortalModule[] {
     { key: 'project', navLabel: 'overview', route: '/dashboard', icon: 'dashboard', enabled: true },
     { key: 'project', navLabel: 'project', route: '/dashboard/project', icon: 'kanban', enabled: true },
     ...REGISTRY.filter((m) =>
-      ['files', 'messages', 'approvals', 'changeRequests', 'support', 'services'].includes(m.key),
+      ['sites', 'files', 'messages', 'approvals', 'changeRequests', 'support', 'services'].includes(m.key),
     ),
   ]
 }

@@ -13,6 +13,7 @@ const NAV = [
   { href: '/admin', label: 'Overview', match: (p: string | null) => p === '/admin' || p?.endsWith('/admin') },
   { href: '/admin/customers', label: 'Customers', match: (p: string | null) => !!p?.includes('/admin/customers') },
   { href: '/admin/projects', label: 'Projects', match: (p: string | null) => !!p?.includes('/admin/projects') },
+  { href: '/admin/sites', label: 'Sites', match: (p: string | null) => !!p?.includes('/admin/sites') },
   { href: '/admin/approvals', label: 'Approvals', match: (p: string | null) => !!p?.includes('/admin/approvals') },
   { href: '/admin/requests', label: 'Change requests', match: (p: string | null) => !!p?.includes('/admin/requests') },
   { href: '/admin/support', label: 'Support', match: (p: string | null) => !!p?.includes('/admin/support') },
