@@ -1,8 +1,13 @@
 import { prisma } from '@/lib/db'
 import { calculateProjectEta } from '@/lib/portal/eta'
 
+export type SyncProjectProgressOptions = {
+  /** When true, only sync ETA-derived dates — keep staff-set progressPercent on the project row. */
+  preserveProgressPercent?: boolean
+}
+
 /** Persist ETA-derived progress fields so customer dashboard stays in sync. */
-export async function syncProjectProgressFromEta(projectId: string) {
+export async function syncProjectProgressFromEta(projectId: string, options?: SyncProjectProgressOptions) {
   const project = await prisma.project.findUnique({ where: { id: projectId } })
   if (!project) return null
 
@@ -30,7 +35,7 @@ export async function syncProjectProgressFromEta(projectId: string) {
   await prisma.project.update({
     where: { id: projectId },
     data: {
-      progressPercent: eta.progressPercent,
+      ...(options?.preserveProgressPercent ? {} : { progressPercent: eta.progressPercent }),
       estimatedCompletionDate: eta.estimatedCompletionDate,
     },
   })

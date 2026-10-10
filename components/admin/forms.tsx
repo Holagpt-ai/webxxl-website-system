@@ -184,7 +184,7 @@ export function ProjectStatusForm({
         </select>
       </div>
       <div>
-        <Label htmlFor="p-progress">Progress override %</Label>
+        <Label htmlFor="p-progress">Progress %</Label>
         <Input id="p-progress" name="progress" type="number" min={0} max={100} defaultValue={progressPercent} className="w-24" />
       </div>
       <Button type="submit" disabled={pending}>

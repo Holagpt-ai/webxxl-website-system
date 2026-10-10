@@ -7,6 +7,8 @@ import { writeProjectActivity, formatActivitySummary } from '@/lib/portal/activi
 import { notificationHooks } from '@/lib/portal/notifications'
 import { syncProjectProgressFromEta } from '@/lib/admin/sync-project-eta'
 import { notifyCustomerAccountMembers } from '@/lib/admin/notify-customers'
+import { isRegistryEntitlementServiceKey } from '@/lib/admin/service-keys'
+import { parseProgressPercent, resolveProjectCompletedAt, resolveTaskCompletedAt } from '@/lib/admin/validation'
 import type {
   ChangeRequestStatus,
   CustomerAccountStatus,
@@ -32,6 +34,12 @@ async function loadProjectForStaff(projectId: string) {
   const project = await prisma.project.findUnique({ where: { id: projectId } })
   if (!project) throw new Error('not_found')
   return project
+}
+
+async function assertMilestoneBelongsToProject(projectId: string, milestoneId: string) {
+  const ms = await prisma.projectMilestone.findFirst({ where: { id: milestoneId, projectId } })
+  if (!ms) throw new Error('not_found')
+  return ms
 }
 
 export async function updateCustomerAccountStatusAction(
@@ -153,6 +161,7 @@ export async function updateProjectAction(
     const staff = await requireStaff()
     const project = await loadProjectForStaff(projectId)
     const prevStatus = project.status
+    let explicitProgress: number | undefined
     const update: {
       name?: string
       status?: ProjectStatus
@@ -164,9 +173,15 @@ export async function updateProjectAction(
     if (data.name !== undefined) update.name = data.name.trim()
     if (data.status !== undefined) {
       update.status = data.status
-      if (data.status === 'COMPLETED') update.completedAt = new Date()
+      const completedAt = resolveProjectCompletedAt(prevStatus, data.status, project.completedAt)
+      if (completedAt !== undefined) update.completedAt = completedAt
     }
-    if (data.progressPercent !== undefined) update.progressPercent = data.progressPercent
+    if (data.progressPercent !== undefined) {
+      const parsed = parseProgressPercent(data.progressPercent)
+      if (!parsed.ok) return { ok: false, error: parsed.error }
+      explicitProgress = parsed.value
+      update.progressPercent = parsed.value
+    }
     if (data.targetDate !== undefined) update.targetDate = data.targetDate ? new Date(data.targetDate) : null
     if (data.summary !== undefined) update.summary = data.summary?.trim() || null
 
@@ -180,7 +195,9 @@ export async function updateProjectAction(
         summary: `Project status updated: ${prevStatus} → ${data.status}`,
       })
     }
-    await syncProjectProgressFromEta(projectId)
+    await syncProjectProgressFromEta(projectId, {
+      preserveProgressPercent: explicitProgress !== undefined,
+    })
     revalidateAdmin()
     return { ok: true }
   } catch (e) {
@@ -299,14 +316,18 @@ export async function upsertTaskAction(
     if (!title) return { ok: false, error: 'empty' }
 
     if (input.milestoneId) {
-      const ms = await prisma.projectMilestone.findFirst({ where: { id: input.milestoneId, projectId } })
-      if (!ms) return { ok: false, error: 'not_found' }
+      try {
+        await assertMilestoneBelongsToProject(projectId, input.milestoneId)
+      } catch {
+        return { ok: false, error: 'not_found' }
+      }
     }
 
     if (input.id) {
       const existing = await prisma.projectTask.findFirst({ where: { id: input.id, projectId } })
       if (!existing) return { ok: false, error: 'not_found' }
       const status = input.status ?? existing.status
+      const completedAt = resolveTaskCompletedAt(existing.status, status, existing.completedAt)
       await prisma.projectTask.update({
         where: { id: input.id },
         data: {
@@ -314,7 +335,7 @@ export async function upsertTaskAction(
           milestoneId: input.milestoneId !== undefined ? input.milestoneId : undefined,
           status,
           dueDate: input.dueDate !== undefined ? (input.dueDate ? new Date(input.dueDate) : null) : undefined,
-          completedAt: status === 'DONE' && existing.status !== 'DONE' ? new Date() : undefined,
+          ...(completedAt !== undefined ? { completedAt } : {}),
         },
       })
       if (status === 'DONE' && existing.status !== 'DONE') {
@@ -360,6 +381,14 @@ export async function upsertDependencyAction(
     const project = await loadProjectForStaff(projectId)
     const title = input.title.trim()
     if (!title) return { ok: false, error: 'empty' }
+
+    if (input.milestoneId) {
+      try {
+        await assertMilestoneBelongsToProject(projectId, input.milestoneId)
+      } catch {
+        return { ok: false, error: 'not_found' }
+      }
+    }
 
     if (input.id) {
       const existing = await prisma.projectDependency.findFirst({ where: { id: input.id, projectId } })
@@ -535,6 +564,7 @@ export async function upsertCustomerServiceAction(
     const staff = await requireAdmin()
     const key = serviceKey.trim()
     if (!key) return { ok: false, error: 'empty' }
+    if (!isRegistryEntitlementServiceKey(key)) return { ok: false, error: 'invalid_service' }
     const account = await prisma.customerAccount.findUnique({ where: { id: customerAccountId } })
     if (!account) return { ok: false, error: 'not_found' }
 
