@@ -3,6 +3,11 @@ import { PrismaAdapter } from '@auth/prisma-adapter'
 import Email from 'next-auth/providers/email'
 import { prisma } from '@/lib/db'
 import { sendMagicLinkEmail } from '@/lib/integrations/email'
+import {
+  getActiveCustomerAccountIdFromCookie,
+  pickActiveMembership,
+} from '@/lib/portal/active-customer-account'
+import { touchUserLastLogin } from '@/lib/portal/login-tracking'
 import type { UserRole } from '@prisma/client'
 
 declare module 'next-auth' {
@@ -36,6 +41,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     verifyRequest: '/login?checkEmail=1',
   },
   session: { strategy: 'database' },
+  events: {
+    async signIn({ user }) {
+      if (!user.id) return
+      await touchUserLastLogin(user.id)
+    },
+  },
   callbacks: {
     async signIn({ user }) {
       if (!user.email) return false
@@ -52,10 +63,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         where: { id: user.id },
         select: { id: true, email: true, name: true, role: true },
       })
-      const membership = await prisma.customerMembership.findFirst({
+      const memberships = await prisma.customerMembership.findMany({
         where: { userId: user.id },
         orderBy: { createdAt: 'asc' },
+        include: { customerAccount: true },
       })
+      let membership = memberships[0] ?? null
+      if (memberships.length > 0) {
+        const cookieAccountId = await getActiveCustomerAccountIdFromCookie()
+        membership = pickActiveMembership(memberships, cookieAccountId).membership
+      }
       session.user = {
         id: user.id,
         email: dbUser?.email ?? user.email!,

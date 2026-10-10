@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { allowedUploadAccept, PROJECT_FILE_CATEGORIES } from '@/lib/files/policy'
 import {
-  addCustomerMembershipAction,
+  inviteCustomerMemberAction,
+  resendCustomerInvitationAction,
   attachApprovalFilesAction,
   createApprovalRequestAction,
   createProjectAction,
@@ -65,27 +66,36 @@ export function CustomerStatusForm({
   )
 }
 
-export function AddMembershipForm({ customerId }: { customerId: string }) {
+export function InviteCustomerForm({ customerId }: { customerId: string }) {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('MEMBER')
+  const [locale, setLocale] = useState<'en' | 'es'>('en')
+  const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
   return (
     <form
       className="flex flex-col gap-3"
       onSubmit={(e) => {
         e.preventDefault()
+        setError(null)
         startTransition(async () => {
-          await addCustomerMembershipAction(customerId, email, role as never)
-          setEmail('')
+          const result = await inviteCustomerMemberAction({
+            customerAccountId: customerId,
+            email,
+            role: role as never,
+            locale,
+          })
+          if (result.ok) setEmail('')
+          else setError(result.error)
         })
       }}
     >
       <div>
-        <Label htmlFor="member-email">Existing user email</Label>
+        <Label htmlFor="member-email">Email</Label>
         <Input id="member-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
       </div>
       <div>
-        <Label htmlFor="member-role">Membership role</Label>
+        <Label htmlFor="member-role">Role</Label>
         <select
           id="member-role"
           className="mt-1 block w-full rounded-md border bg-background px-3 py-2 text-sm"
@@ -96,35 +106,84 @@ export function AddMembershipForm({ customerId }: { customerId: string }) {
           <option value="MEMBER">MEMBER</option>
         </select>
       </div>
+      <div>
+        <Label htmlFor="invite-locale">Language</Label>
+        <select
+          id="invite-locale"
+          className="mt-1 block w-full rounded-md border bg-background px-3 py-2 text-sm"
+          value={locale}
+          onChange={(e) => setLocale(e.target.value as 'en' | 'es')}
+        >
+          <option value="en">English</option>
+          <option value="es">Español</option>
+        </select>
+      </div>
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <Button type="submit" disabled={pending}>
-        Add membership
+        Send invitation
       </Button>
     </form>
   )
 }
 
-export function MembershipRowActions({ membershipId, role }: { membershipId: string; role: string }) {
+export function MembershipRowActions({
+  membershipId,
+  role,
+  resendLocale = 'en',
+}: {
+  membershipId: string
+  role: string
+  resendLocale?: 'en' | 'es'
+}) {
+  const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
   return (
-    <div className="flex flex-wrap gap-2">
-      <Button
-        size="sm"
-        variant="outline"
-        disabled={pending}
-        onClick={() =>
-          startTransition(() => void updateMembershipRoleAction(membershipId, role === 'OWNER' ? 'MEMBER' : 'OWNER'))
-        }
-      >
-        Toggle role
-      </Button>
-      <Button
-        size="sm"
-        variant="outline"
-        disabled={pending}
-        onClick={() => startTransition(() => void removeMembershipAction(membershipId))}
-      >
-        Remove
-      </Button>
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={pending}
+          onClick={() => {
+            setError(null)
+            startTransition(async () => {
+              const result = await updateMembershipRoleAction(membershipId, role === 'OWNER' ? 'MEMBER' : 'OWNER')
+              if (!result.ok) setError(result.error)
+            })
+          }}
+        >
+          Toggle role
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={pending}
+          onClick={() => {
+            setError(null)
+            startTransition(async () => {
+              const result = await resendCustomerInvitationAction({ membershipId, locale: resendLocale })
+              if (!result.ok) setError(result.error)
+            })
+          }}
+        >
+          Resend invitation
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={pending}
+          onClick={() => {
+            setError(null)
+            startTransition(async () => {
+              const result = await removeMembershipAction(membershipId)
+              if (!result.ok) setError(result.error)
+            })
+          }}
+        >
+          Remove
+        </Button>
+      </div>
+      {error ? <p className="text-xs text-destructive">{error}</p> : null}
     </div>
   )
 }

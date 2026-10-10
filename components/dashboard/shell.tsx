@@ -10,6 +10,7 @@ import type { Dictionary } from '@/lib/i18n/dictionaries/en'
 import type { PortalModule } from '@/lib/portal/modules'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
+import { CustomerAccountSwitcher } from '@/components/dashboard/account-switcher'
 
 type Props = {
   locale: string
@@ -17,6 +18,8 @@ type Props = {
   businessName: string
   userEmail: string
   navModules: PortalModule[]
+  accountOptions?: { customerAccountId: string; businessName: string }[]
+  activeAccountId?: string
   children: React.ReactNode
 }
 
@@ -66,7 +69,16 @@ function NavLinks({
   )
 }
 
-export function DashboardShell({ locale, dict, businessName, userEmail, navModules, children }: Props) {
+export function DashboardShell({
+  locale,
+  dict,
+  businessName,
+  userEmail,
+  navModules,
+  accountOptions,
+  activeAccountId,
+  children,
+}: Props) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
@@ -76,7 +88,11 @@ export function DashboardShell({ locale, dict, businessName, userEmail, navModul
         <LocaleLink locale={locale as 'en' | 'es'} href="/dashboard" aria-label={dict.title}>
           <Logo />
         </LocaleLink>
-        <p className="-mt-2 truncate text-sm font-semibold text-foreground">{businessName}</p>
+        {accountOptions && activeAccountId ? (
+          <CustomerAccountSwitcher accounts={accountOptions} activeAccountId={activeAccountId} />
+        ) : (
+          <p className="-mt-2 truncate text-sm font-semibold text-foreground">{businessName}</p>
+        )}
         <NavLinks locale={locale} dict={dict} navModules={navModules} pathname={pathname} />
         <div className="mt-auto flex flex-col gap-3 border-t pt-4">
           <p className="truncate text-xs text-muted-foreground">{userEmail}</p>
@@ -103,7 +119,13 @@ export function DashboardShell({ locale, dict, businessName, userEmail, navModul
                 <Menu className="size-4" />
               </SheetTrigger>
               <SheetContent side="left" className="w-72 p-6">
-                <p className="mb-4 truncate text-sm font-semibold">{businessName}</p>
+                {accountOptions && activeAccountId ? (
+                  <div className="mb-4">
+                    <CustomerAccountSwitcher accounts={accountOptions} activeAccountId={activeAccountId} />
+                  </div>
+                ) : (
+                  <p className="mb-4 truncate text-sm font-semibold">{businessName}</p>
+                )}
                 <NavLinks
                   locale={locale}
                   dict={dict}

@@ -77,7 +77,18 @@ export async function getCustomerDetail(customerId: string) {
     where: { id: customerId },
     include: {
       memberships: {
-        include: { user: { select: { id: true, email: true, name: true, role: true } } },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              role: true,
+              emailVerified: true,
+              lastLoginAt: true,
+            },
+          },
+        },
         orderBy: { createdAt: 'asc' },
       },
       projects: { orderBy: { updatedAt: 'desc' } },
