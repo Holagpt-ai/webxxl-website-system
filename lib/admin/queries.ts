@@ -179,6 +179,7 @@ export async function listChangeRequestQueue() {
       project: { include: { customerAccount: { select: { businessName: true, id: true } } } },
       submittedBy: { select: { email: true, name: true } },
       fileLinks: { include: { projectFile: { select: { id: true, originalName: true } } } },
+      managedSite: { select: { id: true, name: true, domain: true } },
     },
   })
 }
