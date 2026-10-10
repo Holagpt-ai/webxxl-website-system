@@ -12,6 +12,15 @@ import { canDeleteProjectFile } from '@/lib/files/access'
 import { deleteStoredProjectFile, linkProjectFiles, readUploadFromFormData, uploadProjectFile } from '@/lib/files/operations'
 import { isRegistryEntitlementServiceKey } from '@/lib/admin/service-keys'
 import { parseProgressPercent, resolveProjectCompletedAt, resolveTaskCompletedAt } from '@/lib/admin/validation'
+import { isStaffRole } from '@/lib/admin/roles'
+import {
+  isAllowedInviteRole,
+  isValidCustomerInviteEmail,
+  normalizeCustomerInviteEmail,
+  wouldViolateLastOwnerOnDemote,
+  wouldViolateLastOwnerOnRemove,
+  type CustomerAccessLocale,
+} from '@/lib/portal/customer-access'
 import type {
   ChangeRequestStatus,
   CustomerAccountStatus,
@@ -23,6 +32,7 @@ import type {
   ProjectType,
   SupportRequestStatus,
   TaskStatus,
+  UserRole,
 } from '@prisma/client'
 
 export type AdminActionResult = { ok: true } | { ok: false; error: string }
@@ -71,24 +81,93 @@ export async function updateCustomerAccountStatusAction(
   }
 }
 
-export async function addCustomerMembershipAction(
-  customerId: string,
-  email: string,
-  role: MembershipRole,
-): Promise<AdminActionResult> {
+export async function inviteCustomerMemberAction(input: {
+  customerAccountId: string
+  email: string
+  role: MembershipRole
+  locale: CustomerAccessLocale
+}): Promise<AdminActionResult> {
   try {
     await requireAdmin()
-    const normalized = email.trim().toLowerCase()
-    if (!normalized) return { ok: false, error: 'empty' }
-    const account = await prisma.customerAccount.findUnique({ where: { id: customerId } })
+    const normalized = normalizeCustomerInviteEmail(input.email)
+    if (!normalized) return { ok: false, error: 'invalid_email' }
+    if (!isValidCustomerInviteEmail(normalized)) return { ok: false, error: 'invalid_email' }
+    if (!isAllowedInviteRole(input.role)) return { ok: false, error: 'invalid_email' }
+
+    const account = await prisma.customerAccount.findUnique({ where: { id: input.customerAccountId } })
     if (!account) return { ok: false, error: 'not_found' }
-    const user = await prisma.user.findUnique({ where: { email: normalized } })
-    if (!user) return { ok: false, error: 'user_not_found' }
-    await prisma.customerMembership.upsert({
-      where: { userId_customerAccountId: { userId: user.id, customerAccountId: customerId } },
-      create: { userId: user.id, customerAccountId: customerId, role },
-      update: { role },
+
+    let user = await prisma.user.findUnique({ where: { email: normalized } })
+    if (user && isStaffRole(user.role as UserRole)) {
+      return { ok: false, error: 'staff_account_not_allowed' }
+    }
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: { email: normalized, role: 'CUSTOMER', emailVerified: null },
+      })
+    } else if (user.role !== 'CUSTOMER') {
+      return { ok: false, error: 'staff_account_not_allowed' }
+    }
+
+    const now = new Date()
+    const existing = await prisma.customerMembership.findUnique({
+      where: { userId_customerAccountId: { userId: user.id, customerAccountId: input.customerAccountId } },
     })
+
+    await prisma.customerMembership.upsert({
+      where: { userId_customerAccountId: { userId: user.id, customerAccountId: input.customerAccountId } },
+      create: {
+        userId: user.id,
+        customerAccountId: input.customerAccountId,
+        role: input.role,
+        invitedAt: now,
+        lastInviteSentAt: now,
+      },
+      update: {
+        role: input.role,
+        lastInviteSentAt: now,
+        invitedAt: existing?.invitedAt ?? now,
+      },
+    })
+
+    const { sendCustomerInvitationMagicLink } = await import('@/lib/portal/customer-invite-mail')
+    const mail = await sendCustomerInvitationMagicLink(normalized, input.customerAccountId, input.locale)
+    if (!mail.ok) return { ok: false, error: mail.error }
+
+    revalidateAdmin()
+    return { ok: true }
+  } catch {
+    return { ok: false, error: 'unauthorized' }
+  }
+}
+
+export async function resendCustomerInvitationAction(input: {
+  membershipId: string
+  locale: CustomerAccessLocale
+}): Promise<AdminActionResult> {
+  try {
+    await requireAdmin()
+    const membership = await prisma.customerMembership.findUnique({
+      where: { id: input.membershipId },
+      include: { user: true },
+    })
+    if (!membership) return { ok: false, error: 'not_found' }
+    if (membership.user.role !== 'CUSTOMER') return { ok: false, error: 'staff_account_not_allowed' }
+
+    await prisma.customerMembership.update({
+      where: { id: membership.id },
+      data: { lastInviteSentAt: new Date() },
+    })
+
+    const { sendCustomerInvitationMagicLink } = await import('@/lib/portal/customer-invite-mail')
+    const mail = await sendCustomerInvitationMagicLink(
+      membership.user.email,
+      membership.customerAccountId,
+      input.locale,
+    )
+    if (!mail.ok) return { ok: false, error: mail.error }
+
     revalidateAdmin()
     return { ok: true }
   } catch {
@@ -101,6 +180,13 @@ export async function updateMembershipRoleAction(membershipId: string, role: Mem
     await requireAdmin()
     const membership = await prisma.customerMembership.findUnique({ where: { id: membershipId } })
     if (!membership) return { ok: false, error: 'not_found' }
+    const siblings = await prisma.customerMembership.findMany({
+      where: { customerAccountId: membership.customerAccountId },
+      select: { id: true, role: true },
+    })
+    if (wouldViolateLastOwnerOnDemote(membership, siblings, role)) {
+      return { ok: false, error: 'last_owner' }
+    }
     await prisma.customerMembership.update({ where: { id: membershipId }, data: { role } })
     revalidateAdmin()
     return { ok: true }
@@ -114,8 +200,13 @@ export async function removeMembershipAction(membershipId: string): Promise<Admi
     await requireAdmin()
     const membership = await prisma.customerMembership.findUnique({ where: { id: membershipId } })
     if (!membership) return { ok: false, error: 'not_found' }
-    const count = await prisma.customerMembership.count({ where: { customerAccountId: membership.customerAccountId } })
-    if (count <= 1) return { ok: false, error: 'last_member' }
+    const siblings = await prisma.customerMembership.findMany({
+      where: { customerAccountId: membership.customerAccountId },
+      select: { role: true },
+    })
+    if (wouldViolateLastOwnerOnRemove(membership, siblings)) {
+      return { ok: false, error: 'last_owner' }
+    }
     await prisma.customerMembership.delete({ where: { id: membershipId } })
     revalidateAdmin()
     return { ok: true }

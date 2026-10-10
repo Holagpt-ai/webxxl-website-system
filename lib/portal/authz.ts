@@ -6,6 +6,11 @@ import { routeManagedSiteRequest } from '@/lib/managed-sites/routing'
 import { canCustomerAccessProjectFile } from '@/lib/files/access'
 import { canAccessProject } from '@/lib/portal/access-rules'
 import { isAdminRole, isStaffRole } from '@/lib/admin/roles'
+import {
+  getActiveCustomerAccountIdFromCookie,
+  pickActiveMembership,
+  setActiveCustomerAccountCookie,
+} from '@/lib/portal/active-customer-account'
 
 export class AuthError extends Error {
   constructor(message = 'Unauthorized') {
@@ -38,12 +43,17 @@ export async function requireAdmin(): Promise<User> {
 
 export async function requireCustomerMembership(): Promise<PortalUser> {
   const user = await requireUser()
-  const membership = await prisma.customerMembership.findFirst({
+  const memberships = await prisma.customerMembership.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: 'asc' },
     include: { customerAccount: true },
   })
-  if (!membership) throw new AuthError('No customer account')
+  if (memberships.length === 0) throw new AuthError('No customer account')
+  const cookieAccountId = await getActiveCustomerAccountIdFromCookie()
+  const { membership, shouldRefreshCookie } = pickActiveMembership(memberships, cookieAccountId)
+  if (shouldRefreshCookie) {
+    await setActiveCustomerAccountCookie(membership.customerAccountId)
+  }
   return { ...user, membership, customerAccount: membership.customerAccount }
 }
 

@@ -1,13 +1,14 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getCustomerDetail, getCustomerRecentActivity } from '@/lib/admin/queries'
+import { deriveMembershipAccessState } from '@/lib/portal/customer-access'
 import { PageTitle, SectionCard, StatusBadge } from '@/components/dashboard/primitives'
 import { requireStaff, requireUser } from '@/lib/portal/authz'
 import { isAdminRole } from '@/lib/admin/roles'
 import { resolveLocale } from '@/lib/i18n/server'
 import { getPortalModuleRegistry } from '@/lib/portal/modules'
 import {
-  AddMembershipForm,
+  InviteCustomerForm,
   CreateProjectForm,
   CustomerStatusForm,
   MembershipRowActions,
@@ -42,21 +43,35 @@ export default async function AdminCustomerDetailPage({ params }: Props) {
       <div className="grid gap-6 lg:grid-cols-2">
         <SectionCard title="Memberships">
           <ul className="flex flex-col gap-4 text-sm">
-            {customer.memberships.map((m) => (
-              <li key={m.id} className="flex flex-col gap-2 border-b pb-3 last:border-0">
-                <div>
-                  <p className="font-medium">{m.user.email}</p>
-                  <p className="text-muted-foreground">
-                    {m.role} · portal user role {m.user.role}
-                  </p>
-                </div>
-                {isAdminRole(user.role) && <MembershipRowActions membershipId={m.id} role={m.role} />}
-              </li>
-            ))}
+            {customer.memberships.map((m) => {
+              const accessState = deriveMembershipAccessState(m.user, m)
+              return (
+                <li key={m.id} className="flex flex-col gap-2 border-b pb-3 last:border-0">
+                  <div>
+                    <p className="font-medium">{m.user.email}</p>
+                    <p className="text-muted-foreground">
+                      {m.role} · portal user role {m.user.role} · {accessState}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {m.user.emailVerified
+                        ? `Email verified ${m.user.emailVerified.toISOString().slice(0, 10)}`
+                        : 'Email not verified'}
+                      {m.lastInviteSentAt
+                        ? ` · Last invite ${m.lastInviteSentAt.toISOString().slice(0, 10)}`
+                        : ''}
+                      {m.user.lastLoginAt ? ` · Last sign-in ${m.user.lastLoginAt.toISOString().slice(0, 10)}` : ''}
+                    </p>
+                  </div>
+                  {isAdminRole(user.role) && (
+                    <MembershipRowActions membershipId={m.id} role={m.role} resendLocale={locale === 'es' ? 'es' : 'en'} />
+                  )}
+                </li>
+              )
+            })}
           </ul>
           {isAdminRole(user.role) && (
             <div className="mt-4 border-t pt-4">
-              <AddMembershipForm customerId={customer.id} />
+              <InviteCustomerForm customerId={customer.id} />
             </div>
           )}
         </SectionCard>

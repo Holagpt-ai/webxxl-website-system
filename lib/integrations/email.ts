@@ -37,12 +37,72 @@ export async function sendEmail(options: {
   }
 }
 
-export async function sendMagicLinkEmail(email: string, url: string): Promise<SendEmailResult> {
+export type MagicLinkEmailKind = 'sign_in' | 'invitation'
+
+export type MagicLinkEmailLocale = 'en' | 'es'
+
+function magicLinkCopy(kind: MagicLinkEmailKind, locale: MagicLinkEmailLocale) {
+  if (kind === 'invitation') {
+    if (locale === 'es') {
+      return {
+        subject: 'Invitación a tu portal de cliente WebXXL',
+        intro: 'Has sido invitado a tu portal de cliente de WebXXL.',
+        cta: 'Abrir portal',
+        footer: 'Si no esperabas este correo, puedes ignorarlo.',
+      }
+    }
+    return {
+      subject: 'Invitation to your WebXXL client portal',
+      intro: "You've been invited to your WebXXL client portal.",
+      cta: 'Open portal',
+      footer: 'If you did not expect this email, you can ignore it.',
+    }
+  }
+  if (locale === 'es') {
+    return {
+      subject: 'Inicia sesión en tu portal de cliente WebXXL',
+      intro: 'Inicia sesión en tu portal de cliente WebXXL:',
+      cta: 'Iniciar sesión',
+      footer: 'Si no solicitaste este correo, puedes ignorarlo.',
+    }
+  }
+  return {
+    subject: 'Sign in to your WebXXL client portal',
+    intro: 'Sign in to your WebXXL client portal:',
+    cta: 'Sign in',
+    footer: 'If you did not request this email, you can ignore it.',
+  }
+}
+
+/** Infer invitation + locale from Auth.js verification URL callbackUrl when present. */
+export function parseMagicLinkEmailContext(url: string): { kind: MagicLinkEmailKind; locale: MagicLinkEmailLocale } {
+  try {
+    const parsed = new URL(url)
+    const callbackUrl = parsed.searchParams.get('callbackUrl')
+    if (!callbackUrl) return { kind: 'sign_in', locale: 'en' }
+    const cb = callbackUrl.startsWith('http') ? new URL(callbackUrl) : new URL(callbackUrl, parsed.origin)
+    const invitation = cb.pathname.includes('/api/portal/activate-account')
+    const locale = cb.searchParams.get('locale') === 'es' ? 'es' : 'en'
+    return { kind: invitation ? 'invitation' : 'sign_in', locale }
+  } catch {
+    return { kind: 'sign_in', locale: 'en' }
+  }
+}
+
+export async function sendMagicLinkEmail(
+  email: string,
+  url: string,
+  override?: { kind?: MagicLinkEmailKind; locale?: MagicLinkEmailLocale },
+): Promise<SendEmailResult> {
+  const parsed = parseMagicLinkEmailContext(url)
+  const kind = override?.kind ?? parsed.kind
+  const locale = override?.locale ?? parsed.locale
+  const copy = magicLinkCopy(kind, locale)
   return sendEmail({
     to: email,
-    subject: 'Sign in to your WebXXL client portal',
-    text: `Sign in to your WebXXL client portal:\n\n${url}\n\nIf you did not request this email, you can ignore it.`,
-    html: `<p>Sign in to your WebXXL client portal:</p><p><a href="${url}">Sign in</a></p><p>If you did not request this email, you can ignore it.</p>`,
+    subject: copy.subject,
+    text: `${copy.intro}\n\n${url}\n\n${copy.footer}`,
+    html: `<p>${copy.intro}</p><p><a href="${url}">${copy.cta}</a></p><p>${copy.footer}</p>`,
   })
 }
 

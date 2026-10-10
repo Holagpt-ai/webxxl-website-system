@@ -44,6 +44,15 @@ export default async function DashboardLayout({ params, children }: Props) {
   const activeKeys = new Set(services.map((s) => s.serviceKey))
   const dict = getDictionary(locale)
   const navModules = getDashboardNavModules()
+  const accountMemberships = await prisma.customerMembership.findMany({
+    where: { userId: portal.id },
+    include: { customerAccount: { select: { id: true, businessName: true } } },
+    orderBy: { createdAt: 'asc' },
+  })
+  const accountOptions = accountMemberships.map((m) => ({
+    customerAccountId: m.customerAccount.id,
+    businessName: m.customerAccount.businessName,
+  }))
 
   return (
     <DashboardShell
@@ -52,6 +61,8 @@ export default async function DashboardLayout({ params, children }: Props) {
       businessName={portal.customerAccount.businessName}
       userEmail={portal.email}
       navModules={navModules}
+      accountOptions={accountOptions.length > 1 ? accountOptions : undefined}
+      activeAccountId={portal.customerAccount.id}
     >
       {children}
     </DashboardShell>
