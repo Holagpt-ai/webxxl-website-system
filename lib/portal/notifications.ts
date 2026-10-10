@@ -23,6 +23,31 @@ export async function createNotification(input: CreateNotificationInput) {
   })
 }
 
+export async function notifyStaffUsers(input: {
+  type: NotificationType
+  title: string
+  body: string
+  actionUrl?: string
+  customerAccountId?: string
+}) {
+  const staff = await prisma.user.findMany({
+    where: { role: { in: ['STAFF', 'ADMIN'] } },
+    select: { id: true },
+  })
+  await Promise.all(
+    staff.map((user) =>
+      createNotification({
+        userId: user.id,
+        customerAccountId: input.customerAccountId,
+        type: input.type,
+        title: input.title,
+        body: input.body,
+        actionUrl: input.actionUrl,
+      }),
+    ),
+  )
+}
+
 /** Hooks for domain events — email/SMS automation can subscribe later. */
 export const notificationHooks = {
   async onDependencyRequested(userId: string, customerAccountId: string, title: string, actionUrl: string) {

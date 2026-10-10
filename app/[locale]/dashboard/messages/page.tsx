@@ -3,6 +3,7 @@ import { requireCustomerMembership, getActiveProject } from '@/lib/portal/authz'
 import { prisma } from '@/lib/db'
 import { PageTitle, SectionCard, EmptyState } from '@/components/dashboard/primitives'
 import { CommentForm } from '@/components/dashboard/forms'
+import { filterCustomerComments } from '@/lib/portal/access-rules'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,33 +22,39 @@ export default async function MessagesPage({ params }: { params: Promise<{ local
     )
   }
 
-  const comments = await prisma.projectComment.findMany({
-    where: { projectId: project.id, visibility: 'CUSTOMER' },
-    orderBy: { createdAt: 'desc' },
-    include: { author: { select: { name: true, email: true } } },
-  })
+  const comments = filterCustomerComments(
+    await prisma.projectComment.findMany({
+      where: { projectId: project.id, visibility: 'CUSTOMER' },
+      orderBy: { createdAt: 'asc' },
+      include: { author: { select: { name: true, email: true } } },
+    }),
+  )
+  const dateFormat = new Intl.DateTimeFormat(locale === 'es' ? 'es' : 'en', { dateStyle: 'medium', timeStyle: 'short' })
 
   return (
     <>
       <PageTitle title={d.messagesTitle} />
-      <SectionCard title="New message">
-        <CommentForm projectId={project.id} submitLabel={d.submit} />
-      </SectionCard>
       <SectionCard title={d.recentMessages}>
-        <ul className="flex flex-col gap-4">
-          {comments.map((c) => (
-            <li key={c.id} className="rounded-lg border p-3 text-sm">
-              <p>{c.body}</p>
-              <p className="mt-2 text-xs text-muted-foreground">
-                {c.author.name ?? c.author.email} ·{' '}
-                {new Intl.DateTimeFormat(locale === 'es' ? 'es' : 'en', { dateStyle: 'medium', timeStyle: 'short' }).format(
-                  c.createdAt,
-                )}
-              </p>
-            </li>
-          ))}
-        </ul>
+        {comments.length === 0 ? (
+          <EmptyState title={d.emptyMessages} body={d.emptyMessagesBody} />
+        ) : (
+          <ul className="flex flex-col gap-4">
+            {comments.map((comment) => (
+              <li key={comment.id} className="rounded-lg border p-3 text-sm">
+                <p className="whitespace-pre-wrap">{comment.body}</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {comment.author.name ?? comment.author.email} · {dateFormat.format(comment.createdAt)}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
       </SectionCard>
+      <div className="mt-6">
+        <SectionCard title={d.newMessage}>
+          <CommentForm projectId={project.id} submitLabel={d.submit} />
+        </SectionCard>
+      </div>
     </>
   )
 }

@@ -5,16 +5,21 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { allowedUploadAccept, PROJECT_FILE_CATEGORIES } from '@/lib/files/policy'
 import {
   addCustomerMembershipAction,
+  attachApprovalFilesAction,
   createApprovalRequestAction,
   createProjectAction,
+  deleteProjectFileAction,
+  postStaffProjectCommentAction,
   removeMembershipAction,
   updateChangeRequestStatusAction,
   updateCustomerAccountStatusAction,
   updateMembershipRoleAction,
   updateProjectAction,
   updateSupportRequestStatusAction,
+  uploadStaffProjectFileAction,
   upsertCustomerServiceAction,
   upsertDependencyAction,
   upsertMilestoneAction,
@@ -402,5 +407,164 @@ export function ServiceToggleForm({
     >
       {current === 'ACTIVE' ? 'Deactivate' : 'Activate'}
     </Button>
+  )
+}
+
+export function StaffFileUploadForm({ projectId, storageReady }: { projectId: string; storageReady: boolean }) {
+  const [pending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+  return (
+    <form
+      className="flex flex-col gap-2"
+      onSubmit={(e) => {
+        e.preventDefault()
+        const form = e.currentTarget
+        const data = new FormData(form)
+        data.set('projectId', projectId)
+        startTransition(async () => {
+          setError(null)
+          const result = await uploadStaffProjectFileAction(data)
+          if (!result.ok) {
+            setError(
+              result.error === 'not_configured'
+                ? 'File storage is not configured.'
+                : result.error === 'too_large'
+                  ? 'Maximum file size: 4 MB.'
+                  : result.error,
+            )
+            return
+          }
+          form.reset()
+        })
+      }}
+    >
+      <select name="category" className="rounded-md border bg-background px-2 py-1 text-sm" defaultValue="OTHER" disabled={!storageReady}>
+        {PROJECT_FILE_CATEGORIES.map((category) => (
+          <option key={category} value={category}>
+            {category}
+          </option>
+        ))}
+      </select>
+      <Input name="file" type="file" required accept={allowedUploadAccept()} disabled={!storageReady || pending} />
+      <p className="text-xs text-muted-foreground">Maximum file size: 4 MB.</p>
+      {error && <p className="text-sm text-destructive">{error}</p>}
+      <Button type="submit" size="sm" disabled={pending || !storageReady}>
+        Upload file
+      </Button>
+    </form>
+  )
+}
+
+export function DeleteFileButton({ projectId, fileId }: { projectId: string; fileId: string }) {
+  const [pending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+  return (
+    <span className="flex flex-col items-start gap-1">
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        disabled={pending}
+        onClick={() => {
+          if (!window.confirm('Delete this file from the project?')) return
+          startTransition(async () => {
+            const result = await deleteProjectFileAction(projectId, fileId)
+            if (!result.ok) {
+              setError(result.error === 'not_configured' ? 'File storage is not configured.' : 'Could not delete this file.')
+            }
+          })
+        }}
+      >
+        Delete
+      </Button>
+      {error && <span className="text-xs text-destructive">{error}</span>}
+    </span>
+  )
+}
+
+export function StaffCommentForm({ projectId }: { projectId: string }) {
+  const [body, setBody] = useState('')
+  const [visibility, setVisibility] = useState<'CUSTOMER' | 'INTERNAL'>('CUSTOMER')
+  const [pending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+  return (
+    <form
+      className="flex flex-col gap-2"
+      onSubmit={(e) => {
+        e.preventDefault()
+        startTransition(async () => {
+          setError(null)
+          const result = await postStaffProjectCommentAction(projectId, body, visibility)
+          if (!result.ok) {
+            setError(result.error)
+            return
+          }
+          setBody('')
+        })
+      }}
+    >
+      <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} required placeholder="Write a reply or internal note" />
+      <select
+        className="rounded-md border bg-background px-2 py-1 text-sm"
+        value={visibility}
+        onChange={(e) => setVisibility(e.target.value as 'CUSTOMER' | 'INTERNAL')}
+      >
+        <option value="CUSTOMER">Reply visible to customer</option>
+        <option value="INTERNAL">Internal note</option>
+      </select>
+      {error && <p className="text-sm text-destructive">{error}</p>}
+      <Button type="submit" size="sm" disabled={pending}>
+        Post
+      </Button>
+    </form>
+  )
+}
+
+export function AttachApprovalFilesForm({
+  projectId,
+  approvalId,
+  files,
+}: {
+  projectId: string
+  approvalId: string
+  files: { id: string; originalName: string }[]
+}) {
+  const [selected, setSelected] = useState<string[]>([])
+  const [pending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+  if (files.length === 0) return <p className="text-xs text-muted-foreground">No project files to attach.</p>
+  return (
+    <form
+      className="mt-2 flex flex-col gap-2"
+      onSubmit={(e) => {
+        e.preventDefault()
+        startTransition(async () => {
+          setError(null)
+          const result = await attachApprovalFilesAction(projectId, approvalId, selected)
+          if (!result.ok) {
+            setError(result.error === 'cross_project' ? 'Those files are not on this project.' : result.error)
+            return
+          }
+          setSelected([])
+        })
+      }}
+    >
+      {files.map((file) => (
+        <label key={file.id} className="flex items-center gap-2 text-xs">
+          <input
+            type="checkbox"
+            checked={selected.includes(file.id)}
+            onChange={(e) =>
+              setSelected((current) => (e.target.checked ? [...current, file.id] : current.filter((id) => id !== file.id)))
+            }
+          />
+          <span className="truncate">{file.originalName}</span>
+        </label>
+      ))}
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      <Button type="submit" size="sm" variant="outline" disabled={pending || selected.length === 0}>
+        Attach to approval
+      </Button>
+    </form>
   )
 }

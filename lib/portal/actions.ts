@@ -4,14 +4,24 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { requireCustomerMembership, requireProjectAccess } from '@/lib/portal/authz'
 import { writeProjectActivity, formatActivitySummary } from '@/lib/portal/activity'
-import { notificationHooks } from '@/lib/portal/notifications'
-import { buildStorageKey, getStorageProvider, validateUpload } from '@/lib/integrations/storage'
-import type { ChangeRequestPriority, ProjectFileCategory } from '@prisma/client'
+import { notifyStaffUsers } from '@/lib/portal/notifications'
+import { buildCustomerCommentWrite } from '@/lib/files/comments'
+import { assertFilesBelongToProject, linkProjectFiles, readUploadFromFormData, uploadProjectFile } from '@/lib/files/operations'
+import type { ChangeRequestPriority } from '@prisma/client'
 
 export type ActionResult = { ok: true } | { ok: false; error: string }
 
 function revalidateDashboard() {
   revalidatePath('/dashboard', 'layout')
+  revalidatePath('/es/dashboard', 'layout')
+}
+
+async function bestEffort(task: Promise<unknown>) {
+  try {
+    await task
+  } catch {
+    // The domain write already succeeded. Notification delivery stays best-effort.
+  }
 }
 
 export async function resolveDependencyAction(dependencyId: string): Promise<ActionResult> {
@@ -44,23 +54,28 @@ export async function resolveDependencyAction(dependencyId: string): Promise<Act
 export async function postCommentAction(projectId: string, body: string): Promise<ActionResult> {
   try {
     const { portal, project } = await requireProjectAccess(projectId)
-    const trimmed = body.trim()
-    if (!trimmed) return { ok: false, error: 'empty' }
-    await prisma.projectComment.create({
-      data: {
-        projectId: project.id,
-        authorUserId: portal.id,
-        body: trimmed,
-        visibility: 'CUSTOMER',
-      },
+    const write = buildCustomerCommentWrite({
+      projectId: project.id,
+      authorUserId: portal.id,
+      body,
     })
+    if (!write.ok) return write
+    await prisma.projectComment.create({ data: write.data })
     await writeProjectActivity({
       projectId: project.id,
       actorUserId: portal.id,
       eventType: 'COMMENT_POSTED',
-      summary: formatActivitySummary('COMMENT_POSTED', trimmed.slice(0, 80)),
+      summary: formatActivitySummary('COMMENT_POSTED', write.data.body.slice(0, 80)),
     })
-    await notificationHooks.onProjectMessage(portal.id, portal.customerAccount.id, trimmed.slice(0, 120), '/dashboard/messages')
+    await bestEffort(
+      notifyStaffUsers({
+        type: 'PROJECT_MESSAGE',
+        title: 'New customer message',
+        body: write.data.body.slice(0, 120),
+        actionUrl: `/admin/projects/${project.id}`,
+        customerAccountId: portal.customerAccount.id,
+      }),
+    )
     revalidateDashboard()
     return { ok: true }
   } catch {
@@ -112,13 +127,16 @@ export async function submitChangeRequestAction(
   title: string,
   description: string,
   priority: ChangeRequestPriority,
+  fileIds: string[] = [],
 ): Promise<ActionResult> {
   try {
     const { portal, project } = await requireProjectAccess(projectId)
     const t = title.trim()
     const d = description.trim()
     if (!t || !d) return { ok: false, error: 'empty' }
-    await prisma.changeRequest.create({
+    const filesOk = await assertFilesBelongToProject(fileIds, project.id)
+    if (!filesOk.ok) return filesOk
+    const created = await prisma.changeRequest.create({
       data: {
         projectId: project.id,
         submittedById: portal.id,
@@ -127,6 +145,23 @@ export async function submitChangeRequestAction(
         priority,
       },
     })
+    if (fileIds.length > 0) {
+      const linked = await linkProjectFiles({
+        targetProjectId: project.id,
+        fileIds,
+        changeRequestId: created.id,
+      })
+      if (!linked.ok) return linked
+      await bestEffort(
+        notifyStaffUsers({
+          type: 'GENERAL',
+          title: 'Files attached to a change request',
+          body: t,
+          actionUrl: '/admin/requests',
+          customerAccountId: portal.customerAccount.id,
+        }),
+      )
+    }
     await writeProjectActivity({
       projectId: project.id,
       actorUserId: portal.id,
@@ -140,26 +175,55 @@ export async function submitChangeRequestAction(
   }
 }
 
-export async function createSupportRequestAction(subject: string, message: string, projectId?: string): Promise<ActionResult> {
+export async function createSupportRequestAction(
+  subject: string,
+  message: string,
+  projectId?: string,
+  fileIds: string[] = [],
+): Promise<ActionResult> {
   try {
     const portal = await requireCustomerMembership()
     const s = subject.trim()
     const m = message.trim()
     if (!s || !m) return { ok: false, error: 'empty' }
+    let scopedProjectId: string | null = null
     if (projectId) {
-      await requireProjectAccess(projectId)
+      const access = await requireProjectAccess(projectId)
+      scopedProjectId = access.project.id
     }
-    await prisma.supportRequest.create({
+    if (fileIds.length > 0) {
+      if (!scopedProjectId) return { ok: false, error: 'cross_project' }
+      const filesOk = await assertFilesBelongToProject(fileIds, scopedProjectId)
+      if (!filesOk.ok) return filesOk
+    }
+    const created = await prisma.supportRequest.create({
       data: {
         customerAccountId: portal.customerAccount.id,
-        projectId: projectId || null,
+        projectId: scopedProjectId,
         subject: s,
         message: m,
       },
     })
-    if (projectId) {
+    if (fileIds.length > 0 && scopedProjectId) {
+      const linked = await linkProjectFiles({
+        targetProjectId: scopedProjectId,
+        fileIds,
+        supportRequestId: created.id,
+      })
+      if (!linked.ok) return linked
+      await bestEffort(
+        notifyStaffUsers({
+          type: 'GENERAL',
+          title: 'Files attached to a support request',
+          body: s,
+          actionUrl: '/admin/support',
+          customerAccountId: portal.customerAccount.id,
+        }),
+      )
+    }
+    if (scopedProjectId) {
       await writeProjectActivity({
-        projectId,
+        projectId: scopedProjectId,
         actorUserId: portal.id,
         eventType: 'SUPPORT_REQUEST_CREATED',
         summary: formatActivitySummary('SUPPORT_REQUEST_CREATED', s),
@@ -172,59 +236,32 @@ export async function createSupportRequestAction(subject: string, message: strin
   }
 }
 
-export async function registerUploadedFileAction(input: {
-  projectId: string
-  originalName: string
-  storageKey: string
-  mimeType: string
-  size: number
-  category: ProjectFileCategory
-}): Promise<ActionResult> {
+export async function uploadProjectFileAction(formData: FormData): Promise<ActionResult> {
   try {
-    const { portal, project } = await requireProjectAccess(input.projectId)
-    if (validateUpload(input.mimeType, input.size) !== 'ok') return { ok: false, error: 'invalid' }
-    await prisma.projectFile.create({
-      data: {
-        projectId: project.id,
-        uploadedById: portal.id,
-        originalName: input.originalName,
-        storageKey: input.storageKey,
-        mimeType: input.mimeType,
-        size: input.size,
-        category: input.category,
-      },
-    })
-    await writeProjectActivity({
-      projectId: project.id,
+    const parsed = await readUploadFromFormData(formData)
+    if (!parsed.ok) return parsed
+    const { portal, project } = await requireProjectAccess(parsed.projectId)
+    const uploaded = await uploadProjectFile({
       actorUserId: portal.id,
-      eventType: 'FILE_UPLOADED',
-      summary: formatActivitySummary('FILE_UPLOADED', input.originalName),
+      projectId: project.id,
+      originalName: parsed.originalName,
+      mimeType: parsed.mimeType,
+      size: parsed.size,
+      bytes: parsed.bytes,
+      category: parsed.category,
     })
+    if (!uploaded.ok) return uploaded
+    await bestEffort(
+      notifyStaffUsers({
+        type: 'GENERAL',
+        title: 'Customer uploaded a file',
+        body: parsed.originalName,
+        actionUrl: `/admin/projects/${project.id}`,
+        customerAccountId: portal.customerAccount.id,
+      }),
+    )
     revalidateDashboard()
     return { ok: true }
-  } catch {
-    return { ok: false, error: 'unauthorized' }
-  }
-}
-
-export async function prepareFileUploadAction(
-  projectId: string,
-  originalName: string,
-  mimeType: string,
-  size: number,
-): Promise<
-  | { ok: true; uploadUrl: string; storageKey: string }
-  | { ok: false; error: string }
-> {
-  try {
-    await requireProjectAccess(projectId)
-    const validation = validateUpload(mimeType, size)
-    if (validation !== 'ok') return { ok: false, error: validation }
-    const storageKey = buildStorageKey(projectId, originalName)
-    const provider = getStorageProvider()
-    const result = await provider.createUpload({ storageKey, mimeType, size })
-    if (!result.ok) return { ok: false, error: result.reason }
-    return { ok: true, uploadUrl: result.uploadUrl, storageKey: result.storageKey }
   } catch {
     return { ok: false, error: 'unauthorized' }
   }

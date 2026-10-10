@@ -5,15 +5,25 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { allowedUploadAccept, PROJECT_FILE_CATEGORIES } from '@/lib/files/policy'
 import {
   postCommentAction,
   respondApprovalAction,
   submitChangeRequestAction,
   createSupportRequestAction,
   resolveDependencyAction,
-  prepareFileUploadAction,
-  registerUploadedFileAction,
+  uploadProjectFileAction,
 } from '@/lib/portal/actions'
+
+function uploadErrorMessage(
+  error: string,
+  labels: { notConfigured: string; tooLarge: string; invalid: string; failed: string },
+) {
+  if (error === 'not_configured') return labels.notConfigured
+  if (error === 'too_large') return labels.tooLarge
+  if (error === 'invalid') return labels.invalid
+  return labels.failed
+}
 
 export function CommentForm({ projectId, submitLabel }: { projectId: string; submitLabel: string }) {
   const [body, setBody] = useState('')
@@ -74,14 +84,19 @@ export function ChangeRequestForm({
   projectId,
   submitLabel,
   priorityLabel,
+  attachLabel,
+  files = [],
 }: {
   projectId: string
   submitLabel: string
   priorityLabel: string
+  attachLabel: string
+  files?: { id: string; originalName: string }[]
 }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'>('NORMAL')
+  const [fileIds, setFileIds] = useState<string[]>([])
   const [pending, startTransition] = useTransition()
   return (
     <form
@@ -89,9 +104,12 @@ export function ChangeRequestForm({
       onSubmit={(e) => {
         e.preventDefault()
         startTransition(async () => {
-          await submitChangeRequestAction(projectId, title, description, priority)
-          setTitle('')
-          setDescription('')
+          const result = await submitChangeRequestAction(projectId, title, description, priority, fileIds)
+          if (result.ok) {
+            setTitle('')
+            setDescription('')
+            setFileIds([])
+          }
         })
       }}
     >
@@ -110,6 +128,9 @@ export function ChangeRequestForm({
           <option value="URGENT">Urgent</option>
         </select>
       </div>
+      {files.length > 0 && (
+        <FileCheckboxGroup label={attachLabel} files={files} selected={fileIds} onChange={setFileIds} />
+      )}
       <Button type="submit" disabled={pending}>
         {submitLabel}
       </Button>
@@ -122,14 +143,19 @@ export function SupportForm({
   submitLabel,
   subjectLabel,
   messageLabel,
+  attachLabel,
+  files = [],
 }: {
   projectId?: string
   submitLabel: string
   subjectLabel: string
   messageLabel: string
+  attachLabel?: string
+  files?: { id: string; originalName: string }[]
 }) {
   const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
+  const [fileIds, setFileIds] = useState<string[]>([])
   const [pending, startTransition] = useTransition()
   return (
     <form
@@ -137,9 +163,12 @@ export function SupportForm({
       onSubmit={(e) => {
         e.preventDefault()
         startTransition(async () => {
-          await createSupportRequestAction(subject, message, projectId)
-          setSubject('')
-          setMessage('')
+          const result = await createSupportRequestAction(subject, message, projectId, fileIds)
+          if (result.ok) {
+            setSubject('')
+            setMessage('')
+            setFileIds([])
+          }
         })
       }}
     >
@@ -151,6 +180,9 @@ export function SupportForm({
         <Label htmlFor="support-message">{messageLabel}</Label>
         <Textarea id="support-message" value={message} onChange={(e) => setMessage(e.target.value)} required rows={4} className="mt-1" />
       </div>
+      {files.length > 0 && attachLabel && (
+        <FileCheckboxGroup label={attachLabel} files={files} selected={fileIds} onChange={setFileIds} />
+      )}
       <Button type="submit" disabled={pending}>
         {submitLabel}
       </Button>
@@ -170,11 +202,19 @@ export function DependencyResolveButton({ dependencyId, label }: { dependencyId:
 export function FileUploadForm({
   projectId,
   submitLabel,
-  notConfiguredMessage,
+  categoryLabel,
+  categoryNames,
+  hint,
+  storageReady,
+  errors,
 }: {
   projectId: string
   submitLabel: string
-  notConfiguredMessage: string
+  categoryLabel: string
+  categoryNames: Record<(typeof PROJECT_FILE_CATEGORIES)[number], string>
+  hint: string
+  storageReady: boolean
+  errors: { notConfigured: string; tooLarge: string; invalid: string; failed: string }
 }) {
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -183,38 +223,72 @@ export function FileUploadForm({
       className="flex flex-col gap-3"
       onSubmit={(e) => {
         e.preventDefault()
-        const input = (e.target as HTMLFormElement).elements.namedItem('file') as HTMLInputElement
-        const file = input.files?.[0]
-        if (!file) return
+        const form = e.currentTarget
+        const data = new FormData(form)
+        data.set('projectId', projectId)
         startTransition(async () => {
           setError(null)
-          const prep = await prepareFileUploadAction(projectId, file.name, file.type || 'application/octet-stream', file.size)
-          if (!prep.ok) {
-            setError(prep.error === 'not_configured' ? notConfiguredMessage : prep.error)
+          const result = await uploadProjectFileAction(data)
+          if (!result.ok) {
+            setError(uploadErrorMessage(result.error, errors))
             return
           }
-          const upload = await fetch(prep.uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' } })
-          if (!upload.ok) {
-            setError(notConfiguredMessage)
-            return
-          }
-          await registerUploadedFileAction({
-            projectId,
-            originalName: file.name,
-            storageKey: prep.storageKey,
-            mimeType: file.type || 'application/octet-stream',
-            size: file.size,
-            category: 'OTHER',
-          })
-          input.value = ''
+          form.reset()
         })
       }}
     >
-      <Input name="file" type="file" required />
+      <div>
+        <Label htmlFor={`category-${projectId}`}>{categoryLabel}</Label>
+        <select
+          id={`category-${projectId}`}
+          name="category"
+          className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm"
+          defaultValue="OTHER"
+          disabled={!storageReady || pending}
+        >
+          {PROJECT_FILE_CATEGORIES.map((category) => (
+            <option key={category} value={category}>
+              {categoryNames[category]}
+            </option>
+          ))}
+        </select>
+      </div>
+      <Input name="file" type="file" required accept={allowedUploadAccept()} disabled={!storageReady || pending} />
+      <p className="text-xs text-muted-foreground">{hint}</p>
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" disabled={pending || !storageReady}>
         {submitLabel}
       </Button>
     </form>
+  )
+}
+
+function FileCheckboxGroup({
+  label,
+  files,
+  selected,
+  onChange,
+}: {
+  label: string
+  files: { id: string; originalName: string }[]
+  selected: string[]
+  onChange: (ids: string[]) => void
+}) {
+  return (
+    <fieldset className="flex flex-col gap-2">
+      <legend className="text-sm font-medium">{label}</legend>
+      {files.map((file) => (
+        <label key={file.id} className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={selected.includes(file.id)}
+            onChange={(e) => {
+              onChange(e.target.checked ? [...selected, file.id] : selected.filter((id) => id !== file.id))
+            }}
+          />
+          <span className="truncate">{file.originalName}</span>
+        </label>
+      ))}
+    </fieldset>
   )
 }

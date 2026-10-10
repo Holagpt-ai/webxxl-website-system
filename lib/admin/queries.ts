@@ -121,15 +121,22 @@ export async function getProjectAdminDetail(projectId: string) {
   })
   if (!project) return null
 
-  const [milestones, tasks, dependencies, approvals, changeRequests, activities] = await Promise.all([
+  const [milestones, tasks, dependencies, approvals, changeRequests, activities, files, comments] = await Promise.all([
     prisma.projectMilestone.findMany({ where: { projectId }, orderBy: { sortOrder: 'asc' } }),
     prisma.projectTask.findMany({ where: { projectId }, orderBy: { createdAt: 'asc' } }),
     prisma.projectDependency.findMany({ where: { projectId }, orderBy: { requestedFromCustomerAt: 'desc' } }),
-    prisma.projectApproval.findMany({ where: { projectId }, orderBy: { requestedAt: 'desc' } }),
+    prisma.projectApproval.findMany({
+      where: { projectId },
+      orderBy: { requestedAt: 'desc' },
+      include: { fileLinks: { include: { projectFile: { select: { id: true, originalName: true } } } } },
+    }),
     prisma.changeRequest.findMany({
       where: { projectId },
       orderBy: { createdAt: 'desc' },
-      include: { submittedBy: { select: { email: true, name: true } } },
+      include: {
+        submittedBy: { select: { email: true, name: true } },
+        fileLinks: { include: { projectFile: { select: { id: true, originalName: true } } } },
+      },
     }),
     prisma.projectActivity.findMany({
       where: { projectId },
@@ -137,9 +144,19 @@ export async function getProjectAdminDetail(projectId: string) {
       take: 25,
       include: { actor: { select: { email: true, name: true } } },
     }),
+    prisma.projectFile.findMany({
+      where: { projectId },
+      orderBy: { createdAt: 'desc' },
+      include: { uploadedBy: { select: { name: true, email: true } } },
+    }),
+    prisma.projectComment.findMany({
+      where: { projectId },
+      orderBy: { createdAt: 'asc' },
+      include: { author: { select: { name: true, email: true } } },
+    }),
   ])
 
-  return { project, milestones, tasks, dependencies, approvals, changeRequests, activities }
+  return { project, milestones, tasks, dependencies, approvals, changeRequests, activities, files, comments }
 }
 
 export async function listPendingApprovals() {
@@ -150,6 +167,7 @@ export async function listPendingApprovals() {
       project: {
         include: { customerAccount: { select: { businessName: true, id: true } } },
       },
+      fileLinks: { include: { projectFile: { select: { id: true, originalName: true } } } },
     },
   })
 }
@@ -160,6 +178,7 @@ export async function listChangeRequestQueue() {
     include: {
       project: { include: { customerAccount: { select: { businessName: true, id: true } } } },
       submittedBy: { select: { email: true, name: true } },
+      fileLinks: { include: { projectFile: { select: { id: true, originalName: true } } } },
     },
   })
 }
@@ -170,6 +189,7 @@ export async function listSupportQueue() {
     include: {
       customerAccount: { select: { businessName: true, id: true } },
       project: { select: { id: true, name: true } },
+      fileLinks: { include: { projectFile: { select: { id: true, originalName: true } } } },
     },
   })
 }

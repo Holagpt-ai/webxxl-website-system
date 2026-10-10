@@ -1,6 +1,7 @@
 import { auth } from '@/auth'
 import { prisma } from '@/lib/db'
 import type { CustomerAccount, CustomerMembership, Project, User } from '@prisma/client'
+import { canCustomerAccessProjectFile } from '@/lib/files/access'
 import { canAccessProject } from '@/lib/portal/access-rules'
 import { isAdminRole, isStaffRole } from '@/lib/admin/roles'
 
@@ -51,6 +52,46 @@ export async function requireProjectAccess(projectId: string): Promise<{ portal:
     throw new AuthError('Project access denied')
   }
   return { portal, project }
+}
+
+export async function requireProjectFileAccess(fileId: string) {
+  const portal = await requireCustomerMembership()
+  const file = await prisma.projectFile.findUnique({
+    where: { id: fileId },
+    include: { project: true },
+  })
+  if (!file || !canCustomerAccessProjectFile(portal.customerAccount.id, file.project.customerAccountId)) {
+    throw new AuthError('File access denied')
+  }
+  return { portal, file }
+}
+
+export async function requireStaffProjectFileAccess(fileId: string) {
+  const staff = await requireStaff()
+  const file = await prisma.projectFile.findUnique({
+    where: { id: fileId },
+    include: { project: true },
+  })
+  if (!file) throw new AuthError('File not found')
+  return { staff, file }
+}
+
+/** Customer members of the file's account, or any staff/admin user. */
+export async function authorizeProjectFileRead(fileId: string) {
+  const user = await requireUser()
+  const file = await prisma.projectFile.findUnique({
+    where: { id: fileId },
+    include: { project: true },
+  })
+  if (!file) throw new AuthError('File not found')
+  if (isStaffRole(user.role)) return { user, file }
+  const membership = await prisma.customerMembership.findFirst({
+    where: { userId: user.id, customerAccountId: file.project.customerAccountId },
+  })
+  if (!membership || !canCustomerAccessProjectFile(membership.customerAccountId, file.project.customerAccountId)) {
+    throw new AuthError('File access denied')
+  }
+  return { user, file }
 }
 
 /** Resolve active project for the customer account (first active, else most recent). */

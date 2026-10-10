@@ -30,6 +30,7 @@ export function formatActivitySummary(eventType: ProjectActivityEventType, detai
     DEPENDENCY_REQUESTED: 'Customer action requested',
     DEPENDENCY_RESOLVED: 'Customer action completed',
     FILE_UPLOADED: 'File uploaded',
+    FILE_DELETED: 'File removed',
     COMMENT_POSTED: 'Message posted',
     APPROVAL_REQUESTED: 'Approval requested',
     APPROVAL_APPROVED: 'Work approved',

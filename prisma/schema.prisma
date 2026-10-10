@@ -133,6 +133,7 @@ enum ProjectActivityEventType {
   DEPENDENCY_REQUESTED
   DEPENDENCY_RESOLVED
   FILE_UPLOADED
+  FILE_DELETED
   COMMENT_POSTED
   APPROVAL_REQUESTED
   APPROVAL_APPROVED
@@ -368,10 +369,32 @@ model ProjectFile {
   createdAt    DateTime            @default(now())
   updatedAt    DateTime            @updatedAt
 
-  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  uploadedBy User    @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  project    Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploadedBy User              @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  links      ProjectFileLink[]
 
   @@index([projectId])
+}
+
+/// Associates an existing project file with one workflow record.
+/// Exactly one of approval, change request, or support request is set in application code.
+model ProjectFileLink {
+  id               String   @id @default(cuid())
+  projectFileId    String
+  approvalId       String?
+  changeRequestId  String?
+  supportRequestId String?
+  createdAt        DateTime @default(now())
+
+  projectFile    ProjectFile      @relation(fields: [projectFileId], references: [id], onDelete: Cascade)
+  approval       ProjectApproval? @relation(fields: [approvalId], references: [id], onDelete: Cascade)
+  changeRequest  ChangeRequest?   @relation(fields: [changeRequestId], references: [id], onDelete: Cascade)
+  supportRequest SupportRequest?  @relation(fields: [supportRequestId], references: [id], onDelete: Cascade)
+
+  @@index([projectFileId])
+  @@index([approvalId])
+  @@index([changeRequestId])
+  @@index([supportRequestId])
 }
 
 model ProjectApproval {
@@ -385,8 +408,9 @@ model ProjectApproval {
   respondedById String?
   responseNotes String?        @db.Text
 
-  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  respondedBy User?   @relation("ApprovalResponder", fields: [respondedById], references: [id], onDelete: SetNull)
+  project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  respondedBy User?             @relation("ApprovalResponder", fields: [respondedById], references: [id], onDelete: SetNull)
+  fileLinks   ProjectFileLink[]
 
   @@index([projectId])
 }
@@ -402,8 +426,9 @@ model ChangeRequest {
   createdAt     DateTime              @default(now())
   updatedAt     DateTime              @updatedAt
 
-  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  submittedBy User    @relation(fields: [submittedById], references: [id], onDelete: Cascade)
+  project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  submittedBy User              @relation(fields: [submittedById], references: [id], onDelete: Cascade)
+  fileLinks   ProjectFileLink[]
 
   @@index([projectId])
 }
@@ -419,8 +444,9 @@ model SupportRequest {
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
 
-  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
-  project         Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  customerAccount CustomerAccount   @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  project         Project?          @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  fileLinks       ProjectFileLink[]
 
   @@index([customerAccountId])
 }
