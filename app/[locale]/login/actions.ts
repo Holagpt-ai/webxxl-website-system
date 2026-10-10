@@ -2,7 +2,8 @@
 
 import { signIn, signOut } from '@/auth'
 import { isAuthEmailConfigured } from '@/lib/integrations/email'
-import { resolveMagicLinkRedirect } from '@/lib/portal/auth-redirect'
+import { MAGIC_LINK_REDIRECT_ADMIN, resolveMagicLinkRedirect } from '@/lib/portal/auth-redirect'
+import { isStaffRole } from '@/lib/admin/roles'
 import { prisma } from '@/lib/db'
 
 export type MagicLinkResult = { ok: true } | { ok: false; reason: 'invalid' | 'not_configured' | 'not_invited' | 'failed' }
@@ -24,11 +25,17 @@ export async function requestMagicLinkAction(email: string, redirectTo: string):
   }
 
   try {
+    const staff = isStaffRole(user.role)
+    const redirectTarget = staff
+      ? redirectTo.includes('/es')
+        ? MAGIC_LINK_REDIRECT_ADMIN.es
+        : MAGIC_LINK_REDIRECT_ADMIN.en
+      : resolveMagicLinkRedirect(redirectTo)
     // Auth.js v5 reads redirectTo. callbackUrl is ignored and the magic link falls back to the login Referer.
     await signIn('email', {
       email: normalized,
       redirect: false,
-      redirectTo: resolveMagicLinkRedirect(redirectTo),
+      redirectTo: redirectTarget,
     })
     return { ok: true }
   } catch {

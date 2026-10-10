@@ -27,6 +27,10 @@ export default async function DashboardLayout({ params, children }: Props) {
   const session = await auth()
   if (!session?.user) redirect(locale === 'es' ? '/es/login' : '/login')
 
+  if (session.user.role === 'STAFF' || session.user.role === 'ADMIN') {
+    redirect(locale === 'es' ? '/es/admin' : '/admin')
+  }
+
   let portal
   try {
     portal = await requireCustomerMembership()
