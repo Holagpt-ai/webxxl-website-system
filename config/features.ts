@@ -17,6 +17,13 @@ export const features = {
   aiServices: false,
   serviceMarketplace: true,
   infrastructureManagement: true,
+  automationNotifications: true,
+  automationEmailChannel: true,
+  automationWorker: true,
+  automationRenewalReminders: true,
+  automationSmsChannel: false,
+  automationWhatsappChannel: false,
+  automationPushChannel: false,
 } as const
 
 export type FeatureFlag = keyof typeof features

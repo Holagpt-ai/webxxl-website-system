@@ -4,6 +4,7 @@ import type { ServiceOrderStatus } from '@prisma/client'
 import { getMarketplaceService, isMarketplaceServiceVisible } from '@/lib/marketplace/catalog'
 import { writeServiceOrderActivity } from '@/lib/marketplace/activity'
 import { canTransitionServiceOrder, OPEN_SERVICE_ORDER_STATUSES } from '@/lib/marketplace/transitions'
+import { automationHooks } from '@/lib/automation/hooks'
 
 function buildPublicOrderId(): string {
   return `WO-${Date.now().toString(36).toUpperCase()}`
@@ -83,6 +84,13 @@ export async function createServiceOrderRequest(input: {
     summary: `Service request submitted (${publicId})`,
     metadata: { serviceKey: input.serviceKey },
   })
+  await automationHooks.serviceOrderRequested({
+    orderId: order.id,
+    publicId: order.publicId,
+    customerAccountId: input.customerAccountId,
+    actorUserId: input.actorUserId,
+    serviceKey: input.serviceKey,
+  })
 
   return { ok: true as const, duplicate: false, orderId: order.id, publicId: order.publicId, status: order.status }
 }
@@ -121,6 +129,12 @@ export async function transitionServiceOrderStatus(input: {
       summary: 'Internal note added',
     })
   }
+  await automationHooks.serviceOrderStatusUpdated({
+    orderId: order.id,
+    publicId: order.publicId,
+    customerAccountId: order.customerAccountId,
+    status: input.nextStatus,
+  })
   return { ok: true as const, orderId: order.id, status: input.nextStatus }
 }
 
@@ -148,6 +162,13 @@ export async function setServiceOrderQuote(input: {
     summary: input.quoteAmountCents != null ? 'Quote amount updated' : 'Quote cleared',
     metadata: { quoteAmountCents: input.quoteAmountCents },
   })
+  if (input.quoteAmountCents != null) {
+    await automationHooks.serviceOrderQuoteReady({
+      orderId: order.id,
+      publicId: order.publicId,
+      customerAccountId: order.customerAccountId,
+    })
+  }
   return { ok: true as const }
 }
 
@@ -217,6 +238,11 @@ export async function activateServiceOrderEntitlement(input: {
     type: 'ENTITLEMENT_ACTIVATED',
     summary: `Entitlement ${entitlementKey} activated on customer account`,
     metadata: { customerServiceId: service.id, serviceKey: entitlementKey },
+  })
+  await automationHooks.serviceActivated({
+    orderId: order.id,
+    customerAccountId: order.customerAccountId,
+    serviceKey: entitlementKey,
   })
   return { ok: true as const, idempotent: false, customerServiceId: service.id }
 }

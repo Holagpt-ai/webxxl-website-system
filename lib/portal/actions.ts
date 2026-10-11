@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { requireCustomerMembership, requireProjectAccess } from '@/lib/portal/authz'
 import { writeProjectActivity, formatActivitySummary } from '@/lib/portal/activity'
+import { automationHooks } from '@/lib/automation/hooks'
 import { notifyStaffUsers } from '@/lib/portal/notifications'
 import { buildCustomerCommentWrite } from '@/lib/files/comments'
 import { assertFilesBelongToProject, linkProjectFiles, readUploadFromFormData, uploadProjectFile } from '@/lib/files/operations'
@@ -68,12 +69,11 @@ export async function postCommentAction(projectId: string, body: string): Promis
       summary: formatActivitySummary('COMMENT_POSTED', write.data.body.slice(0, 80)),
     })
     await bestEffort(
-      notifyStaffUsers({
-        type: 'PROJECT_MESSAGE',
-        title: 'New customer message',
-        body: write.data.body.slice(0, 120),
-        actionUrl: `/admin/projects/${project.id}`,
+      automationHooks.customerMessageReceived({
+        projectId: project.id,
         customerAccountId: portal.customerAccount.id,
+        actorUserId: portal.id,
+        preview: write.data.body.slice(0, 120),
       }),
     )
     revalidateDashboard()
@@ -115,6 +115,15 @@ export async function respondApprovalAction(
         approval.title,
       ),
     })
+    await bestEffort(
+      automationHooks.customerApprovalSubmitted({
+        approvalId: approval.id,
+        customerAccountId: portal.customerAccount.id,
+        actorUserId: portal.id,
+        title: approval.title,
+        decision,
+      }),
+    )
     revalidateDashboard()
     return { ok: true }
   } catch {
@@ -168,6 +177,14 @@ export async function submitChangeRequestAction(
       eventType: 'CHANGE_REQUEST_SUBMITTED',
       summary: formatActivitySummary('CHANGE_REQUEST_SUBMITTED', t),
     })
+    await bestEffort(
+      automationHooks.changeRequestSubmitted({
+        changeRequestId: created.id,
+        customerAccountId: portal.customerAccount.id,
+        actorUserId: portal.id,
+        title: t,
+      }),
+    )
     revalidateDashboard()
     return { ok: true }
   } catch {

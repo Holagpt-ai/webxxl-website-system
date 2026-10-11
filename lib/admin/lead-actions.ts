@@ -8,6 +8,7 @@ import { writeLeadActivity } from '@/lib/leads/activity'
 import { convertLeadToCustomer } from '@/lib/leads/conversion'
 import type { MembershipRole, ProjectType } from '@prisma/client'
 import type { CustomerAccessLocale } from '@/lib/portal/customer-access'
+import { automationHooks } from '@/lib/automation/hooks'
 
 export type LeadActionResult = { ok: true } | { ok: false; error: string }
 
@@ -57,6 +58,7 @@ export async function assignLeadAction(leadId: string, assignedToId: string | nu
       summary: assignedToId ? 'Lead assigned' : 'Lead unassigned',
       metadata: { assignedToId },
     })
+    await automationHooks.leadAssigned({ leadId, assignedToId })
     revalidateLeads()
     return { ok: true }
   } catch {

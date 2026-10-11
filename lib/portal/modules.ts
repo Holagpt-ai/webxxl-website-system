@@ -63,11 +63,18 @@ export function getDashboardNavModules(): PortalModule[] {
   const infrastructureNav: PortalModule[] = isEnabled('infrastructureManagement')
     ? [{ key: 'hosting', navLabel: 'infrastructure', route: '/dashboard/infrastructure', icon: 'server', enabled: true }]
     : []
+  const automationNav: PortalModule[] = isEnabled('automationNotifications')
+    ? [
+        { key: 'support', navLabel: 'notifications', route: '/dashboard/notifications', icon: 'lifebuoy', enabled: true },
+        { key: 'support', navLabel: 'notificationSettings', route: '/dashboard/settings/notifications', icon: 'shield', enabled: true },
+      ]
+    : []
   return [
     { key: 'project', navLabel: 'overview', route: '/dashboard', icon: 'dashboard', enabled: true },
     { key: 'project', navLabel: 'project', route: '/dashboard/project', icon: 'kanban', enabled: true },
     ...core,
     ...infrastructureNav,
+    ...automationNav,
   ]
 }
 

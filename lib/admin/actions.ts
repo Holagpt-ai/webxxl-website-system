@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db'
 import { requireAdmin, requireStaff } from '@/lib/portal/authz'
 import { writeProjectActivity, formatActivitySummary } from '@/lib/portal/activity'
 import { notificationHooks } from '@/lib/portal/notifications'
+import { automationHooks } from '@/lib/automation/hooks'
 import { syncProjectProgressFromEta } from '@/lib/admin/sync-project-eta'
 import { notifyCustomerAccountMembers } from '@/lib/admin/notify-customers'
 import { buildStaffCommentWrite } from '@/lib/files/comments'
@@ -243,6 +244,12 @@ export async function createProjectAction(input: {
       eventType: 'PROJECT_CREATED',
       summary: formatActivitySummary('PROJECT_CREATED', name),
     })
+    await automationHooks.projectCreated({
+      projectId: project.id,
+      customerAccountId: input.customerAccountId,
+      actorUserId: staff.id,
+      projectName: name,
+    })
     await syncProjectProgressFromEta(project.id)
     revalidateAdmin()
     return { ok: true, projectId: project.id }
@@ -373,13 +380,16 @@ export async function upsertMilestoneAction(
           eventType: 'MILESTONE_COMPLETED',
           summary: formatActivitySummary('MILESTONE_COMPLETED', title),
         })
-        await notifyCustomerAccountMembers({
-          customerAccountId: (await prisma.project.findUnique({ where: { id: projectId } }))!.customerAccountId,
-          type: 'MILESTONE_UPDATE',
-          title: 'Milestone completed',
-          body: title,
-          actionUrl: '/dashboard/project',
-        })
+        const projectRow = await prisma.project.findUnique({ where: { id: projectId } })
+        if (projectRow && input.id) {
+          await automationHooks.milestoneCompleted({
+            milestoneId: input.id,
+            projectId,
+            customerAccountId: projectRow.customerAccountId,
+            actorUserId: staff.id,
+            title,
+          })
+        }
       }
     } else {
       await prisma.projectMilestone.create({
@@ -562,7 +572,7 @@ export async function createApprovalRequestAction(
     const project = await loadProjectForStaff(projectId)
     const t = title.trim()
     if (!t) return { ok: false, error: 'empty' }
-    await prisma.projectApproval.create({
+    const approval = await prisma.projectApproval.create({
       data: {
         projectId,
         title: t,
@@ -576,14 +586,12 @@ export async function createApprovalRequestAction(
       eventType: 'APPROVAL_REQUESTED',
       summary: formatActivitySummary('APPROVAL_REQUESTED', t),
     })
-    const memberships = await prisma.customerMembership.findMany({
-      where: { customerAccountId: project.customerAccountId },
-      take: 1,
+    await automationHooks.approvalRequested({
+      approvalId: approval.id,
+      customerAccountId: project.customerAccountId,
+      actorUserId: staff.id,
+      title: t,
     })
-    const member = memberships[0]
-    if (member) {
-      await notificationHooks.onApprovalRequested(member.userId, project.customerAccountId, t, '/dashboard/approvals')
-    }
     revalidateAdmin()
     return { ok: true }
   } catch (e) {

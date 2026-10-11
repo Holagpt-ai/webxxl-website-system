@@ -46,6 +46,14 @@ vi.mock('@/lib/portal/activity', () => ({
   writeProjectActivity: hoisted.writeProjectActivity,
   formatActivitySummary: (type: string, detail: string) => `${type}:${detail}`,
 }))
+vi.mock('@/lib/automation/hooks', () => ({
+  automationHooks: {
+    customerMessageReceived: hoisted.notifyStaffUsers,
+    customerApprovalSubmitted: vi.fn(),
+    changeRequestSubmitted: vi.fn(),
+  },
+}))
+
 vi.mock('@/lib/portal/notifications', () => ({
   notifyStaffUsers: hoisted.notifyStaffUsers,
 }))
