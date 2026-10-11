@@ -16,6 +16,7 @@ export const features = {
   annualBilling: false,
   aiServices: false,
   serviceMarketplace: true,
+  infrastructureManagement: true,
 } as const
 
 export type FeatureFlag = keyof typeof features

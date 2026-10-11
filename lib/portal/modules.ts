@@ -1,4 +1,5 @@
 import type { IconName } from '@/lib/icons'
+import { isEnabled } from '@/config/features'
 
 export type PortalModuleKey =
   | 'project'
@@ -56,12 +57,17 @@ export function getPortalModuleRegistry(): PortalModule[] {
 }
 
 export function getDashboardNavModules(): PortalModule[] {
+  const core = REGISTRY.filter((m) =>
+    ['sites', 'files', 'messages', 'approvals', 'changeRequests', 'support', 'services'].includes(m.key),
+  )
+  const infrastructureNav: PortalModule[] = isEnabled('infrastructureManagement')
+    ? [{ key: 'hosting', navLabel: 'infrastructure', route: '/dashboard/infrastructure', icon: 'server', enabled: true }]
+    : []
   return [
     { key: 'project', navLabel: 'overview', route: '/dashboard', icon: 'dashboard', enabled: true },
     { key: 'project', navLabel: 'project', route: '/dashboard/project', icon: 'kanban', enabled: true },
-    ...REGISTRY.filter((m) =>
-      ['sites', 'files', 'messages', 'approvals', 'changeRequests', 'support', 'services'].includes(m.key),
-    ),
+    ...core,
+    ...infrastructureNav,
   ]
 }
 
