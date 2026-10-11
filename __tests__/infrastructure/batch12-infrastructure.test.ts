@@ -36,8 +36,8 @@ vi.mock('@/lib/portal/authz', () => ({
   requireStaff: hoisted.requireStaff,
 }))
 
-vi.mock('@/lib/portal/notifications', () => ({
-  notifyStaffUsers: hoisted.notifyStaff,
+vi.mock('@/lib/automation/hooks', () => ({
+  automationHooks: { infrastructureSupportRequestSubmitted: hoisted.notifyStaff },
 }))
 
 import { registerManagedDomain } from '@/lib/infrastructure/registry'

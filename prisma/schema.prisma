@@ -264,6 +264,43 @@ enum NotificationType {
   GENERAL
 }
 
+enum AutomationEventType {
+  PROJECT_CREATED
+  MILESTONE_COMPLETED
+  APPROVAL_REQUESTED
+  CUSTOMER_APPROVAL_SUBMITTED
+  CUSTOMER_MESSAGE_RECEIVED
+  CHANGE_REQUEST_SUBMITTED
+  LEAD_RECEIVED
+  LEAD_ASSIGNED
+  LEAD_FOLLOW_UP_DUE
+  LEAD_CONVERTED
+  SERVICE_ORDER_REQUESTED
+  SERVICE_ORDER_QUOTE_READY
+  SERVICE_ORDER_STATUS_UPDATED
+  SERVICE_ACTIVATED
+  DOMAIN_RENEWAL_APPROACHING
+  HOSTING_RENEWAL_APPROACHING
+  EMAIL_SERVICE_RENEWAL_APPROACHING
+  INFRASTRUCTURE_SUPPORT_REQUEST_SUBMITTED
+}
+
+enum AutomationDeliveryChannel {
+  IN_APP
+  EMAIL
+  SMS
+  WHATSAPP
+  PUSH
+}
+
+enum AutomationDeliveryStatus {
+  PENDING
+  PROCESSING
+  DELIVERED
+  FAILED
+  DEAD
+}
+
 enum LeadSource {
   CONTACT
   PROJECT_INTAKE
@@ -318,6 +355,9 @@ model User {
   requestedServiceOrders ServiceOrder[]    @relation("ServiceOrderRequester")
   serviceOrderActivities ServiceOrderActivity[] @relation("ServiceOrderActivityActor")
   infrastructureActivities InfrastructureActivity[] @relation("InfrastructureActivityActor")
+  automationEventsEmitted  AutomationEvent[]        @relation("AutomationEventActor")
+  automationDeliveries     AutomationDeliveryJob[]  @relation("AutomationDeliveryRecipient")
+  notificationPreferences  CustomerNotificationPreference[]
 }
 
 model Account {
@@ -377,6 +417,8 @@ model CustomerAccount {
   hostingServices     HostingService[]
   managedDomains      ManagedDomain[]
   businessEmailServices BusinessEmailService[]
+  automationEvents        AutomationEvent[]
+  notificationPreferences CustomerNotificationPreference[]
 }
 
 model CustomerMembership {
@@ -932,4 +974,76 @@ model InfrastructureActivity {
 
   @@index([assetType, assetId, createdAt])
   @@index([customerAccountId, createdAt])
+}
+
+model CustomerNotificationPreference {
+  id                     String   @id @default(cuid())
+  userId                 String
+  customerAccountId      String
+  projectUpdates         Boolean  @default(true)
+  messagesAndApprovals   Boolean  @default(true)
+  serviceOrders          Boolean  @default(true)
+  infrastructureRenewals Boolean  @default(true)
+  transactionalEmail     Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, customerAccountId])
+  @@index([customerAccountId])
+}
+
+model AutomationEvent {
+  id                String              @id @default(cuid())
+  dedupeKey         String              @unique
+  eventType         AutomationEventType
+  customerAccountId String?
+  actorUserId       String?
+  payload           Json
+  createdAt         DateTime            @default(now())
+
+  customerAccount CustomerAccount?        @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)
+  actor           User?                   @relation("AutomationEventActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  deliveries      AutomationDeliveryJob[]
+
+  @@index([customerAccountId, createdAt])
+  @@index([eventType, createdAt])
+}
+
+model AutomationDeliveryJob {
+  id              String                    @id @default(cuid())
+  dedupeKey       String                    @unique
+  eventId         String
+  channel         AutomationDeliveryChannel
+  status          AutomationDeliveryStatus  @default(PENDING)
+  recipientUserId String?
+  recipientEmail  String?
+  attempts        Int                       @default(0)
+  maxAttempts     Int                       @default(5)
+  nextAttemptAt   DateTime                  @default(now())
+  lastErrorClass  String?
+  providerRef     String?
+  deliveredAt     DateTime?
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+
+  event           AutomationEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  recipientUser   User?           @relation("AutomationDeliveryRecipient", fields: [recipientUserId], references: [id], onDelete: SetNull)
+
+  @@index([status, nextAttemptAt])
+  @@index([eventId])
+  @@index([recipientUserId])
+}
+
+model InfrastructureRenewalReminder {
+  id        String                  @id @default(cuid())
+  assetType InfrastructureAssetType
+  assetId   String
+  windowDays Int
+  sentAt    DateTime                @default(now())
+
+  @@unique([assetType, assetId, windowDays])
+  @@index([assetType, assetId])
 }

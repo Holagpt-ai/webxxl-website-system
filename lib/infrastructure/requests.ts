@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db'
-import { notifyStaffUsers } from '@/lib/portal/notifications'
+import { automationHooks } from '@/lib/automation/hooks'
 import { writeInfrastructureActivity } from '@/lib/infrastructure/activity'
 
 export const INFRASTRUCTURE_REQUEST_TYPES = [
@@ -96,12 +96,11 @@ export async function createInfrastructureSupportRequest(input: {
     },
   })
 
-  await notifyStaffUsers({
-    type: 'GENERAL',
-    title: 'Infrastructure service request',
-    body: subject,
-    actionUrl: '/admin/infrastructure',
+  await automationHooks.infrastructureSupportRequestSubmitted({
+    supportRequestId: ticket.id,
     customerAccountId: input.customerAccountId,
+    actorUserId: input.actorUserId,
+    subject,
   })
 
   const assetType = activityAssetForRequest(input.type)

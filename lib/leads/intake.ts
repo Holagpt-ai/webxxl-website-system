@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db'
 import type { LeadSource, Prisma } from '@prisma/client'
 import { buildLeadSubmissionFingerprint, buildReferenceCode } from '@/lib/leads/fingerprint'
 import { writeLeadActivity } from '@/lib/leads/activity'
+import { automationHooks } from '@/lib/automation/hooks'
 
 const DUPLICATE_WINDOW_MS = 15 * 60 * 1000
 
@@ -68,6 +69,7 @@ export async function persistSalesLead(input: PersistSalesLeadInput) {
     type: 'EMAIL_DELIVERED',
     summary: 'Notification email delivered to WebXXL inbox',
   })
+  await automationHooks.leadReceived({ leadId: lead.id, headline: lead.headline })
 
   return { lead, duplicate: false as const }
 }

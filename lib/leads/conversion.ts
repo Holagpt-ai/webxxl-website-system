@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db'
 import { formatActivitySummary, writeProjectActivity } from '@/lib/portal/activity'
 import { syncProjectProgressFromEta } from '@/lib/admin/sync-project-eta'
+import { automationHooks } from '@/lib/automation/hooks'
 import type { MembershipRole, ProjectType } from '@prisma/client'
 import { slugifyBusinessName } from '@/lib/leads/slug'
 import { mapIntakeProjectType } from '@/lib/leads/project-type'
@@ -228,6 +229,10 @@ export async function convertLeadToCustomer(input: ConvertLeadInput): Promise<Co
         customerAccountId: txResult.customerAccountId,
         projectId: txResult.projectId,
       },
+    })
+    await automationHooks.leadConverted({
+      leadId: txResult.leadId!,
+      customerAccountId: txResult.customerAccountId,
     })
   }
 
