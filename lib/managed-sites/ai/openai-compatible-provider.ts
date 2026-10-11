@@ -4,6 +4,9 @@ import type { AiProviderGenerateInput, AiProviderResult, ManagedSiteAiProvider }
 
 const TIMEOUT_MS = 15_000
 
+export const MAX_RESPONSE_CHARS = 20_000
+export const MANAGED_SITE_AI_MAX_TOKENS = 2500
+
 /** Provider output must be raw JSON only — no markdown fences or surrounding prose. */
 export function parseStrictProviderJsonContent(text: string): unknown {
   return JSON.parse(text.trim())
@@ -29,6 +32,7 @@ export function createOpenAiCompatibleProvider(config: {
             model: config.model,
             temperature: 0.2,
             n: 1,
+            max_tokens: MANAGED_SITE_AI_MAX_TOKENS,
             messages: [
               { role: 'system', content: buildAiContentDraftSystemPrompt(input.locale) },
               {
@@ -49,6 +53,7 @@ export function createOpenAiCompatibleProvider(config: {
         }
         const content = payload.choices?.[0]?.message?.content
         if (!content) return { ok: false, error: 'ai_invalid_output' }
+        if (content.length > MAX_RESPONSE_CHARS) return { ok: false, error: 'ai_invalid_output' }
         let parsed: unknown
         try {
           parsed = parseStrictProviderJsonContent(content)

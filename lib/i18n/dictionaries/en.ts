@@ -321,6 +321,11 @@ export const en = {
       'AI creates a draft for you to review. It cannot publish changes to your website.',
     aiContentHelper:
       'AI creates a draft for you to review. It cannot publish changes to your website.',
+    aiDescribeChange: 'Describe your change',
+    aiActionReplace: 'Replace',
+    aiActionRewrite: 'Rewrite',
+    aiActionAdd: 'Add',
+    aiActionRemove: 'Remove',
     aiGenerateDraft: 'Generate draft',
     aiDraftTitle: 'AI draft',
     aiDraftSummary: 'Summary',

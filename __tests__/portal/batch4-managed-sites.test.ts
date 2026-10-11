@@ -151,7 +151,7 @@ describe('managed site changes', () => {
       capabilityKey: 'content.edit',
       requestText: 'Change the October popup to 20% off through Halloween',
     })
-    expect(result).toMatchObject({ ok: false, error: 'ai_use_generator', applied: false })
+    expect(result).toMatchObject({ ok: false, error: 'dedicated_ai_flow_required', applied: false })
     expect(hoisted.prisma.managedSiteChange.create).not.toHaveBeenCalled()
     expect(transformManagedSiteRequest({ capabilityKey: 'content.edit', requestText: 'hello' })).toEqual({
       available: false,

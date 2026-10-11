@@ -100,64 +100,111 @@ export async function submitManagedSiteAiDraftForReview(input: {
   customerAccountId: string
   changeId: string
 }): Promise<SiteMutationResult> {
-  const change = await prisma.managedSiteChange.findUnique({
-    where: { id: input.changeId },
-    include: { managedSite: true },
-  })
-  if (!change || change.managedSite.customerAccountId !== input.customerAccountId) {
-    return { ok: false, error: 'not_found', applied: false }
-  }
-  if (change.requestedById !== input.actorUserId) return { ok: false, error: 'unauthorized', applied: false }
-  if (change.capabilityKey !== AI_CONTENT_CAPABILITY || change.executionMode !== 'AI_ASSISTED') {
-    return { ok: false, error: 'invalid', applied: false }
-  }
-  if (change.status !== 'DRAFT') return { ok: false, error: 'invalid_status', applied: false }
+  const txResult = await prisma.$transaction(async (tx) => {
+    const change = await tx.managedSiteChange.findUnique({
+      where: { id: input.changeId },
+      include: { managedSite: true },
+    })
+    if (!change || change.managedSite.customerAccountId !== input.customerAccountId) {
+      return { kind: 'error' as const, result: { ok: false, error: 'not_found', applied: false } as SiteMutationResult }
+    }
+    if (change.requestedById !== input.actorUserId) {
+      return { kind: 'error' as const, result: { ok: false, error: 'unauthorized', applied: false } as SiteMutationResult }
+    }
+    if (change.capabilityKey !== AI_CONTENT_CAPABILITY || change.executionMode !== 'AI_ASSISTED') {
+      return { kind: 'error' as const, result: { ok: false, error: 'invalid', applied: false } as SiteMutationResult }
+    }
+    if (change.status !== 'DRAFT') {
+      return { kind: 'error' as const, result: { ok: false, error: 'invalid_status', applied: false } as SiteMutationResult }
+    }
 
-  const draft = parseAiContentDraftV1(change.structuredPayload)
-  if (!draft) return { ok: false, error: 'invalid', applied: false }
+    const draft = parseAiContentDraftV1(change.structuredPayload)
+    if (!draft) {
+      return { kind: 'error' as const, result: { ok: false, error: 'invalid', applied: false } as SiteMutationResult }
+    }
 
-  const site = change.managedSite
-  if (!site.projectId) return { ok: false, error: 'project_required', applied: false, status: 'DRAFT' }
-  const project = await prisma.project.findFirst({
-    where: { id: site.projectId, customerAccountId: input.customerAccountId },
-  })
-  if (!project) return { ok: false, error: 'project_required', applied: false, status: 'DRAFT' }
+    const site = change.managedSite
+    if (!site.projectId) {
+      return {
+        kind: 'error' as const,
+        result: { ok: false, error: 'project_required', applied: false, status: 'DRAFT' } as SiteMutationResult,
+      }
+    }
+    const project = await tx.project.findFirst({
+      where: { id: site.projectId, customerAccountId: input.customerAccountId },
+    })
+    if (!project) {
+      return {
+        kind: 'error' as const,
+        result: { ok: false, error: 'project_required', applied: false, status: 'DRAFT' } as SiteMutationResult,
+      }
+    }
 
-  const definition = getCapabilityDefinition(AI_CONTENT_CAPABILITY)
-  const title = `${site.name}: ${definition?.label.en ?? 'Content update'}`
-  const description = buildAiContentChangeRequestDescription(change.requestText ?? '', draft)
-
-  const changeRequest = await prisma.changeRequest.create({
-    data: {
-      projectId: project.id,
-      submittedById: input.actorUserId,
-      managedSiteId: site.id,
-      title,
-      description,
-    },
-  })
-
-  await prisma.managedSiteChange.update({
-    where: { id: change.id },
-    data: {
-      status: 'ESCALATED',
-      changeRequestId: changeRequest.id,
-      resultMetadata: {
-        ...(typeof change.resultMetadata === 'object' && change.resultMetadata ? change.resultMetadata : {}),
-        routed: 'WEBXXL_REVIEW',
-        executed: false,
+    const claimed = await tx.managedSiteChange.updateMany({
+      where: {
+        id: change.id,
+        status: 'DRAFT',
+        requestedById: input.actorUserId,
+        capabilityKey: AI_CONTENT_CAPABILITY,
+        executionMode: 'AI_ASSISTED',
       },
-    },
+      data: { status: 'ESCALATED' },
+    })
+    if (claimed.count !== 1) {
+      return { kind: 'error' as const, result: { ok: false, error: 'invalid_status', applied: false } as SiteMutationResult }
+    }
+
+    const definition = getCapabilityDefinition(AI_CONTENT_CAPABILITY)
+    const title = `${site.name}: ${definition?.label.en ?? 'Content update'}`
+    const description = buildAiContentChangeRequestDescription(change.requestText ?? '', draft)
+
+    const changeRequest = await tx.changeRequest.create({
+      data: {
+        projectId: project.id,
+        submittedById: input.actorUserId,
+        managedSiteId: site.id,
+        title,
+        description,
+      },
+    })
+
+    await tx.managedSiteChange.update({
+      where: { id: change.id },
+      data: {
+        changeRequestId: changeRequest.id,
+        resultMetadata: {
+          ...(typeof change.resultMetadata === 'object' && change.resultMetadata ? change.resultMetadata : {}),
+          routed: 'WEBXXL_REVIEW',
+          executed: false,
+        },
+      },
+    })
+
+    return {
+      kind: 'ok' as const,
+      changeId: change.id,
+      changeRequestId: changeRequest.id,
+      projectId: project.id,
+      activitySummary: `${site.domain}: content update`,
+    }
   })
+
+  if (txResult.kind === 'error') return txResult.result
 
   await writeProjectActivity({
-    projectId: project.id,
+    projectId: txResult.projectId,
     actorUserId: input.actorUserId,
     eventType: 'CHANGE_REQUEST_SUBMITTED',
-    summary: formatActivitySummary('CHANGE_REQUEST_SUBMITTED', `${site.domain}: content update`),
+    summary: formatActivitySummary('CHANGE_REQUEST_SUBMITTED', txResult.activitySummary),
   })
 
-  return { ok: true, applied: false, status: 'ESCALATED', changeId: change.id, changeRequestId: changeRequest.id }
+  return {
+    ok: true,
+    applied: false,
+    status: 'ESCALATED',
+    changeId: txResult.changeId,
+    changeRequestId: txResult.changeRequestId,
+  }
 }
 
 export async function discardManagedSiteAiDraft(input: {
@@ -165,24 +212,34 @@ export async function discardManagedSiteAiDraft(input: {
   customerAccountId: string
   changeId: string
 }): Promise<SiteMutationResult> {
-  const change = await prisma.managedSiteChange.findUnique({
-    where: { id: input.changeId },
-    include: { managedSite: true },
-  })
-  if (!change || change.managedSite.customerAccountId !== input.customerAccountId) {
-    return { ok: false, error: 'not_found', applied: false }
-  }
-  if (change.requestedById !== input.actorUserId) return { ok: false, error: 'unauthorized', applied: false }
-  if (change.capabilityKey !== AI_CONTENT_CAPABILITY || change.executionMode !== 'AI_ASSISTED') {
-    return { ok: false, error: 'invalid', applied: false }
-  }
-  if (change.status !== 'DRAFT') return { ok: false, error: 'invalid_status', applied: false }
+  return prisma.$transaction(async (tx) => {
+    const change = await tx.managedSiteChange.findUnique({
+      where: { id: input.changeId },
+      include: { managedSite: true },
+    })
+    if (!change || change.managedSite.customerAccountId !== input.customerAccountId) {
+      return { ok: false, error: 'not_found', applied: false }
+    }
+    if (change.requestedById !== input.actorUserId) return { ok: false, error: 'unauthorized', applied: false }
+    if (change.capabilityKey !== AI_CONTENT_CAPABILITY || change.executionMode !== 'AI_ASSISTED') {
+      return { ok: false, error: 'invalid', applied: false }
+    }
+    if (change.status !== 'DRAFT') return { ok: false, error: 'invalid_status', applied: false }
 
-  await prisma.managedSiteChange.update({
-    where: { id: change.id },
-    data: { status: 'CANCELLED' },
+    const claimed = await tx.managedSiteChange.updateMany({
+      where: {
+        id: change.id,
+        status: 'DRAFT',
+        requestedById: input.actorUserId,
+        capabilityKey: AI_CONTENT_CAPABILITY,
+        executionMode: 'AI_ASSISTED',
+      },
+      data: { status: 'CANCELLED' },
+    })
+    if (claimed.count !== 1) return { ok: false, error: 'invalid_status', applied: false }
+
+    return { ok: true, applied: false, status: 'CANCELLED', changeId: change.id }
   })
-  return { ok: true, applied: false, status: 'CANCELLED', changeId: change.id }
 }
 
 export async function submitContentEditDirectToWebxxl(input: {

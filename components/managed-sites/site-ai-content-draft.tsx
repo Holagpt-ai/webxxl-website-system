@@ -39,13 +39,27 @@ export type SiteAiContentDraftDict = {
   aiAvailableLabel: string
   aiUnavailableLabel: string
   siteRequestPlaceholder: string
+  aiDescribeChange: string
+  aiActionReplace: string
+  aiActionRewrite: string
+  aiActionAdd: string
+  aiActionRemove: string
 }
 
-const ACTION_LABEL: Record<AiContentDraftV1['proposedChanges'][number]['action'], string> = {
-  replace: 'Replace',
-  rewrite: 'Rewrite',
-  add: 'Add',
-  remove: 'Remove',
+function aiActionLabel(
+  dict: SiteAiContentDraftDict,
+  action: AiContentDraftV1['proposedChanges'][number]['action'],
+): string {
+  switch (action) {
+    case 'replace':
+      return dict.aiActionReplace
+    case 'rewrite':
+      return dict.aiActionRewrite
+    case 'add':
+      return dict.aiActionAdd
+    case 'remove':
+      return dict.aiActionRemove
+  }
 }
 
 export function SiteAiContentDraft({
@@ -85,7 +99,7 @@ export function SiteAiContentDraft({
       {!activeDraft && (
         <div className="space-y-3">
           <div>
-            <Label htmlFor={`ai-content-request-${siteId}`}>Describe your change</Label>
+            <Label htmlFor={`ai-content-request-${siteId}`}>{dict.aiDescribeChange}</Label>
             <Textarea
               id={`ai-content-request-${siteId}`}
               value={requestText}
@@ -163,7 +177,8 @@ export function SiteAiContentDraft({
                     <span className="font-medium">{dict.aiDraftLocation}:</span> {change.location}
                   </p>
                   <p>
-                    <span className="font-medium">{dict.aiDraftAction}:</span> {ACTION_LABEL[change.action]}
+                    <span className="font-medium">{dict.aiDraftAction}:</span>{' '}
+                    {aiActionLabel(dict, change.action)}
                   </p>
                   <p className="mt-1 whitespace-pre-wrap">
                     <span className="font-medium">{dict.aiDraftProposedText}:</span> {change.proposedText}

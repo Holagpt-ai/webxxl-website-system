@@ -322,6 +322,11 @@ export const es: Dictionary = {
       'La IA crea un borrador para que lo revises. No puede publicar cambios en tu sitio web.',
     aiContentHelper:
       'La IA crea un borrador para que lo revises. No puede publicar cambios en tu sitio web.',
+    aiDescribeChange: 'Describe el cambio',
+    aiActionReplace: 'Reemplazar',
+    aiActionRewrite: 'Reescribir',
+    aiActionAdd: 'Agregar',
+    aiActionRemove: 'Eliminar',
     aiGenerateDraft: 'Generar borrador',
     aiDraftTitle: 'Borrador de IA',
     aiDraftSummary: 'Resumen',
