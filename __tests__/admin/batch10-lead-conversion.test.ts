@@ -176,9 +176,39 @@ describe('batch10 lead conversion', () => {
       inviteRole: 'OWNER',
       locale: 'en',
     })
-    expect(result).toMatchObject({ ok: true, customerAccountId: 'acct-1', projectId: 'proj-1', idempotent: false })
+    expect(result).toMatchObject({
+      ok: true,
+      customerAccountId: 'acct-1',
+      projectId: 'proj-1',
+      idempotent: false,
+      inviteRequested: true,
+      inviteSent: true,
+    })
     expect(hoisted.projectCreate).toHaveBeenCalledTimes(1)
     expect(hoisted.sendInvite).toHaveBeenCalled()
+  })
+
+  it('returns conversion success when invitation delivery fails', async () => {
+    hoisted.sendInvite.mockResolvedValueOnce({ ok: false, error: 'auth_email_not_configured' })
+    const result = await convertLeadToCustomer({
+      leadId: 'lead-1',
+      actorUserId: 'staff-1',
+      mode: 'create',
+      businessName: 'Acme Plumbing',
+      projectName: 'Acme website',
+      sendInvite: true,
+      inviteRole: 'OWNER',
+      locale: 'en',
+    })
+    expect(result).toMatchObject({
+      ok: true,
+      customerAccountId: 'acct-1',
+      projectId: 'proj-1',
+      inviteRequested: true,
+      inviteSent: false,
+      inviteError: 'auth_email_not_configured',
+    })
+    expect(hoisted.projectCreate).toHaveBeenCalledTimes(1)
   })
 
   it('is idempotent when lead already converted', async () => {

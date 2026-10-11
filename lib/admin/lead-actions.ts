@@ -119,7 +119,15 @@ export async function convertLeadAction(input: {
   inviteRole?: MembershipRole
   locale?: CustomerAccessLocale
 }): Promise<
-  | { ok: true; customerAccountId: string; projectId: string; idempotent: boolean; inviteSent: boolean }
+  | {
+      ok: true
+      customerAccountId: string
+      projectId: string
+      idempotent: boolean
+      inviteRequested: boolean
+      inviteSent: boolean
+      inviteError?: string
+    }
   | { ok: false; error: string }
 > {
   try {
@@ -139,7 +147,9 @@ export async function convertLeadAction(input: {
       customerAccountId: result.customerAccountId,
       projectId: result.projectId,
       idempotent: result.idempotent,
+      inviteRequested: result.inviteRequested,
       inviteSent: result.inviteSent,
+      inviteError: result.inviteError,
     }
   } catch {
     return { ok: false, error: 'unauthorized' }

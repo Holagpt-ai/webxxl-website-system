@@ -224,10 +224,19 @@ export function LeadConvertForm({
               setMessage(result.error)
               return
             }
+            const conversionLine = result.idempotent
+              ? 'Conversion already completed — no duplicate customer or project was created.'
+              : 'Conversion succeeded — customer account and project are ready.'
+            if (!result.inviteRequested) {
+              setMessage(conversionLine)
+              return
+            }
+            if (result.inviteSent) {
+              setMessage(`${conversionLine} Portal invitation sent.`)
+              return
+            }
             setMessage(
-              result.idempotent
-                ? 'Already converted — no duplicate records created.'
-                : `Converted. Invite ${result.inviteSent ? 'sent' : 'not sent'}.`,
+              `${conversionLine} Portal invitation failed (${result.inviteError ?? 'delivery_error'}). Open the customer record to resend the invitation — no need to convert again.`,
             )
           })
         }}

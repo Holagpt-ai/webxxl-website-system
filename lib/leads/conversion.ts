@@ -34,7 +34,9 @@ export type ConvertLeadResult =
       idempotent: boolean
       customerAccountId: string
       projectId: string
+      inviteRequested: boolean
       inviteSent: boolean
+      inviteError?: string
     }
   | { ok: false; error: string }
 
@@ -229,8 +231,10 @@ export async function convertLeadToCustomer(input: ConvertLeadInput): Promise<Co
     })
   }
 
+  const inviteRequested = Boolean(input.sendInvite)
   let inviteSent = false
-  if (input.sendInvite) {
+  let inviteError: string | undefined
+  if (inviteRequested) {
     const leadEmail = txResult.contactEmail ?? (await prisma.salesLead.findUnique({ where: { id: input.leadId } }))?.contactEmail
     const invite = await provisionCustomerMembershipInvite({
       customerAccountId: txResult.customerAccountId,
@@ -238,8 +242,19 @@ export async function convertLeadToCustomer(input: ConvertLeadInput): Promise<Co
       role: input.inviteRole ?? 'OWNER',
       locale,
     })
-    if (!invite.ok) return { ok: false, error: invite.error }
-    inviteSent = true
+    if (!invite.ok) {
+      inviteError = invite.error
+      const leadIdForActivity = txResult.leadId ?? input.leadId
+      await writeLeadActivity({
+        leadId: leadIdForActivity,
+        actorUserId: input.actorUserId,
+        type: 'NOTE_ADDED',
+        summary: 'Portal invitation failed after successful conversion',
+        metadata: { inviteError: invite.error },
+      })
+    } else {
+      inviteSent = true
+    }
   }
 
   return {
@@ -247,6 +262,8 @@ export async function convertLeadToCustomer(input: ConvertLeadInput): Promise<Co
     idempotent: txResult.idempotent,
     customerAccountId: txResult.customerAccountId,
     projectId: txResult.projectId,
+    inviteRequested,
     inviteSent,
+    inviteError,
   }
 }

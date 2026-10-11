@@ -1,6 +1,8 @@
 'use server'
 
-import { persistSalesLead, recordNewsletterSubscriber } from '@/lib/leads/intake'
+import { buildReferenceCode } from '@/lib/leads/fingerprint'
+import { persistSalesLead, recordNewsletterSubscriber, type PersistSalesLeadInput } from '@/lib/leads/intake'
+import { logLeadPersistenceFailure, logNewsletterPersistenceFailure } from '@/lib/leads/persistence-log'
 
 /**
  * INTEGRATION BOUNDARY — Public form submissions.
@@ -13,7 +15,9 @@ import { persistSalesLead, recordNewsletterSubscriber } from '@/lib/leads/intake
  *               LEADS_FROM_EMAIL (default onboarding@resend.dev)
  */
 
-export type SubmitResult = { ok: true; reference: string } | { ok: false; error: 'invalid' | 'spam' | 'server' }
+export type SubmitResult =
+  | { ok: true; reference: string; persistedToCrm: boolean }
+  | { ok: false; error: 'invalid' | 'spam' | 'server' }
 
 export type ContactPayload = {
   name: string
@@ -49,7 +53,6 @@ export type StrategyCallPayload = { name: string; email: string; phone?: string;
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY
 const LEADS_TO_EMAIL = process.env.LEADS_TO_EMAIL ?? 'hello@webbxxl.com'
 const LEADS_FROM_EMAIL = process.env.LEADS_FROM_EMAIL ?? 'onboarding@resend.dev'
 
@@ -64,13 +67,14 @@ function clean(value: string | undefined): string {
  * delivery is unavailable (missing key, network or API error).
  */
 async function deliverLead(kind: string, subject: string, fields: Field[]): Promise<string | null> {
-  if (!RESEND_API_KEY) return null
+  const resendApiKey = process.env.RESEND_API_KEY
+  if (!resendApiKey) return null
   const text = fields.map(([label, value]) => `${label}: ${clean(value)}`).join('\n')
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
+        Authorization: `Bearer ${resendApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -89,9 +93,27 @@ async function deliverLead(kind: string, subject: string, fields: Field[]): Prom
   }
 }
 
-function confirmation(prefix: string, id: string | null): SubmitResult {
+function confirmation(prefix: string, id: string | null, persistedToCrm = true): SubmitResult {
   if (!id) return { ok: false, error: 'server' }
-  return { ok: true, reference: `${prefix}-${id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase()}` }
+  return {
+    ok: true,
+    reference: `${prefix}-${id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase()}`,
+    persistedToCrm,
+  }
+}
+
+async function persistSalesLeadAfterEmail(input: PersistSalesLeadInput): Promise<SubmitResult> {
+  try {
+    const persisted = await persistSalesLead(input)
+    return { ok: true, reference: persisted.lead.referenceCode, persistedToCrm: true }
+  } catch {
+    logLeadPersistenceFailure({ source: input.source, resendMessageId: input.resendMessageId })
+    return {
+      ok: true,
+      reference: buildReferenceCode(input.referencePrefix, input.resendMessageId),
+      persistedToCrm: false,
+    }
+  }
 }
 
 export async function submitContact(payload: ContactPayload): Promise<SubmitResult> {
@@ -110,7 +132,7 @@ export async function submitContact(payload: ContactPayload): Promise<SubmitResu
     ['Locale', payload.locale],
   ])
   if (!id) return { ok: false, error: 'server' }
-  const persisted = await persistSalesLead({
+  return persistSalesLeadAfterEmail({
     source: 'CONTACT',
     locale: payload.locale,
     contactName: payload.name,
@@ -123,7 +145,6 @@ export async function submitContact(payload: ContactPayload): Promise<SubmitResu
     referencePrefix: 'MSG',
     resendMessageId: id,
   })
-  return { ok: true, reference: persisted.lead.referenceCode }
 }
 
 export async function submitLead(payload: LeadPayload): Promise<SubmitResult> {
@@ -135,12 +156,18 @@ export async function submitLead(payload: LeadPayload): Promise<SubmitResult> {
     ['Locale', payload.locale],
   ])
   if (!id) return { ok: false, error: 'server' }
-  await recordNewsletterSubscriber({
-    email: payload.email,
-    source: payload.source,
-    locale: payload.locale,
-  })
-  return confirmation('LEAD', id)
+  let persistedToCrm = true
+  try {
+    await recordNewsletterSubscriber({
+      email: payload.email,
+      source: payload.source,
+      locale: payload.locale,
+    })
+  } catch {
+    logNewsletterPersistenceFailure({ source: payload.source, resendMessageId: id })
+    persistedToCrm = false
+  }
+  return confirmation('LEAD', id, persistedToCrm)
 }
 
 export async function submitProjectIntake(payload: ProjectIntakePayload): Promise<SubmitResult> {
@@ -172,7 +199,7 @@ export async function submitProjectIntake(payload: ProjectIntakePayload): Promis
     ],
   )
   if (!id) return { ok: false, error: 'server' }
-  const persisted = await persistSalesLead({
+  return persistSalesLeadAfterEmail({
     source: 'PROJECT_INTAKE',
     locale: payload.locale,
     contactName: payload.contact.name,
@@ -185,7 +212,6 @@ export async function submitProjectIntake(payload: ProjectIntakePayload): Promis
     referencePrefix: 'WX',
     resendMessageId: id,
   })
-  return { ok: true, reference: persisted.lead.referenceCode }
 }
 
 export async function requestStrategyCall(payload: StrategyCallPayload): Promise<SubmitResult> {
@@ -198,7 +224,7 @@ export async function requestStrategyCall(payload: StrategyCallPayload): Promise
     ['Locale', payload.locale],
   ])
   if (!id) return { ok: false, error: 'server' }
-  const persisted = await persistSalesLead({
+  return persistSalesLeadAfterEmail({
     source: 'QUOTE_REQUEST',
     locale: payload.locale,
     contactName: payload.name,
@@ -210,5 +236,4 @@ export async function requestStrategyCall(payload: StrategyCallPayload): Promise
     referencePrefix: 'CALL',
     resendMessageId: id,
   })
-  return { ok: true, reference: persisted.lead.referenceCode }
 }

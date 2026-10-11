@@ -90,6 +90,10 @@ export default async function AdminLeadDetailPage({
                 </Link>{' '}
                 <StatusBadge label={lead.project.status} />
               </p>
+              <p className="mt-3 text-muted-foreground">
+                Portal invitations are sent separately from conversion. If an invite failed, resend it from the customer
+                memberships section — that will not create another project.
+              </p>
             </div>
           )}
           <div className="rounded-xl border bg-card p-4 text-sm">
