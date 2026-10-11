@@ -142,7 +142,7 @@ describe('managed site changes', () => {
     })
   })
 
-  it('saves an AI-assisted draft and does not execute it', async () => {
+  it('routes content.edit AI requests through the dedicated generator flow', async () => {
     const result = await submitManagedSiteChange({
       actorUserId: 'user-1',
       actor: 'customer',
@@ -151,8 +151,8 @@ describe('managed site changes', () => {
       capabilityKey: 'content.edit',
       requestText: 'Change the October popup to 20% off through Halloween',
     })
-    expect(result).toMatchObject({ ok: true, applied: false, status: 'DRAFT' })
-    expect(hoisted.prisma.changeRequest.create).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ ok: false, error: 'ai_use_generator', applied: false })
+    expect(hoisted.prisma.managedSiteChange.create).not.toHaveBeenCalled()
     expect(transformManagedSiteRequest({ capabilityKey: 'content.edit', requestText: 'hello' })).toEqual({
       available: false,
       reason: 'llm_not_connected',

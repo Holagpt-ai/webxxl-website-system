@@ -47,13 +47,17 @@ export interface ManagedSiteChangeExecutor {
 
 export type ManagedSiteAiTransformResult = { available: false; reason: 'llm_not_connected' }
 
-/** Provider-neutral placeholder. Batch 4 does not call an LLM. */
+/** Legacy placeholder for non-content AI capabilities. content.edit uses lib/managed-sites/ai/service.ts */
 export function transformManagedSiteRequest(_input: {
   capabilityKey: string
   requestText: string
 }): ManagedSiteAiTransformResult {
   return { available: false, reason: 'llm_not_connected' }
 }
+
+export { isManagedSiteAiConfigured } from '@/lib/managed-sites/ai/provider'
+export { parseAiContentDraftV1 } from '@/lib/managed-sites/ai/schema'
+export type { AiContentDraftV1 } from '@/lib/managed-sites/ai/types'
 
 export const managedSiteChangeValidator: ManagedSiteChangeValidator = {
   validate(capability, payload) {

@@ -14,6 +14,7 @@ import {
   ManagedSiteProfileForm,
 } from '@/components/managed-sites/admin-forms'
 import { isAbmedApprovalRecoveryResultMetadata } from '@/lib/managed-sites/abmed/recovery'
+import { AdminAiContentChangeDetails } from '@/components/managed-sites/admin-ai-change-details'
 
 export const dynamic = 'force-dynamic'
 
@@ -90,8 +91,12 @@ export default async function AdminSiteDetailPage({ params }: { params: Promise<
                   <p>
                     {change.capabilityKey} · {change.executionMode} · <StatusBadge label={change.status} />
                   </p>
-                  {change.requestText && <p className="mt-1 text-muted-foreground">{change.requestText}</p>}
-                  {change.resultMetadata && typeof change.resultMetadata === 'object' && (
+                  {change.capabilityKey === 'content.edit' && change.executionMode === 'AI_ASSISTED' ? (
+                    <AdminAiContentChangeDetails change={change} requestsPrefix={prefix} />
+                  ) : (
+                    change.requestText && <p className="mt-1 text-muted-foreground">{change.requestText}</p>
+                  )}
+                  {change.capabilityKey !== 'content.edit' && change.resultMetadata && typeof change.resultMetadata === 'object' && (
                     <p className="mt-1 text-xs text-muted-foreground">
                       {JSON.stringify(change.resultMetadata)}
                     </p>
