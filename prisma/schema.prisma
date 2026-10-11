@@ -189,6 +189,31 @@ enum NotificationType {
   GENERAL
 }
 
+enum LeadSource {
+  CONTACT
+  PROJECT_INTAKE
+  QUOTE_REQUEST
+}
+
+enum LeadStage {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL_SENT
+  WON
+  LOST
+}
+
+enum LeadActivityType {
+  CREATED
+  STAGE_CHANGED
+  ASSIGNED
+  NOTE_ADDED
+  FOLLOW_UP_SET
+  CONVERTED
+  EMAIL_DELIVERED
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -211,6 +236,9 @@ model User {
   activities         ProjectActivity[] @relation("ActivityActor")
   siteChangesRequested ManagedSiteChange[] @relation("ManagedSiteChangeRequester")
   siteChangesApproved  ManagedSiteChange[] @relation("ManagedSiteChangeApprover")
+  assignedLeads        SalesLead[]         @relation("LeadAssignee")
+  convertedLeads       SalesLead[]         @relation("LeadConverter")
+  leadActivities       LeadActivity[]      @relation("LeadActivityActor")
 }
 
 model Account {
@@ -265,6 +293,7 @@ model CustomerAccount {
   services        CustomerService[]
   notifications   Notification[]
   managedSites    ManagedSite[]
+  salesLeads      SalesLead[]
 }
 
 model CustomerMembership {
@@ -310,6 +339,7 @@ model Project {
   changeRequests  ChangeRequest[]
   supportRequests SupportRequest[]
   managedSites    ManagedSite[]
+  salesLeads      SalesLead[]
 
   @@index([customerAccountId])
 }
@@ -605,4 +635,67 @@ model ManagedSiteChange {
 
   @@index([managedSiteId, createdAt])
   @@index([changeRequestId])
+}
+
+model SalesLead {
+  id                    String     @id @default(cuid())
+  source                LeadSource
+  stage                 LeadStage  @default(NEW)
+  locale                String     @default("en")
+  contactName           String?
+  contactEmail          String
+  contactPhone          String?
+  businessName          String?
+  headline              String?
+  payload               Json
+  referenceCode         String     @unique
+  submissionFingerprint String
+  resendMessageId       String?
+  assignedToId          String?
+  followUpAt            DateTime?
+  internalNotes         String?    @db.Text
+  customerAccountId     String?
+  projectId             String?
+  convertedAt           DateTime?
+  convertedById         String?
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  assignedTo      User?            @relation("LeadAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  customerAccount CustomerAccount? @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)
+  project         Project?         @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  convertedBy     User?            @relation("LeadConverter", fields: [convertedById], references: [id], onDelete: SetNull)
+  activities      LeadActivity[]
+
+  @@index([stage, createdAt])
+  @@index([contactEmail])
+  @@index([assignedToId])
+  @@index([submissionFingerprint, createdAt])
+  @@index([customerAccountId])
+}
+
+model LeadActivity {
+  id          String           @id @default(cuid())
+  leadId      String
+  actorUserId String?
+  type        LeadActivityType
+  summary     String
+  metadata    Json?
+  createdAt   DateTime         @default(now())
+
+  lead  SalesLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  actor User?     @relation("LeadActivityActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([leadId, createdAt])
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String
+  source    String
+  locale    String   @default("en")
+  createdAt DateTime @default(now())
+
+  @@unique([email, source])
+  @@index([email])
 }
