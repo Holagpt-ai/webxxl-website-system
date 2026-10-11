@@ -88,9 +88,9 @@ export function formatCampaignCustomerState(
   if (status === 'paused') return labels.campaignStatePaused
   if (status === 'archived') return labels.campaignStateArchived
   if (derived === 'expired') return labels.campaignStateEnded
-  if (derived === 'scheduled') return labels.campaignStateScheduled
-  if (derived === 'active') return labels.campaignStateLive
   if (status === 'approved' && !campaign.publishedAt) return labels.campaignStateApprovedNotLive
+  if (derived === 'scheduled') return labels.campaignStateScheduled
+  if (derived === 'active' && campaign.publishedAt) return labels.campaignStateLive
   return labels.campaignStateUnknown
 }
 

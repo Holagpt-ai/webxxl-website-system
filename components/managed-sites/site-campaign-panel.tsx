@@ -97,8 +97,17 @@ export function SiteCampaignPanel({
 
   useEffect(() => {
     setForm(editTarget ? campaignToFormFields(editTarget) : emptyCampaignFormFields())
-    setMessage(null)
   }, [editTarget])
+
+  function beginEdit(campaign: AbmedRemoteCampaign) {
+    setMessage(null)
+    setEditTarget(campaign)
+  }
+
+  function cancelEdit() {
+    setMessage(null)
+    setEditTarget(null)
+  }
 
   const showForm = connected && canWrite
 
@@ -142,7 +151,7 @@ export function SiteCampaignPanel({
                       {dict.campaignDetailsToggle}
                     </Button>
                     {canWrite && campaign.status === 'draft' && (
-                      <Button type="button" size="sm" variant="secondary" onClick={() => setEditTarget(campaign)}>
+                      <Button type="button" size="sm" variant="secondary" onClick={() => beginEdit(campaign)}>
                         {dict.abmedCampaignEditDraft}
                       </Button>
                     )}
@@ -185,8 +194,8 @@ export function SiteCampaignPanel({
                 setMessage(result.error === 'version_conflict' ? dict.abmedCampaignVersionConflict : dict.abmedCampaignsUnavailable)
                 return
               }
-              setMessage(dict.campaignSubmitSuccess)
               setEditTarget(null)
+              setMessage(dict.campaignSubmitSuccess)
             })
           }}
         >
@@ -321,7 +330,7 @@ export function SiteCampaignPanel({
               {editTarget ? dict.campaignSubmitEdit : dict.campaignSubmitCreate}
             </Button>
             {editTarget && (
-              <Button type="button" size="sm" variant="outline" disabled={pending} onClick={() => setEditTarget(null)}>
+              <Button type="button" size="sm" variant="outline" disabled={pending} onClick={cancelEdit}>
                 {dict.cancelEdit}
               </Button>
             )}

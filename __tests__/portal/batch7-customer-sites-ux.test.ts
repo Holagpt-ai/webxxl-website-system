@@ -144,8 +144,19 @@ describe('batch7 customer sites UX helpers', () => {
       labels.campaignStateLive,
     )
     expect(
+      formatCampaignCustomerState(sampleCampaign({ status: 'approved', derivedState: 'active', publishedAt: null }), stateLabels),
+    ).toBe(labels.campaignStateApprovedNotLive)
+    expect(
       formatCampaignCustomerState(sampleCampaign({ status: 'approved', derivedState: 'approved', publishedAt: null }), stateLabels),
     ).toBe(labels.campaignStateApprovedNotLive)
+  })
+
+  it('success message is not cleared by editTarget form sync effect', () => {
+    const panel = readFileSync(resolve('components/managed-sites/site-campaign-panel.tsx'), 'utf8')
+    const editTargetEffect = panel.match(/useEffect\(\(\) => \{[\s\S]*?\}, \[editTarget\]\)/)
+    expect(editTargetEffect).toBeTruthy()
+    expect(editTargetEffect![0]).not.toContain('setMessage(null)')
+    expect(panel).toMatch(/setEditTarget\(null\)\s*\n\s*setMessage\(dict\.campaignSubmitSuccess\)/)
   })
 
   it('19 hides write form when remote unavailable', () => {
