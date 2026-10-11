@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db'
 import { requireCustomerMembership } from '@/lib/portal/authz'
 import { updateCustomerNotificationPreference } from '@/lib/automation/preferences'
 import { isEnabled } from '@/config/features'
+import { customerNotificationWhere } from '@/lib/portal/notification-scope'
 
 export type AutomationCustomerActionResult = { ok: true } | { ok: false; error: string }
 
@@ -20,7 +21,10 @@ export async function markNotificationReadAction(notificationId: string): Promis
   try {
     const portal = await requireCustomerMembership()
     const row = await prisma.notification.findFirst({
-      where: { id: notificationId, userId: portal.id },
+      where: {
+        id: notificationId,
+        ...customerNotificationWhere(portal.id, portal.customerAccount.id),
+      },
     })
     if (!row) return { ok: false, error: 'not_found' }
     if (!row.readAt) {
@@ -38,7 +42,7 @@ export async function markAllNotificationsReadAction(): Promise<AutomationCustom
   try {
     const portal = await requireCustomerMembership()
     await prisma.notification.updateMany({
-      where: { userId: portal.id, readAt: null },
+      where: { ...customerNotificationWhere(portal.id, portal.customerAccount.id), readAt: null },
       data: { readAt: new Date() },
     })
     revalidateCustomerAutomation()
