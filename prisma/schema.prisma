@@ -138,6 +138,61 @@ enum ServiceOrderActivityType {
   ENTITLEMENT_ACTIVATED
 }
 
+enum InfrastructureDataSource {
+  MANUAL
+  PROVIDER_VERIFIED
+}
+
+enum InfrastructureManagementMode {
+  MANUAL
+  PROVIDER_READONLY
+  PROVIDER_SYNC_READY
+}
+
+enum HostingServiceStatus {
+  ACTIVE
+  PENDING
+  SUSPENDED
+  CANCELLED
+  UNKNOWN
+}
+
+enum HostingSslStatus {
+  UNKNOWN
+  NOT_APPLICABLE
+  PENDING
+  ACTIVE
+  EXPIRED
+}
+
+enum DomainRenewalStatus {
+  UNKNOWN
+  AUTO
+  MANUAL
+  PENDING
+  EXPIRED
+}
+
+enum DomainVerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+}
+
+enum BusinessEmailServiceStatus {
+  ACTIVE
+  PENDING
+  SUSPENDED
+  CANCELLED
+  UNKNOWN
+}
+
+enum InfrastructureAssetType {
+  HOSTING
+  DOMAIN
+  EMAIL
+}
+
 enum ProjectFileCategory {
   BRAND
   PHOTO
@@ -262,6 +317,7 @@ model User {
   assignedServiceOrders ServiceOrder[]     @relation("ServiceOrderAssignee")
   requestedServiceOrders ServiceOrder[]    @relation("ServiceOrderRequester")
   serviceOrderActivities ServiceOrderActivity[] @relation("ServiceOrderActivityActor")
+  infrastructureActivities InfrastructureActivity[] @relation("InfrastructureActivityActor")
 }
 
 model Account {
@@ -317,7 +373,10 @@ model CustomerAccount {
   notifications   Notification[]
   managedSites    ManagedSite[]
   salesLeads      SalesLead[]
-  serviceOrders   ServiceOrder[]
+  serviceOrders       ServiceOrder[]
+  hostingServices     HostingService[]
+  managedDomains      ManagedDomain[]
+  businessEmailServices BusinessEmailService[]
 }
 
 model CustomerMembership {
@@ -365,6 +424,7 @@ model Project {
   managedSites    ManagedSite[]
   salesLeads      SalesLead[]
   serviceOrders   ServiceOrder[]
+  hostingServices HostingService[]
 
   @@index([customerAccountId])
 }
@@ -771,4 +831,105 @@ model ServiceOrderActivity {
   actor User?        @relation("ServiceOrderActivityActor", fields: [actorUserId], references: [id], onDelete: SetNull)
 
   @@index([orderId, createdAt])
+}
+
+model HostingService {
+  id                  String                     @id @default(cuid())
+  publicId            String                     @unique
+  customerAccountId   String
+  projectId           String?
+  providerId          String
+  externalProviderRef String?
+  planLabel           String?
+  primaryDomain       String?
+  managedDomainId     String?
+  status              HostingServiceStatus       @default(PENDING)
+  startedAt           DateTime?
+  renewsAt            DateTime?
+  sslStatus           HostingSslStatus           @default(UNKNOWN)
+  managementMode      InfrastructureManagementMode @default(MANUAL)
+  dataSource          InfrastructureDataSource     @default(MANUAL)
+  notes               String?                    @db.Text
+  internalNotes       String?                    @db.Text
+  metadata            Json?
+  syncRequestedAt     DateTime?
+  createdAt           DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  project         Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  managedDomain   ManagedDomain?  @relation(fields: [managedDomainId], references: [id], onDelete: SetNull)
+
+  @@index([customerAccountId])
+  @@index([projectId])
+}
+
+model ManagedDomain {
+  id                  String                   @id @default(cuid())
+  publicId            String                   @unique
+  customerAccountId   String
+  domainName          String
+  registrar           String?
+  registeredAt        DateTime?
+  expiresAt           DateTime?
+  renewalStatus       DomainRenewalStatus      @default(UNKNOWN)
+  nameservers         Json?
+  dnsProviderId       String?
+  verificationStatus  DomainVerificationStatus @default(UNVERIFIED)
+  dataSource          InfrastructureDataSource @default(MANUAL)
+  providerReference   String?
+  internalNotes       String?                  @db.Text
+  metadata            Json?
+  syncRequestedAt     DateTime?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+
+  customerAccount     CustomerAccount      @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  hostingServices     HostingService[]
+  businessEmailServices BusinessEmailService[]
+
+  @@unique([customerAccountId, domainName])
+  @@index([customerAccountId])
+  @@index([expiresAt])
+}
+
+model BusinessEmailService {
+  id                  String                     @id @default(cuid())
+  publicId            String                     @unique
+  customerAccountId   String
+  managedDomainId     String?
+  providerId          String
+  planLabel           String?
+  mailboxCount        Int                        @default(0)
+  renewsAt            DateTime?
+  status              BusinessEmailServiceStatus @default(PENDING)
+  externalProviderRef String?
+  dataSource          InfrastructureDataSource   @default(MANUAL)
+  internalNotes       String?                    @db.Text
+  metadata            Json?
+  syncRequestedAt     DateTime?
+  createdAt           DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  managedDomain   ManagedDomain?  @relation(fields: [managedDomainId], references: [id], onDelete: SetNull)
+
+  @@index([customerAccountId])
+  @@index([managedDomainId])
+}
+
+model InfrastructureActivity {
+  id            String                  @id @default(cuid())
+  assetType     InfrastructureAssetType
+  assetId       String
+  customerAccountId String
+  actorUserId   String?
+  summary       String
+  metadata      Json?
+  createdAt     DateTime                @default(now())
+
+  actor User? @relation("InfrastructureActivityActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([assetType, assetId, createdAt])
+  @@index([customerAccountId, createdAt])
 }
