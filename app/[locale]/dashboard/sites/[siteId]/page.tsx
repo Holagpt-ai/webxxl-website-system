@@ -16,6 +16,8 @@ import { StatusBadge, SectionCard } from '@/components/dashboard/primitives'
 import { SiteCampaignPanel } from '@/components/managed-sites/site-campaign-panel'
 import { SiteWebsiteChangesSection } from '@/components/managed-sites/site-website-changes'
 import { listAbmedCampaignSummariesForSite } from '@/lib/managed-sites/abmed/queries'
+import { isManagedSiteAiConfigured } from '@/lib/managed-sites/ai/provider'
+import { getCustomerAiContentDraft } from '@/lib/managed-sites/queries-ai'
 import { Button } from '@/components/ui/button'
 
 export const dynamic = 'force-dynamic'
@@ -64,6 +66,13 @@ export default async function ManagedSiteDetailPage({ params }: { params: Promis
     activityTitleContentUpdate: d.activityTitleContentUpdate,
     activityTitleCustomWork: d.activityTitleCustomWork,
   }
+
+  const aiContentDraft = await getCustomerAiContentDraft({
+    siteId: site.id,
+    customerAccountId: portal.customerAccount.id,
+    userId: portal.id,
+  })
+  const aiConfigured = isManagedSiteAiConfigured()
 
   const dateFormatter = new Intl.DateTimeFormat(language === 'es' ? 'es-US' : 'en-US', {
     dateStyle: 'medium',
@@ -117,6 +126,8 @@ export default async function ManagedSiteDetailPage({ params }: { params: Promis
           connected={connection.state === 'connected'}
           dict={d}
           messages={messages}
+          aiConfigured={aiConfigured}
+          aiContentDraft={aiContentDraft}
         />
 
         {site.changes.length > 0 && (

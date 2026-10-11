@@ -1,5 +1,7 @@
 import type { EffectiveCapability } from '@/lib/managed-sites/capabilities'
 import { SiteCapabilityRequestForm } from '@/components/managed-sites/request-form'
+import { SiteAiContentDraft, type SiteAiContentDraftDict } from '@/components/managed-sites/site-ai-content-draft'
+import type { AiContentDraftV1 } from '@/lib/managed-sites/ai/types'
 
 type WebsiteChangesDict = {
   websiteChangesTitle: string
@@ -8,6 +10,11 @@ type WebsiteChangesDict = {
   websiteChangesAiHint: string
   requestChange: string
   siteRequestPlaceholder: string
+  changeSaved: string
+  changeUnavailable: string
+  changeEscalated: string
+  aiDraftSaved: string
+  projectRequired: string
 }
 
 export function SiteWebsiteChangesSection({
@@ -17,18 +24,14 @@ export function SiteWebsiteChangesSection({
   connected,
   dict,
   messages,
+  aiConfigured,
+  aiContentDraft,
 }: {
   capabilities: EffectiveCapability[]
   locale: string
   siteId: string
   connected: boolean
-  dict: WebsiteChangesDict & {
-    changeSaved: string
-    changeUnavailable: string
-    changeEscalated: string
-    aiDraftSaved: string
-    projectRequired: string
-  }
+  dict: WebsiteChangesDict & SiteAiContentDraftDict
   messages: {
     saved: string
     unavailable: string
@@ -37,9 +40,12 @@ export function SiteWebsiteChangesSection({
     projectRequired: string
     failed: string
   }
+  aiConfigured: boolean
+  aiContentDraft: { changeId: string; requestText: string; draft: AiContentDraftV1 } | null
 }) {
   if (capabilities.length === 0) return null
   const language = locale === 'es' ? 'es' : 'en'
+  const portalLocale = locale === 'es' ? 'es' : 'en'
 
   return (
     <section className="rounded-xl border bg-card p-5 shadow-sm">
@@ -55,19 +61,26 @@ export function SiteWebsiteChangesSection({
             {item.executionMode === 'HUMAN_REQUIRED' && (
               <p className="mt-2 text-sm text-muted-foreground">{dict.websiteChangesHumanHint}</p>
             )}
-            {item.executionMode === 'AI_ASSISTED' && (
-              <p className="mt-2 text-sm text-muted-foreground">{dict.websiteChangesAiHint}</p>
-            )}
-            {(item.executionMode === 'SELF_SERVICE' || item.executionMode === 'HUMAN_REQUIRED' || item.executionMode === 'AI_ASSISTED') && (
-              <SiteCapabilityRequestForm
+            {item.key === 'content.edit' && item.executionMode === 'AI_ASSISTED' ? (
+              <SiteAiContentDraft
                 siteId={siteId}
-                capabilityKey={item.key}
-                submitLabel={dict.requestChange}
-                placeholder={dict.siteRequestPlaceholder}
-                messages={messages}
-                disabled={!connected && item.executionMode === 'SELF_SERVICE'}
-                disabledMessage={dict.changeUnavailable}
+                locale={portalLocale}
+                aiConfigured={aiConfigured}
+                initialDraft={aiContentDraft}
+                dict={dict}
               />
+            ) : (
+              (item.executionMode === 'SELF_SERVICE' || item.executionMode === 'HUMAN_REQUIRED') && (
+                <SiteCapabilityRequestForm
+                  siteId={siteId}
+                  capabilityKey={item.key}
+                  submitLabel={dict.requestChange}
+                  placeholder={dict.siteRequestPlaceholder}
+                  messages={messages}
+                  disabled={!connected && item.executionMode === 'SELF_SERVICE'}
+                  disabledMessage={dict.changeUnavailable}
+                />
+              )
             )}
           </li>
         ))}

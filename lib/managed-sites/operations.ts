@@ -108,6 +108,9 @@ export async function submitManagedSiteChange(input: {
   }
 
   if (decision.mode === 'AI_ASSISTED') {
+    if (input.capabilityKey === 'content.edit') {
+      return { ok: false, error: 'dedicated_ai_flow_required', applied: false }
+    }
     const ai = transformManagedSiteRequest({ capabilityKey: input.capabilityKey, requestText })
     const change = await prisma.managedSiteChange.create({
       data: {

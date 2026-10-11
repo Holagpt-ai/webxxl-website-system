@@ -83,8 +83,8 @@ export const CAPABILITY_DEFINITIONS: readonly CapabilityDefinition[] = [
     key: 'content.edit',
     label: { en: 'Edit content', es: 'Editar contenido' },
     description: {
-      en: 'Describe a content change. AI drafting is not connected yet.',
-      es: 'Describe un cambio de contenido. La redacción con IA aún no está conectada.',
+      en: 'Describe a website content change and create a draft for review.',
+      es: 'Describe un cambio de contenido del sitio y crea un borrador para revisión.',
     },
     executionMode: 'AI_ASSISTED',
     requiresApproval: true,
