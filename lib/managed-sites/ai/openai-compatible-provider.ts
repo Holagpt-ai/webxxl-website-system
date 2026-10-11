@@ -4,17 +4,9 @@ import type { AiProviderGenerateInput, AiProviderResult, ManagedSiteAiProvider }
 
 const TIMEOUT_MS = 15_000
 
-function extractJsonObject(text: string): unknown {
-  const trimmed = text.trim()
-  try {
-    return JSON.parse(trimmed)
-  } catch {
-    const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i)
-    if (fenced?.[1]) {
-      return JSON.parse(fenced[1].trim())
-    }
-    throw new Error('invalid_json')
-  }
+/** Provider output must be raw JSON only — no markdown fences or surrounding prose. */
+export function parseStrictProviderJsonContent(text: string): unknown {
+  return JSON.parse(text.trim())
 }
 
 export function createOpenAiCompatibleProvider(config: {
@@ -59,7 +51,7 @@ export function createOpenAiCompatibleProvider(config: {
         if (!content) return { ok: false, error: 'ai_invalid_output' }
         let parsed: unknown
         try {
-          parsed = extractJsonObject(content)
+          parsed = parseStrictProviderJsonContent(content)
         } catch {
           return { ok: false, error: 'ai_invalid_output' }
         }

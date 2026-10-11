@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { parseAiContentDraftV1, assertAiDraftHasNoBlockedKeys } from '@/lib/managed-sites/ai/schema'
 import { buildAiContentDraftUserPrompt } from '@/lib/managed-sites/ai/prompt'
+import { parseStrictProviderJsonContent } from '@/lib/managed-sites/ai/openai-compatible-provider'
 import { isManagedSiteAiConfigured } from '@/lib/managed-sites/ai/provider'
 import { buildAiContentChangeRequestDescription } from '@/lib/managed-sites/ai/change-request-description'
 import { getDictionary } from '@/lib/i18n/dictionaries'
@@ -138,6 +139,18 @@ describe('batch8 AI content draft schema', () => {
     expect(parseAiContentDraftV1({ ...validDraft, adapterKey: 'abmed' })).toBeNull()
     expect(parseAiContentDraftV1({ ...validDraft, executionMode: 'APPLIED' })).toBeNull()
     expect(assertAiDraftHasNoBlockedKeys(injection!)).toBe(true)
+  })
+})
+
+describe('batch8 strict provider JSON parsing', () => {
+  it('accepts raw JSON object content', () => {
+    const parsed = parseStrictProviderJsonContent(JSON.stringify(validDraft))
+    expect(parsed).toEqual(validDraft)
+  })
+
+  it('rejects markdown-fenced JSON', () => {
+    const fenced = '```json\n' + JSON.stringify(validDraft) + '\n```'
+    expect(() => parseStrictProviderJsonContent(fenced)).toThrow()
   })
 })
 
