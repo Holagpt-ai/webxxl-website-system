@@ -6,6 +6,10 @@ import { getSchedulerLaunchUrl, getSchedulerStatus } from '@/lib/integrations/sc
 import { PageTitle, SectionCard, StatusBadge } from '@/components/dashboard/primitives'
 import { LocaleLink } from '@/components/site/primitives'
 import { Button } from '@/components/ui/button'
+import { isEnabled } from '@/config/features'
+import { listVisibleMarketplaceServices } from '@/lib/marketplace/catalog'
+import { listCustomerServiceOrders } from '@/lib/marketplace/queries'
+import { MarketplacePanel } from '@/components/dashboard/marketplace-panel'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,18 +17,55 @@ export default async function ServicesPage({ params }: { params: Promise<{ local
   const { locale, dict } = await getPageContext(params)
   const portal = await requireCustomerMembership()
   const d = dict.dashboard
+  const loc = locale === 'es' ? 'es' : 'en'
 
-  const services = await prisma.customerService.findMany({
-    where: { customerAccountId: portal.customerAccount.id },
-  })
+  const [services, projects, orders] = await Promise.all([
+    prisma.customerService.findMany({ where: { customerAccountId: portal.customerAccount.id } }),
+    prisma.project.findMany({
+      where: { customerAccountId: portal.customerAccount.id, status: { in: ['ACTIVE', 'DRAFT', 'ON_HOLD'] } },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    }),
+    listCustomerServiceOrders(portal.customerAccount.id),
+  ])
+
   const activeKeys = new Set(services.filter((s) => s.status === 'ACTIVE').map((s) => s.serviceKey))
   const modules = getServiceModules(activeKeys)
   const schedulerActive = activeKeys.has('scheduler')
   const schedulerStatus = schedulerActive ? await getSchedulerStatus() : null
+  const marketplaceEnabled = isEnabled('serviceMarketplace')
 
   return (
     <>
       <PageTitle title={d.servicesTitle} description={d.servicesDescription} />
+
+      {marketplaceEnabled && (
+        <div className="mb-10">
+          <MarketplacePanel
+            locale={loc}
+            services={listVisibleMarketplaceServices()}
+            activeEntitlements={activeKeys}
+            projects={projects}
+            orders={orders}
+            dict={{
+              marketplaceBrowse: d.marketplaceBrowse,
+              marketplaceRequestAddon: d.marketplaceRequestAddon,
+              marketplaceOrderHistory: d.marketplaceOrderHistory,
+              marketplaceAlreadyActive: d.marketplaceAlreadyActive,
+              marketplaceComingSoon: d.marketplaceComingSoon,
+              marketplaceUnavailable: d.marketplaceUnavailable,
+              marketplaceSelectProject: d.marketplaceSelectProject,
+              marketplaceRequestSubmitted: d.marketplaceRequestSubmitted,
+              marketplaceDuplicateOrder: d.marketplaceDuplicateOrder,
+              marketplaceNoPayment: d.marketplaceNoPayment,
+              marketplaceActiveOnAccount: d.marketplaceActiveOnAccount,
+              marketplaceCategoryLabels: d.marketplaceCategoryLabels,
+            }}
+          />
+        </div>
+      )}
+
+      <h2 className="mb-4 text-lg font-semibold">{d.marketplaceEntitlementsTitle}</h2>
       <div className="grid gap-4 sm:grid-cols-2">
         {modules.map((mod) => {
           const service = services.find((s) => s.serviceKey === mod.entitlementRequired || s.serviceKey === mod.key)

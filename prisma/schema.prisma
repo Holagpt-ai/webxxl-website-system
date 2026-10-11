@@ -118,6 +118,26 @@ enum CustomerServiceStatus {
   INACTIVE
 }
 
+enum ServiceOrderStatus {
+  REQUESTED
+  UNDER_REVIEW
+  QUOTED
+  APPROVED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  REJECTED
+}
+
+enum ServiceOrderActivityType {
+  CREATED
+  STATUS_CHANGED
+  ASSIGNED
+  QUOTE_SET
+  NOTE_ADDED
+  ENTITLEMENT_ACTIVATED
+}
+
 enum ProjectFileCategory {
   BRAND
   PHOTO
@@ -239,6 +259,9 @@ model User {
   assignedLeads        SalesLead[]         @relation("LeadAssignee")
   convertedLeads       SalesLead[]         @relation("LeadConverter")
   leadActivities       LeadActivity[]      @relation("LeadActivityActor")
+  assignedServiceOrders ServiceOrder[]     @relation("ServiceOrderAssignee")
+  requestedServiceOrders ServiceOrder[]    @relation("ServiceOrderRequester")
+  serviceOrderActivities ServiceOrderActivity[] @relation("ServiceOrderActivityActor")
 }
 
 model Account {
@@ -294,6 +317,7 @@ model CustomerAccount {
   notifications   Notification[]
   managedSites    ManagedSite[]
   salesLeads      SalesLead[]
+  serviceOrders   ServiceOrder[]
 }
 
 model CustomerMembership {
@@ -340,6 +364,7 @@ model Project {
   supportRequests SupportRequest[]
   managedSites    ManagedSite[]
   salesLeads      SalesLead[]
+  serviceOrders   ServiceOrder[]
 
   @@index([customerAccountId])
 }
@@ -698,4 +723,52 @@ model NewsletterSubscriber {
 
   @@unique([email, source])
   @@index([email])
+}
+
+model ServiceOrder {
+  id                  String             @id @default(cuid())
+  publicId            String             @unique
+  customerAccountId   String
+  projectId           String?
+  requestedById       String
+  serviceKey          String
+  status              ServiceOrderStatus @default(REQUESTED)
+  customerNotes       String?            @db.Text
+  assignedToId        String?
+  internalNotes       String?            @db.Text
+  quoteAmountCents    Int?
+  quoteCurrency       String?            @default("USD")
+  quoteNotes          String?            @db.Text
+  billingProvider     String?
+  billingProviderRef  String?
+  customerServiceId   String?
+  submissionFingerprint String
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  project         Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  requestedBy     User            @relation("ServiceOrderRequester", fields: [requestedById], references: [id], onDelete: Cascade)
+  assignedTo      User?           @relation("ServiceOrderAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  activities      ServiceOrderActivity[]
+
+  @@index([customerAccountId, createdAt])
+  @@index([status, createdAt])
+  @@index([serviceKey])
+  @@index([submissionFingerprint, createdAt])
+}
+
+model ServiceOrderActivity {
+  id          String                   @id @default(cuid())
+  orderId     String
+  actorUserId String?
+  type        ServiceOrderActivityType
+  summary     String
+  metadata    Json?
+  createdAt   DateTime                 @default(now())
+
+  order ServiceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  actor User?        @relation("ServiceOrderActivityActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
 }
