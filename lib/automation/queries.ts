@@ -1,12 +1,10 @@
 import { prisma } from '@/lib/db'
 import type { AutomationDeliveryStatus } from '@prisma/client'
+import { customerNotificationWhere } from '@/lib/portal/notification-scope'
 
-export async function listCustomerNotifications(userId: string, customerAccountId?: string) {
+export async function listCustomerNotifications(userId: string, customerAccountId: string) {
   return prisma.notification.findMany({
-    where: {
-      userId,
-      ...(customerAccountId ? { OR: [{ customerAccountId }, { customerAccountId: null }] } : {}),
-    },
+    where: customerNotificationWhere(userId, customerAccountId),
     orderBy: { createdAt: 'desc' },
     take: 100,
   })

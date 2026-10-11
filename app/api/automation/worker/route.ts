@@ -6,6 +6,10 @@ import { isEnabled } from '@/config/features'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
+export async function GET() {
+  return NextResponse.json({ ok: false, error: 'method_not_allowed' }, { status: 405 })
+}
+
 export async function POST(request: Request) {
   if (!isEnabled('automationWorker')) {
     return NextResponse.json({ ok: false, error: 'disabled' }, { status: 404 })
