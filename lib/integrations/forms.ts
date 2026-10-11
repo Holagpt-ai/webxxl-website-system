@@ -1,5 +1,7 @@
 'use server'
 
+import { persistSalesLead, recordNewsletterSubscriber } from '@/lib/leads/intake'
+
 /**
  * INTEGRATION BOUNDARY — Public form submissions.
  * These server actions validate input and deliver each submission by email
@@ -107,7 +109,21 @@ export async function submitContact(payload: ContactPayload): Promise<SubmitResu
     ['Message', payload.message],
     ['Locale', payload.locale],
   ])
-  return confirmation('MSG', id)
+  if (!id) return { ok: false, error: 'server' }
+  const persisted = await persistSalesLead({
+    source: 'CONTACT',
+    locale: payload.locale,
+    contactName: payload.name,
+    contactEmail: payload.email,
+    contactPhone: payload.phone,
+    businessName: payload.company,
+    headline: payload.reason || payload.service || 'Contact inquiry',
+    payload: { ...payload, website_url: undefined },
+    dedupeKey: `${payload.message}|${payload.reason ?? ''}|${payload.service ?? ''}`,
+    referencePrefix: 'MSG',
+    resendMessageId: id,
+  })
+  return { ok: true, reference: persisted.lead.referenceCode }
 }
 
 export async function submitLead(payload: LeadPayload): Promise<SubmitResult> {
@@ -118,6 +134,12 @@ export async function submitLead(payload: LeadPayload): Promise<SubmitResult> {
     ['Source', payload.source],
     ['Locale', payload.locale],
   ])
+  if (!id) return { ok: false, error: 'server' }
+  await recordNewsletterSubscriber({
+    email: payload.email,
+    source: payload.source,
+    locale: payload.locale,
+  })
   return confirmation('LEAD', id)
 }
 
@@ -149,7 +171,21 @@ export async function submitProjectIntake(payload: ProjectIntakePayload): Promis
       ['Locale', payload.locale],
     ],
   )
-  return confirmation('WX', id)
+  if (!id) return { ok: false, error: 'server' }
+  const persisted = await persistSalesLead({
+    source: 'PROJECT_INTAKE',
+    locale: payload.locale,
+    contactName: payload.contact.name,
+    contactEmail: payload.contact.email,
+    contactPhone: payload.contact.phone,
+    businessName: payload.business.name,
+    headline: `${payload.business.name} — ${payload.projectType || 'new project'}`,
+    payload: { ...payload, website_url: undefined },
+    dedupeKey: `${payload.business.name}|${payload.contact.email}|${payload.projectType}|${payload.timeline}`,
+    referencePrefix: 'WX',
+    resendMessageId: id,
+  })
+  return { ok: true, reference: persisted.lead.referenceCode }
 }
 
 export async function requestStrategyCall(payload: StrategyCallPayload): Promise<SubmitResult> {
@@ -161,5 +197,18 @@ export async function requestStrategyCall(payload: StrategyCallPayload): Promise
     ['Preferred time', payload.preferredTime],
     ['Locale', payload.locale],
   ])
-  return confirmation('CALL', id)
+  if (!id) return { ok: false, error: 'server' }
+  const persisted = await persistSalesLead({
+    source: 'QUOTE_REQUEST',
+    locale: payload.locale,
+    contactName: payload.name,
+    contactEmail: payload.email,
+    contactPhone: payload.phone,
+    headline: `${payload.name} — strategy call`,
+    payload: { ...payload },
+    dedupeKey: `${payload.name}|${payload.preferredTime ?? ''}`,
+    referencePrefix: 'CALL',
+    resendMessageId: id,
+  })
+  return { ok: true, reference: persisted.lead.referenceCode }
 }
