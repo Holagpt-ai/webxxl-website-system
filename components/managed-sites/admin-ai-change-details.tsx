@@ -4,6 +4,7 @@ import { parseAiContentDraftV1 } from '@/lib/managed-sites/ai/schema'
 export function AdminAiContentChangeDetails({
   change,
   requestsPrefix,
+  labels,
 }: {
   change: {
     id: string
@@ -13,6 +14,15 @@ export function AdminAiContentChangeDetails({
     changeRequestId: string | null
   }
   requestsPrefix: string
+  labels: {
+    customerRequest: string
+    aiSummary: string
+    proposedChanges: string
+    notes: string
+    assumptions: string
+    clarifyingQuestions: string
+    viewQueue: string
+  }
 }) {
   if (!change.requestText) return null
   const draft = parseAiContentDraftV1(change.structuredPayload)
@@ -23,15 +33,15 @@ export function AdminAiContentChangeDetails({
   return (
     <div className="mt-2 space-y-2 text-sm">
       <div>
-        <p className="font-medium">Customer request</p>
+        <p className="font-medium">{labels.customerRequest}</p>
         <p className="text-muted-foreground whitespace-pre-wrap">{change.requestText}</p>
       </div>
       <div>
-        <p className="font-medium">AI summary</p>
+        <p className="font-medium">{labels.aiSummary}</p>
         <p className="text-muted-foreground">{draft.summary}</p>
       </div>
       <div>
-        <p className="font-medium">Proposed changes</p>
+        <p className="font-medium">{labels.proposedChanges}</p>
         <ul className="mt-1 space-y-2">
           {draft.proposedChanges.map((item, index) => (
             <li key={`${item.location}-${index}`} className="rounded border p-2">
@@ -39,14 +49,14 @@ export function AdminAiContentChangeDetails({
                 {item.location} · {item.action}
               </p>
               <p className="whitespace-pre-wrap text-muted-foreground">{item.proposedText}</p>
-              {item.notes && <p className="text-xs text-muted-foreground">Notes: {item.notes}</p>}
+              {item.notes && <p className="text-xs text-muted-foreground">{labels.notes}: {item.notes}</p>}
             </li>
           ))}
         </ul>
       </div>
       {draft.assumptions.length > 0 && (
         <div>
-          <p className="font-medium">Assumptions</p>
+          <p className="font-medium">{labels.assumptions}</p>
           <ul className="list-disc pl-5 text-muted-foreground">
             {draft.assumptions.map((item) => (
               <li key={item}>{item}</li>
@@ -56,7 +66,7 @@ export function AdminAiContentChangeDetails({
       )}
       {draft.clarifyingQuestions.length > 0 && (
         <div>
-          <p className="font-medium">Clarifying questions</p>
+          <p className="font-medium">{labels.clarifyingQuestions}</p>
           <ul className="list-disc pl-5 text-muted-foreground">
             {draft.clarifyingQuestions.map((item) => (
               <li key={item}>{item}</li>
@@ -67,7 +77,7 @@ export function AdminAiContentChangeDetails({
       {change.status === 'ESCALATED' && change.changeRequestId && (
         <p>
           <Link href={`${requestsPrefix}/admin/requests`} className="text-primary hover:underline">
-            View change request queue
+            {labels.viewQueue}
           </Link>
         </p>
       )}

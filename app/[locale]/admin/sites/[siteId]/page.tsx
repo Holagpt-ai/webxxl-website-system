@@ -95,7 +95,7 @@ export default async function AdminSiteDetailPage({ params }: { params: Promise<
                     {change.capabilityKey} · {enumLabel(copy.executionModes, change.executionMode)} · <StatusBadge label={change.status} />
                   </p>
                   {change.capabilityKey === 'content.edit' && change.executionMode === 'AI_ASSISTED' ? (
-                    <AdminAiContentChangeDetails change={change} requestsPrefix={prefix} />
+                    <AdminAiContentChangeDetails change={change} requestsPrefix={prefix} labels={copy} />
                   ) : (
                     change.requestText && <p className="mt-1 text-muted-foreground">{change.requestText}</p>
                   )}
