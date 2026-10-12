@@ -7,6 +7,7 @@ import { PageTitle, SectionCard, StatusBadge, EmptyState } from '@/components/da
 import { LocaleLink } from '@/components/site/primitives'
 import { dataSourceCustomerLabel, formatOptionalDate } from '@/lib/infrastructure/display'
 import { InfrastructureRequestForm } from '@/components/dashboard/infrastructure-request-form'
+import { enumLabel } from '@/lib/i18n/labels'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,7 +35,7 @@ export default async function InfrastructureEmailPage({ params }: { params: Prom
             <li key={svc.id} className="rounded-xl border bg-card p-4 text-sm">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-semibold">{svc.planLabel ?? svc.publicId}</p>
-                <StatusBadge label={svc.status} />
+                <StatusBadge label={enumLabel(d.emailStatuses, svc.status)} />
               </div>
               {svc.managedDomain && <p className="mt-1 text-muted-foreground">{svc.managedDomain.domainName}</p>}
               <p className="mt-2 text-xs text-muted-foreground">

@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { allowedUploadAccept, PROJECT_FILE_CATEGORIES } from '@/lib/files/policy'
+import { useAdminCopy } from '@/components/admin/locale'
+import { actionErrorLabel, enumLabel } from '@/lib/i18n/labels'
 import {
   inviteCustomerMemberAction,
   resendCustomerInvitationAction,
@@ -36,6 +38,7 @@ export function CustomerStatusForm({
 }) {
   const [status, setStatus] = useState(current)
   const [pending, startTransition] = useTransition()
+  const { admin: copy, dashboard: dash } = useAdminCopy()
   return (
     <form
       className="flex flex-wrap items-end gap-2"
@@ -45,7 +48,7 @@ export function CustomerStatusForm({
       }}
     >
       <div>
-        <Label htmlFor="acct-status">Account status</Label>
+        <Label htmlFor="acct-status">{copy.customers.accountStatus}</Label>
         <select
           id="acct-status"
           className="mt-1 block w-full rounded-md border bg-background px-3 py-2 text-sm"
@@ -54,13 +57,13 @@ export function CustomerStatusForm({
         >
           {['ACTIVE', 'ONBOARDING', 'PAUSED', 'CLOSED'].map((s) => (
             <option key={s} value={s}>
-              {s}
+              {enumLabel(dash.accountStatuses, s)}
             </option>
           ))}
         </select>
       </div>
       <Button type="submit" disabled={pending}>
-        Save
+        {copy.save}
       </Button>
     </form>
   )
@@ -72,6 +75,7 @@ export function InviteCustomerForm({ customerId }: { customerId: string }) {
   const [locale, setLocale] = useState<'en' | 'es'>('en')
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const { admin: copy } = useAdminCopy()
   return (
     <form
       className="flex flex-col gap-3"
@@ -86,41 +90,41 @@ export function InviteCustomerForm({ customerId }: { customerId: string }) {
             locale,
           })
           if (result.ok) setEmail('')
-          else setError(result.error)
+          else setError(actionErrorLabel(result.error, copy.errors))
         })
       }}
     >
       <div>
-        <Label htmlFor="member-email">Email</Label>
+        <Label htmlFor="member-email">{copy.email}</Label>
         <Input id="member-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
       </div>
       <div>
-        <Label htmlFor="member-role">Role</Label>
+        <Label htmlFor="member-role">{copy.role}</Label>
         <select
           id="member-role"
           className="mt-1 block w-full rounded-md border bg-background px-3 py-2 text-sm"
           value={role}
           onChange={(e) => setRole(e.target.value)}
         >
-          <option value="OWNER">OWNER</option>
-          <option value="MEMBER">MEMBER</option>
+          <option value="OWNER">{copy.owner}</option>
+          <option value="MEMBER">{copy.member}</option>
         </select>
       </div>
       <div>
-        <Label htmlFor="invite-locale">Language</Label>
+        <Label htmlFor="invite-locale">{copy.language}</Label>
         <select
           id="invite-locale"
           className="mt-1 block w-full rounded-md border bg-background px-3 py-2 text-sm"
           value={locale}
           onChange={(e) => setLocale(e.target.value as 'en' | 'es')}
         >
-          <option value="en">English</option>
-          <option value="es">Español</option>
+          <option value="en">{copy.english}</option>
+          <option value="es">{copy.spanish}</option>
         </select>
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <Button type="submit" disabled={pending}>
-        Send invitation
+        {copy.customers.sendInvitation}
       </Button>
     </form>
   )
@@ -137,6 +141,7 @@ export function MembershipRowActions({
 }) {
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const { admin: copy } = useAdminCopy()
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap gap-2">
@@ -148,11 +153,11 @@ export function MembershipRowActions({
             setError(null)
             startTransition(async () => {
               const result = await updateMembershipRoleAction(membershipId, role === 'OWNER' ? 'MEMBER' : 'OWNER')
-              if (!result.ok) setError(result.error)
+              if (!result.ok) setError(actionErrorLabel(result.error, copy.errors))
             })
           }}
         >
-          Toggle role
+          {copy.customers.toggleRole}
         </Button>
         <Button
           size="sm"
@@ -162,11 +167,11 @@ export function MembershipRowActions({
             setError(null)
             startTransition(async () => {
               const result = await resendCustomerInvitationAction({ membershipId, locale: resendLocale })
-              if (!result.ok) setError(result.error)
+              if (!result.ok) setError(actionErrorLabel(result.error, copy.errors))
             })
           }}
         >
-          Resend invitation
+          {copy.customers.resendInvitation}
         </Button>
         <Button
           size="sm"
@@ -176,11 +181,11 @@ export function MembershipRowActions({
             setError(null)
             startTransition(async () => {
               const result = await removeMembershipAction(membershipId)
-              if (!result.ok) setError(result.error)
+              if (!result.ok) setError(actionErrorLabel(result.error, copy.errors))
             })
           }}
         >
-          Remove
+          {copy.customers.remove}
         </Button>
       </div>
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
@@ -191,6 +196,7 @@ export function MembershipRowActions({
 export function CreateProjectForm({ customerAccountId }: { customerAccountId: string }) {
   const [name, setName] = useState('')
   const [pending, startTransition] = useTransition()
+  const { admin: copy } = useAdminCopy()
   return (
     <form
       className="flex flex-wrap items-end gap-2"
@@ -203,11 +209,11 @@ export function CreateProjectForm({ customerAccountId }: { customerAccountId: st
       }}
     >
       <div className="min-w-[200px] flex-1">
-        <Label htmlFor="proj-name">New project</Label>
+        <Label htmlFor="proj-name">{copy.customers.newProject}</Label>
         <Input id="proj-name" value={name} onChange={(e) => setName(e.target.value)} required />
       </div>
       <Button type="submit" disabled={pending}>
-        Create
+        {copy.create}
       </Button>
     </form>
   )
@@ -223,6 +229,7 @@ export function ProjectStatusForm({
   progressPercent: number
 }) {
   const [pending, startTransition] = useTransition()
+  const { admin: copy, dashboard: dash } = useAdminCopy()
   return (
     <form
       className="flex flex-wrap items-end gap-3"
@@ -238,21 +245,21 @@ export function ProjectStatusForm({
       }}
     >
       <div>
-        <Label htmlFor="p-status">Status</Label>
+        <Label htmlFor="p-status">{copy.status}</Label>
         <select id="p-status" name="status" defaultValue={status} className="mt-1 block rounded-md border bg-background px-3 py-2 text-sm">
           {['DRAFT', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'CANCELLED'].map((s) => (
             <option key={s} value={s}>
-              {s}
+              {enumLabel(dash.projectStatuses, s)}
             </option>
           ))}
         </select>
       </div>
       <div>
-        <Label htmlFor="p-progress">Progress %</Label>
+        <Label htmlFor="p-progress">{copy.projects.progressPercent}</Label>
         <Input id="p-progress" name="progress" type="number" min={0} max={100} defaultValue={progressPercent} className="w-24" />
       </div>
       <Button type="submit" disabled={pending}>
-        Update project
+        {copy.projects.updateProject}
       </Button>
     </form>
   )
@@ -261,6 +268,7 @@ export function ProjectStatusForm({
 export function MilestoneForm({ projectId }: { projectId: string }) {
   const [title, setTitle] = useState('')
   const [pending, startTransition] = useTransition()
+  const { admin: copy } = useAdminCopy()
   return (
     <form
       className="flex flex-wrap gap-2"
@@ -272,9 +280,9 @@ export function MilestoneForm({ projectId }: { projectId: string }) {
         })
       }}
     >
-      <Input placeholder="Milestone title" value={title} onChange={(e) => setTitle(e.target.value)} required className="flex-1" />
+      <Input placeholder={copy.projects.milestoneTitle} value={title} onChange={(e) => setTitle(e.target.value)} required className="flex-1" />
       <Button type="submit" disabled={pending}>
-        Add milestone
+        {copy.projects.addMilestone}
       </Button>
     </form>
   )
@@ -292,6 +300,7 @@ export function MilestoneStatusButton({
   status: string
 }) {
   const [pending, startTransition] = useTransition()
+  const { dashboard: dash } = useAdminCopy()
   const next = status === 'PENDING' ? 'IN_PROGRESS' : status === 'IN_PROGRESS' ? 'COMPLETED' : 'PENDING'
   return (
     <Button
@@ -300,7 +309,7 @@ export function MilestoneStatusButton({
       disabled={pending}
       onClick={() => startTransition(() => void upsertMilestoneAction(projectId, { id: milestoneId, title, status: next as never }))}
     >
-      → {next}
+      → {enumLabel(dash.milestoneStatuses, next)}
     </Button>
   )
 }
@@ -308,6 +317,7 @@ export function MilestoneStatusButton({
 export function TaskForm({ projectId }: { projectId: string }) {
   const [title, setTitle] = useState('')
   const [pending, startTransition] = useTransition()
+  const { admin: copy } = useAdminCopy()
   return (
     <form
       className="flex flex-wrap gap-2"
@@ -319,9 +329,9 @@ export function TaskForm({ projectId }: { projectId: string }) {
         })
       }}
     >
-      <Input placeholder="Task title" value={title} onChange={(e) => setTitle(e.target.value)} required className="flex-1" />
+      <Input placeholder={copy.projects.taskTitle} value={title} onChange={(e) => setTitle(e.target.value)} required className="flex-1" />
       <Button type="submit" disabled={pending}>
-        Add task
+        {copy.projects.addTask}
       </Button>
     </form>
   )
@@ -329,6 +339,7 @@ export function TaskForm({ projectId }: { projectId: string }) {
 
 export function TaskStatusSelect({ projectId, taskId, title, status }: { projectId: string; taskId: string; title: string; status: string }) {
   const [pending, startTransition] = useTransition()
+  const { dashboard: dash } = useAdminCopy()
   return (
     <select
       className="rounded-md border bg-background px-2 py-1 text-xs"
@@ -338,7 +349,7 @@ export function TaskStatusSelect({ projectId, taskId, title, status }: { project
     >
       {['TODO', 'IN_PROGRESS', 'BLOCKED', 'DONE', 'CANCELLED'].map((s) => (
         <option key={s} value={s}>
-          {s}
+          {enumLabel(dash.taskStatuses, s)}
         </option>
       ))}
     </select>
@@ -348,6 +359,7 @@ export function TaskStatusSelect({ projectId, taskId, title, status }: { project
 export function DependencyForm({ projectId }: { projectId: string }) {
   const [title, setTitle] = useState('')
   const [pending, startTransition] = useTransition()
+  const { admin: copy } = useAdminCopy()
   return (
     <form
       className="flex flex-wrap gap-2"
@@ -359,9 +371,9 @@ export function DependencyForm({ projectId }: { projectId: string }) {
         })
       }}
     >
-      <Input placeholder="Customer action item" value={title} onChange={(e) => setTitle(e.target.value)} required className="flex-1" />
+      <Input placeholder={copy.projects.actionItem} value={title} onChange={(e) => setTitle(e.target.value)} required className="flex-1" />
       <Button type="submit" disabled={pending}>
-        Request action
+        {copy.projects.requestAction}
       </Button>
     </form>
   )
@@ -371,6 +383,7 @@ export function ApprovalForm({ projectId }: { projectId: string }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [pending, startTransition] = useTransition()
+  const { admin: copy } = useAdminCopy()
   return (
     <form
       className="flex flex-col gap-3"
@@ -383,10 +396,10 @@ export function ApprovalForm({ projectId }: { projectId: string }) {
         })
       }}
     >
-      <Input placeholder="Approval title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-      <Textarea placeholder="Context (optional)" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+      <Input placeholder={copy.projects.approvalTitle} value={title} onChange={(e) => setTitle(e.target.value)} required />
+      <Textarea placeholder={copy.projects.approvalContext} value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
       <Button type="submit" disabled={pending}>
-        Request approval
+        {copy.projects.requestApproval}
       </Button>
     </form>
   )
@@ -396,6 +409,7 @@ export function ChangeRequestStatusForm({ changeRequestId, current }: { changeRe
   const [status, setStatus] = useState(current)
   const [note, setNote] = useState('')
   const [pending, startTransition] = useTransition()
+  const { admin: copy, dashboard: dash } = useAdminCopy()
   return (
     <form
       className="flex flex-col gap-2"
@@ -407,13 +421,13 @@ export function ChangeRequestStatusForm({ changeRequestId, current }: { changeRe
       <select className="rounded-md border bg-background px-2 py-1 text-sm" value={status} onChange={(e) => setStatus(e.target.value)}>
         {['SUBMITTED', 'REVIEWING', 'APPROVED', 'SCHEDULED', 'COMPLETED', 'DECLINED'].map((s) => (
           <option key={s} value={s}>
-            {s}
+            {enumLabel(dash.changeRequestStatuses, s)}
           </option>
         ))}
       </select>
-      <Textarea placeholder="Internal note (not visible to customer)" value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
+      <Textarea placeholder={copy.projects.internalNote} value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
       <Button type="submit" size="sm" disabled={pending}>
-        Update
+        {copy.update}
       </Button>
     </form>
   )
@@ -422,6 +436,7 @@ export function ChangeRequestStatusForm({ changeRequestId, current }: { changeRe
 export function SupportStatusForm({ supportRequestId, current }: { supportRequestId: string; current: string }) {
   const [status, setStatus] = useState(current)
   const [pending, startTransition] = useTransition()
+  const { admin: copy, dashboard: dash } = useAdminCopy()
   return (
     <form
       onSubmit={(e) => {
@@ -432,12 +447,12 @@ export function SupportStatusForm({ supportRequestId, current }: { supportReques
       <select className="rounded-md border bg-background px-2 py-1 text-sm" value={status} onChange={(e) => setStatus(e.target.value)}>
         {['OPEN', 'IN_PROGRESS', 'WAITING_ON_CUSTOMER', 'RESOLVED', 'CLOSED'].map((s) => (
           <option key={s} value={s}>
-            {s}
+            {enumLabel(dash.supportStatuses, s)}
           </option>
         ))}
       </select>
       <Button type="submit" size="sm" className="ml-2" disabled={pending}>
-        Save
+        {copy.save}
       </Button>
     </form>
   )
@@ -453,6 +468,7 @@ export function ServiceToggleForm({
   current: string
 }) {
   const [pending, startTransition] = useTransition()
+  const { admin: copy } = useAdminCopy()
   return (
     <Button
       size="sm"
@@ -464,7 +480,7 @@ export function ServiceToggleForm({
         )
       }
     >
-      {current === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+      {current === 'ACTIVE' ? copy.deactivate : copy.activate}
     </Button>
   )
 }
@@ -472,6 +488,7 @@ export function ServiceToggleForm({
 export function StaffFileUploadForm({ projectId, storageReady }: { projectId: string; storageReady: boolean }) {
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const { admin: copy, dashboard: dash } = useAdminCopy()
   return (
     <form
       className="flex flex-col gap-2"
@@ -484,13 +501,7 @@ export function StaffFileUploadForm({ projectId, storageReady }: { projectId: st
           setError(null)
           const result = await uploadStaffProjectFileAction(data)
           if (!result.ok) {
-            setError(
-              result.error === 'not_configured'
-                ? 'File storage is not configured.'
-                : result.error === 'too_large'
-                  ? 'Maximum file size: 4 MB.'
-                  : result.error,
-            )
+            setError(actionErrorLabel(result.error, copy.errors))
             return
           }
           form.reset()
@@ -500,15 +511,21 @@ export function StaffFileUploadForm({ projectId, storageReady }: { projectId: st
       <select name="category" className="rounded-md border bg-background px-2 py-1 text-sm" defaultValue="OTHER" disabled={!storageReady}>
         {PROJECT_FILE_CATEGORIES.map((category) => (
           <option key={category} value={category}>
-            {category}
+            {category === 'BRAND'
+              ? dash.categoryBrand
+              : category === 'PHOTO'
+                ? dash.categoryPhoto
+                : category === 'DOCUMENT'
+                  ? dash.categoryDocument
+                  : dash.categoryOther}
           </option>
         ))}
       </select>
       <Input name="file" type="file" required accept={allowedUploadAccept()} disabled={!storageReady || pending} />
-      <p className="text-xs text-muted-foreground">Maximum file size: 4 MB.</p>
+      <p className="text-xs text-muted-foreground">{copy.maxFile}</p>
       {error && <p className="text-sm text-destructive">{error}</p>}
       <Button type="submit" size="sm" disabled={pending || !storageReady}>
-        Upload file
+        {copy.uploadFile}
       </Button>
     </form>
   )
@@ -517,6 +534,7 @@ export function StaffFileUploadForm({ projectId, storageReady }: { projectId: st
 export function DeleteFileButton({ projectId, fileId }: { projectId: string; fileId: string }) {
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const { admin: copy } = useAdminCopy()
   return (
     <span className="flex flex-col items-start gap-1">
       <Button
@@ -525,16 +543,16 @@ export function DeleteFileButton({ projectId, fileId }: { projectId: string; fil
         variant="outline"
         disabled={pending}
         onClick={() => {
-          if (!window.confirm('Delete this file from the project?')) return
+          if (!window.confirm(copy.deleteConfirm)) return
           startTransition(async () => {
             const result = await deleteProjectFileAction(projectId, fileId)
             if (!result.ok) {
-              setError(result.error === 'not_configured' ? 'File storage is not configured.' : 'Could not delete this file.')
+              setError(result.error === 'not_configured' ? copy.errors.notConfigured : copy.errors.deleteFailed)
             }
           })
         }}
       >
-        Delete
+        {copy.delete}
       </Button>
       {error && <span className="text-xs text-destructive">{error}</span>}
     </span>
@@ -546,6 +564,7 @@ export function StaffCommentForm({ projectId }: { projectId: string }) {
   const [visibility, setVisibility] = useState<'CUSTOMER' | 'INTERNAL'>('CUSTOMER')
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const { admin: copy } = useAdminCopy()
   return (
     <form
       className="flex flex-col gap-2"
@@ -555,25 +574,25 @@ export function StaffCommentForm({ projectId }: { projectId: string }) {
           setError(null)
           const result = await postStaffProjectCommentAction(projectId, body, visibility)
           if (!result.ok) {
-            setError(result.error)
+            setError(actionErrorLabel(result.error, copy.errors))
             return
           }
           setBody('')
         })
       }}
     >
-      <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} required placeholder="Write a reply or internal note" />
+      <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} required placeholder={copy.projects.replyPlaceholder} />
       <select
         className="rounded-md border bg-background px-2 py-1 text-sm"
         value={visibility}
         onChange={(e) => setVisibility(e.target.value as 'CUSTOMER' | 'INTERNAL')}
       >
-        <option value="CUSTOMER">Reply visible to customer</option>
-        <option value="INTERNAL">Internal note</option>
+        <option value="CUSTOMER">{copy.projects.replyVisible}</option>
+        <option value="INTERNAL">{copy.projects.internalOnly}</option>
       </select>
       {error && <p className="text-sm text-destructive">{error}</p>}
       <Button type="submit" size="sm" disabled={pending}>
-        Post
+        {copy.post}
       </Button>
     </form>
   )
@@ -591,7 +610,8 @@ export function AttachApprovalFilesForm({
   const [selected, setSelected] = useState<string[]>([])
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  if (files.length === 0) return <p className="text-xs text-muted-foreground">No project files to attach.</p>
+  const { admin: copy } = useAdminCopy()
+  if (files.length === 0) return <p className="text-xs text-muted-foreground">{copy.noProjectFiles}</p>
   return (
     <form
       className="mt-2 flex flex-col gap-2"
@@ -601,7 +621,7 @@ export function AttachApprovalFilesForm({
           setError(null)
           const result = await attachApprovalFilesAction(projectId, approvalId, selected)
           if (!result.ok) {
-            setError(result.error === 'cross_project' ? 'Those files are not on this project.' : result.error)
+            setError(actionErrorLabel(result.error, copy.errors))
             return
           }
           setSelected([])
@@ -622,7 +642,7 @@ export function AttachApprovalFilesForm({
       ))}
       {error && <p className="text-xs text-destructive">{error}</p>}
       <Button type="submit" size="sm" variant="outline" disabled={pending || selected.length === 0}>
-        Attach to approval
+        {copy.projects.attachToApproval}
       </Button>
     </form>
   )

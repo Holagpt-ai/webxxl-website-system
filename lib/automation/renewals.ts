@@ -23,6 +23,7 @@ async function scheduleRenewalIfDue(input: {
   expiresAt: Date
   eventType: 'DOMAIN_RENEWAL_APPROACHING' | 'HOSTING_RENEWAL_APPROACHING' | 'EMAIL_SERVICE_RENEWAL_APPROACHING'
   label: string
+  name: string
   actionUrl: string
 }) {
   const window = matchWindow(daysUntil(input.expiresAt))
@@ -42,6 +43,17 @@ async function scheduleRenewalIfDue(input: {
     customerAccountId: input.customerAccountId,
     payload: {
       audience: 'customer_members',
+      templateKey:
+        input.eventType === 'DOMAIN_RENEWAL_APPROACHING'
+          ? 'domainRenewal'
+          : input.eventType === 'HOSTING_RENEWAL_APPROACHING'
+            ? 'hostingRenewal'
+            : 'emailRenewal',
+      templateVars: {
+        name: input.name,
+        window: String(window),
+        date: input.expiresAt.toISOString().slice(0, 10),
+      },
       title: input.label,
       body: `${input.label} — ${window} days remaining (${input.expiresAt.toISOString().slice(0, 10)}).`,
       actionUrl: input.actionUrl,
@@ -71,6 +83,7 @@ export async function evaluateInfrastructureRenewalReminders() {
       expiresAt: d.expiresAt,
       eventType: 'DOMAIN_RENEWAL_APPROACHING',
       label: `Domain renewal: ${d.domainName}`,
+      name: d.domainName,
       actionUrl: '/dashboard/infrastructure/domains',
     })
     if (ok) eventsCreated += 1
@@ -85,6 +98,7 @@ export async function evaluateInfrastructureRenewalReminders() {
       expiresAt: h.renewsAt,
       eventType: 'HOSTING_RENEWAL_APPROACHING',
       label: `Hosting renewal: ${h.primaryDomain ?? h.publicId}`,
+      name: h.primaryDomain ?? h.publicId,
       actionUrl: '/dashboard/infrastructure/hosting',
     })
     if (ok) eventsCreated += 1
@@ -99,6 +113,7 @@ export async function evaluateInfrastructureRenewalReminders() {
       expiresAt: e.renewsAt,
       eventType: 'EMAIL_SERVICE_RENEWAL_APPROACHING',
       label: `Business email renewal: ${e.publicId}`,
+      name: e.publicId,
       actionUrl: '/dashboard/infrastructure/email',
     })
     if (ok) eventsCreated += 1

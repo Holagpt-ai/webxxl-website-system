@@ -1,4 +1,6 @@
 import { requireStaff } from '@/lib/portal/authz'
+import { getDictionary } from '@/lib/i18n/dictionaries'
+import { format } from '@/lib/i18n/localize'
 import { resolveLocale } from '@/lib/i18n/server'
 import { listAdminInfrastructure } from '@/lib/infrastructure/queries'
 import { PageTitle, EmptyState, StatusBadge } from '@/components/dashboard/primitives'
@@ -21,24 +23,22 @@ export default async function AdminInfrastructurePage({
 }) {
   await requireStaff()
   const locale = await resolveLocale(params)
+  const copy = getDictionary(locale).admin
   const sp = await searchParams
   const data = await listAdminInfrastructure({ q: sp.q, customerAccountId: sp.customerAccountId })
   const providerProbe = await probeProviderReadOnly({ kind: 'dns', providerId: 'manual', domain: 'example.com' })
 
   return (
     <>
-      <PageTitle
-        title="Infrastructure"
-        description="Register hosting, domains, and business email for customers. Provider integrations are placeholders — no live provisioning or DNS changes."
-      />
+      <PageTitle title={copy.infrastructure.title} description={copy.infrastructure.description} />
       <p className="mb-4 text-sm text-muted-foreground">
-        Provider read-only probe status: {providerProbe.ok ? 'ok' : providerProbe.error} (expected unavailable in v1)
+        {format(copy.infrastructure.probe, { status: providerProbe.ok ? copy.infrastructure.probeOk : providerProbe.error ?? copy.infrastructure.probeOk })}
       </p>
       <form method="get" className="mb-6 flex flex-wrap gap-3">
         <input
           name="q"
           defaultValue={sp.q ?? ''}
-          placeholder="Search assets, domains, customers…"
+          placeholder={copy.infrastructure.searchPlaceholder}
           className="min-w-[220px] rounded-md border bg-background px-3 py-2 text-sm"
         />
         <select
@@ -46,7 +46,7 @@ export default async function AdminInfrastructurePage({
           defaultValue={sp.customerAccountId ?? ''}
           className="rounded-md border bg-background px-3 py-2 text-sm"
         >
-          <option value="">All customers</option>
+          <option value="">{copy.infrastructure.allCustomers}</option>
           {data.customers.map((c) => (
             <option key={c.id} value={c.id}>
               {c.businessName}
@@ -71,11 +71,11 @@ export default async function AdminInfrastructurePage({
               ))}
             </select>
             <input name="domainName" required placeholder="example.com" className="rounded-md border px-2 py-1.5" />
-            <input name="registrar" placeholder="Registrar" className="rounded-md border px-2 py-1.5" />
+            <input name="registrar" placeholder={copy.infrastructure.registrar} className="rounded-md border px-2 py-1.5" />
             <input name="expiresAt" type="date" className="rounded-md border px-2 py-1.5" />
-            <input name="dnsProviderId" placeholder="DNS provider id" className="rounded-md border px-2 py-1.5" />
-            <input name="providerReference" placeholder="External ref" className="rounded-md border px-2 py-1.5" />
-            <textarea name="internalNotes" placeholder="Internal notes" rows={2} className="rounded-md border px-2 py-1.5" />
+            <input name="dnsProviderId" placeholder={copy.infrastructure.dnsProviderId} className="rounded-md border px-2 py-1.5" />
+            <input name="providerReference" placeholder={copy.infrastructure.externalRef} className="rounded-md border px-2 py-1.5" />
+            <textarea name="internalNotes" placeholder={copy.infrastructure.internalNotes} rows={2} className="rounded-md border px-2 py-1.5" />
             <button type="submit" className="rounded-md bg-primary px-3 py-2 text-primary-foreground">
               Save domain
             </button>
@@ -93,12 +93,12 @@ export default async function AdminInfrastructurePage({
               ))}
             </select>
             <input name="providerId" defaultValue="manual" className="rounded-md border px-2 py-1.5" />
-            <input name="planLabel" placeholder="Plan" className="rounded-md border px-2 py-1.5" />
-            <input name="primaryDomain" placeholder="Primary domain" className="rounded-md border px-2 py-1.5" />
-            <input name="externalProviderRef" placeholder="External ref" className="rounded-md border px-2 py-1.5" />
+            <input name="planLabel" placeholder={copy.infrastructure.plan} className="rounded-md border px-2 py-1.5" />
+            <input name="primaryDomain" placeholder={copy.infrastructure.primaryDomain} className="rounded-md border px-2 py-1.5" />
+            <input name="externalProviderRef" placeholder={copy.infrastructure.externalRef} className="rounded-md border px-2 py-1.5" />
             <input name="renewsAt" type="date" className="rounded-md border px-2 py-1.5" />
-            <textarea name="notes" placeholder="Customer-visible notes" rows={2} className="rounded-md border px-2 py-1.5" />
-            <textarea name="internalNotes" placeholder="Internal notes" rows={2} className="rounded-md border px-2 py-1.5" />
+            <textarea name="notes" placeholder={copy.infrastructure.customerNotes} rows={2} className="rounded-md border px-2 py-1.5" />
+            <textarea name="internalNotes" placeholder={copy.infrastructure.internalNotes} rows={2} className="rounded-md border px-2 py-1.5" />
             <button type="submit" className="rounded-md bg-primary px-3 py-2 text-primary-foreground">
               Save hosting
             </button>
@@ -116,11 +116,11 @@ export default async function AdminInfrastructurePage({
               ))}
             </select>
             <input name="providerId" defaultValue="manual" className="rounded-md border px-2 py-1.5" />
-            <input name="planLabel" placeholder="Plan" className="rounded-md border px-2 py-1.5" />
+            <input name="planLabel" placeholder={copy.infrastructure.plan} className="rounded-md border px-2 py-1.5" />
             <input name="mailboxCount" type="number" min={0} defaultValue={0} className="rounded-md border px-2 py-1.5" />
             <input name="renewsAt" type="date" className="rounded-md border px-2 py-1.5" />
-            <input name="externalProviderRef" placeholder="External ref" className="rounded-md border px-2 py-1.5" />
-            <textarea name="internalNotes" placeholder="Internal notes" rows={2} className="rounded-md border px-2 py-1.5" />
+            <input name="externalProviderRef" placeholder={copy.infrastructure.externalRef} className="rounded-md border px-2 py-1.5" />
+            <textarea name="internalNotes" placeholder={copy.infrastructure.internalNotes} rows={2} className="rounded-md border px-2 py-1.5" />
             <button type="submit" className="rounded-md bg-primary px-3 py-2 text-primary-foreground">
               Save email
             </button>
@@ -130,7 +130,7 @@ export default async function AdminInfrastructurePage({
 
       <h2 className="mb-3 text-lg font-semibold">Hosting ({data.hosting.length})</h2>
       {data.hosting.length === 0 ? (
-        <EmptyState title="No hosting records" body="Register hosting above when onboarding customers." />
+        <EmptyState title={copy.infrastructure.emptyHosting} body={copy.infrastructure.emptyHostingBody} />
       ) : (
         <ul className="mb-8 flex flex-col gap-2 text-sm">
           {data.hosting.map((h) => (
@@ -200,7 +200,7 @@ export default async function AdminInfrastructurePage({
 
       <h2 className="mb-3 text-lg font-semibold">Infrastructure support requests</h2>
       {data.infrastructureSupport.length === 0 ? (
-        <EmptyState title="No infrastructure tickets" body="Customer requests tagged [Infrastructure] appear here." />
+        <EmptyState title={copy.infrastructure.emptyTickets} body={copy.infrastructure.emptyTicketsBody} />
       ) : (
         <ul className="flex flex-col gap-3 text-sm">
           {data.infrastructureSupport.map((t) => (

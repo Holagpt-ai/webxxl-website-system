@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { listProjects } from '@/lib/admin/queries'
 import { PageTitle, EmptyState, StatusBadge } from '@/components/dashboard/primitives'
 import { requireStaff } from '@/lib/portal/authz'
+import { getDictionary } from '@/lib/i18n/dictionaries'
+import { enumLabel } from '@/lib/i18n/labels'
 import { resolveLocale } from '@/lib/i18n/server'
 
 export const dynamic = 'force-dynamic'
@@ -9,23 +11,25 @@ export const dynamic = 'force-dynamic'
 export default async function AdminProjectsPage({ params }: { params: Promise<{ locale: string }> }) {
   await requireStaff()
   const locale = await resolveLocale(params)
+  const dict = getDictionary(locale)
+  const a = dict.admin
   const projects = await listProjects()
   const prefix = locale === 'es' ? '/es' : ''
 
   return (
     <>
-      <PageTitle title="Projects" description="All customer projects." />
+      <PageTitle title={a.projects.title} description={a.projects.description} />
       {projects.length === 0 ? (
-        <EmptyState title="No projects" body="Create a project from a customer detail page." />
+        <EmptyState title={a.projects.emptyTitle} body={a.projects.emptyBody} />
       ) : (
         <div className="overflow-x-auto rounded-xl border">
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="border-b bg-muted/50 text-xs uppercase text-muted-foreground">
               <tr>
-                <th className="px-4 py-3">Project</th>
-                <th className="px-4 py-3">Customer</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Progress</th>
+                <th className="px-4 py-3">{a.project}</th>
+                <th className="px-4 py-3">{a.customer}</th>
+                <th className="px-4 py-3">{a.status}</th>
+                <th className="px-4 py-3">{a.progress}</th>
               </tr>
             </thead>
             <tbody>
@@ -38,7 +42,7 @@ export default async function AdminProjectsPage({ params }: { params: Promise<{ 
                   </td>
                   <td className="px-4 py-3">{p.customerAccount.businessName}</td>
                   <td className="px-4 py-3">
-                    <StatusBadge label={p.status} />
+                    <StatusBadge label={enumLabel(dict.dashboard.projectStatuses, p.status)} />
                   </td>
                   <td className="px-4 py-3 tabular-nums">{p.progressPercent}%</td>
                 </tr>

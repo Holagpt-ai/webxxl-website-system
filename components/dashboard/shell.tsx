@@ -11,10 +11,13 @@ import type { PortalModule } from '@/lib/portal/modules'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { CustomerAccountSwitcher } from '@/components/dashboard/account-switcher'
+import { LanguageSwitcher } from '@/components/site/language-switcher'
+import type { Locale } from '@/lib/i18n/config'
 
 type Props = {
   locale: string
   dict: Dictionary['dashboard']
+  languageLabel: string
   businessName: string
   userEmail: string
   navModules: PortalModule[]
@@ -72,6 +75,7 @@ function NavLinks({
 export function DashboardShell({
   locale,
   dict,
+  languageLabel,
   businessName,
   userEmail,
   navModules,
@@ -95,6 +99,7 @@ export function DashboardShell({
         )}
         <NavLinks locale={locale} dict={dict} navModules={navModules} pathname={pathname} />
         <div className="mt-auto flex flex-col gap-3 border-t pt-4">
+          <LanguageSwitcher locale={locale as Locale} label={languageLabel} persist />
           <p className="truncate text-xs text-muted-foreground">{userEmail}</p>
           <form action={signOutAction}>
             <button
@@ -114,6 +119,7 @@ export function DashboardShell({
             <Logo />
           </LocaleLink>
           <div className="flex items-center gap-2">
+            <LanguageSwitcher locale={locale as Locale} label={languageLabel} persist />
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger render={<Button variant="outline" size="icon" aria-label={dict.openNav} />}>
                 <Menu className="size-4" />

@@ -12,7 +12,7 @@ import { SiteFooter } from '@/components/site/site-footer'
 import '../globals.css'
 
 function isPortalPath(pathname: string): boolean {
-  return pathname === '/dashboard' || pathname.startsWith('/dashboard/') || pathname.includes('/dashboard/')
+  return /\/(?:dashboard|admin)(?:\/|$)/.test(pathname)
 }
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta', display: 'swap' })

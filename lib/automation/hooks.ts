@@ -14,6 +14,8 @@ export const automationHooks = {
       actorUserId: input.actorUserId,
       payload: {
         audience: 'customer_members',
+        templateKey: 'projectCreated',
+        templateVars: { projectName: input.projectName },
         title: 'New project started',
         body: `Your WebXXL project "${input.projectName}" is now active.`,
         actionUrl: '/dashboard/project',
@@ -35,6 +37,8 @@ export const automationHooks = {
       actorUserId: input.actorUserId,
       payload: {
         audience: 'customer_members',
+        templateKey: 'milestoneCompleted',
+        templateVars: { title: input.title },
         title: 'Milestone completed',
         body: input.title,
         actionUrl: '/dashboard/project',
@@ -55,6 +59,8 @@ export const automationHooks = {
       actorUserId: input.actorUserId,
       payload: {
         audience: 'customer_members',
+        templateKey: 'approvalRequested',
+        templateVars: { title: input.title },
         title: 'Approval requested',
         body: input.title,
         actionUrl: '/dashboard/approvals',
@@ -74,6 +80,8 @@ export const automationHooks = {
       customerAccountId: input.customerAccountId,
       actorUserId: input.actorUserId,
       payload: {
+        templateKey: 'customerApprovalSubmitted',
+        templateVars: { title: input.title, decision: input.decision },
         title: 'Customer approval response',
         body: `${input.title} — ${input.decision}`,
         actionUrl: '/admin/approvals',
@@ -92,6 +100,8 @@ export const automationHooks = {
       customerAccountId: input.customerAccountId,
       actorUserId: input.actorUserId,
       payload: {
+        templateKey: 'customerMessageReceived',
+        templateVars: { preview: input.preview },
         title: 'New customer message',
         body: input.preview,
         actionUrl: `/admin/projects/${input.projectId}`,
@@ -110,6 +120,8 @@ export const automationHooks = {
       customerAccountId: input.customerAccountId,
       actorUserId: input.actorUserId,
       payload: {
+        templateKey: 'changeRequestSubmitted',
+        templateVars: { title: input.title },
         title: 'Change request submitted',
         body: input.title,
         actionUrl: '/admin/requests',
@@ -121,6 +133,8 @@ export const automationHooks = {
       eventType: 'LEAD_RECEIVED',
       dedupeKey: `lead.received:${input.leadId}`,
       payload: {
+        templateKey: input.headline ? 'leadReceived' : 'leadCaptured',
+        templateVars: input.headline ? { headline: input.headline } : {},
         title: 'New sales lead',
         body: input.headline ?? 'A new lead was captured.',
         actionUrl: `/admin/leads/${input.leadId}`,
@@ -132,6 +146,8 @@ export const automationHooks = {
       eventType: 'LEAD_ASSIGNED',
       dedupeKey: `lead.assigned:${input.leadId}:${input.assignedToId ?? 'none'}`,
       payload: {
+        templateKey: input.assignedToId ? 'leadAssigned' : 'leadUnassigned',
+        templateVars: {},
         title: 'Lead assignment updated',
         body: input.assignedToId ? 'A lead was assigned to you.' : 'A lead was unassigned.',
         actionUrl: `/admin/leads/${input.leadId}`,
@@ -144,6 +160,8 @@ export const automationHooks = {
       eventType: 'LEAD_FOLLOW_UP_DUE',
       dedupeKey: `lead.follow_up_due:${input.leadId}:${new Date().toISOString().slice(0, 10)}`,
       payload: {
+        templateKey: 'leadFollowUpDue',
+        templateVars: {},
         title: 'Lead follow-up due',
         body: 'A scheduled lead follow-up is due today.',
         actionUrl: `/admin/leads/${input.leadId}`,
@@ -157,6 +175,8 @@ export const automationHooks = {
       dedupeKey: `lead.converted:${input.leadId}`,
       customerAccountId: input.customerAccountId,
       payload: {
+        templateKey: 'leadConverted',
+        templateVars: {},
         title: 'Lead converted to customer',
         body: 'A sales lead was converted to a customer account.',
         actionUrl: `/admin/customers/${input.customerAccountId}`,
@@ -177,6 +197,8 @@ export const automationHooks = {
       actorUserId: input.actorUserId,
       payload: {
         audience: 'customer_members',
+        templateKey: 'serviceOrderRequested',
+        templateVars: { publicId: input.publicId, serviceKey: input.serviceKey },
         title: 'Service request submitted',
         body: `${input.publicId} — ${input.serviceKey}`,
         actionUrl: '/dashboard/services',
@@ -194,6 +216,8 @@ export const automationHooks = {
       customerAccountId: input.customerAccountId,
       payload: {
         audience: 'customer_members',
+        templateKey: 'serviceOrderQuoteReady',
+        templateVars: { publicId: input.publicId },
         title: 'Service quote ready',
         body: `Your quote for ${input.publicId} is ready for review.`,
         actionUrl: '/dashboard/services',
@@ -212,6 +236,8 @@ export const automationHooks = {
       customerAccountId: input.customerAccountId,
       payload: {
         audience: 'customer_members',
+        templateKey: 'serviceOrderStatusUpdated',
+        templateVars: { publicId: input.publicId, status: input.status },
         title: 'Service order update',
         body: `${input.publicId} is now ${input.status}.`,
         actionUrl: '/dashboard/services',
@@ -229,6 +255,8 @@ export const automationHooks = {
       customerAccountId: input.customerAccountId,
       payload: {
         audience: 'customer_members',
+        templateKey: 'serviceActivated',
+        templateVars: { serviceKey: input.serviceKey },
         title: 'Service activated',
         body: `${input.serviceKey} is now active on your account.`,
         actionUrl: '/dashboard/services',
@@ -247,6 +275,8 @@ export const automationHooks = {
       customerAccountId: input.customerAccountId,
       actorUserId: input.actorUserId,
       payload: {
+        templateKey: 'infrastructureSupportRequest',
+        templateVars: { subject: input.subject },
         title: 'Infrastructure service request',
         body: input.subject,
         actionUrl: '/admin/infrastructure',

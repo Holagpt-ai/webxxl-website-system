@@ -1,4 +1,6 @@
 import { requireStaff } from '@/lib/portal/authz'
+import { getDictionary } from '@/lib/i18n/dictionaries'
+import { format } from '@/lib/i18n/localize'
 import { resolveLocale } from '@/lib/i18n/server'
 import { listAdminAutomationJobs } from '@/lib/automation/queries'
 import { PageTitle, EmptyState, StatusBadge } from '@/components/dashboard/primitives'
@@ -22,23 +24,25 @@ export default async function AdminAutomationPage({
 }) {
   await requireStaff()
   const locale = await resolveLocale(params)
+  const copy = getDictionary(locale).admin
   const sp = await searchParams
   const status = sp.status && isDeliveryStatus(sp.status) ? sp.status : undefined
   const jobs = await listAdminAutomationJobs({ status, q: sp.q, customerAccountId: sp.customerAccountId })
 
   return (
     <>
-      <PageTitle
-        title="Automation & notifications"
-        description="Queued delivery jobs, sanitized errors, and provider status. No bulk promotional email."
-      />
+      <PageTitle title={copy.automation.title} description={copy.automation.description} />
       <ul className="mb-6 text-sm text-muted-foreground">
-        <li>Email provider: {isAuthEmailConfigured() ? 'configured' : 'not configured'}</li>
-        <li>Worker endpoint: {isEnabled('automationWorker') ? 'enabled (cron not scheduled in Batch 13)' : 'disabled'}</li>
-        <li>SMS / WhatsApp / Push: disabled by feature flags</li>
+        <li>{format(copy.automation.emailProvider, { status: isAuthEmailConfigured() ? copy.automation.configured : copy.automation.notConfigured })}</li>
+        <li>
+          {format(copy.automation.worker, {
+            status: isEnabled('automationWorker') ? copy.automation.workerEnabled : copy.automation.workerDisabled,
+          })}
+        </li>
+        <li>{copy.automation.channelsDisabled}</li>
       </ul>
       <form method="get" className="mb-6 flex flex-wrap gap-3">
-        <input name="q" defaultValue={sp.q ?? ''} placeholder="Search jobs…" className="min-w-[200px] rounded-md border px-3 py-2 text-sm" />
+        <input name="q" defaultValue={sp.q ?? ''} placeholder={copy.automation.searchPlaceholder} className="min-w-[200px] rounded-md border px-3 py-2 text-sm" />
         <select name="status" defaultValue={status ?? ''} className="rounded-md border px-3 py-2 text-sm">
           <option value="">All statuses</option>
           {['PENDING', 'PROCESSING', 'DELIVERED', 'FAILED', 'DEAD'].map((s) => (
@@ -52,7 +56,7 @@ export default async function AdminAutomationPage({
         </button>
       </form>
       {jobs.length === 0 ? (
-        <EmptyState title="No delivery jobs" body="Automation events will enqueue jobs here." />
+        <EmptyState title={copy.automation.emptyTitle} body={copy.automation.emptyBody} />
       ) : (
         <ul className="flex flex-col gap-3 text-sm">
           {jobs.map((job) => (
@@ -64,7 +68,7 @@ export default async function AdminAutomationPage({
                 <StatusBadge label={job.status} />
               </div>
               <p className="text-muted-foreground">
-                {job.event.customerAccount?.businessName ?? 'Staff / global'} · attempts {job.attempts}/{job.maxAttempts}
+                {job.event.customerAccount?.businessName ?? copy.infrastructure.staffGlobal} · {copy.infrastructure.attempts} {job.attempts}/{job.maxAttempts}
               </p>
               {job.lastErrorClass && <p className="text-xs text-muted-foreground">Error: {job.lastErrorClass}</p>}
               {job.deliveredAt && (
@@ -74,7 +78,7 @@ export default async function AdminAutomationPage({
                 <form action={adminRetryDeliveryJobFormAction} className="mt-2">
                   <input type="hidden" name="jobId" value={job.id} />
                   <button type="submit" className="text-xs text-primary underline">
-                    Retry delivery
+                    {copy.automation.retry}
                   </button>
                 </form>
               )}
@@ -82,7 +86,7 @@ export default async function AdminAutomationPage({
           ))}
         </ul>
       )}
-      <p className="mt-8 text-xs text-muted-foreground">Locale: {locale}</p>
+      <p className="mt-8 text-xs text-muted-foreground">{copy.language}: {locale}</p>
     </>
   )
 }

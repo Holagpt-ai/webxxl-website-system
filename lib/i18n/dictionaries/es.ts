@@ -1,4 +1,5 @@
 import type { Dictionary } from './en'
+import { adminEs, dashboardLocaleEs, systemNotificationsEs } from './portal-es'
 
 export const es: Dictionary = {
   common: {
@@ -551,7 +552,10 @@ export const es: Dictionary = {
       mailbox_addition: 'Agregar buzones',
       renewal_assistance: 'Asistencia con renovación',
     },
+    ...dashboardLocaleEs,
   },
+  admin: adminEs,
+  systemNotifications: systemNotificationsEs,
   blog: {
     categories: 'Categorías',
     all: 'Todos',

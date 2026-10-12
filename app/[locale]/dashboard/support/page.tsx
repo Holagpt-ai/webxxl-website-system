@@ -5,6 +5,7 @@ import { PageTitle, SectionCard, StatusBadge } from '@/components/dashboard/prim
 import { SupportForm } from '@/components/dashboard/forms'
 import { LinkedFileList } from '@/components/files/project-file-list'
 import { isStorageConfigured } from '@/lib/integrations/storage'
+import { enumLabel } from '@/lib/i18n/labels'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,7 +52,7 @@ export default async function SupportPage({ params }: { params: Promise<{ locale
               <li key={ticket.id} className="rounded-lg border p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="font-medium">{ticket.subject}</p>
-                  <StatusBadge label={ticket.status.replace('_', ' ')} />
+                  <StatusBadge label={enumLabel(d.supportStatuses, ticket.status)} />
                 </div>
                 <p className="mt-2 text-muted-foreground">{ticket.message}</p>
                 {ticket.fileLinks.length > 0 && (

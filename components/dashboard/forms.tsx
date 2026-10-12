@@ -51,16 +51,18 @@ export function ApprovalActions({
   approvalId,
   approveLabel,
   changesLabel,
+  notesPlaceholder,
 }: {
   approvalId: string
   approveLabel: string
   changesLabel: string
+  notesPlaceholder: string
 }) {
   const [pending, startTransition] = useTransition()
   const [notes, setNotes] = useState('')
   return (
     <div className="flex flex-col gap-3">
-      <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes" rows={2} />
+      <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={notesPlaceholder} rows={2} />
       <div className="flex flex-wrap gap-2">
         <Button
           disabled={pending}
@@ -85,12 +87,16 @@ export function ChangeRequestForm({
   submitLabel,
   priorityLabel,
   attachLabel,
+  titlePlaceholder,
+  priorityLabels,
   files = [],
 }: {
   projectId: string
   submitLabel: string
   priorityLabel: string
   attachLabel: string
+  titlePlaceholder: string
+  priorityLabels: { LOW: string; NORMAL: string; HIGH: string; URGENT: string }
   files?: { id: string; originalName: string }[]
 }) {
   const [title, setTitle] = useState('')
@@ -113,7 +119,7 @@ export function ChangeRequestForm({
         })
       }}
     >
-      <Input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Title" />
+      <Input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder={titlePlaceholder} />
       <Textarea value={description} onChange={(e) => setDescription(e.target.value)} required rows={4} />
       <div>
         <Label>{priorityLabel}</Label>
@@ -122,10 +128,10 @@ export function ChangeRequestForm({
           value={priority}
           onChange={(e) => setPriority(e.target.value as typeof priority)}
         >
-          <option value="LOW">Low</option>
-          <option value="NORMAL">Normal</option>
-          <option value="HIGH">High</option>
-          <option value="URGENT">Urgent</option>
+          <option value="LOW">{priorityLabels.LOW}</option>
+          <option value="NORMAL">{priorityLabels.NORMAL}</option>
+          <option value="HIGH">{priorityLabels.HIGH}</option>
+          <option value="URGENT">{priorityLabels.URGENT}</option>
         </select>
       </div>
       {files.length > 0 && (

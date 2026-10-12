@@ -6,6 +6,8 @@ import { isPublicHttpUrl } from '@/lib/managed-sites/domain'
 import { PageTitle, SectionCard, StatusBadge } from '@/components/dashboard/primitives'
 import { requireStaff } from '@/lib/portal/authz'
 import { resolveLocale } from '@/lib/i18n/server'
+import { getDictionary } from '@/lib/i18n/dictionaries'
+import { enumLabel } from '@/lib/i18n/labels'
 import {
   ApproveSiteChangeButton,
   RetryAbmedApprovalHandoffButton,
@@ -28,6 +30,7 @@ export default async function AdminSiteDetailPage({ params }: { params: Promise<
   const projects = options.projects.filter((project) => project.customerAccountId === site.customerAccountId)
   const connection = await getManagedSiteAdapter(site.adapterKey).connectionStatus(site)
   const prefix = locale === 'es' ? '/es' : ''
+  const copy = getDictionary(locale).admin.sites
 
   return (
     <>
@@ -40,15 +43,15 @@ export default async function AdminSiteDetailPage({ params }: { params: Promise<
       {site.externalAdminUrl && isPublicHttpUrl(site.externalAdminUrl) && (
         <p className="mb-6 text-sm">
           <a href={site.externalAdminUrl} className="text-primary hover:underline" target="_blank" rel="noreferrer">
-            Open existing site admin
+            {copy.openExistingAdmin}
           </a>
           <span className="mt-1 block text-xs text-muted-foreground">
-            This opens the site&apos;s current admin. WebXXL does not control that screen natively yet.
+            {copy.openExistingAdminHint}
           </span>
         </p>
       )}
       <div className="grid gap-6 lg:grid-cols-2">
-        <SectionCard title="Site">
+        <SectionCard title={copy.site}>
           <ManagedSiteProfileForm
             siteId={site.id}
             name={site.name}
@@ -61,12 +64,12 @@ export default async function AdminSiteDetailPage({ params }: { params: Promise<
           />
           <p className="mt-3 text-xs text-muted-foreground">
             <Link href={`${prefix}/admin/customers/${site.customerAccountId}`} className="text-primary hover:underline">
-              View customer
+              {copy.viewCustomer}
             </Link>
             {site.project ? ` · ${site.project.name}` : ''}
           </p>
         </SectionCard>
-        <SectionCard title="Connection">
+        <SectionCard title={copy.connection}>
           <ManagedSiteConnectionForm
             siteId={site.id}
             adapterKey={site.adapterKey}
@@ -76,23 +79,23 @@ export default async function AdminSiteDetailPage({ params }: { params: Promise<
         </SectionCard>
       </div>
       <div className="mt-6">
-        <SectionCard title="Capabilities">
+        <SectionCard title={copy.capabilities}>
           <ManagedSiteCapabilityForm siteId={site.id} assignments={site.capabilities} />
         </SectionCard>
       </div>
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <SectionCard title="Site change history">
+        <SectionCard title={copy.changeHistory}>
           {site.changes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No site changes yet.</p>
+            <p className="text-sm text-muted-foreground">{copy.noSiteChanges}</p>
           ) : (
             <ul className="flex flex-col gap-3 text-sm">
               {site.changes.map((change) => (
                 <li key={change.id} className="border-b pb-2">
                   <p>
-                    {change.capabilityKey} · {change.executionMode} · <StatusBadge label={change.status} />
+                    {change.capabilityKey} · {enumLabel(copy.executionModes, change.executionMode)} · <StatusBadge label={change.status} />
                   </p>
                   {change.capabilityKey === 'content.edit' && change.executionMode === 'AI_ASSISTED' ? (
-                    <AdminAiContentChangeDetails change={change} requestsPrefix={prefix} />
+                    <AdminAiContentChangeDetails change={change} requestsPrefix={prefix} labels={copy} />
                   ) : (
                     change.requestText && <p className="mt-1 text-muted-foreground">{change.requestText}</p>
                   )}
@@ -110,16 +113,16 @@ export default async function AdminSiteDetailPage({ params }: { params: Promise<
             </ul>
           )}
         </SectionCard>
-        <SectionCard title="Human-required requests">
+        <SectionCard title={copy.humanRequests}>
           {site.changeRequests.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No work requests from this site.</p>
+            <p className="text-sm text-muted-foreground">{copy.noWorkRequests}</p>
           ) : (
             <ul className="flex flex-col gap-2 text-sm">
               {site.changeRequests.map((request) => (
                 <li key={request.id}>
                   {request.title} · <StatusBadge label={request.status} />
                   <Link href={`${prefix}/admin/requests`} className="ml-2 text-primary hover:underline">
-                    Queue
+                    {copy.queue}
                   </Link>
                 </li>
               ))}

@@ -82,7 +82,8 @@ export function parseMagicLinkEmailContext(url: string): { kind: MagicLinkEmailK
     if (!callbackUrl) return { kind: 'sign_in', locale: 'en' }
     const cb = callbackUrl.startsWith('http') ? new URL(callbackUrl) : new URL(callbackUrl, parsed.origin)
     const invitation = cb.pathname.includes('/api/portal/activate-account')
-    const locale = cb.searchParams.get('locale') === 'es' ? 'es' : 'en'
+    const pathLocale = cb.pathname === '/es' || cb.pathname.startsWith('/es/') ? 'es' : 'en'
+    const locale = cb.searchParams.get('locale') === 'es' || pathLocale === 'es' ? 'es' : 'en'
     return { kind: invitation ? 'invitation' : 'sign_in', locale }
   } catch {
     return { kind: 'sign_in', locale: 'en' }

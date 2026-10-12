@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import { getProjectAdminDetail } from '@/lib/admin/queries'
 import { PageTitle, SectionCard, StatusBadge } from '@/components/dashboard/primitives'
 import { requireStaff } from '@/lib/portal/authz'
+import { getDictionary } from '@/lib/i18n/dictionaries'
+import { enumLabel, localizeStoredActivity } from '@/lib/i18n/labels'
 import { resolveLocale } from '@/lib/i18n/server'
 import { calculateProjectEta } from '@/lib/portal/eta'
 import {
@@ -29,6 +31,8 @@ type Props = { params: Promise<{ locale: string; projectId: string }> }
 export default async function AdminProjectDetailPage({ params }: Props) {
   await requireStaff()
   const locale = await resolveLocale(params)
+  const dict = getDictionary(locale)
+  const copy = dict.admin
   const { projectId } = await params
   const data = await getProjectAdminDetail(projectId)
   if (!data) notFound()
@@ -58,27 +62,27 @@ export default async function AdminProjectDetailPage({ params }: Props) {
     <>
       <PageTitle
         title={project.name}
-        description={`${project.customerAccount.businessName} · ETA ${eta.stateLabel} (${eta.progressPercent}%)`}
+        description={`${project.customerAccount.businessName} · ${enumLabel(dict.dashboard.etaStates, eta.state)} (${eta.progressPercent}%)`}
       />
       <p className="-mt-6 mb-6 text-sm">
         <Link href={`${prefix}/admin/customers/${project.customerAccount.id}`} className="text-primary hover:underline">
-          View customer
+          {copy.customer}
         </Link>
       </p>
 
-      <SectionCard title="Project settings">
+      <SectionCard title={copy.projects.settings}>
         <ProjectStatusForm projectId={project.id} status={project.status} progressPercent={project.progressPercent} />
       </SectionCard>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <SectionCard title="Milestones">
+        <SectionCard title={copy.projects.milestones}>
           <MilestoneForm projectId={project.id} />
           <ul className="mt-4 flex flex-col gap-3 text-sm">
             {milestones.map((m) => (
               <li key={m.id} className="flex items-center justify-between gap-2 border-b pb-2">
                 <div>
                   <p className="font-medium">{m.title}</p>
-                  <StatusBadge label={m.status} />
+                  <StatusBadge label={enumLabel(dict.dashboard.milestoneStatuses, m.status)} />
                 </div>
                 <MilestoneStatusButton projectId={project.id} milestoneId={m.id} title={m.title} status={m.status} />
               </li>
@@ -86,7 +90,7 @@ export default async function AdminProjectDetailPage({ params }: Props) {
           </ul>
         </SectionCard>
 
-        <SectionCard title="Tasks">
+        <SectionCard title={dict.dashboard.tasksHeading}>
           <TaskForm projectId={project.id} />
           <ul className="mt-4 flex flex-col gap-2 text-sm">
             {tasks.map((t) => (
@@ -100,31 +104,31 @@ export default async function AdminProjectDetailPage({ params }: Props) {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <SectionCard title="Customer dependencies">
+        <SectionCard title={copy.projects.dependencies}>
           <DependencyForm projectId={project.id} />
           <ul className="mt-4 flex flex-col gap-2 text-sm">
             {dependencies.map((d) => (
               <li key={d.id}>
-                {d.title} · <StatusBadge label={d.status} />
+                {d.title} · <StatusBadge label={enumLabel(dict.dashboard.dependencyStatuses, d.status)} />
               </li>
             ))}
           </ul>
         </SectionCard>
 
-        <SectionCard title="Approvals">
+        <SectionCard title={copy.nav.approvals}>
           <ApprovalForm projectId={project.id} />
           <ul className="mt-4 flex flex-col gap-3 text-sm">
-            {approvals.map((a) => (
-              <li key={a.id} className="border-b pb-3">
+            {approvals.map((item) => (
+              <li key={item.id} className="border-b pb-3">
                 <p>
-                  {a.title} · <StatusBadge label={a.status} />
+                  {item.title} · <StatusBadge label={enumLabel(dict.dashboard.approvalStatuses, item.status)} />
                 </p>
                 <LinkedFileList
-                  files={a.fileLinks.map((link) => link.projectFile)}
+                  files={item.fileLinks.map((link) => link.projectFile)}
                   storageReady={storageReady}
-                  downloadLabel="Download"
+                  downloadLabel={copy.download}
                 />
-                <AttachApprovalFilesForm projectId={project.id} approvalId={a.id} files={files} />
+                <AttachApprovalFilesForm projectId={project.id} approvalId={item.id} files={files} />
               </li>
             ))}
           </ul>
@@ -132,18 +136,18 @@ export default async function AdminProjectDetailPage({ params }: Props) {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <SectionCard title="Project files">
-          {!storageReady && <p className="mb-3 text-sm text-muted-foreground">File storage is not configured.</p>}
+        <SectionCard title={copy.projects.files}>
+          {!storageReady && <p className="mb-3 text-sm text-muted-foreground">{copy.errors.notConfigured}</p>}
           <StaffFileUploadForm projectId={project.id} storageReady={storageReady} />
           <div className="mt-4">
             {files.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No files on this project.</p>
+              <p className="text-sm text-muted-foreground">{dict.dashboard.emptyFiles}</p>
             ) : (
               <ProjectFileList
                 files={files}
                 locale={locale}
                 storageReady={storageReady}
-                downloadLabel="Download"
+                downloadLabel={copy.download}
                 categoryLabel={(category) => category}
                 trailing={(file) => <DeleteFileButton projectId={project.id} fileId={file.id} />}
               />
@@ -151,11 +155,11 @@ export default async function AdminProjectDetailPage({ params }: Props) {
           </div>
         </SectionCard>
 
-        <SectionCard title="Messages">
+        <SectionCard title={dict.dashboard.messagesTitle}>
           <StaffCommentForm projectId={project.id} />
-          <h3 className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Customer thread</h3>
+          <h3 className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{copy.projects.customerThread}</h3>
           {customerMessages.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No customer messages.</p>
+            <p className="text-sm text-muted-foreground">{copy.projects.noCustomerMessages}</p>
           ) : (
             <ul className="flex flex-col gap-2 text-sm">
               {customerMessages.map((comment) => (
@@ -166,9 +170,9 @@ export default async function AdminProjectDetailPage({ params }: Props) {
               ))}
             </ul>
           )}
-          <h3 className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Internal notes</h3>
+          <h3 className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{copy.projects.internalNotesHeading}</h3>
           {internalNotes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No internal notes.</p>
+            <p className="text-sm text-muted-foreground">{copy.projects.noInternalNotes}</p>
           ) : (
             <ul className="flex flex-col gap-2 text-sm">
               {internalNotes.map((comment) => (
@@ -183,12 +187,12 @@ export default async function AdminProjectDetailPage({ params }: Props) {
       </div>
 
       <div className="mt-6">
-      <SectionCard title="Activity">
+      <SectionCard title={dict.dashboard.recentActivity}>
         <ul className="flex flex-col gap-2 text-sm">
-          {activities.map((a) => (
-            <li key={a.id}>
-              {a.summary}
-              {a.actor?.email ? ` · ${a.actor.email}` : ''}
+          {activities.map((activity) => (
+            <li key={activity.id}>
+              {localizeStoredActivity(activity.summary, activity.eventType, dict.dashboard.activityLabels)}
+              {activity.actor?.email ? ` · ${activity.actor.email}` : ''}
             </li>
           ))}
         </ul>

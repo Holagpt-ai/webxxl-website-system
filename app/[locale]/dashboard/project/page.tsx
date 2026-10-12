@@ -4,6 +4,7 @@ import { getProjectDetail } from '@/lib/portal/queries'
 import { PageTitle, SectionCard, StatusBadge } from '@/components/dashboard/primitives'
 import { DependencyResolveButton } from '@/components/dashboard/forms'
 import { EmptyState } from '@/components/dashboard/primitives'
+import { enumLabel, localizeStoredActivity } from '@/lib/i18n/labels'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,19 +39,19 @@ export default async function ProjectPage({ params }: { params: Promise<{ locale
     <>
       <PageTitle title={project.name} description={project.summary ?? undefined} />
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <StatusBadge label={project.status.replace('_', ' ')} />
+        <StatusBadge label={enumLabel(d.projectStatuses, project.status)} />
         <StatusBadge label={`${eta.progressPercent}%`} />
-        {eta && <StatusBadge label={eta.stateLabel} tone={eta.state === 'at_risk' ? 'warn' : 'default'} />}
+        {eta && <StatusBadge label={enumLabel(d.etaStates, eta.state)} tone={eta.state === 'at_risk' ? 'warn' : 'default'} />}
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <SectionCard title={d.progress}>
           <dl className="grid gap-2 text-sm">
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Start</dt>
+              <dt className="text-muted-foreground">{d.startDate}</dt>
               <dd>{fmtDate(project.startDate, locale)}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Target</dt>
+              <dt className="text-muted-foreground">{d.targetDate}</dt>
               <dd>{fmtDate(project.targetDate, locale)}</dd>
             </div>
             <div className="flex justify-between gap-4">
@@ -74,31 +75,31 @@ export default async function ProjectPage({ params }: { params: Promise<{ locale
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <SectionCard title="Milestones">
+        <SectionCard title={d.milestonesHeading}>
           <ol className="flex flex-col gap-3">
             {milestones.map((m) => (
               <li key={m.id} className="rounded-lg border p-3 text-sm">
                 <p className="font-medium">{m.title}</p>
-                <p className="text-muted-foreground">{m.status.replace('_', ' ')}</p>
+                <p className="text-muted-foreground">{enumLabel(d.milestoneStatuses, m.status)}</p>
               </li>
             ))}
           </ol>
         </SectionCard>
-        <SectionCard title="Tasks">
+        <SectionCard title={d.tasksHeading}>
           <div className="grid gap-4">
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">WebXXL</p>
+              <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{d.webxxlSide}</p>
               <ul className="flex flex-col gap-1 text-sm">
                 {tasks.filter((t) => t.assignedSide === 'WEBXXL').map((t) => (
-                  <li key={t.id}>{t.title} — {t.status}</li>
+                  <li key={t.id}>{t.title} — {enumLabel(d.taskStatuses, t.status)}</li>
                 ))}
               </ul>
             </div>
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Customer</p>
+              <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{d.customerSide}</p>
               <ul className="flex flex-col gap-1 text-sm">
                 {tasks.filter((t) => t.assignedSide === 'CUSTOMER').map((t) => (
-                  <li key={t.id}>{t.title} — {t.status}</li>
+                  <li key={t.id}>{t.title} — {enumLabel(d.taskStatuses, t.status)}</li>
                 ))}
               </ul>
             </div>
@@ -111,7 +112,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ locale
           <ul className="flex flex-col gap-2 text-sm">
             {activities.map((a) => (
               <li key={a.id}>
-                <p>{a.summary}</p>
+                <p>{localizeStoredActivity(a.summary, a.eventType, d.activityLabels)}</p>
                 <p className="text-xs text-muted-foreground">{fmtDate(a.createdAt, locale)}</p>
               </li>
             ))}

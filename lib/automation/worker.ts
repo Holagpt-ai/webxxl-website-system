@@ -8,6 +8,7 @@ import { pushChannel, smsChannel, whatsappChannel } from '@/lib/automation/chann
 import type { NotificationChannel } from '@/lib/automation/channels/types'
 import { evaluateInfrastructureRenewalReminders } from '@/lib/automation/renewals'
 import { isEnabled } from '@/config/features'
+import { preferredLocaleForUser } from '@/lib/i18n/preference-db'
 
 const CHANNELS: Record<AutomationDeliveryChannel, NotificationChannel> = {
   IN_APP: inAppChannel,
@@ -47,7 +48,8 @@ export async function processAutomationDeliveryBatch(limit = 25): Promise<Worker
       data: { status: 'PROCESSING' },
     })
 
-    const content = resolveEventContent(job.event, 'en')
+    const locale = await preferredLocaleForUser(job.recipientUserId)
+    const content = resolveEventContent(job.event, locale)
     const channel = CHANNELS[job.channel]
     try {
       const result = await channel.deliver({

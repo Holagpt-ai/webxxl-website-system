@@ -4,6 +4,8 @@ import { LinkedFileList } from '@/components/files/project-file-list'
 import { isStorageConfigured } from '@/lib/integrations/storage'
 import { PageTitle, EmptyState, StatusBadge } from '@/components/dashboard/primitives'
 import { requireStaff } from '@/lib/portal/authz'
+import { getDictionary } from '@/lib/i18n/dictionaries'
+import { enumLabel } from '@/lib/i18n/labels'
 import { resolveLocale } from '@/lib/i18n/server'
 
 export const dynamic = 'force-dynamic'
@@ -11,32 +13,34 @@ export const dynamic = 'force-dynamic'
 export default async function AdminApprovalsPage({ params }: { params: Promise<{ locale: string }> }) {
   await requireStaff()
   const locale = await resolveLocale(params)
+  const dict = getDictionary(locale)
+  const a = dict.admin
   const approvals = await listPendingApprovals()
   const prefix = locale === 'es' ? '/es' : ''
   const storageReady = isStorageConfigured()
 
   return (
     <>
-      <PageTitle title="Pending approvals" description="Awaiting customer response." />
+      <PageTitle title={a.approvals.title} description={a.approvals.description} />
       {approvals.length === 0 ? (
-        <EmptyState title="No pending approvals" body="Create approval requests from a project detail page." />
+        <EmptyState title={a.approvals.emptyTitle} body={a.approvals.emptyBody} />
       ) : (
         <ul className="flex flex-col gap-4">
-          {approvals.map((a) => (
-            <li key={a.id} className="rounded-xl border bg-card p-4 text-sm">
-              <p className="font-semibold">{a.title}</p>
+          {approvals.map((item) => (
+            <li key={item.id} className="rounded-xl border bg-card p-4 text-sm">
+              <p className="font-semibold">{item.title}</p>
               <p className="text-muted-foreground">
-                {a.project.customerAccount.businessName} · {a.project.name}
+                {item.project.customerAccount.businessName} · {item.project.name}
               </p>
-              <StatusBadge label={a.status} />
+              <StatusBadge label={enumLabel(dict.dashboard.approvalStatuses, item.status)} />
               <LinkedFileList
-                files={a.fileLinks.map((link) => link.projectFile)}
+                files={item.fileLinks.map((link) => link.projectFile)}
                 storageReady={storageReady}
-                downloadLabel="Download"
+                downloadLabel={a.download}
               />
               <p className="mt-2">
-                <Link href={`${prefix}/admin/projects/${a.projectId}`} className="text-primary hover:underline">
-                  Manage project
+                <Link href={`${prefix}/admin/projects/${item.projectId}`} className="text-primary hover:underline">
+                  {a.projects.manageProject}
                 </Link>
               </p>
             </li>

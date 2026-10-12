@@ -2,7 +2,9 @@ import Link from 'next/link'
 import { requireStaff } from '@/lib/portal/authz'
 import { resolveLocale } from '@/lib/i18n/server'
 import { listSalesLeads } from '@/lib/admin/lead-queries'
-import { LEAD_STAGE_LABELS, LEAD_PIPELINE_STAGES, isLeadPipelineStage } from '@/lib/leads/pipeline'
+import { LEAD_PIPELINE_STAGES, isLeadPipelineStage } from '@/lib/leads/pipeline'
+import { getDictionary } from '@/lib/i18n/dictionaries'
+import { enumLabel } from '@/lib/i18n/labels'
 import { PageTitle, EmptyState, StatusBadge } from '@/components/dashboard/primitives'
 
 export const dynamic = 'force-dynamic'
@@ -16,6 +18,7 @@ export default async function AdminLeadsPage({
 }) {
   await requireStaff()
   const locale = await resolveLocale(params)
+  const copy = getDictionary(locale).admin
   const sp = await searchParams
   const stage = sp.stage && isLeadPipelineStage(sp.stage) ? sp.stage : undefined
   const leads = await listSalesLeads({ stage, q: sp.q })
@@ -23,31 +26,28 @@ export default async function AdminLeadsPage({
 
   return (
     <>
-      <PageTitle
-        title="Leads"
-        description="Website inquiries and project intake submissions. Newsletter signups are kept separate."
-      />
+      <PageTitle title={copy.leads.title} description={copy.leads.description} />
       <form method="get" className="mb-6 flex flex-wrap gap-3">
         <input
           name="q"
           defaultValue={sp.q ?? ''}
-          placeholder="Search email, name, reference…"
+          placeholder={copy.leads.searchPlaceholder}
           className="min-w-[220px] rounded-md border bg-background px-3 py-2 text-sm"
         />
         <select name="stage" defaultValue={stage ?? ''} className="rounded-md border bg-background px-3 py-2 text-sm">
-          <option value="">All stages</option>
+          <option value="">{copy.leads.allStages}</option>
           {LEAD_PIPELINE_STAGES.map((s) => (
             <option key={s} value={s}>
-              {LEAD_STAGE_LABELS[s]}
+              {enumLabel(copy.leads.stages, s)}
             </option>
           ))}
         </select>
         <button type="submit" className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
-          Filter
+          {copy.search}
         </button>
       </form>
       {leads.length === 0 ? (
-        <EmptyState title="No leads yet" body="New contact and get-started submissions will appear here after email delivery." />
+        <EmptyState title={copy.leads.emptyTitle} body={copy.leads.emptyBody} />
       ) : (
         <ul className="flex flex-col gap-3">
           {leads.map((lead) => (
@@ -67,7 +67,7 @@ export default async function AdminLeadsPage({
                   </p>
                   {lead.headline && <p className="mt-1 line-clamp-2">{lead.headline}</p>}
                 </div>
-                <StatusBadge label={LEAD_STAGE_LABELS[lead.stage]} />
+                <StatusBadge label={enumLabel(copy.leads.stages, lead.stage)} />
               </div>
             </li>
           ))}
