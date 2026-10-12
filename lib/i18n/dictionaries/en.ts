@@ -1,3 +1,5 @@
+import { adminEn, dashboardLocaleEn, systemNotificationsEn } from './portal-en'
+
 /** UI chrome, template labels and form copy. Page content lives in /content with Localized fields. */
 export const en = {
   common: {
@@ -548,7 +550,10 @@ export const en = {
       mailbox_addition: 'Add mailboxes',
       renewal_assistance: 'Renewal assistance',
     },
+    ...dashboardLocaleEn,
   },
+  admin: adminEn,
+  systemNotifications: systemNotificationsEn,
   blog: {
     categories: 'Categories',
     all: 'All',

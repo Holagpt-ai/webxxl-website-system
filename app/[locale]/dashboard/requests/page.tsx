@@ -5,6 +5,7 @@ import { PageTitle, SectionCard, EmptyState, StatusBadge } from '@/components/da
 import { ChangeRequestForm } from '@/components/dashboard/forms'
 import { LinkedFileList } from '@/components/files/project-file-list'
 import { isStorageConfigured } from '@/lib/integrations/storage'
+import { enumLabel } from '@/lib/i18n/labels'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,6 +47,8 @@ export default async function RequestsPage({ params }: { params: Promise<{ local
           submitLabel={d.submit}
           priorityLabel={d.priority}
           attachLabel={d.attachFiles}
+          titlePlaceholder={d.titlePlaceholder}
+          priorityLabels={d.priorities}
           files={files}
         />
         {files.length === 0 && <p className="mt-3 text-xs text-muted-foreground">{d.noFilesToAttach}</p>}
@@ -60,7 +63,7 @@ export default async function RequestsPage({ params }: { params: Promise<{ local
                 <li key={request.id} className="rounded-lg border p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="font-medium">{request.title}</p>
-                    <StatusBadge label={request.status} />
+                    <StatusBadge label={enumLabel(d.changeRequestStatuses, request.status)} />
                   </div>
                   <p className="mt-2 text-muted-foreground">{request.description}</p>
                   {request.fileLinks.length > 0 && (

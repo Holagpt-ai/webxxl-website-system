@@ -58,6 +58,7 @@ export default async function DashboardLayout({ params, children }: Props) {
     <DashboardShell
       locale={locale}
       dict={dict.dashboard}
+      languageLabel={dict.common.language}
       businessName={portal.customerAccount.businessName}
       userEmail={portal.email}
       navModules={navModules}

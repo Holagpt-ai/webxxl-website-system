@@ -3,6 +3,7 @@ import { requireCustomerMembership, getActiveProject } from '@/lib/portal/authz'
 import { prisma } from '@/lib/db'
 import { PageTitle, SectionCard, EmptyState, StatusBadge } from '@/components/dashboard/primitives'
 import { ApprovalActions } from '@/components/dashboard/forms'
+import { enumLabel } from '@/lib/i18n/labels'
 import { LinkedFileList } from '@/components/files/project-file-list'
 import { isStorageConfigured } from '@/lib/integrations/storage'
 
@@ -40,7 +41,7 @@ export default async function ApprovalsPage({ params }: { params: Promise<{ loca
           {approvals.map((approval) => (
             <SectionCard key={approval.id} title={approval.title}>
               <p className="mb-3 text-sm text-muted-foreground">{approval.description}</p>
-              <StatusBadge label={approval.status.replace('_', ' ')} />
+              <StatusBadge label={enumLabel(d.approvalStatuses, approval.status)} />
               {approval.fileLinks.length > 0 && (
                 <div className="mt-4">
                   <p className="text-sm font-medium">{d.supportingFiles}</p>
@@ -54,7 +55,12 @@ export default async function ApprovalsPage({ params }: { params: Promise<{ loca
               )}
               {approval.status === 'PENDING' && (
                 <div className="mt-4">
-                  <ApprovalActions approvalId={approval.id} approveLabel={d.approve} changesLabel={d.requestChanges} />
+                  <ApprovalActions
+                    approvalId={approval.id}
+                    approveLabel={d.approve}
+                    changesLabel={d.requestChanges}
+                    notesPlaceholder={d.optionalNotes}
+                  />
                 </div>
               )}
             </SectionCard>

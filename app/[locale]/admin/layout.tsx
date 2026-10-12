@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
+import { getDictionary } from '@/lib/i18n/dictionaries'
 import { resolveLocale } from '@/lib/i18n/server'
 import { buildMetadata } from '@/lib/seo'
 import { AdminShell } from '@/components/admin/shell'
@@ -12,8 +13,9 @@ type Props = { params: Promise<{ locale: string }>; children: React.ReactNode }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = await resolveLocale(params)
+  const dict = getDictionary(locale)
   return {
-    ...buildMetadata({ locale, path: '/admin', title: 'WebXXL Admin' }),
+    ...buildMetadata({ locale, path: '/admin', title: dict.admin.title }),
     robots: { index: false, follow: false },
   }
 }
@@ -38,10 +40,17 @@ export default async function AdminLayout({ params, children }: Props) {
     throw e
   }
 
-  const roleLabel = staffUser.role === 'ADMIN' ? 'Admin' : 'Staff'
+  const dict = getDictionary(locale)
+  const roleLabel = staffUser.role === 'ADMIN' ? dict.admin.roleAdmin : dict.admin.roleStaff
 
   return (
-    <AdminShell locale={locale} userEmail={staffUser.email} roleLabel={roleLabel}>
+    <AdminShell
+      locale={locale}
+      dict={dict.admin}
+      languageLabel={dict.common.language}
+      userEmail={staffUser.email}
+      roleLabel={roleLabel}
+    >
       {children}
     </AdminShell>
   )

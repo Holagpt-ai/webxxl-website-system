@@ -1,6 +1,7 @@
 import { LocaleLink } from '@/components/site/primitives'
 import { SectionCard, StatusBadge } from '@/components/dashboard/primitives'
 import { dataSourceCustomerLabel, formatOptionalDate } from '@/lib/infrastructure/display'
+import { enumLabel } from '@/lib/i18n/labels'
 
 type Locale = 'en' | 'es'
 
@@ -20,18 +21,20 @@ type Dict = {
   emptyHosting: string
   emptyDomains: string
   emptyEmail: string
+  hostingStatuses: { [key: string]: string }
+  sslStatuses: { [key: string]: string }
+  domainVerificationStatuses: { [key: string]: string }
+  emailStatuses: { [key: string]: string }
 }
 
 export function InfrastructureOverviewCards({
   locale,
   overview,
   dict,
-  prefix,
 }: {
   locale: Locale
   overview: Overview
   dict: Dict
-  prefix: string
 }) {
   return (
     <div className="grid gap-4 lg:grid-cols-3">
@@ -44,7 +47,7 @@ export function InfrastructureOverviewCards({
               <li key={h.id} className="rounded-lg border p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-medium">{h.planLabel ?? h.publicId}</span>
-                  <StatusBadge label={h.status} />
+                  <StatusBadge label={enumLabel(dict.hostingStatuses, h.status)} />
                 </div>
                 {h.primaryDomain && <p className="mt-1 text-muted-foreground">{h.primaryDomain}</p>}
                 <p className="mt-2 text-xs text-muted-foreground">
@@ -57,14 +60,14 @@ export function InfrastructureOverviewCards({
                 )}
                 {h.sslStatus !== 'UNKNOWN' && (
                   <p className="text-xs text-muted-foreground">
-                    {dict.ssl}: {h.sslStatus}
+                    {dict.ssl}: {enumLabel(dict.sslStatuses, h.sslStatus)}
                   </p>
                 )}
               </li>
             ))}
           </ul>
         )}
-        <LocaleLink locale={locale} href={`${prefix}/dashboard/infrastructure/hosting`} className="mt-3 inline-block text-sm text-primary">
+        <LocaleLink locale={locale} href="/dashboard/infrastructure/hosting" className="mt-3 inline-block text-sm text-primary">
           {dict.viewAllHosting}
         </LocaleLink>
       </SectionCard>
@@ -78,7 +81,7 @@ export function InfrastructureOverviewCards({
               <li key={d.id} className="rounded-lg border p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-medium">{d.domainName}</span>
-                  <StatusBadge label={d.verificationStatus} />
+                  <StatusBadge label={enumLabel(dict.domainVerificationStatuses, d.verificationStatus)} />
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">
                   {dict.dataSourceLabel}: {dataSourceCustomerLabel(d.dataSource, locale)}
@@ -92,7 +95,7 @@ export function InfrastructureOverviewCards({
             ))}
           </ul>
         )}
-        <LocaleLink locale={locale} href={`${prefix}/dashboard/infrastructure/domains`} className="mt-3 inline-block text-sm text-primary">
+        <LocaleLink locale={locale} href="/dashboard/infrastructure/domains" className="mt-3 inline-block text-sm text-primary">
           {dict.viewAllDomains}
         </LocaleLink>
       </SectionCard>
@@ -106,7 +109,7 @@ export function InfrastructureOverviewCards({
               <li key={e.id} className="rounded-lg border p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-medium">{e.planLabel ?? e.publicId}</span>
-                  <StatusBadge label={e.status} />
+                  <StatusBadge label={enumLabel(dict.emailStatuses, e.status)} />
                 </div>
                 {e.managedDomain && <p className="mt-1 text-muted-foreground">{e.managedDomain.domainName}</p>}
                 <p className="mt-2 text-xs text-muted-foreground">
@@ -119,7 +122,7 @@ export function InfrastructureOverviewCards({
             ))}
           </ul>
         )}
-        <LocaleLink locale={locale} href={`${prefix}/dashboard/infrastructure/email`} className="mt-3 inline-block text-sm text-primary">
+        <LocaleLink locale={locale} href="/dashboard/infrastructure/email" className="mt-3 inline-block text-sm text-primary">
           {dict.viewAllEmail}
         </LocaleLink>
       </SectionCard>

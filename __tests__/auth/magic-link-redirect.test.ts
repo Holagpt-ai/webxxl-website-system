@@ -79,4 +79,15 @@ describe('magic link redirect targets', () => {
       redirectTo: '/dashboard',
     })
   })
+
+  it('sends a later English login to the saved Spanish preference', async () => {
+    findUnique.mockResolvedValue({ ...invitedCustomer, preferredLocale: 'es', role: 'CUSTOMER' })
+    const result = await requestMagicLinkAction('carlos@example.com', '/dashboard')
+    expect(result).toEqual({ ok: true })
+    expect(signIn).toHaveBeenCalledWith('email', {
+      email: 'carlos@example.com',
+      redirect: false,
+      redirectTo: '/es/dashboard',
+    })
+  })
 })

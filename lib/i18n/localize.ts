@@ -21,6 +21,14 @@ export function localizePath(locale: Locale, path = '/'): string {
   return clean === '/' ? `/${locale}` : `/${locale}${clean}`
 }
 
+/** Equivalent href in another locale, keeping the path and query string. */
+export function switchLocaleHref(pathname: string, search: string, locale: Locale): string {
+  const { path } = splitLocale(pathname)
+  const base = localizePath(locale, path)
+  const query = search.replace(/^\?/, '')
+  return query ? `${base}?${query}` : base
+}
+
 /** Split a pathname into locale + unprefixed path. */
 export function splitLocale(pathname: string): { locale: Locale; path: string } {
   const [, first, ...rest] = pathname.split('/')

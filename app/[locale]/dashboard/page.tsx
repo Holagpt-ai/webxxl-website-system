@@ -3,6 +3,7 @@ import { requireCustomerMembership } from '@/lib/portal/authz'
 import { getDashboardOverview } from '@/lib/portal/queries'
 import { PageTitle, SectionCard, EmptyState, StatusBadge } from '@/components/dashboard/primitives'
 import { DependencyResolveButton } from '@/components/dashboard/forms'
+import { enumLabel, localizeStoredActivity } from '@/lib/i18n/labels'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,7 +44,9 @@ export default async function DashboardOverviewPage({ params }: { params: Promis
           <p className="mt-1 text-sm text-muted-foreground">
             {d.eta}: {fmtDate(data.eta?.estimatedCompletionDate, locale)}
           </p>
-          {data.eta && <StatusBadge label={data.eta.stateLabel} tone={data.eta.state === 'at_risk' ? 'warn' : 'default'} />}
+          {data.eta && (
+            <StatusBadge label={enumLabel(d.etaStates, data.eta.state)} tone={data.eta.state === 'at_risk' ? 'warn' : 'default'} />
+          )}
         </SectionCard>
         <SectionCard title={d.nextMilestone}>
           {nextMilestone ? (
@@ -95,7 +98,7 @@ export default async function DashboardOverviewPage({ params }: { params: Promis
           <ul className="flex flex-col gap-2 text-sm">
             {data.activities.map((a) => (
               <li key={a.id}>
-                <p>{a.summary}</p>
+                <p>{localizeStoredActivity(a.summary, a.eventType, d.activityLabels)}</p>
                 <p className="text-xs text-muted-foreground">{fmtDate(a.createdAt, locale)}</p>
               </li>
             ))}

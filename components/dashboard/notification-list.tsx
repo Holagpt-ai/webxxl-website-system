@@ -4,6 +4,7 @@ import { useTransition } from 'react'
 import { LocaleLink } from '@/components/site/primitives'
 import { markAllNotificationsReadAction, markNotificationReadAction } from '@/lib/automation/customer-actions'
 import { Button } from '@/components/ui/button'
+import { enumLabel } from '@/lib/i18n/labels'
 
 type Item = {
   id: string
@@ -22,9 +23,20 @@ type Props = {
   markAllReadLabel: string
   deliveryLabel: string
   unreadLabel: string
+  openLabel: string
+  deliveryStatuses: { [key: string]: string }
 }
 
-export function NotificationList({ locale, items, markReadLabel, markAllReadLabel, deliveryLabel, unreadLabel }: Props) {
+export function NotificationList({
+  locale,
+  items,
+  markReadLabel,
+  markAllReadLabel,
+  deliveryLabel,
+  unreadLabel,
+  openLabel,
+  deliveryStatuses,
+}: Props) {
   const [pending, startTransition] = useTransition()
 
   return (
@@ -49,13 +61,13 @@ export function NotificationList({ locale, items, markReadLabel, markAllReadLabe
             <p className="mt-2 text-xs text-muted-foreground">{n.createdAt.toLocaleString(locale === 'es' ? 'es-US' : 'en-US')}</p>
             {n.deliveryStatus && (
               <p className="text-xs text-muted-foreground">
-                {deliveryLabel}: {n.deliveryStatus}
+                {deliveryLabel}: {enumLabel(deliveryStatuses, n.deliveryStatus)}
               </p>
             )}
             <div className="mt-3 flex flex-wrap gap-3">
               {n.actionUrl && (
                 <LocaleLink locale={locale} href={n.actionUrl} className="text-xs text-primary underline">
-                  Open
+                  {openLabel}
                 </LocaleLink>
               )}
               {!n.readAt && (

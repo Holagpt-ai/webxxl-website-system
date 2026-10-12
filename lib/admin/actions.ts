@@ -371,6 +371,8 @@ export async function upsertMilestoneAction(
           title: 'Milestone update',
           body: title,
           actionUrl: '/dashboard/project',
+          templateKey: 'milestoneUpdate',
+          templateVars: { title },
         })
       }
       if (status === 'COMPLETED' && prevStatus !== 'COMPLETED') {
@@ -623,6 +625,8 @@ export async function uploadStaffProjectFileAction(formData: FormData): Promise<
         title: 'A file was added to your project',
         body: parsed.originalName,
         actionUrl: '/dashboard/files',
+        templateKey: 'fileAddedToProject',
+        templateVars: { fileName: parsed.originalName },
       }),
     )
     revalidateAdmin()
@@ -682,6 +686,8 @@ export async function postStaffProjectCommentAction(
           title: 'New project message',
           body: write.data.body.slice(0, 120),
           actionUrl: '/dashboard/messages',
+          templateKey: 'newProjectMessage',
+          templateVars: { preview: write.data.body.slice(0, 120) },
         }),
       )
     }
@@ -718,6 +724,8 @@ export async function attachApprovalFilesAction(
           title: 'Review files added',
           body: approval.title,
           actionUrl: '/dashboard/approvals',
+          templateKey: 'reviewFilesAdded',
+          templateVars: { title: approval.title },
         }),
       )
     }
@@ -764,6 +772,8 @@ export async function updateChangeRequestStatusAction(
       title: 'Change request update',
       body: `${cr.title}: ${status}`,
       actionUrl: '/dashboard/requests',
+      templateKey: 'changeRequestUpdate',
+      templateVars: { title: cr.title, status },
     })
     revalidateAdmin()
     return { ok: true }

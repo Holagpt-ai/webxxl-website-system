@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { getAdminDashboardStats } from '@/lib/admin/queries'
 import { PageTitle, SectionCard, EmptyState } from '@/components/dashboard/primitives'
 import { requireStaff } from '@/lib/portal/authz'
+import { getDictionary } from '@/lib/i18n/dictionaries'
+import { localizeStoredActivity } from '@/lib/i18n/labels'
 import { resolveLocale } from '@/lib/i18n/server'
 
 export const dynamic = 'force-dynamic'
@@ -18,6 +20,8 @@ function Stat({ label, value }: { label: string; value: number }) {
 export default async function AdminOverviewPage({ params }: { params: Promise<{ locale: string }> }) {
   await requireStaff()
   const locale = await resolveLocale(params)
+  const dict = getDictionary(locale)
+  const a = dict.admin
   const stats = await getAdminDashboardStats()
   const prefix = locale === 'es' ? '/es' : ''
 
@@ -31,33 +35,35 @@ export default async function AdminOverviewPage({ params }: { params: Promise<{ 
 
   return (
     <>
-      <PageTitle title="Operations overview" description="Live counts from production data." />
+      <PageTitle title={a.overview.title} description={a.overview.description} />
       {!hasWork ? (
-        <EmptyState title="No operational data yet" body="Customer accounts and projects will appear here once they exist in the database." />
+        <EmptyState title={a.overview.emptyTitle} body={a.overview.emptyBody} />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Active customers" value={stats.activeCustomers} />
-          <Stat label="Active projects" value={stats.activeProjects} />
-          <Stat label="Customer actions open" value={stats.projectsNeedingCustomerAction} />
-          <Stat label="Pending approvals" value={stats.pendingApprovals} />
-          <Stat label="Open change requests" value={stats.openChangeRequests} />
-          <Stat label="Open support tickets" value={stats.openSupportRequests} />
-          <Stat label="Blocked tasks" value={stats.blockedTasks} />
-          <Stat label="Overdue tasks" value={stats.overdueTasks} />
+          <Stat label={a.overview.activeCustomers} value={stats.activeCustomers} />
+          <Stat label={a.overview.activeProjects} value={stats.activeProjects} />
+          <Stat label={a.overview.customerActions} value={stats.projectsNeedingCustomerAction} />
+          <Stat label={a.overview.pendingApprovals} value={stats.pendingApprovals} />
+          <Stat label={a.overview.openRequests} value={stats.openChangeRequests} />
+          <Stat label={a.overview.openSupport} value={stats.openSupportRequests} />
+          <Stat label={a.overview.blockedTasks} value={stats.blockedTasks} />
+          <Stat label={a.overview.overdueTasks} value={stats.overdueTasks} />
         </div>
       )}
 
-      <SectionCard title="Recent activity">
+      <SectionCard title={a.overview.recentActivity}>
         {stats.recentActivity.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No activity recorded yet.</p>
+          <p className="text-sm text-muted-foreground">{a.overview.noActivity}</p>
         ) : (
           <ul className="flex flex-col gap-3 text-sm">
-            {stats.recentActivity.map((a) => (
-              <li key={a.id} className="flex flex-col gap-0.5 border-b pb-3 last:border-0">
-                <span className="font-medium">{a.summary}</span>
+            {stats.recentActivity.map((activity) => (
+              <li key={activity.id} className="flex flex-col gap-0.5 border-b pb-3 last:border-0">
+                <span className="font-medium">
+                  {localizeStoredActivity(activity.summary, activity.eventType, dict.dashboard.activityLabels)}
+                </span>
                 <span className="text-muted-foreground">
-                  {a.project.name} · {a.createdAt.toISOString().slice(0, 10)}
-                  {a.actor?.email ? ` · ${a.actor.email}` : ''}
+                  {activity.project.name} · {activity.createdAt.toISOString().slice(0, 10)}
+                  {activity.actor?.email ? ` · ${activity.actor.email}` : ''}
                 </span>
               </li>
             ))}
@@ -66,13 +72,13 @@ export default async function AdminOverviewPage({ params }: { params: Promise<{ 
       </SectionCard>
 
       <p className="mt-6 text-sm text-muted-foreground">
-        Quick links:{' '}
+        {a.overview.quickLinks}{' '}
         <Link href={`${prefix}/admin/customers`} className="text-primary hover:underline">
-          Customers
+          {a.nav.customers}
         </Link>
         {' · '}
         <Link href={`${prefix}/admin/projects`} className="text-primary hover:underline">
-          Projects
+          {a.nav.projects}
         </Link>
       </p>
     </>

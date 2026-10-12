@@ -7,6 +7,7 @@ import { PageTitle, SectionCard, StatusBadge, EmptyState } from '@/components/da
 import { LocaleLink } from '@/components/site/primitives'
 import { dataSourceCustomerLabel, formatOptionalDate } from '@/lib/infrastructure/display'
 import { InfrastructureRequestForm } from '@/components/dashboard/infrastructure-request-form'
+import { enumLabel } from '@/lib/i18n/labels'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,7 +38,7 @@ export default async function InfrastructureHostingPage({ params }: { params: Pr
             <li key={h.id} className="rounded-xl border bg-card p-4 text-sm">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-semibold">{h.planLabel ?? h.publicId}</p>
-                <StatusBadge label={h.status} />
+                <StatusBadge label={enumLabel(d.hostingStatuses, h.status)} />
               </div>
               <p className="mt-1 text-muted-foreground">{h.primaryDomain ?? h.providerId}</p>
               <p className="mt-2 text-xs text-muted-foreground">
@@ -50,7 +51,7 @@ export default async function InfrastructureHostingPage({ params }: { params: Pr
               )}
               {h.sslStatus !== 'UNKNOWN' && (
                 <p className="text-xs text-muted-foreground">
-                  {d.infrastructureSsl}: {h.sslStatus}
+                  {d.infrastructureSsl}: {enumLabel(d.sslStatuses, h.sslStatus)}
                 </p>
               )}
               {h.project && (

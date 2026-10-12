@@ -331,8 +331,9 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   name          String?
-  image         String?
-  role          UserRole  @default(CUSTOMER)
+  image            String?
+  preferredLocale  String    @default("en")
+  role             UserRole  @default(CUSTOMER)
   lastLoginAt   DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

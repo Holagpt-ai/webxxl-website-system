@@ -4,6 +4,8 @@ import { LinkedFileList } from '@/components/files/project-file-list'
 import { isStorageConfigured } from '@/lib/integrations/storage'
 import { PageTitle, EmptyState, StatusBadge } from '@/components/dashboard/primitives'
 import { requireStaff } from '@/lib/portal/authz'
+import { getDictionary } from '@/lib/i18n/dictionaries'
+import { enumLabel } from '@/lib/i18n/labels'
 import { resolveLocale } from '@/lib/i18n/server'
 import { ChangeRequestStatusForm } from '@/components/admin/forms'
 
@@ -12,15 +14,17 @@ export const dynamic = 'force-dynamic'
 export default async function AdminChangeRequestsPage({ params }: { params: Promise<{ locale: string }> }) {
   await requireStaff()
   const locale = await resolveLocale(params)
+  const dict = getDictionary(locale)
+  const copy = dict.admin
   const requests = await listChangeRequestQueue()
   const prefix = locale === 'es' ? '/es' : ''
   const storageReady = isStorageConfigured()
 
   return (
     <>
-      <PageTitle title="Change requests" description="Customer-submitted scope changes." />
+      <PageTitle title={copy.requests.title} description={copy.requests.description} />
       {requests.length === 0 ? (
-        <EmptyState title="No change requests" body="Requests from the customer portal will appear here." />
+        <EmptyState title={copy.requests.emptyTitle} body={copy.requests.emptyBody} />
       ) : (
         <ul className="flex flex-col gap-4">
           {requests.map((cr) => (
@@ -29,18 +33,18 @@ export default async function AdminChangeRequestsPage({ params }: { params: Prom
                 <div>
                   <p className="font-semibold">{cr.title}</p>
                   <p className="text-muted-foreground">
-                    {cr.project.customerAccount.businessName} · {cr.priority}
+                    {cr.project.customerAccount.businessName} · {enumLabel(dict.dashboard.priorities, cr.priority)}
                     {cr.managedSite ? ` · ${cr.managedSite.domain}` : ''}
                   </p>
-                  <StatusBadge label={cr.status} />
+                  <StatusBadge label={enumLabel(dict.dashboard.changeRequestStatuses, cr.status)} />
                   <p className="mt-2 line-clamp-3 text-muted-foreground">{cr.description}</p>
                   <LinkedFileList
                     files={cr.fileLinks.map((link) => link.projectFile)}
                     storageReady={storageReady}
-                    downloadLabel="Download"
+                    downloadLabel={copy.download}
                   />
                   <Link href={`${prefix}/admin/projects/${cr.projectId}`} className="mt-2 inline-block text-primary hover:underline">
-                    Project
+                    {copy.project}
                   </Link>
                 </div>
                 <ChangeRequestStatusForm changeRequestId={cr.id} current={cr.status} />

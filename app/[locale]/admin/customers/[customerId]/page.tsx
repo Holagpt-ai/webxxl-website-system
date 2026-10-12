@@ -6,6 +6,9 @@ import { PageTitle, SectionCard, StatusBadge } from '@/components/dashboard/prim
 import { requireStaff, requireUser } from '@/lib/portal/authz'
 import { isAdminRole } from '@/lib/admin/roles'
 import { resolveLocale } from '@/lib/i18n/server'
+import { getDictionary } from '@/lib/i18n/dictionaries'
+import { format } from '@/lib/i18n/localize'
+import { enumLabel, localizeStoredActivity } from '@/lib/i18n/labels'
 import { getPortalModuleRegistry } from '@/lib/portal/modules'
 import {
   InviteCustomerForm,
@@ -28,6 +31,13 @@ export default async function AdminCustomerDetailPage({ params }: Props) {
   if (!customer) notFound()
   const activity = await getCustomerRecentActivity(customerId)
   const prefix = locale === 'es' ? '/es' : ''
+  const dict = getDictionary(locale)
+  const copy = dict.admin.customers
+  const roleLabel = (role: string) =>
+    role === 'ADMIN' ? dict.admin.roleAdmin : role === 'STAFF' ? dict.admin.roleStaff : role === 'CUSTOMER' ? dict.admin.roleCustomer : role
+  const membershipRole = (role: string) => (role === 'OWNER' ? dict.admin.owner : role === 'MEMBER' ? dict.admin.member : role)
+  const accessLabel = (state: string) =>
+    state === 'ACTIVE' ? copy.accessActive : state === 'INVITED' ? copy.accessInvited : state === 'PENDING' ? copy.accessPending : state
   const serviceKeys = getPortalModuleRegistry()
     .filter((m) => m.entitlementRequired)
     .map((m) => m.entitlementRequired!)
@@ -35,13 +45,13 @@ export default async function AdminCustomerDetailPage({ params }: Props) {
 
   return (
     <>
-      <PageTitle title={customer.businessName} description={`/${customer.slug} · ${customer.status}`} />
+      <PageTitle title={customer.businessName} description={`/${customer.slug} · ${enumLabel(dict.dashboard.accountStatuses, customer.status)}`} />
       <div className="mb-6">
         <CustomerStatusForm customerId={customer.id} current={customer.status} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <SectionCard title="Memberships">
+        <SectionCard title={copy.memberships}>
           <ul className="flex flex-col gap-4 text-sm">
             {customer.memberships.map((m) => {
               const accessState = deriveMembershipAccessState(m.user, m)
@@ -50,16 +60,16 @@ export default async function AdminCustomerDetailPage({ params }: Props) {
                   <div>
                     <p className="font-medium">{m.user.email}</p>
                     <p className="text-muted-foreground">
-                      {m.role} · portal user role {m.user.role} · {accessState}
+                      {membershipRole(m.role)} · {copy.portalUserRole} {roleLabel(m.user.role)} · {accessLabel(accessState)}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {m.user.emailVerified
-                        ? `Email verified ${m.user.emailVerified.toISOString().slice(0, 10)}`
-                        : 'Email not verified'}
+                        ? format(copy.emailVerified, { date: m.user.emailVerified.toISOString().slice(0, 10) })
+                        : copy.emailNotVerified}
                       {m.lastInviteSentAt
-                        ? ` · Last invite ${m.lastInviteSentAt.toISOString().slice(0, 10)}`
+                        ? ` · ${format(copy.lastInvite, { date: m.lastInviteSentAt.toISOString().slice(0, 10) })}`
                         : ''}
-                      {m.user.lastLoginAt ? ` · Last sign-in ${m.user.lastLoginAt.toISOString().slice(0, 10)}` : ''}
+                      {m.user.lastLoginAt ? ` · ${format(copy.lastSignIn, { date: m.user.lastLoginAt.toISOString().slice(0, 10) })}` : ''}
                     </p>
                   </div>
                   {isAdminRole(user.role) && (
@@ -76,18 +86,18 @@ export default async function AdminCustomerDetailPage({ params }: Props) {
           )}
         </SectionCard>
 
-        <SectionCard title="Projects">
+        <SectionCard title={copy.projects}>
           <CreateProjectForm customerAccountId={customer.id} />
           <ul className="mt-4 flex flex-col gap-2 text-sm">
             {customer.projects.length === 0 ? (
-              <p className="text-muted-foreground">No projects.</p>
+              <p className="text-muted-foreground">{copy.noProjects}</p>
             ) : (
               customer.projects.map((p) => (
                 <li key={p.id}>
                   <Link href={`${prefix}/admin/projects/${p.id}`} className="font-medium text-primary hover:underline">
                     {p.name}
                   </Link>
-                  <StatusBadge label={p.status} />
+                  <StatusBadge label={enumLabel(dict.dashboard.projectStatuses, p.status)} />
                 </li>
               ))
             )}
@@ -96,7 +106,7 @@ export default async function AdminCustomerDetailPage({ params }: Props) {
       </div>
 
       {isAdminRole(user.role) && (
-        <SectionCard title="Services">
+        <SectionCard title={copy.services}>
           <ul className="flex flex-col gap-3 text-sm">
             {serviceKeys.map((key) => {
               const row = serviceMap.get(key)
@@ -114,14 +124,14 @@ export default async function AdminCustomerDetailPage({ params }: Props) {
         </SectionCard>
       )}
 
-      <SectionCard title="Recent activity">
+      <SectionCard title={copy.recentActivity}>
         {activity.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No activity.</p>
+          <p className="text-sm text-muted-foreground">{copy.noActivity}</p>
         ) : (
           <ul className="flex flex-col gap-2 text-sm">
             {activity.map((a) => (
               <li key={a.id}>
-                <span className="font-medium">{a.summary}</span>
+                <span className="font-medium">{localizeStoredActivity(a.summary, a.eventType, dict.dashboard.activityLabels)}</span>
                 <span className="text-muted-foreground"> · {a.project.name}</span>
               </li>
             ))}

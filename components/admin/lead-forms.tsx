@@ -13,11 +13,15 @@ import {
   setLeadFollowUpAction,
   updateLeadStageAction,
 } from '@/lib/admin/lead-actions'
-import { LEAD_PIPELINE_STAGES, LEAD_STAGE_LABELS } from '@/lib/leads/pipeline'
+import { LEAD_PIPELINE_STAGES } from '@/lib/leads/pipeline'
+import { useAdminCopy } from '@/components/admin/locale'
+import { actionErrorLabel, enumLabel } from '@/lib/i18n/labels'
+import { format } from '@/lib/i18n/localize'
 
 export function LeadStageForm({ leadId, current }: { leadId: string; current: LeadStage }) {
   const [pending, startTransition] = useTransition()
   const [message, setMessage] = useState<string | null>(null)
+  const { admin: copy } = useAdminCopy()
 
   return (
     <form
@@ -29,12 +33,12 @@ export function LeadStageForm({ leadId, current }: { leadId: string; current: Le
         setMessage(null)
         startTransition(async () => {
           const result = await updateLeadStageAction(leadId, stage)
-          setMessage(result.ok ? 'Stage updated' : result.error)
+          setMessage(result.ok ? copy.leads.stageUpdated : actionErrorLabel(result.error, copy.errors))
         })
       }}
     >
       <div>
-        <Label htmlFor={`lead-stage-${leadId}`}>Stage</Label>
+        <Label htmlFor={`lead-stage-${leadId}`}>{copy.leads.stage}</Label>
         <select
           id={`lead-stage-${leadId}`}
           name="stage"
@@ -44,13 +48,13 @@ export function LeadStageForm({ leadId, current }: { leadId: string; current: Le
         >
           {LEAD_PIPELINE_STAGES.map((stage) => (
             <option key={stage} value={stage}>
-              {LEAD_STAGE_LABELS[stage]}
+              {enumLabel(copy.leads.stages, stage)}
             </option>
           ))}
         </select>
       </div>
       <Button type="submit" size="sm" disabled={pending}>
-        Save stage
+        {copy.leads.saveStage}
       </Button>
       {message && <p className="text-xs text-muted-foreground">{message}</p>}
     </form>
@@ -68,6 +72,7 @@ export function LeadAssignForm({
 }) {
   const [pending, startTransition] = useTransition()
   const [message, setMessage] = useState<string | null>(null)
+  const { admin: copy } = useAdminCopy()
 
   return (
     <form
@@ -78,12 +83,12 @@ export function LeadAssignForm({
         setMessage(null)
         startTransition(async () => {
           const result = await assignLeadAction(leadId, assignee || null)
-          setMessage(result.ok ? 'Assignment saved' : result.error)
+          setMessage(result.ok ? copy.leads.assignmentSaved : actionErrorLabel(result.error, copy.errors))
         })
       }}
     >
       <div>
-        <Label htmlFor={`lead-assign-${leadId}`}>Assigned to</Label>
+        <Label htmlFor={`lead-assign-${leadId}`}>{copy.leads.assignedTo}</Label>
         <select
           id={`lead-assign-${leadId}`}
           name="assignedToId"
@@ -91,7 +96,7 @@ export function LeadAssignForm({
           className="mt-1 block rounded-md border bg-background px-3 py-2 text-sm"
           disabled={pending}
         >
-          <option value="">Unassigned</option>
+          <option value="">{copy.unassigned}</option>
           {staff.map((member) => (
             <option key={member.id} value={member.id}>
               {member.name || member.email}
@@ -100,7 +105,7 @@ export function LeadAssignForm({
         </select>
       </div>
       <Button type="submit" size="sm" disabled={pending}>
-        Save assignment
+        {copy.leads.saveAssignment}
       </Button>
       {message && <p className="text-xs text-muted-foreground">{message}</p>}
     </form>
@@ -109,6 +114,7 @@ export function LeadAssignForm({
 
 export function LeadFollowUpForm({ leadId, followUpAt }: { leadId: string; followUpAt: Date | null }) {
   const [pending, startTransition] = useTransition()
+  const { admin: copy } = useAdminCopy()
   const value = followUpAt ? followUpAt.toISOString().slice(0, 10) : ''
 
   return (
@@ -123,11 +129,11 @@ export function LeadFollowUpForm({ leadId, followUpAt }: { leadId: string; follo
       }}
     >
       <div>
-        <Label htmlFor={`lead-follow-${leadId}`}>Follow-up date</Label>
+        <Label htmlFor={`lead-follow-${leadId}`}>{copy.leads.followUp}</Label>
         <Input id={`lead-follow-${leadId}`} name="followUpAt" type="date" defaultValue={value} disabled={pending} className="mt-1" />
       </div>
       <Button type="submit" size="sm" disabled={pending}>
-        Save follow-up
+        {copy.leads.saveFollowUp}
       </Button>
     </form>
   )
@@ -136,10 +142,11 @@ export function LeadFollowUpForm({ leadId, followUpAt }: { leadId: string; follo
 export function LeadNoteForm({ leadId }: { leadId: string }) {
   const [pending, startTransition] = useTransition()
   const [note, setNote] = useState('')
+  const { admin: copy } = useAdminCopy()
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={`lead-note-${leadId}`}>Add internal note</Label>
+      <Label htmlFor={`lead-note-${leadId}`}>{copy.leads.addNote}</Label>
       <Textarea
         id={`lead-note-${leadId}`}
         value={note}
@@ -158,7 +165,7 @@ export function LeadNoteForm({ leadId }: { leadId: string }) {
           })
         }}
       >
-        Add note
+        {copy.leads.addNoteButton}
       </Button>
     </div>
   )
@@ -184,22 +191,23 @@ export function LeadConvertForm({
   const [pending, startTransition] = useTransition()
   const [mode, setMode] = useState<'create' | 'link'>('create')
   const [message, setMessage] = useState<string | null>(null)
+  const { admin: copy } = useAdminCopy()
 
   if (converted) {
-    return <p className="text-sm text-muted-foreground">This lead is already linked to a customer and project.</p>
+    return <p className="text-sm text-muted-foreground">{copy.leads.alreadyConverted}</p>
   }
 
   return (
     <div className="space-y-4 rounded-lg border p-4">
-      <p className="text-sm font-medium">Convert to customer (Won)</p>
+      <p className="text-sm font-medium">{copy.leads.convertTitle}</p>
       <div className="flex gap-4 text-sm">
         <label className="flex items-center gap-2">
           <input type="radio" checked={mode === 'create'} onChange={() => setMode('create')} />
-          Create new customer
+          {copy.leads.createCustomer}
         </label>
         <label className="flex items-center gap-2">
           <input type="radio" checked={mode === 'link'} onChange={() => setMode('link')} />
-          Link existing customer
+          {copy.leads.linkCustomer}
         </label>
       </div>
       <form
@@ -224,33 +232,31 @@ export function LeadConvertForm({
               setMessage(result.error)
               return
             }
-            const conversionLine = result.idempotent
-              ? 'Conversion already completed — no duplicate customer or project was created.'
-              : 'Conversion succeeded — customer account and project are ready.'
+            const conversionLine = result.idempotent ? copy.leads.convertedIdempotent : copy.leads.convertedReady
             if (!result.inviteRequested) {
               setMessage(conversionLine)
               return
             }
             if (result.inviteSent) {
-              setMessage(`${conversionLine} Portal invitation sent.`)
+              setMessage(`${conversionLine} ${copy.leads.inviteSent}`)
               return
             }
             setMessage(
-              `${conversionLine} Portal invitation failed (${result.inviteError ?? 'delivery_error'}). Open the customer record to resend the invitation — no need to convert again.`,
+              `${conversionLine} ${format(copy.leads.inviteFailed, { error: result.inviteError ?? 'delivery_error' })}`,
             )
           })
         }}
       >
         {mode === 'link' ? (
           <div>
-            <Label htmlFor={`lead-customer-${leadId}`}>Customer account</Label>
+            <Label htmlFor={`lead-customer-${leadId}`}>{copy.customer}</Label>
             <select
               id={`lead-customer-${leadId}`}
               name="customerAccountId"
               className="mt-1 block w-full rounded-md border bg-background px-3 py-2 text-sm"
               required
             >
-              <option value="">Select customer…</option>
+              <option value="">{copy.customer}</option>
               {customers.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.businessName} ({c.slug})
@@ -260,16 +266,16 @@ export function LeadConvertForm({
           </div>
         ) : (
           <div>
-            <Label htmlFor={`lead-business-${leadId}`}>Business name</Label>
+            <Label htmlFor={`lead-business-${leadId}`}>{copy.customers.business}</Label>
             <Input id={`lead-business-${leadId}`} name="businessName" defaultValue={defaultBusinessName} required />
           </div>
         )}
         <div>
-          <Label htmlFor={`lead-project-${leadId}`}>Project name</Label>
+          <Label htmlFor={`lead-project-${leadId}`}>{copy.project}</Label>
           <Input id={`lead-project-${leadId}`} name="projectName" defaultValue={defaultProjectName} required />
         </div>
         <div>
-          <Label htmlFor={`lead-type-${leadId}`}>Project type</Label>
+          <Label htmlFor={`lead-type-${leadId}`}>{copy.project}</Label>
           <select
             id={`lead-type-${leadId}`}
             name="projectType"
@@ -289,12 +295,12 @@ export function LeadConvertForm({
             Send portal invite to {defaultEmail}
           </label>
           <select name="inviteRole" defaultValue="OWNER" className="rounded-md border px-2 py-1">
-            <option value="OWNER">Owner</option>
-            <option value="MEMBER">Member</option>
+            <option value="OWNER">{copy.owner}</option>
+            <option value="MEMBER">{copy.member}</option>
           </select>
           <select name="locale" defaultValue="en" className="rounded-md border px-2 py-1">
-            <option value="en">Invite EN</option>
-            <option value="es">Invite ES</option>
+            <option value="en">{copy.english}</option>
+            <option value="es">{copy.spanish}</option>
           </select>
         </div>
         <Button type="submit" disabled={pending}>

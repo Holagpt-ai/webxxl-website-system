@@ -168,6 +168,8 @@ export async function submitChangeRequestAction(
           body: t,
           actionUrl: '/admin/requests',
           customerAccountId: portal.customerAccount.id,
+          templateKey: 'filesOnChangeRequest',
+          templateVars: { title: t },
         }),
       )
     }
@@ -235,6 +237,8 @@ export async function createSupportRequestAction(
           body: s,
           actionUrl: '/admin/support',
           customerAccountId: portal.customerAccount.id,
+          templateKey: 'filesOnSupportRequest',
+          templateVars: { subject: s },
         }),
       )
     }
@@ -275,6 +279,8 @@ export async function uploadProjectFileAction(formData: FormData): Promise<Actio
         body: parsed.originalName,
         actionUrl: `/admin/projects/${project.id}`,
         customerAccountId: portal.customerAccount.id,
+        templateKey: 'customerUploadedFile',
+        templateVars: { fileName: parsed.originalName },
       }),
     )
     revalidateDashboard()

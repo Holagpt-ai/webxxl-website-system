@@ -4,6 +4,8 @@ import { LinkedFileList } from '@/components/files/project-file-list'
 import { isStorageConfigured } from '@/lib/integrations/storage'
 import { PageTitle, EmptyState, StatusBadge } from '@/components/dashboard/primitives'
 import { requireStaff } from '@/lib/portal/authz'
+import { getDictionary } from '@/lib/i18n/dictionaries'
+import { enumLabel } from '@/lib/i18n/labels'
 import { resolveLocale } from '@/lib/i18n/server'
 import { SupportStatusForm } from '@/components/admin/forms'
 
@@ -12,15 +14,16 @@ export const dynamic = 'force-dynamic'
 export default async function AdminSupportPage({ params }: { params: Promise<{ locale: string }> }) {
   await requireStaff()
   const locale = await resolveLocale(params)
+  const copy = getDictionary(locale).admin
   const tickets = await listSupportQueue()
   const prefix = locale === 'es' ? '/es' : ''
   const storageReady = isStorageConfigured()
 
   return (
     <>
-      <PageTitle title="Support queue" description="Customer support requests." />
+      <PageTitle title={copy.support.title} description={copy.support.description} />
       {tickets.length === 0 ? (
-        <EmptyState title="No support requests" body="Tickets from the customer portal will appear here." />
+        <EmptyState title={copy.support.emptyTitle} body={copy.support.emptyBody} />
       ) : (
         <ul className="flex flex-col gap-4">
           {tickets.map((sr) => (
@@ -32,20 +35,20 @@ export default async function AdminSupportPage({ params }: { params: Promise<{ l
                     {sr.customerAccount.businessName}
                     {sr.project ? ` · ${sr.project.name}` : ''}
                   </p>
-                  <StatusBadge label={sr.status} />
+                  <StatusBadge label={enumLabel(getDictionary(locale).dashboard.supportStatuses, sr.status)} />
                   <p className="mt-2 line-clamp-4 text-muted-foreground">{sr.message}</p>
                   <LinkedFileList
                     files={sr.fileLinks.map((link) => link.projectFile)}
                     storageReady={storageReady}
-                    downloadLabel="Download"
+                    downloadLabel={copy.download}
                   />
                   {sr.projectId && (
                     <Link href={`${prefix}/admin/projects/${sr.projectId}`} className="mt-2 inline-block text-primary hover:underline">
-                      Project
+                      {copy.project}
                     </Link>
                   )}
                   <Link href={`${prefix}/admin/customers/${sr.customerAccountId}`} className="ml-3 text-primary hover:underline">
-                    Customer
+                    {copy.customer}
                   </Link>
                 </div>
                 <SupportStatusForm supportRequestId={sr.id} current={sr.status} />
