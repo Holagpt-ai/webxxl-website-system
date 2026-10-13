@@ -37,6 +37,7 @@ export function formatActivitySummary(eventType: ProjectActivityEventType, detai
     CHANGES_REQUESTED: 'Changes requested',
     CHANGE_REQUEST_SUBMITTED: 'Change request submitted',
     SUPPORT_REQUEST_CREATED: 'Support request created',
+    WEBSITE_PREVIEW_REGISTERED: 'Website preview registered',
   }
   return `${prefix[eventType]}: ${detail}`
 }

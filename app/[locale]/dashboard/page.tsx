@@ -4,6 +4,7 @@ import { getDashboardOverview } from '@/lib/portal/queries'
 import { PageTitle, SectionCard, EmptyState, StatusBadge } from '@/components/dashboard/primitives'
 import { DependencyResolveButton } from '@/components/dashboard/forms'
 import { enumLabel, localizeStoredActivity } from '@/lib/i18n/labels'
+import { WebsitePreviewSection } from '@/components/dashboard/website-preview-section'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,6 +35,13 @@ export default async function DashboardOverviewPage({ params }: { params: Promis
       <PageTitle
         title={d.overviewTitle}
         description={`${portal.customerAccount.businessName} · ${data.project.name}`}
+      />
+      <WebsitePreviewSection
+        customerAccountId={portal.customerAccount.id}
+        projectId={data.project.id}
+        projectType={data.project.type}
+        locale={locale}
+        copy={d}
       />
       <div className="grid gap-6 md:grid-cols-2">
         <SectionCard title={d.progress}>

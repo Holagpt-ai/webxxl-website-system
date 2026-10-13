@@ -5,6 +5,7 @@ import { PageTitle, SectionCard, StatusBadge } from '@/components/dashboard/prim
 import { DependencyResolveButton } from '@/components/dashboard/forms'
 import { EmptyState } from '@/components/dashboard/primitives'
 import { enumLabel, localizeStoredActivity } from '@/lib/i18n/labels'
+import { WebsitePreviewSection } from '@/components/dashboard/website-preview-section'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,6 +39,13 @@ export default async function ProjectPage({ params }: { params: Promise<{ locale
   return (
     <>
       <PageTitle title={project.name} description={project.summary ?? undefined} />
+      <WebsitePreviewSection
+        customerAccountId={portal.customerAccount.id}
+        projectId={project.id}
+        projectType={project.type}
+        locale={locale}
+        copy={d}
+      />
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <StatusBadge label={enumLabel(d.projectStatuses, project.status)} />
         <StatusBadge label={`${eta.progressPercent}%`} />

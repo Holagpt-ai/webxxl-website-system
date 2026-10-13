@@ -215,6 +215,22 @@ enum ProjectActivityEventType {
   CHANGES_REQUESTED
   CHANGE_REQUEST_SUBMITTED
   SUPPORT_REQUEST_CREATED
+  WEBSITE_PREVIEW_REGISTERED
+}
+
+enum WebsitePreviewProvider {
+  VERCEL
+  NETLIFY
+  CLOUDFLARE_PAGES
+  OTHER
+}
+
+enum WebsitePreviewStatus {
+  DEVELOPMENT
+  READY_FOR_REVIEW
+  CHANGES_REQUESTED
+  APPROVED
+  SUPERSEDED
 }
 
 enum ManagedSiteStatus {
@@ -347,6 +363,7 @@ model User {
   changeRequests     ChangeRequest[]
   notifications      Notification[]
   activities         ProjectActivity[] @relation("ActivityActor")
+  registeredWebsitePreviewVersions WebsitePreviewVersion[] @relation("WebsitePreviewRegistrar")
   siteChangesRequested ManagedSiteChange[] @relation("ManagedSiteChangeRequester")
   siteChangesApproved  ManagedSiteChange[] @relation("ManagedSiteChangeApprover")
   assignedLeads        SalesLead[]         @relation("LeadAssignee")
@@ -420,6 +437,7 @@ model CustomerAccount {
   businessEmailServices BusinessEmailService[]
   automationEvents        AutomationEvent[]
   notificationPreferences CustomerNotificationPreference[]
+  websitePreviews              WebsitePreview[]
 }
 
 model CustomerMembership {
@@ -468,6 +486,7 @@ model Project {
   salesLeads      SalesLead[]
   serviceOrders   ServiceOrder[]
   hostingServices HostingService[]
+  websitePreview  WebsitePreview?
 
   @@index([customerAccountId])
 }
@@ -614,6 +633,9 @@ model ProjectApproval {
   project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   respondedBy User?             @relation("ApprovalResponder", fields: [respondedById], references: [id], onDelete: SetNull)
   fileLinks   ProjectFileLink[]
+  /// Present when this approval was opened for one immutable website deployment.
+  metadata    Json?
+  websitePreviewVersion WebsitePreviewVersion?
 
   @@index([projectId])
 }
@@ -634,6 +656,7 @@ model ChangeRequest {
   fileLinks   ProjectFileLink[]
   managedSite ManagedSite?      @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
   siteChanges ManagedSiteChange[]
+  websitePreviewVersion WebsitePreviewVersion?
 
   managedSiteId String?
 
@@ -1047,4 +1070,50 @@ model InfrastructureRenewalReminder {
 
   @@unique([assetType, assetId, windowDays])
   @@index([assetType, assetId])
+}
+
+/// External website preview for a customer project. The alias URL can change.
+/// Customer approval is stored on WebsitePreviewVersion, not on this alias.
+model WebsitePreview {
+  id                String                 @id @default(cuid())
+  projectId         String                 @unique
+  customerAccountId String
+  provider          WebsitePreviewProvider
+  displayName       String
+  aliasUrl          String
+  status            WebsitePreviewStatus   @default(DEVELOPMENT)
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+
+  project         Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  customerAccount CustomerAccount          @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  versions        WebsitePreviewVersion[]
+
+  @@index([customerAccountId])
+}
+
+/// One immutable provider deployment. Re-registering the same deployment updates this row.
+model WebsitePreviewVersion {
+  id              String                 @id @default(cuid())
+  previewId       String
+  provider        WebsitePreviewProvider
+  deploymentId    String
+  versionLabel    String
+  sourceRevision  String?
+  registeredUrl   String
+  status          WebsitePreviewStatus
+  isCurrent       Boolean                @default(true)
+  registeredById  String?
+  registeredAt    DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  approvalId      String?                @unique
+  changeRequestId String?                @unique
+
+  preview       WebsitePreview   @relation(fields: [previewId], references: [id], onDelete: Cascade)
+  registeredBy  User?            @relation("WebsitePreviewRegistrar", fields: [registeredById], references: [id], onDelete: SetNull)
+  approval      ProjectApproval? @relation(fields: [approvalId], references: [id], onDelete: SetNull)
+  changeRequest ChangeRequest?   @relation(fields: [changeRequestId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, deploymentId])
+  @@index([previewId, registeredAt])
 }
