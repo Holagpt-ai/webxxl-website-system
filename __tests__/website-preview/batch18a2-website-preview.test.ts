@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { pickActiveProject } from '@/lib/portal/active-project'
-import { ABMED_CLINICAL_RESEARCH_PREVIEW, guardKnownDeploymentProject } from '@/lib/website-preview/catalog'
+import {
+  ABMED_CLINICAL_RESEARCH_PREVIEW,
+  guardKnownDeploymentAccount,
+  guardKnownDeploymentProject,
+} from '@/lib/website-preview/catalog'
 import { previewApprovalMetadata, previewDecisionIsBound } from '@/lib/website-preview/binding'
-import { previewChangeRequestDescription } from '@/lib/website-preview/display'
+import { customerPreviewDeploymentUrl, previewChangeRequestDescription } from '@/lib/website-preview/display'
 import { parseWebsitePreviewInput, validatePreviewUrl } from '@/lib/website-preview/validation'
 import { getDictionary } from '@/lib/i18n/dictionaries'
 import { formatActivitySummary } from '@/lib/portal/activity'
@@ -11,6 +15,7 @@ const verified = {
   provider: ABMED_CLINICAL_RESEARCH_PREVIEW.provider,
   displayName: ABMED_CLINICAL_RESEARCH_PREVIEW.displayName,
   aliasUrl: ABMED_CLINICAL_RESEARCH_PREVIEW.aliasUrl,
+  registeredUrl: ABMED_CLINICAL_RESEARCH_PREVIEW.registeredUrl,
   deploymentId: ABMED_CLINICAL_RESEARCH_PREVIEW.deploymentId,
   versionLabel: ABMED_CLINICAL_RESEARCH_PREVIEW.versionLabel,
   sourceRevision: ABMED_CLINICAL_RESEARCH_PREVIEW.sourceRevision,
@@ -50,8 +55,11 @@ describe('website preview URL and deployment validation', () => {
     expect(parsed.ok).toBe(true)
     if (!parsed.ok) return
     expect(parsed.value.aliasUrl).toBe('https://abmed-clinical-research.vercel.app/')
+    expect(parsed.value.registeredUrl).toBe(
+      'https://abmed-clinical-research-e0tp8x0d2-tone4real-7828s-projects.vercel.app/',
+    )
     expect(parsed.value.deploymentId).toBe('dpl_BVKpzBn4TLZ3xvyNJYNLBZCFUbNC')
-    expect(parsed.value.deploymentId).not.toBe(parsed.value.aliasUrl)
+    expect(parsed.value.registeredUrl).not.toBe(parsed.value.aliasUrl)
   })
 
   it('rejects non-https, private, and cross-provider hosts', () => {
@@ -109,6 +117,16 @@ describe('approval binding follows the immutable deployment', () => {
   })
 })
 
+describe('immutable customer view URL', () => {
+  it('loads the version registeredUrl even when the public alias differs', () => {
+    const registered = customerPreviewDeploymentUrl({
+      registeredUrl: ABMED_CLINICAL_RESEARCH_PREVIEW.registeredUrl,
+    })
+    expect(registered).toBe(ABMED_CLINICAL_RESEARCH_PREVIEW.registeredUrl)
+    expect(registered).not.toBe(ABMED_CLINICAL_RESEARCH_PREVIEW.aliasUrl)
+  })
+})
+
 describe('ABMED clinical research activation guard', () => {
   it('blocks the verified deployment on the existing aesthetics and physicians projects', () => {
     expect(guardKnownDeploymentProject(aesthetics.id, verified.deploymentId)).toEqual({
@@ -121,6 +139,14 @@ describe('ABMED clinical research activation guard', () => {
     })
     expect(guardKnownDeploymentProject('abmed-clinical-research-project', verified.deploymentId)).toEqual({ ok: true })
     expect(guardKnownDeploymentProject(aesthetics.id, 'dpl_someotherdeploy')).toEqual({ ok: true })
+  })
+
+  it('allows the verified deployment only on the ABMED customer account', () => {
+    expect(guardKnownDeploymentAccount('abmed-account', verified.deploymentId)).toEqual({ ok: true })
+    expect(guardKnownDeploymentAccount('other-account', verified.deploymentId)).toEqual({
+      ok: false,
+      error: 'abmed_wrong_account',
+    })
   })
 })
 

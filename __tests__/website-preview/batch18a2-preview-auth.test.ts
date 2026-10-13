@@ -92,7 +92,17 @@ describe('website preview authorization', () => {
 
   it('refuses preview registration without staff access', async () => {
     hoisted.requireStaff.mockRejectedValue(new Error('no'))
-    const result = await registerWebsitePreviewAction('project-1', 'VERCEL', 'Name', 'https://example.vercel.app', 'dpl_abcdefgh', '1', '', 'DEVELOPMENT')
+    const result = await registerWebsitePreviewAction(
+      'project-1',
+      'VERCEL',
+      'Name',
+      'https://example.vercel.app',
+      'https://example-abc123.vercel.app',
+      'dpl_abcdefgh',
+      '1',
+      '',
+      'DEVELOPMENT',
+    )
     expect(result).toEqual({ ok: false, error: 'unauthorized' })
     expect(hoisted.registerWebsitePreview).not.toHaveBeenCalled()
     expect(hoisted.projectFindUnique).not.toHaveBeenCalled()

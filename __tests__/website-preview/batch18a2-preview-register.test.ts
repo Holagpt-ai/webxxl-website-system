@@ -60,6 +60,7 @@ const verified = {
   provider: ABMED_CLINICAL_RESEARCH_PREVIEW.provider,
   displayName: ABMED_CLINICAL_RESEARCH_PREVIEW.displayName,
   aliasUrl: ABMED_CLINICAL_RESEARCH_PREVIEW.aliasUrl,
+  registeredUrl: ABMED_CLINICAL_RESEARCH_PREVIEW.registeredUrl,
   deploymentId: ABMED_CLINICAL_RESEARCH_PREVIEW.deploymentId,
   versionLabel: ABMED_CLINICAL_RESEARCH_PREVIEW.versionLabel,
   sourceRevision: ABMED_CLINICAL_RESEARCH_PREVIEW.sourceRevision,
@@ -70,6 +71,16 @@ describe('website preview registration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     hoisted.versionFindUnique.mockResolvedValue(null)
+  })
+
+  it('does not write when the clinical research deployment targets another customer account', async () => {
+    const result = await registerWebsitePreview({
+      actorUserId: 'staff-1',
+      project: { id: 'clinical-project', customerAccountId: 'other-account' },
+      ...verified,
+    })
+    expect(result).toEqual({ ok: false, error: 'abmed_wrong_account' })
+    expect(hoisted.approvalCreate).not.toHaveBeenCalled()
   })
 
   it('does not write when the clinical research deployment targets an existing ABMED website project', async () => {
@@ -103,6 +114,7 @@ describe('website preview registration', () => {
     expect(hoisted.versionCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
         deploymentId: verified.deploymentId,
+        registeredUrl: 'https://abmed-clinical-research-e0tp8x0d2-tone4real-7828s-projects.vercel.app/',
         isCurrent: true,
         approvalId: 'approval-1',
       }),

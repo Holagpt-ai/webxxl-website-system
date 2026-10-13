@@ -4,7 +4,7 @@ import { WebsitePreviewActions } from '@/components/dashboard/website-preview-ac
 import { enumLabel } from '@/lib/i18n/labels'
 import type { Dictionary } from '@/lib/i18n/dictionaries/en'
 import { previewDecisionIsBound } from '@/lib/website-preview/binding'
-import { isWebsiteProjectType } from '@/lib/website-preview/display'
+import { customerPreviewDeploymentUrl, isWebsiteProjectType } from '@/lib/website-preview/display'
 import { findCustomerWebsitePreview } from '@/lib/website-preview/operations'
 import { validatePreviewUrl, type WebsitePreviewProviderId } from '@/lib/website-preview/validation'
 
@@ -37,7 +37,9 @@ export async function WebsitePreviewSection({
   }
 
   const version = preview.versions[0]
-  const safeUrl = validatePreviewUrl(preview.aliasUrl, preview.provider as WebsitePreviewProviderId)
+  const provider = preview.provider as WebsitePreviewProviderId
+  const deploymentViewUrl = validatePreviewUrl(customerPreviewDeploymentUrl(version), provider)
+  const publicAliasUrl = validatePreviewUrl(preview.aliasUrl, provider)
   const canDecide = Boolean(
     version.approval &&
       previewDecisionIsBound({
@@ -52,21 +54,33 @@ export async function WebsitePreviewSection({
     <div className="mb-6">
       <SectionCard title={copy.websitePreviewTitle}>
         <div className="flex flex-col gap-4">
-          {safeUrl.ok && (
+          {deploymentViewUrl.ok && (
             <iframe
               title={copy.previewFrameTitle}
-              src={safeUrl.url}
+              src={deploymentViewUrl.url}
               className="h-80 w-full rounded-lg border bg-background md:h-[28rem]"
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
               referrerPolicy="strict-origin-when-cross-origin"
             />
           )}
           <div className="flex flex-wrap items-center gap-3">
-            {safeUrl.ok && (
-              <a className={buttonVariants()} href={safeUrl.url} target="_blank" rel="noopener noreferrer">
+            {deploymentViewUrl.ok && (
+              <a className={buttonVariants()} href={deploymentViewUrl.url} target="_blank" rel="noopener noreferrer">
                 {copy.openPreviewWebsite}
               </a>
             )}
+            {publicAliasUrl.ok &&
+              deploymentViewUrl.ok &&
+              publicAliasUrl.url !== deploymentViewUrl.url && (
+                <a
+                  className={buttonVariants({ variant: 'outline' })}
+                  href={publicAliasUrl.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {copy.openPublicAlias}
+                </a>
+              )}
             <StatusBadge label={enumLabel(copy.websitePreviewStatuses, version.status)} tone={tone} />
           </div>
           <dl className="grid gap-2 text-sm sm:grid-cols-2">

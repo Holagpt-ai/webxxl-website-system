@@ -4,6 +4,11 @@ export function isWebsiteProjectType(type: string): boolean {
   return WEBSITE_PROJECT_TYPES.has(type)
 }
 
+/** Customer review always loads the immutable deployment URL, never the mutable alias. */
+export function customerPreviewDeploymentUrl(version: { registeredUrl: string }): string {
+  return version.registeredUrl
+}
+
 export function previewChangeRequestTitle(locale: string, versionLabel: string): string {
   if (locale === 'es') return `Vista previa del sitio ${versionLabel}`
   return `Website preview ${versionLabel}`

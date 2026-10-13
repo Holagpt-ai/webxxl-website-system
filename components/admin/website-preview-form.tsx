@@ -15,6 +15,7 @@ const initial = {
   provider: 'VERCEL',
   displayName: '',
   aliasUrl: '',
+  registeredUrl: '',
   deploymentId: '',
   versionLabel: '',
   sourceRevision: '',
@@ -45,6 +46,7 @@ export function WebsitePreviewForm({ projectId }: { projectId: string }) {
             fields.provider,
             fields.displayName,
             fields.aliasUrl,
+            fields.registeredUrl,
             fields.deploymentId,
             fields.versionLabel,
             fields.sourceRevision,
@@ -70,6 +72,7 @@ export function WebsitePreviewForm({ projectId }: { projectId: string }) {
             provider: verified.provider,
             displayName: verified.displayName,
             aliasUrl: verified.aliasUrl,
+            registeredUrl: verified.registeredUrl,
             deploymentId: verified.deploymentId,
             versionLabel: verified.versionLabel,
             sourceRevision: verified.sourceRevision,
@@ -115,6 +118,16 @@ export function WebsitePreviewForm({ projectId }: { projectId: string }) {
       <div>
         <Label htmlFor="preview-name">{copy.displayName}</Label>
         <Input id="preview-name" className="mt-1" value={fields.displayName} onChange={(event) => set('displayName', event.target.value)} required />
+      </div>
+      <div>
+        <Label htmlFor="preview-registered-url">{copy.registeredUrl}</Label>
+        <Input
+          id="preview-registered-url"
+          className="mt-1"
+          value={fields.registeredUrl}
+          onChange={(event) => set('registeredUrl', event.target.value)}
+          required
+        />
       </div>
       <div>
         <Label htmlFor="preview-url">{copy.aliasUrl}</Label>

@@ -33,7 +33,14 @@ export async function WebsitePreviewAdminPanel({
           <p className="mt-1">
             {current.versionLabel} · <span className="font-mono text-xs">{current.deploymentId}</span>
           </p>
-          <p className="text-muted-foreground">{current.registeredUrl}</p>
+          <p className="text-muted-foreground">
+            {copy.registeredUrl}: {current.registeredUrl}
+          </p>
+          {preview && (
+            <p className="text-muted-foreground">
+              {copy.aliasUrl}: {preview.aliasUrl}
+            </p>
+          )}
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <StatusBadge label={enumLabel(dashboard.websitePreviewStatuses, current.status)} />
             <span className="text-muted-foreground">{fmt(current.updatedAt)}</span>

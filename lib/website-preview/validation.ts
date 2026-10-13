@@ -24,7 +24,10 @@ const BLOCKED_HOSTS = new Set([
 export type ParsedWebsitePreview = {
   provider: WebsitePreviewProviderId
   displayName: string
+  /** Mutable public alias on WebsitePreview. */
   aliasUrl: string
+  /** Immutable provider deployment host stored on WebsitePreviewVersion.registeredUrl. */
+  registeredUrl: string
   deploymentId: string
   versionLabel: string
   sourceRevision: string | null
@@ -84,6 +87,7 @@ export function parseWebsitePreviewInput(input: {
   provider: string
   displayName: string
   aliasUrl: string
+  registeredUrl: string
   deploymentId: string
   versionLabel: string
   sourceRevision?: string | null
@@ -97,12 +101,15 @@ export function parseWebsitePreviewInput(input: {
   const displayName = input.displayName.trim()
   if (!displayName || displayName.length > 120) return { ok: false, error: 'empty' }
 
-  const url = validatePreviewUrl(input.aliasUrl, provider)
-  if (!url.ok) return url
+  const alias = validatePreviewUrl(input.aliasUrl, provider)
+  if (!alias.ok) return alias
+  const registered = validatePreviewUrl(input.registeredUrl, provider)
+  if (!registered.ok) return registered
+  if (alias.url === registered.url) return { ok: false, error: 'invalid_deployment' }
 
   const deploymentId = input.deploymentId.trim()
   if (!deploymentIdPattern(provider).test(deploymentId)) return { ok: false, error: 'invalid_deployment' }
-  if (deploymentId === url.url) return { ok: false, error: 'invalid_deployment' }
+  if (deploymentId === alias.url || deploymentId === registered.url) return { ok: false, error: 'invalid_deployment' }
 
   const versionLabel = input.versionLabel.trim()
   if (!versionLabel || versionLabel.length > 64 || /[\r\n]/.test(versionLabel)) {
@@ -117,7 +124,8 @@ export function parseWebsitePreviewInput(input: {
     value: {
       provider,
       displayName,
-      aliasUrl: url.url,
+      aliasUrl: alias.url,
+      registeredUrl: registered.url,
       deploymentId,
       versionLabel,
       sourceRevision: revision || null,

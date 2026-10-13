@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db'
 import { automationHooks } from '@/lib/automation/hooks'
 import { formatActivitySummary, writeProjectActivity } from '@/lib/portal/activity'
 import { previewApprovalMetadata, previewDecisionIsBound } from '@/lib/website-preview/binding'
-import { guardKnownDeploymentProject } from '@/lib/website-preview/catalog'
+import { guardKnownDeploymentAccount, guardKnownDeploymentProject } from '@/lib/website-preview/catalog'
 import { previewChangeRequestDescription, previewChangeRequestTitle } from '@/lib/website-preview/display'
 import { parseWebsitePreviewInput, type ParsedWebsitePreview } from '@/lib/website-preview/validation'
 
@@ -42,7 +42,7 @@ async function recordRegistration(
       deploymentId: parsed.deploymentId,
       versionLabel: parsed.versionLabel,
       sourceRevision: parsed.sourceRevision,
-      registeredUrl: parsed.aliasUrl,
+      registeredUrl: parsed.registeredUrl,
     },
   })
   if (!approvalId) return
@@ -71,6 +71,7 @@ export async function registerWebsitePreview(input: {
   provider: string
   displayName: string
   aliasUrl: string
+  registeredUrl: string
   deploymentId: string
   versionLabel: string
   sourceRevision?: string | null
@@ -78,8 +79,10 @@ export async function registerWebsitePreview(input: {
 }): Promise<PreviewWriteResult> {
   const parsed = parseWebsitePreviewInput(input)
   if (!parsed.ok) return parsed
-  const guard = guardKnownDeploymentProject(input.project.id, parsed.value.deploymentId)
-  if (!guard.ok) return guard
+  const projectGuard = guardKnownDeploymentProject(input.project.id, parsed.value.deploymentId)
+  if (!projectGuard.ok) return projectGuard
+  const accountGuard = guardKnownDeploymentAccount(input.project.customerAccountId, parsed.value.deploymentId)
+  if (!accountGuard.ok) return accountGuard
 
   const existing = await prisma.websitePreviewVersion.findUnique({
     where: {
@@ -108,7 +111,6 @@ export async function registerWebsitePreview(input: {
       data: {
         versionLabel: parsed.value.versionLabel,
         sourceRevision: parsed.value.sourceRevision,
-        registeredUrl: parsed.value.aliasUrl,
         status: parsed.value.status,
         approvalId,
       },
@@ -185,7 +187,7 @@ export async function registerWebsitePreview(input: {
         deploymentId: parsed.value.deploymentId,
         versionLabel: parsed.value.versionLabel,
         sourceRevision: parsed.value.sourceRevision,
-        registeredUrl: parsed.value.aliasUrl,
+        registeredUrl: parsed.value.registeredUrl,
         status: parsed.value.status,
         isCurrent: true,
         registeredById: input.actorUserId,
