@@ -6,6 +6,7 @@ import { resolveLocale } from '@/lib/i18n/server'
 import { buildMetadata } from '@/lib/seo'
 import { DashboardShell } from '@/components/dashboard/shell'
 import { requireCustomerMembership } from '@/lib/portal/authz'
+import { getActiveProjectIdFromCookie, pickActiveProject } from '@/lib/portal/active-project'
 import { getDashboardNavModules } from '@/lib/portal/modules'
 import { prisma } from '@/lib/db'
 
@@ -53,6 +54,12 @@ export default async function DashboardLayout({ params, children }: Props) {
     customerAccountId: m.customerAccount.id,
     businessName: m.customerAccount.businessName,
   }))
+  const projects = await prisma.project.findMany({
+    where: { customerAccountId: portal.customerAccount.id },
+    select: { id: true, name: true, status: true, updatedAt: true },
+    orderBy: { name: 'asc' },
+  })
+  const activeProject = pickActiveProject(projects, await getActiveProjectIdFromCookie()).project
 
   return (
     <DashboardShell
@@ -64,6 +71,8 @@ export default async function DashboardLayout({ params, children }: Props) {
       navModules={navModules}
       accountOptions={accountOptions.length > 1 ? accountOptions : undefined}
       activeAccountId={portal.customerAccount.id}
+      projectOptions={projects.map((project) => ({ id: project.id, name: project.name }))}
+      activeProjectId={activeProject?.id}
     >
       {children}
     </DashboardShell>

@@ -11,6 +11,7 @@ import type { PortalModule } from '@/lib/portal/modules'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { CustomerAccountSwitcher } from '@/components/dashboard/account-switcher'
+import { CustomerProjectSwitcher } from '@/components/dashboard/project-switcher'
 import { LanguageSwitcher } from '@/components/site/language-switcher'
 import type { Locale } from '@/lib/i18n/config'
 
@@ -23,6 +24,8 @@ type Props = {
   navModules: PortalModule[]
   accountOptions?: { customerAccountId: string; businessName: string }[]
   activeAccountId?: string
+  projectOptions?: { id: string; name: string }[]
+  activeProjectId?: string
   children: React.ReactNode
 }
 
@@ -81,6 +84,8 @@ export function DashboardShell({
   navModules,
   accountOptions,
   activeAccountId,
+  projectOptions,
+  activeProjectId,
   children,
 }: Props) {
   const pathname = usePathname()
@@ -97,6 +102,9 @@ export function DashboardShell({
         ) : (
           <p className="-mt-2 truncate text-sm font-semibold text-foreground">{businessName}</p>
         )}
+        {projectOptions && activeProjectId ? (
+          <CustomerProjectSwitcher projects={projectOptions} activeProjectId={activeProjectId} label={dict.selectProject} />
+        ) : null}
         <NavLinks locale={locale} dict={dict} navModules={navModules} pathname={pathname} />
         <div className="mt-auto flex flex-col gap-3 border-t pt-4">
           <LanguageSwitcher locale={locale as Locale} label={languageLabel} persist />
@@ -132,6 +140,11 @@ export function DashboardShell({
                 ) : (
                   <p className="mb-4 truncate text-sm font-semibold">{businessName}</p>
                 )}
+                {projectOptions && activeProjectId ? (
+                  <div className="mb-4">
+                    <CustomerProjectSwitcher projects={projectOptions} activeProjectId={activeProjectId} label={dict.selectProject} />
+                  </div>
+                ) : null}
                 <NavLinks
                   locale={locale}
                   dict={dict}

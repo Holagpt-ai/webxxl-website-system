@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { PageTitle, SectionCard, EmptyState, StatusBadge } from '@/components/dashboard/primitives'
 import { ApprovalActions } from '@/components/dashboard/forms'
 import { enumLabel } from '@/lib/i18n/labels'
+import { previewDecisionIsBound } from '@/lib/website-preview/binding'
 import { LinkedFileList } from '@/components/files/project-file-list'
 import { isStorageConfigured } from '@/lib/integrations/storage'
 
@@ -27,7 +28,10 @@ export default async function ApprovalsPage({ params }: { params: Promise<{ loca
   const approvals = await prisma.projectApproval.findMany({
     where: { projectId: project.id },
     orderBy: { requestedAt: 'desc' },
-    include: { fileLinks: { include: { projectFile: { select: { id: true, originalName: true } } } } },
+    include: {
+      fileLinks: { include: { projectFile: { select: { id: true, originalName: true } } } },
+      websitePreviewVersion: true,
+    },
   })
   const storageReady = isStorageConfigured()
 
@@ -38,10 +42,32 @@ export default async function ApprovalsPage({ params }: { params: Promise<{ loca
         <EmptyState title={d.emptyApprovals} body={d.emptyApprovalsBody} />
       ) : (
         <div className="flex flex-col gap-4">
-          {approvals.map((approval) => (
-            <SectionCard key={approval.id} title={approval.title}>
-              <p className="mb-3 text-sm text-muted-foreground">{approval.description}</p>
-              <StatusBadge label={enumLabel(d.approvalStatuses, approval.status)} />
+          {approvals.map((approval) => {
+            const previewVersion = approval.websitePreviewVersion
+            const title = previewVersion
+              ? d.previewApprovalTitle.replace('{version}', previewVersion.versionLabel)
+              : approval.title
+            const canAct =
+              approval.status === 'PENDING' &&
+              (!previewVersion ||
+                previewDecisionIsBound({
+                  version: previewVersion,
+                  approvalId: approval.id,
+                  approvalMetadata: approval.metadata,
+                }))
+            const statusLabel = previewVersion && !previewVersion.isCurrent
+              ? enumLabel(d.websitePreviewStatuses, 'SUPERSEDED')
+              : enumLabel(d.approvalStatuses, approval.status)
+            return (
+            <SectionCard key={approval.id} title={title}>
+              {previewVersion ? (
+                <p className="mb-3 text-sm text-muted-foreground">
+                  {d.deploymentId}: <span className="font-mono text-xs">{previewVersion.deploymentId}</span>
+                </p>
+              ) : (
+                <p className="mb-3 text-sm text-muted-foreground">{approval.description}</p>
+              )}
+              <StatusBadge label={statusLabel} />
               {approval.fileLinks.length > 0 && (
                 <div className="mt-4">
                   <p className="text-sm font-medium">{d.supportingFiles}</p>
@@ -53,18 +79,19 @@ export default async function ApprovalsPage({ params }: { params: Promise<{ loca
                   {!storageReady && <p className="mt-2 text-xs text-muted-foreground">{d.storageNotConfigured}</p>}
                 </div>
               )}
-              {approval.status === 'PENDING' && (
+              {canAct && (
                 <div className="mt-4">
                   <ApprovalActions
                     approvalId={approval.id}
-                    approveLabel={d.approve}
+                    approveLabel={previewVersion ? d.approveVersion : d.approve}
                     changesLabel={d.requestChanges}
                     notesPlaceholder={d.optionalNotes}
                   />
                 </div>
               )}
             </SectionCard>
-          ))}
+            )
+          })}
         </div>
       )}
     </>

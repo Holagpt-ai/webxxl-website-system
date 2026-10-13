@@ -11,6 +11,7 @@ import {
   pickActiveMembership,
   setActiveCustomerAccountCookie,
 } from '@/lib/portal/active-customer-account'
+import { getActiveProjectIdFromCookie, pickActiveProject, setActiveProjectCookie } from '@/lib/portal/active-project'
 
 export class AuthError extends Error {
   constructor(message = 'Unauthorized') {
@@ -142,16 +143,17 @@ export async function requireCapabilityAccess(siteId: string, capabilityKey: str
   return { ...access, capability: decision.capability }
 }
 
-/** Resolve active project for the customer account (first active, else most recent). */
+/** Selected project for this account. A valid cookie wins so every existing project stays reachable. */
 export async function getActiveProject(customerAccountId: string): Promise<Project | null> {
-  return (
-    (await prisma.project.findFirst({
-      where: { customerAccountId, status: 'ACTIVE' },
-      orderBy: { updatedAt: 'desc' },
-    })) ??
-    (await prisma.project.findFirst({
-      where: { customerAccountId },
-      orderBy: { updatedAt: 'desc' },
-    }))
-  )
+  const projects = await prisma.project.findMany({ where: { customerAccountId } })
+  const cookieId = await getActiveProjectIdFromCookie()
+  const { project, shouldRefreshCookie } = pickActiveProject(projects, cookieId)
+  if (project && shouldRefreshCookie) {
+    try {
+      await setActiveProjectCookie(project.id)
+    } catch {
+      // Cookie writes can be rejected during render. The chosen project still applies to this request.
+    }
+  }
+  return project
 }

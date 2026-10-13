@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { requireCustomerMembership, requireProjectAccess } from '@/lib/portal/authz'
 import { writeProjectActivity, formatActivitySummary } from '@/lib/portal/activity'
+import { linkedPreviewRejectsDecision, syncWebsitePreviewDecision } from '@/lib/website-preview/operations'
 import { automationHooks } from '@/lib/automation/hooks'
 import { notifyStaffUsers } from '@/lib/portal/notifications'
 import { buildCustomerCommentWrite } from '@/lib/files/comments'
@@ -97,6 +98,9 @@ export async function respondApprovalAction(
     if (!approval || approval.project.customerAccountId !== portal.customerAccount.id || approval.status !== 'PENDING') {
       return { ok: false, error: 'not_found' }
     }
+    const previewGate = await linkedPreviewRejectsDecision(approval.id, approval.metadata)
+    if (previewGate !== 'ok') return { ok: false, error: previewGate }
+    const linkedPreview = await prisma.websitePreviewVersion.findUnique({ where: { approvalId: approval.id } })
     await prisma.projectApproval.update({
       where: { id: approvalId },
       data: {
@@ -114,6 +118,13 @@ export async function respondApprovalAction(
         decision === 'APPROVED' ? 'APPROVAL_APPROVED' : 'CHANGES_REQUESTED',
         approval.title,
       ),
+      metadata: linkedPreview
+        ? {
+            provider: linkedPreview.provider,
+            deploymentId: linkedPreview.deploymentId,
+            versionLabel: linkedPreview.versionLabel,
+          }
+        : undefined,
     })
     await bestEffort(
       automationHooks.customerApprovalSubmitted({
@@ -124,6 +135,13 @@ export async function respondApprovalAction(
         decision,
       }),
     )
+    await syncWebsitePreviewDecision({
+      approvalId: approval.id,
+      decision,
+      actorUserId: portal.id,
+      notes,
+      locale: portal.preferredLocale,
+    })
     revalidateDashboard()
     return { ok: true }
   } catch {
