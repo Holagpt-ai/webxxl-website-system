@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   ABMED_CLINICAL_RESEARCH_LEGACY_PREVIEW,
+  ABMED_CLINICAL_RESEARCH_PREVIEW,
   ABMED_CLINICAL_RESEARCH_PREVIEW_394A5D8,
+  ABMED_CLINICAL_RESEARCH_PREVIEW_FC919F5,
   ABMED_CLINICAL_RESEARCH_PROJECT_ID,
   guardKnownDeploymentProject,
   isAbmedClinicalResearchDeployment,
@@ -11,6 +13,8 @@ import { calculateProjectEta } from '@/lib/portal/eta'
 describe('ABMED clinical research catalog', () => {
   it('guards all known ABMED deployment ids to the clinical research project', () => {
     for (const deploymentId of [
+      ABMED_CLINICAL_RESEARCH_PREVIEW.deploymentId,
+      ABMED_CLINICAL_RESEARCH_PREVIEW_FC919F5.deploymentId,
       ABMED_CLINICAL_RESEARCH_PREVIEW_394A5D8.deploymentId,
       ABMED_CLINICAL_RESEARCH_LEGACY_PREVIEW.deploymentId,
     ]) {
