@@ -136,7 +136,7 @@ describe('website preview registration', () => {
     expect(hoisted.versionCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
         deploymentId: verified.deploymentId,
-        registeredUrl: 'https://abmed-clinical-research-ffm790rpp-tone4real-7828s-projects.vercel.app/',
+        registeredUrl: verified.registeredUrl.endsWith('/') ? verified.registeredUrl : `${verified.registeredUrl}/`,
         isCurrent: true,
         approvalId: 'approval-1',
       }),

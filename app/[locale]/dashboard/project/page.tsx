@@ -6,6 +6,7 @@ import { DependencyResolveButton } from '@/components/dashboard/forms'
 import { EmptyState } from '@/components/dashboard/primitives'
 import { enumLabel, localizeStoredActivity } from '@/lib/i18n/labels'
 import { WebsitePreviewSection } from '@/components/dashboard/website-preview-section'
+import { CollaborationLinks } from '@/components/dashboard/collaboration-links'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,6 +47,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ locale
         locale={locale}
         copy={d}
       />
+      <div className="mb-6">
+        <CollaborationLinks localePrefix={locale === 'es' ? '/es' : ''} copy={d} />
+      </div>
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <StatusBadge label={enumLabel(d.projectStatuses, project.status)} />
         <StatusBadge label={`${eta.progressPercent}%`} />

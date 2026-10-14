@@ -52,7 +52,12 @@ export default async function MessagesPage({ params }: { params: Promise<{ local
       </SectionCard>
       <div className="mt-6">
         <SectionCard title={d.newMessage}>
-          <CommentForm projectId={project.id} submitLabel={d.submit} />
+          <CommentForm
+            projectId={project.id}
+            submitLabel={d.submit}
+            successMessage={d.messageSendSuccess}
+            errorMessage={d.messageSendError}
+          />
         </SectionCard>
       </div>
     </>

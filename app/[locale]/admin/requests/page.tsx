@@ -37,6 +37,12 @@ export default async function AdminChangeRequestsPage({ params }: { params: Prom
                     {cr.managedSite ? ` · ${cr.managedSite.domain}` : ''}
                   </p>
                   <StatusBadge label={enumLabel(dict.dashboard.changeRequestStatuses, cr.status)} />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {enumLabel(dict.dashboard.changeRequestCategories, cr.category)}
+                    {cr.previewVersionRef
+                      ? ` · ${dict.dashboard.currentVersion} ${cr.previewVersionRef.versionLabel} (${cr.previewVersionRef.deploymentId})`
+                      : ''}
+                  </p>
                   <p className="mt-2 line-clamp-3 text-muted-foreground">{cr.description}</p>
                   <LinkedFileList
                     files={cr.fileLinks.map((link) => link.projectFile)}

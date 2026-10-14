@@ -73,6 +73,8 @@ export async function requestWebsitePreviewChangesAction(
       title,
       previewChangeRequestDescription(description, access.version.deploymentId),
       'NORMAL',
+      [],
+      { category: 'OTHER', websitePreviewVersionId: access.version.id },
     )
   } catch {
     return { ok: false, error: 'unauthorized' }

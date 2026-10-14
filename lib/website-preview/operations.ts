@@ -253,6 +253,8 @@ export async function syncWebsitePreviewDecision(input: {
       title,
       description,
       priority: 'NORMAL',
+      category: 'OTHER',
+      websitePreviewVersionId: version.id,
     },
   })
   await prisma.websitePreviewVersion.update({

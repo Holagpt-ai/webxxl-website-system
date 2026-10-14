@@ -9,7 +9,9 @@ import { automationHooks } from '@/lib/automation/hooks'
 import { notifyStaffUsers } from '@/lib/portal/notifications'
 import { buildCustomerCommentWrite } from '@/lib/files/comments'
 import { assertFilesBelongToProject, linkProjectFiles, readUploadFromFormData, uploadProjectFile } from '@/lib/files/operations'
-import type { ChangeRequestPriority } from '@prisma/client'
+import type { ChangeRequestCategory, ChangeRequestPriority } from '@prisma/client'
+import { parseChangeRequestCategory } from '@/lib/change-requests/categories'
+import { assertPreviewVersionForProject } from '@/lib/change-requests/preview-version'
 
 export type ActionResult = { ok: true } | { ok: false; error: string }
 
@@ -155,12 +157,20 @@ export async function submitChangeRequestAction(
   description: string,
   priority: ChangeRequestPriority,
   fileIds: string[] = [],
+  options?: { category?: ChangeRequestCategory; websitePreviewVersionId?: string | null },
 ): Promise<ActionResult> {
   try {
     const { portal, project } = await requireProjectAccess(projectId)
     const t = title.trim()
     const d = description.trim()
     if (!t || !d) return { ok: false, error: 'empty' }
+    const category = options?.category ?? parseChangeRequestCategory('OTHER') ?? 'OTHER'
+    const versionOk = await assertPreviewVersionForProject(
+      options?.websitePreviewVersionId,
+      project.id,
+      portal.customerAccount.id,
+    )
+    if (!versionOk.ok) return { ok: false, error: 'not_found' }
     const filesOk = await assertFilesBelongToProject(fileIds, project.id)
     if (!filesOk.ok) return filesOk
     const created = await prisma.changeRequest.create({
@@ -170,6 +180,8 @@ export async function submitChangeRequestAction(
         title: t,
         description: d,
         priority,
+        category,
+        websitePreviewVersionId: versionOk.versionId,
       },
     })
     if (fileIds.length > 0) {
@@ -196,6 +208,7 @@ export async function submitChangeRequestAction(
       actorUserId: portal.id,
       eventType: 'CHANGE_REQUEST_SUBMITTED',
       summary: formatActivitySummary('CHANGE_REQUEST_SUBMITTED', t),
+      metadata: versionOk.versionId ? { websitePreviewVersionId: versionOk.versionId, category } : { category },
     })
     await bestEffort(
       automationHooks.changeRequestSubmitted({

@@ -36,6 +36,7 @@ export function formatActivitySummary(eventType: ProjectActivityEventType, detai
     APPROVAL_APPROVED: 'Work approved',
     CHANGES_REQUESTED: 'Changes requested',
     CHANGE_REQUEST_SUBMITTED: 'Change request submitted',
+    CHANGE_REQUEST_UPDATED: 'Change request updated',
     SUPPORT_REQUEST_CREATED: 'Support request created',
     WEBSITE_PREVIEW_REGISTERED: 'Website preview registered',
   }
