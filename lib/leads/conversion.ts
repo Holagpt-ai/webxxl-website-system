@@ -6,14 +6,10 @@ import type { MembershipRole, ProjectType } from '@prisma/client'
 import { slugifyBusinessName } from '@/lib/leads/slug'
 import { mapIntakeProjectType } from '@/lib/leads/project-type'
 import { writeLeadActivity } from '@/lib/leads/activity'
-import {
-  isAllowedInviteRole,
-  isValidCustomerInviteEmail,
-  normalizeCustomerInviteEmail,
-  type CustomerAccessLocale,
-} from '@/lib/portal/customer-access'
-import { isStaffRole } from '@/lib/admin/roles'
-import type { UserRole } from '@prisma/client'
+import type { CustomerAccessLocale } from '@/lib/portal/customer-access'
+import { provisionCustomerInvite } from '@/lib/portal/customer-invite-provision'
+import { getProjectTemplate, resolveLeadConversionTemplateId } from '@/lib/project-templates/registry'
+import { instantiateProjectTemplate } from '@/lib/project-templates/instantiate'
 
 export type ConvertLeadInput = {
   leadId: string
@@ -24,6 +20,7 @@ export type ConvertLeadInput = {
   projectName?: string
   projectType?: ProjectType
   projectSummary?: string
+  templateId?: string | null
   sendInvite?: boolean
   inviteRole?: MembershipRole
   locale?: CustomerAccessLocale
@@ -40,55 +37,6 @@ export type ConvertLeadResult =
       inviteError?: string
     }
   | { ok: false; error: string }
-
-async function provisionCustomerMembershipInvite(input: {
-  customerAccountId: string
-  email: string
-  role: MembershipRole
-  locale: CustomerAccessLocale
-}): Promise<{ ok: true } | { ok: false; error: string }> {
-  const normalized = normalizeCustomerInviteEmail(input.email)
-  if (!normalized || !isValidCustomerInviteEmail(normalized)) return { ok: false, error: 'invalid_email' }
-  if (!isAllowedInviteRole(input.role)) return { ok: false, error: 'invalid_email' }
-
-  let user = await prisma.user.findUnique({ where: { email: normalized } })
-  if (user && isStaffRole(user.role as UserRole)) {
-    return { ok: false, error: 'staff_account_not_allowed' }
-  }
-  if (!user) {
-    user = await prisma.user.create({
-      data: { email: normalized, role: 'CUSTOMER', emailVerified: null },
-    })
-  } else if (user.role !== 'CUSTOMER') {
-    return { ok: false, error: 'staff_account_not_allowed' }
-  }
-
-  const now = new Date()
-  const existing = await prisma.customerMembership.findUnique({
-    where: { userId_customerAccountId: { userId: user.id, customerAccountId: input.customerAccountId } },
-  })
-
-  await prisma.customerMembership.upsert({
-    where: { userId_customerAccountId: { userId: user.id, customerAccountId: input.customerAccountId } },
-    create: {
-      userId: user.id,
-      customerAccountId: input.customerAccountId,
-      role: input.role,
-      invitedAt: now,
-      lastInviteSentAt: now,
-    },
-    update: {
-      role: input.role,
-      lastInviteSentAt: now,
-      invitedAt: existing?.invitedAt ?? now,
-    },
-  })
-
-  const { sendCustomerInvitationMagicLink } = await import('@/lib/portal/customer-invite-mail')
-  const mail = await sendCustomerInvitationMagicLink(normalized, input.customerAccountId, input.locale)
-  if (!mail.ok) return { ok: false, error: mail.error }
-  return { ok: true }
-}
 
 function defaultProjectName(lead: { businessName: string | null; headline: string | null; contactName: string | null }) {
   return lead.businessName?.trim() || lead.headline?.trim() || `${lead.contactName ?? 'Customer'} website`
@@ -184,15 +132,25 @@ export async function convertLeadToCustomer(input: ConvertLeadInput): Promise<Co
 
     const projectName = (input.projectName ?? defaultProjectName(lead)).trim()
     const projectType = input.projectType ?? payloadProjectType(lead.payload) ?? 'WEBSITE'
+    const templateId = resolveLeadConversionTemplateId({ projectType, templateId: input.templateId })
+    const template = templateId ? getProjectTemplate(templateId) : null
+    if (templateId && !template) return { kind: 'error' as const, error: 'invalid_template' }
+
     const project = await tx.project.create({
       data: {
         customerAccountId: customerAccountId!,
         name: projectName,
-        type: projectType,
+        type: template?.projectType ?? projectType,
         status: 'ACTIVE',
-        summary: input.projectSummary?.trim() || lead.headline || null,
+        summary: input.projectSummary?.trim() || lead.headline || template?.description || lead.headline || null,
+        templateId: template?.id ?? null,
+        templateVersion: template?.version ?? null,
       },
     })
+
+    if (template) {
+      await instantiateProjectTemplate(project.id, template, tx)
+    }
 
     await tx.salesLead.update({
       where: { id: lead.id },
@@ -205,6 +163,7 @@ export async function convertLeadToCustomer(input: ConvertLeadInput): Promise<Co
       customerAccountId: customerAccountId!,
       projectId: project.id,
       projectName,
+      templateId: template?.id ?? null,
       leadId: lead.id,
       contactEmail: lead.contactEmail,
     }
@@ -218,8 +177,15 @@ export async function convertLeadToCustomer(input: ConvertLeadInput): Promise<Co
       actorUserId: input.actorUserId,
       eventType: 'PROJECT_CREATED',
       summary: formatActivitySummary('PROJECT_CREATED', txResult.projectName ?? 'Project'),
+      metadata: txResult.templateId ? { templateId: txResult.templateId, source: 'lead_conversion' } : { source: 'lead_conversion' },
     })
     await syncProjectProgressFromEta(txResult.projectId)
+    if (txResult.templateId) {
+      await prisma.customerAccount.updateMany({
+        where: { id: txResult.customerAccountId, status: 'ONBOARDING' },
+        data: { status: 'ACTIVE' },
+      })
+    }
     await writeLeadActivity({
       leadId: txResult.leadId!,
       actorUserId: input.actorUserId,
@@ -241,11 +207,12 @@ export async function convertLeadToCustomer(input: ConvertLeadInput): Promise<Co
   let inviteError: string | undefined
   if (inviteRequested) {
     const leadEmail = txResult.contactEmail ?? (await prisma.salesLead.findUnique({ where: { id: input.leadId } }))?.contactEmail
-    const invite = await provisionCustomerMembershipInvite({
+    const invite = await provisionCustomerInvite({
       customerAccountId: txResult.customerAccountId,
       email: leadEmail ?? '',
       role: input.inviteRole ?? 'OWNER',
       locale,
+      sendEmail: true,
     })
     if (!invite.ok) {
       inviteError = invite.error
@@ -258,7 +225,18 @@ export async function convertLeadToCustomer(input: ConvertLeadInput): Promise<Co
         metadata: { inviteError: invite.error },
       })
     } else {
-      inviteSent = true
+      inviteSent = invite.inviteSent
+      inviteError = invite.inviteError
+      if (inviteRequested && !inviteSent) {
+        const leadIdForActivity = txResult.leadId ?? input.leadId
+        await writeLeadActivity({
+          leadId: leadIdForActivity,
+          actorUserId: input.actorUserId,
+          type: 'NOTE_ADDED',
+          summary: 'Portal invitation pending email configuration',
+          metadata: { inviteError: invite.inviteError ?? 'delivery_pending' },
+        })
+      }
     }
   }
 

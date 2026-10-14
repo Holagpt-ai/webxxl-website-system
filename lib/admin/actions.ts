@@ -109,53 +109,20 @@ export async function inviteCustomerMemberAction(input: {
 }): Promise<AdminInviteActionResult> {
   try {
     await requireAdmin()
-    const normalized = normalizeCustomerInviteEmail(input.email)
-    if (!normalized) return { ok: false, error: 'invalid_email' }
-    if (!isValidCustomerInviteEmail(normalized)) return { ok: false, error: 'invalid_email' }
-    if (!isAllowedInviteRole(input.role)) return { ok: false, error: 'invalid_email' }
-
     const account = await prisma.customerAccount.findUnique({ where: { id: input.customerAccountId } })
     if (!account) return { ok: false, error: 'not_found' }
 
-    let user = await prisma.user.findUnique({ where: { email: normalized } })
-    if (user && isStaffRole(user.role as UserRole)) {
-      return { ok: false, error: 'staff_account_not_allowed' }
-    }
-
-    if (!user) {
-      user = await prisma.user.create({
-        data: { email: normalized, role: 'CUSTOMER', emailVerified: null },
-      })
-    } else if (user.role !== 'CUSTOMER') {
-      return { ok: false, error: 'staff_account_not_allowed' }
-    }
-
-    const now = new Date()
-    const existing = await prisma.customerMembership.findUnique({
-      where: { userId_customerAccountId: { userId: user.id, customerAccountId: input.customerAccountId } },
+    const { provisionCustomerInvite } = await import('@/lib/portal/customer-invite-provision')
+    const result = await provisionCustomerInvite({
+      customerAccountId: input.customerAccountId,
+      email: input.email,
+      role: input.role,
+      locale: input.locale,
+      sendEmail: true,
     })
-
-    await prisma.customerMembership.upsert({
-      where: { userId_customerAccountId: { userId: user.id, customerAccountId: input.customerAccountId } },
-      create: {
-        userId: user.id,
-        customerAccountId: input.customerAccountId,
-        role: input.role,
-        invitedAt: now,
-        lastInviteSentAt: now,
-      },
-      update: {
-        role: input.role,
-        lastInviteSentAt: now,
-        invitedAt: existing?.invitedAt ?? now,
-      },
-    })
-
-    const { sendCustomerInvitationMagicLink } = await import('@/lib/portal/customer-invite-mail')
-    const mail = await sendCustomerInvitationMagicLink(normalized, input.customerAccountId, input.locale)
     revalidateAdmin()
-    if (!mail.ok) return { ok: true, inviteSent: false, inviteError: mail.error }
-    return { ok: true, inviteSent: true }
+    if (!result.ok) return { ok: false, error: result.error }
+    return { ok: true, inviteSent: result.inviteSent, inviteError: result.inviteError }
   } catch {
     return { ok: false, error: 'unauthorized' }
   }
@@ -174,11 +141,6 @@ export async function resendCustomerInvitationAction(input: {
     if (!membership) return { ok: false, error: 'not_found' }
     if (membership.user.role !== 'CUSTOMER') return { ok: false, error: 'staff_account_not_allowed' }
 
-    await prisma.customerMembership.update({
-      where: { id: membership.id },
-      data: { lastInviteSentAt: new Date() },
-    })
-
     const { sendCustomerInvitationMagicLink } = await import('@/lib/portal/customer-invite-mail')
     const mail = await sendCustomerInvitationMagicLink(
       membership.user.email,
@@ -186,6 +148,11 @@ export async function resendCustomerInvitationAction(input: {
       input.locale,
     )
     if (!mail.ok) return { ok: false, error: mail.error }
+
+    await prisma.customerMembership.update({
+      where: { id: membership.id },
+      data: { lastInviteSentAt: new Date() },
+    })
 
     revalidateAdmin()
     return { ok: true }

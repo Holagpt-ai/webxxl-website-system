@@ -17,6 +17,8 @@ import { LEAD_PIPELINE_STAGES } from '@/lib/leads/pipeline'
 import { useAdminCopy } from '@/components/admin/locale'
 import { actionErrorLabel, enumLabel } from '@/lib/i18n/labels'
 import { format } from '@/lib/i18n/localize'
+import { listProjectTemplates } from '@/lib/project-templates/registry'
+import { STANDARD_BUSINESS_WEBSITE_TEMPLATE } from '@/lib/project-templates/standard-business-website'
 
 export function LeadStageForm({ leadId, current }: { leadId: string; current: LeadStage }) {
   const [pending, startTransition] = useTransition()
@@ -217,6 +219,7 @@ export function LeadConvertForm({
           const data = new FormData(e.currentTarget)
           setMessage(null)
           startTransition(async () => {
+            const templateRaw = (data.get('templateId') as string) || undefined
             const result = await convertLeadAction({
               leadId,
               mode,
@@ -224,6 +227,7 @@ export function LeadConvertForm({
               businessName: (data.get('businessName') as string) || undefined,
               projectName: (data.get('projectName') as string) || undefined,
               projectType: (data.get('projectType') as ProjectType) || undefined,
+              templateId: templateRaw === '__none__' ? null : templateRaw,
               sendInvite: data.get('sendInvite') === 'on',
               inviteRole: (data.get('inviteRole') as MembershipRole) || 'OWNER',
               locale: (data.get('locale') as 'en' | 'es') || 'en',
@@ -239,6 +243,10 @@ export function LeadConvertForm({
             }
             if (result.inviteSent) {
               setMessage(`${conversionLine} ${copy.leads.inviteSent}`)
+              return
+            }
+            if (result.inviteError === 'auth_email_not_configured' || result.inviteError === 'not_configured') {
+              setMessage(`${conversionLine} ${copy.leads.invitePendingEmail}`)
               return
             }
             setMessage(
@@ -275,7 +283,7 @@ export function LeadConvertForm({
           <Input id={`lead-project-${leadId}`} name="projectName" defaultValue={defaultProjectName} required />
         </div>
         <div>
-          <Label htmlFor={`lead-type-${leadId}`}>{copy.project}</Label>
+          <Label htmlFor={`lead-type-${leadId}`}>{copy.leads.projectTypeLabel}</Label>
           <select
             id={`lead-type-${leadId}`}
             name="projectType"
@@ -288,6 +296,23 @@ export function LeadConvertForm({
               </option>
             ))}
           </select>
+        </div>
+        <div>
+          <Label htmlFor={`lead-template-${leadId}`}>{copy.leads.templateLabel}</Label>
+          <select
+            id={`lead-template-${leadId}`}
+            name="templateId"
+            defaultValue={STANDARD_BUSINESS_WEBSITE_TEMPLATE.id}
+            className="mt-1 block w-full rounded-md border bg-background px-3 py-2 text-sm"
+          >
+            {listProjectTemplates().map((template) => (
+              <option key={template.id} value={template.id}>
+                {template.displayName}
+              </option>
+            ))}
+            <option value="__none__">{copy.leads.templateNone}</option>
+          </select>
+          <p className="mt-1 text-xs text-muted-foreground">{copy.leads.templateHelp}</p>
         </div>
         <div className="flex flex-wrap gap-4 text-sm">
           <label className="flex items-center gap-2">

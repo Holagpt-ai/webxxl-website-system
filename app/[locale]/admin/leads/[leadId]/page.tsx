@@ -5,6 +5,7 @@ import { resolveLocale } from '@/lib/i18n/server'
 import { getSalesLeadDetail, listStaffForLeadAssignment } from '@/lib/admin/lead-queries'
 import { listCustomers } from '@/lib/admin/queries'
 import { LEAD_STAGE_LABELS } from '@/lib/leads/pipeline'
+import { getDictionary } from '@/lib/i18n/dictionaries'
 import { PageTitle, StatusBadge } from '@/components/dashboard/primitives'
 import {
   LeadAssignForm,
@@ -23,7 +24,9 @@ export default async function AdminLeadDetailPage({
 }) {
   await requireStaff()
   const { locale, leadId } = await params
-  await resolveLocale(params)
+  const localeResolved = await resolveLocale(params)
+  const dict = getDictionary(localeResolved)
+  const leadCopy = dict.admin.leads
   const lead = await getSalesLeadDetail(leadId)
   if (!lead) notFound()
   const staff = await listStaffForLeadAssignment()
@@ -78,7 +81,7 @@ export default async function AdminLeadDetailPage({
           />
           {converted && lead.customerAccount && lead.project && (
             <div className="rounded-xl border bg-card p-4 text-sm">
-              <h2 className="font-semibold">Handoff</h2>
+              <h2 className="font-semibold">{leadCopy.handoffTitle}</h2>
               <p className="mt-2">
                 <Link href={`${prefix}/admin/customers/${lead.customerAccount.id}`} className="text-primary hover:underline">
                   {lead.customerAccount.businessName}
@@ -89,11 +92,14 @@ export default async function AdminLeadDetailPage({
                   {lead.project.name}
                 </Link>{' '}
                 <StatusBadge label={lead.project.status} />
+                {lead.project.templateId && (
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    · {lead.project.templateId}
+                    {lead.project.templateVersion ? `@${lead.project.templateVersion}` : ''}
+                  </span>
+                )}
               </p>
-              <p className="mt-3 text-muted-foreground">
-                Portal invitations are sent separately from conversion. If an invite failed, resend it from the customer
-                memberships section — that will not create another project.
-              </p>
+              <p className="mt-3 text-muted-foreground">{leadCopy.handoffInviteNote}</p>
             </div>
           )}
           <div className="rounded-xl border bg-card p-4 text-sm">

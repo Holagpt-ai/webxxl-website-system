@@ -107,12 +107,26 @@ const hoisted = vi.hoisted(() => {
             return row
           },
         ),
-        update: vi.fn(async ({ where, data }: { where: { id: string }; data: { lastInviteSentAt?: Date; role?: string } }) => {
-          const row = memberships.find((m) => m.id === where.id)
-          if (!row) throw new Error('missing')
-          Object.assign(row, data)
-          return row
-        }),
+        update: vi.fn(
+          async ({
+            where,
+            data,
+          }: {
+            where: { id?: string; userId_customerAccountId?: { userId: string; customerAccountId: string } }
+            data: Partial<(typeof memberships)[number]>
+          }) => {
+            const row = where.userId_customerAccountId
+              ? memberships.find(
+                  (m) =>
+                    m.userId === where.userId_customerAccountId!.userId &&
+                    m.customerAccountId === where.userId_customerAccountId!.customerAccountId,
+                )
+              : memberships.find((m) => m.id === where.id)
+            if (!row) throw new Error('missing')
+            Object.assign(row, data)
+            return row
+          },
+        ),
         delete: vi.fn(async ({ where }: { where: { id: string } }) => {
           const idx = memberships.findIndex((m) => m.id === where.id)
           if (idx >= 0) memberships.splice(idx, 1)
