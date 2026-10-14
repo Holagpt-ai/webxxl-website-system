@@ -225,6 +225,20 @@ enum ProjectActivityEventType {
   CHANGE_REQUEST_UPDATED
   SUPPORT_REQUEST_CREATED
   WEBSITE_PREVIEW_REGISTERED
+  OWNER_REVIEW_ITEM_UPDATED
+}
+
+enum OwnerReviewItemCategory {
+  MEDIA
+  CONTENT
+  PRIVACY
+}
+
+enum OwnerReviewItemStatus {
+  PENDING
+  APPROVED
+  CHANGES_REQUESTED
+  NOT_APPLICABLE
 }
 
 enum WebsitePreviewProvider {
@@ -385,6 +399,7 @@ model User {
   automationEventsEmitted  AutomationEvent[]        @relation("AutomationEventActor")
   automationDeliveries     AutomationDeliveryJob[]  @relation("AutomationDeliveryRecipient")
   notificationPreferences  CustomerNotificationPreference[]
+  ownerReviewDecisions     ProjectOwnerReviewDecision[] @relation("OwnerReviewDecider")
 }
 
 model Account {
@@ -497,6 +512,7 @@ model Project {
   salesLeads      SalesLead[]
   serviceOrders   ServiceOrder[]
   hostingServices HostingService[]
+  ownerReviewDecisions ProjectOwnerReviewDecision[]
   websitePreview  WebsitePreview?
 
   @@index([customerAccountId])
@@ -538,6 +554,24 @@ model ProjectTask {
   project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   milestone ProjectMilestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
 
+  @@index([projectId])
+}
+
+model ProjectOwnerReviewDecision {
+  id              String                @id @default(cuid())
+  projectId       String
+  itemKey         String
+  status          OwnerReviewItemStatus @default(PENDING)
+  feedback        String?               @db.Text
+  decidedByUserId String?
+  decidedAt       DateTime?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  decidedBy User?   @relation("OwnerReviewDecider", fields: [decidedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, itemKey])
   @@index([projectId])
 }
 

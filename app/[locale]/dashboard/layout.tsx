@@ -8,6 +8,7 @@ import { DashboardShell } from '@/components/dashboard/shell'
 import { requireCustomerMembership } from '@/lib/portal/authz'
 import { getActiveProjectIdFromCookie, pickActiveProject } from '@/lib/portal/active-project'
 import { getDashboardNavModules } from '@/lib/portal/modules'
+import { hasOwnerReviewPackage } from '@/lib/owner-approval-checklist'
 import { prisma } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
@@ -44,7 +45,6 @@ export default async function DashboardLayout({ params, children }: Props) {
   })
   const activeKeys = new Set(services.map((s) => s.serviceKey))
   const dict = getDictionary(locale)
-  const navModules = getDashboardNavModules()
   const accountMemberships = await prisma.customerMembership.findMany({
     where: { userId: portal.id },
     include: { customerAccount: { select: { id: true, businessName: true } } },
@@ -60,6 +60,15 @@ export default async function DashboardLayout({ params, children }: Props) {
     orderBy: { name: 'asc' },
   })
   const activeProject = pickActiveProject(projects, await getActiveProjectIdFromCookie()).project
+
+  let navModules = getDashboardNavModules()
+  if (activeProject && hasOwnerReviewPackage(activeProject.id)) {
+    navModules = [
+      ...navModules.slice(0, 2),
+      { key: 'project', navLabel: 'ownerReview', route: '/dashboard/review', icon: 'eye', enabled: true },
+      ...navModules.slice(2),
+    ]
+  }
 
   return (
     <DashboardShell

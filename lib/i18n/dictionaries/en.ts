@@ -247,6 +247,7 @@ export const en = {
       infrastructure: 'Infrastructure',
       notifications: 'Notifications',
       notificationSettings: 'Notification settings',
+      ownerReview: 'Owner review',
     },
     overviewTitle: 'Overview',
     overviewDescription: 'Your project status, next steps, and recent updates.',

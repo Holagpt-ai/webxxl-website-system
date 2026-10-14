@@ -247,6 +247,7 @@ export const es: Dictionary = {
       infrastructure: 'Infraestructura',
       notifications: 'Notificaciones',
       notificationSettings: 'Preferencias de notificaciones',
+      ownerReview: 'Revisión del propietario',
     },
     overviewTitle: 'Resumen',
     overviewDescription: 'Estado del proyecto, próximos pasos y novedades.',
