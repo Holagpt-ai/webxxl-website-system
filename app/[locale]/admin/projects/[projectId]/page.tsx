@@ -24,6 +24,7 @@ import { LinkedFileList, ProjectFileList } from '@/components/files/project-file
 import { filterCustomerComments } from '@/lib/portal/access-rules'
 import { isStorageConfigured } from '@/lib/integrations/storage'
 import { WebsitePreviewAdminPanel } from '@/components/admin/website-preview-panel'
+import { OwnerReviewAdminSummary } from '@/components/admin/owner-review-summary'
 
 export const dynamic = 'force-dynamic'
 
@@ -77,6 +78,10 @@ export default async function AdminProjectDetailPage({ params }: Props) {
 
       <div className="mt-6">
         <WebsitePreviewAdminPanel projectId={project.id} locale={locale} admin={copy} dashboard={dict.dashboard} />
+      </div>
+
+      <div className="mt-6">
+        <OwnerReviewAdminSummary projectId={project.id} locale={locale} dashboard={dict.dashboard} />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">

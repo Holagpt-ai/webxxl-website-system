@@ -39,6 +39,7 @@ export function formatActivitySummary(eventType: ProjectActivityEventType, detai
     CHANGE_REQUEST_UPDATED: 'Change request updated',
     SUPPORT_REQUEST_CREATED: 'Support request created',
     WEBSITE_PREVIEW_REGISTERED: 'Website preview registered',
+    OWNER_REVIEW_ITEM_UPDATED: 'Owner review item updated',
   }
   return `${prefix[eventType]}: ${detail}`
 }

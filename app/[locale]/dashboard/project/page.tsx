@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { buttonVariants } from '@/components/ui/button'
+import { hasOwnerReviewPackage } from '@/lib/owner-approval-checklist'
 import { getPageContext } from '@/lib/i18n/server'
 import { requireCustomerMembership, getActiveProject } from '@/lib/portal/authz'
 import { getProjectDetail } from '@/lib/portal/queries'
@@ -39,6 +41,15 @@ export default async function ProjectPage({ params }: { params: Promise<{ locale
   return (
     <>
       <PageTitle title={project.name} description={project.summary ?? undefined} />
+      {hasOwnerReviewPackage(project.id) && (
+        <div className="mb-6 rounded-lg border bg-muted/30 p-4 text-sm">
+          <p className="font-medium">{d.ownerReview.projectBanner}</p>
+          <p className="mt-1 text-muted-foreground">{d.ownerReview.projectBannerBody}</p>
+          <Link href={`${prefix}/dashboard/review`} className={buttonVariants({ size: 'sm', className: 'mt-3' })}>
+            {d.ownerReview.title}
+          </Link>
+        </div>
+      )}
       <WebsitePreviewSection
         customerAccountId={portal.customerAccount.id}
         projectId={project.id}
