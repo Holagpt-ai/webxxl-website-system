@@ -79,10 +79,10 @@ export async function registerWebsitePreview(input: {
 }): Promise<PreviewWriteResult> {
   const parsed = parseWebsitePreviewInput(input)
   if (!parsed.ok) return parsed
-  const projectGuard = guardKnownDeploymentProject(input.project.id, parsed.value.deploymentId)
-  if (!projectGuard.ok) return projectGuard
   const accountGuard = guardKnownDeploymentAccount(input.project.customerAccountId, parsed.value.deploymentId)
   if (!accountGuard.ok) return accountGuard
+  const projectGuard = guardKnownDeploymentProject(input.project.id, parsed.value.deploymentId)
+  if (!projectGuard.ok) return projectGuard
 
   const existing = await prisma.websitePreviewVersion.findUnique({
     where: {
@@ -155,16 +155,6 @@ export async function registerWebsitePreview(input: {
       include: { approval: true },
     })
     for (const version of previous) {
-      if (version.approval?.status === 'PENDING') {
-        await tx.projectApproval.update({
-          where: { id: version.approval.id },
-          data: {
-            status: 'CHANGES_REQUESTED',
-            respondedAt: new Date(),
-            responseNotes: `Superseded by deployment ${parsed.value.deploymentId}`,
-          },
-        })
-      }
       const keepDecision = version.status === 'APPROVED' || version.status === 'CHANGES_REQUESTED'
       await tx.websitePreviewVersion.update({
         where: { id: version.id },

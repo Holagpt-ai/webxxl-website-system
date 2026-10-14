@@ -53,7 +53,7 @@ function currentVersion(customerAccountId: string) {
     approvalId: 'approval-1',
     status: 'READY_FOR_REVIEW',
     versionLabel: ABMED_CLINICAL_RESEARCH_PREVIEW.versionLabel,
-    preview: { projectId: 'abmed-clinical-research-project', customerAccountId },
+    preview: { projectId: 'abmed-clinical-research-redesign', customerAccountId },
     approval: { id: 'approval-1', metadata, status: 'PENDING' },
   }
 }

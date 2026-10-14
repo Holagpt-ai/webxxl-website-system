@@ -56,9 +56,9 @@ describe('website preview URL and deployment validation', () => {
     if (!parsed.ok) return
     expect(parsed.value.aliasUrl).toBe('https://abmed-clinical-research.vercel.app/')
     expect(parsed.value.registeredUrl).toBe(
-      'https://abmed-clinical-research-e0tp8x0d2-tone4real-7828s-projects.vercel.app/',
+      'https://abmed-clinical-research-ffm790rpp-tone4real-7828s-projects.vercel.app/',
     )
-    expect(parsed.value.deploymentId).toBe('dpl_BVKpzBn4TLZ3xvyNJYNLBZCFUbNC')
+    expect(parsed.value.deploymentId).toBe('dpl_3QdtG4N99p9qfe91L3BwqT4vS5b8')
     expect(parsed.value.registeredUrl).not.toBe(parsed.value.aliasUrl)
   })
 
@@ -137,7 +137,7 @@ describe('ABMED clinical research activation guard', () => {
       ok: false,
       error: 'abmed_existing_project',
     })
-    expect(guardKnownDeploymentProject('abmed-clinical-research-project', verified.deploymentId)).toEqual({ ok: true })
+    expect(guardKnownDeploymentProject('abmed-clinical-research-redesign', verified.deploymentId)).toEqual({ ok: true })
     expect(guardKnownDeploymentProject(aesthetics.id, 'dpl_someotherdeploy')).toEqual({ ok: true })
   })
 
