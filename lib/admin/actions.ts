@@ -14,6 +14,8 @@ import { canDeleteProjectFile } from '@/lib/files/access'
 import { deleteStoredProjectFile, linkProjectFiles, readUploadFromFormData, uploadProjectFile } from '@/lib/files/operations'
 import { isRegistryEntitlementServiceKey } from '@/lib/admin/service-keys'
 import { parseProgressPercent, resolveProjectCompletedAt, resolveTaskCompletedAt } from '@/lib/admin/validation'
+import { createCustomerAccountRecord, createProjectFromTemplate } from '@/lib/admin/customer-onboarding'
+import { parseProjectTemplateId } from '@/lib/project-templates/registry'
 import { isStaffRole } from '@/lib/admin/roles'
 import {
   isAllowedInviteRole,
@@ -38,6 +40,22 @@ import type {
 } from '@prisma/client'
 
 export type AdminActionResult = { ok: true } | { ok: false; error: string }
+
+export type AdminInviteActionResult =
+  | { ok: true; inviteSent: boolean; inviteError?: string }
+  | { ok: false; error: string }
+
+export type CustomerOnboardingActionResult =
+  | {
+      ok: true
+      customerAccountId: string
+      slug: string
+      projectId?: string
+      inviteRequested: boolean
+      inviteSent: boolean
+      inviteError?: string
+    }
+  | { ok: false; error: string }
 
 function revalidateAdmin() {
   revalidatePath('/admin', 'layout')
@@ -88,7 +106,7 @@ export async function inviteCustomerMemberAction(input: {
   email: string
   role: MembershipRole
   locale: CustomerAccessLocale
-}): Promise<AdminActionResult> {
+}): Promise<AdminInviteActionResult> {
   try {
     await requireAdmin()
     const normalized = normalizeCustomerInviteEmail(input.email)
@@ -135,10 +153,9 @@ export async function inviteCustomerMemberAction(input: {
 
     const { sendCustomerInvitationMagicLink } = await import('@/lib/portal/customer-invite-mail')
     const mail = await sendCustomerInvitationMagicLink(normalized, input.customerAccountId, input.locale)
-    if (!mail.ok) return { ok: false, error: mail.error }
-
     revalidateAdmin()
-    return { ok: true }
+    if (!mail.ok) return { ok: true, inviteSent: false, inviteError: mail.error }
+    return { ok: true, inviteSent: true }
   } catch {
     return { ok: false, error: 'unauthorized' }
   }
@@ -212,6 +229,110 @@ export async function removeMembershipAction(membershipId: string): Promise<Admi
     await prisma.customerMembership.delete({ where: { id: membershipId } })
     revalidateAdmin()
     return { ok: true }
+  } catch {
+    return { ok: false, error: 'unauthorized' }
+  }
+}
+
+export async function createCustomerOnboardingAction(input: {
+  businessName: string
+  slug?: string
+  primaryContactName?: string
+  primaryContactEmail?: string
+  locale?: 'en' | 'es'
+  inviteEmail?: string
+  inviteRole?: MembershipRole
+  inviteLocale?: CustomerAccessLocale
+  projectName?: string
+  projectSummary?: string
+  templateId?: string
+  targetDate?: string
+}): Promise<CustomerOnboardingActionResult> {
+  try {
+    const staff = await requireAdmin()
+    const accountResult = await createCustomerAccountRecord({
+      businessName: input.businessName,
+      slug: input.slug,
+      primaryContactName: input.primaryContactName,
+      primaryContactEmail: input.primaryContactEmail,
+      locale: input.locale,
+    })
+    if (!accountResult.ok) return { ok: false, error: accountResult.error }
+
+    let projectId: string | undefined
+    const templateId = input.templateId ? parseProjectTemplateId(input.templateId) : null
+    if (input.projectName?.trim() && templateId) {
+      const targetDate = input.targetDate?.trim()
+        ? new Date(input.targetDate)
+        : null
+      if (targetDate && Number.isNaN(targetDate.getTime())) return { ok: false, error: 'invalid' }
+      const projectResult = await createProjectFromTemplate({
+        actorUserId: staff.id,
+        customerAccountId: accountResult.customerAccountId,
+        name: input.projectName,
+        templateId,
+        summary: input.projectSummary,
+        targetDate,
+      })
+      if (!projectResult.ok) return { ok: false, error: projectResult.error }
+      projectId = projectResult.projectId
+    }
+
+    const inviteEmail = input.inviteEmail?.trim() || input.primaryContactEmail?.trim()
+    const inviteRequested = Boolean(inviteEmail)
+    let inviteSent = false
+    let inviteError: string | undefined
+    if (inviteRequested && inviteEmail) {
+      const invite = await inviteCustomerMemberAction({
+        customerAccountId: accountResult.customerAccountId,
+        email: inviteEmail,
+        role: input.inviteRole ?? 'OWNER',
+        locale: input.inviteLocale ?? input.locale ?? 'en',
+      })
+      if (!invite.ok) return { ok: false, error: invite.error }
+      inviteSent = invite.inviteSent
+      inviteError = invite.inviteError
+    }
+
+    revalidateAdmin()
+    return {
+      ok: true,
+      customerAccountId: accountResult.customerAccountId,
+      slug: accountResult.slug,
+      projectId,
+      inviteRequested,
+      inviteSent,
+      inviteError,
+    }
+  } catch {
+    return { ok: false, error: 'unauthorized' }
+  }
+}
+
+export async function createProjectFromTemplateAction(input: {
+  customerAccountId: string
+  name: string
+  templateId: string
+  summary?: string
+  targetDate?: string
+}): Promise<AdminActionResult & { projectId?: string }> {
+  try {
+    const staff = await requireStaff()
+    const templateId = parseProjectTemplateId(input.templateId)
+    if (!templateId) return { ok: false, error: 'invalid' }
+    const targetDate = input.targetDate?.trim() ? new Date(input.targetDate) : null
+    if (targetDate && Number.isNaN(targetDate.getTime())) return { ok: false, error: 'invalid' }
+    const result = await createProjectFromTemplate({
+      actorUserId: staff.id,
+      customerAccountId: input.customerAccountId,
+      name: input.name,
+      templateId,
+      summary: input.summary,
+      targetDate,
+    })
+    if (!result.ok) return { ok: false, error: result.error === 'not_found' ? 'not_found' : 'invalid' }
+    revalidateAdmin()
+    return { ok: true, projectId: result.projectId }
   } catch {
     return { ok: false, error: 'unauthorized' }
   }

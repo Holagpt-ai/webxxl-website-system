@@ -478,6 +478,8 @@ model Project {
   estimatedCompletionDate DateTime?
   completedAt             DateTime?
   summary                 String?       @db.Text
+  templateId              String?
+  templateVersion         String?
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
 

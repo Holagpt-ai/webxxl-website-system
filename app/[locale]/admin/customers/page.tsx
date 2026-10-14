@@ -22,6 +22,14 @@ export default async function AdminCustomersPage({ params, searchParams }: Props
   return (
     <>
       <PageTitle title={copy.customers.title} description={copy.customers.description} />
+      <div className="mb-4">
+        <Link
+          href={`${prefix}/admin/onboarding`}
+          className="inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+        >
+          {copy.onboarding.newCustomer}
+        </Link>
+      </div>
       <form method="get" className="mb-6 flex gap-2">
         <input
           name="q"
