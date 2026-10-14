@@ -2,8 +2,10 @@
  * Verified external deployments that staff may register by hand.
  * Nothing in this catalog is written to a customer account automatically.
  */
-export const ABMED_CLINICAL_RESEARCH_PREVIEW = {
-  key: 'abmed-clinical-research',
+export const ABMED_CLINICAL_RESEARCH_PROJECT_ID = 'abmed-clinical-research-redesign' as const
+
+export const ABMED_CLINICAL_RESEARCH_LEGACY_PREVIEW = {
+  key: 'abmed-clinical-research-6499749',
   provider: 'VERCEL',
   displayName: 'ABMED Clinical Research',
   aliasUrl: 'https://abmed-clinical-research.vercel.app',
@@ -12,11 +14,29 @@ export const ABMED_CLINICAL_RESEARCH_PREVIEW = {
   sourceRevision: '6499749a685bde1ffc437fd1aa25082b8bc379af',
   versionLabel: '6499749',
   status: 'READY_FOR_REVIEW',
+} as const
+
+/** Latest production-verified deployment (Batch 20.2 on main, Oct 14 2026). */
+export const ABMED_CLINICAL_RESEARCH_PREVIEW = {
+  key: 'abmed-clinical-research',
+  provider: 'VERCEL',
+  displayName: 'ABMED Clinical Research',
+  aliasUrl: 'https://abmed-clinical-research.vercel.app',
+  registeredUrl: 'https://abmed-clinical-research-ffm790rpp-tone4real-7828s-projects.vercel.app',
+  deploymentId: 'dpl_3QdtG4N99p9qfe91L3BwqT4vS5b8',
+  sourceRevision: '2b2be46da156c2e5123b9bf2e2f650f4bc5634d0',
+  versionLabel: '394a5d8',
+  status: 'READY_FOR_REVIEW',
   customerAccountId: 'abmed-account',
   customerAccountSlug: 'abmed',
-  /** Existing ABMED websites. This deployment must not be attached to them. */
+  /** Existing ABMED websites. ABMED Clinical Research deployments must not be attached to them. */
   blockedProjectIds: ['abmed-aesthetics-management', 'abmed-physicians-management'] as const,
 } as const
+
+const ABMED_GUARDED_DEPLOYMENT_IDS = new Set<string>([
+  ABMED_CLINICAL_RESEARCH_LEGACY_PREVIEW.deploymentId,
+  ABMED_CLINICAL_RESEARCH_PREVIEW.deploymentId,
+])
 
 export function abmedClinicalResearchRegistration() {
   return {
@@ -31,24 +51,24 @@ export function abmedClinicalResearchRegistration() {
   }
 }
 
+export function isAbmedClinicalResearchDeployment(deploymentId: string): boolean {
+  return ABMED_GUARDED_DEPLOYMENT_IDS.has(deploymentId)
+}
+
 export function guardKnownDeploymentProject(
   projectId: string,
   deploymentId: string,
 ): { ok: true } | { ok: false; error: 'abmed_existing_project' } {
-  if (deploymentId !== ABMED_CLINICAL_RESEARCH_PREVIEW.deploymentId) return { ok: true }
-  if (
-    (ABMED_CLINICAL_RESEARCH_PREVIEW.blockedProjectIds as readonly string[]).includes(projectId)
-  ) {
-    return { ok: false, error: 'abmed_existing_project' }
-  }
-  return { ok: true }
+  if (!isAbmedClinicalResearchDeployment(deploymentId)) return { ok: true }
+  if (projectId === ABMED_CLINICAL_RESEARCH_PROJECT_ID) return { ok: true }
+  return { ok: false, error: 'abmed_existing_project' }
 }
 
 export function guardKnownDeploymentAccount(
   customerAccountId: string,
   deploymentId: string,
 ): { ok: true } | { ok: false; error: 'abmed_wrong_account' } {
-  if (deploymentId !== ABMED_CLINICAL_RESEARCH_PREVIEW.deploymentId) return { ok: true }
+  if (!isAbmedClinicalResearchDeployment(deploymentId)) return { ok: true }
   if (customerAccountId !== ABMED_CLINICAL_RESEARCH_PREVIEW.customerAccountId) {
     return { ok: false, error: 'abmed_wrong_account' }
   }

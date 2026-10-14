@@ -8,10 +8,14 @@ const hoisted = vi.hoisted(() => {
   const changeRequestCreate = vi.fn(async () => ({ id: 'cr-1' }))
   const versionUpdate = vi.fn(async () => ({}))
   const previewUpdate = vi.fn(async () => ({}))
+  const approvalUpdate = vi.fn(async () => ({}))
+  const versionFindMany = vi.fn(async () => [] as unknown[])
   return {
     approvalCreate,
+    approvalUpdate,
     versionCreate,
     versionFindUnique,
+    versionFindMany,
     changeRequestCreate,
     versionUpdate,
     previewUpdate,
@@ -33,11 +37,11 @@ vi.mock('@/lib/db', () => ({
       fn({
         websitePreview: { upsert: vi.fn(async () => ({ id: 'preview-1' })) },
         websitePreviewVersion: {
-          findMany: vi.fn(async () => []),
+          findMany: hoisted.versionFindMany,
           update: vi.fn(),
           create: hoisted.versionCreate,
         },
-        projectApproval: { create: hoisted.approvalCreate, update: vi.fn() },
+        projectApproval: { create: hoisted.approvalCreate, update: hoisted.approvalUpdate },
       }),
   },
 }))
@@ -71,12 +75,13 @@ describe('website preview registration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     hoisted.versionFindUnique.mockResolvedValue(null)
+    hoisted.versionFindMany.mockResolvedValue([])
   })
 
   it('does not write when the clinical research deployment targets another customer account', async () => {
     const result = await registerWebsitePreview({
       actorUserId: 'staff-1',
-      project: { id: 'clinical-project', customerAccountId: 'other-account' },
+      project: { id: 'abmed-clinical-research-redesign', customerAccountId: 'other-account' },
       ...verified,
     })
     expect(result).toEqual({ ok: false, error: 'abmed_wrong_account' })
@@ -94,10 +99,27 @@ describe('website preview registration', () => {
     expect(hoisted.approvalCreate).not.toHaveBeenCalled()
   })
 
+  it('does not auto-cancel pending approvals on superseded preview versions', async () => {
+    hoisted.versionFindMany.mockResolvedValue([
+      {
+        id: 'old-version',
+        approval: { id: 'approval-old', status: 'PENDING' },
+        status: 'READY_FOR_REVIEW',
+      },
+    ])
+    const result = await registerWebsitePreview({
+      actorUserId: 'staff-1',
+      project: { id: 'abmed-clinical-research-redesign', customerAccountId: 'abmed-account' },
+      ...verified,
+    })
+    expect(result).toEqual({ ok: true })
+    expect(hoisted.approvalUpdate).not.toHaveBeenCalled()
+  })
+
   it('creates the approval against the deployment id, not the preview address', async () => {
     const result = await registerWebsitePreview({
       actorUserId: 'staff-1',
-      project: { id: 'abmed-clinical-research-project', customerAccountId: 'abmed-account' },
+      project: { id: 'abmed-clinical-research-redesign', customerAccountId: 'abmed-account' },
       ...verified,
     })
     expect(result).toEqual({ ok: true })
@@ -114,7 +136,7 @@ describe('website preview registration', () => {
     expect(hoisted.versionCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
         deploymentId: verified.deploymentId,
-        registeredUrl: 'https://abmed-clinical-research-e0tp8x0d2-tone4real-7828s-projects.vercel.app/',
+        registeredUrl: 'https://abmed-clinical-research-ffm790rpp-tone4real-7828s-projects.vercel.app/',
         isCurrent: true,
         approvalId: 'approval-1',
       }),
@@ -137,7 +159,7 @@ describe('preview decision sync', () => {
       provider: 'VERCEL',
       changeRequestId: null,
       previewId: 'preview-1',
-      preview: { projectId: 'abmed-clinical-research-project', customerAccountId: 'abmed-account' },
+      preview: { projectId: 'abmed-clinical-research-redesign', customerAccountId: 'abmed-account' },
     })
     await syncWebsitePreviewDecision({
       approvalId: 'approval-1',
@@ -148,7 +170,7 @@ describe('preview decision sync', () => {
     })
     expect(hoisted.changeRequestCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
-        projectId: 'abmed-clinical-research-project',
+        projectId: 'abmed-clinical-research-redesign',
         title: `Vista previa del sitio ${verified.versionLabel}`,
         description: expect.stringContaining(verified.deploymentId),
       }),
@@ -168,7 +190,7 @@ describe('preview decision sync', () => {
       provider: 'VERCEL',
       changeRequestId: null,
       previewId: 'preview-1',
-      preview: { projectId: 'abmed-clinical-research-project', customerAccountId: 'abmed-account' },
+      preview: { projectId: 'abmed-clinical-research-redesign', customerAccountId: 'abmed-account' },
     })
     await syncWebsitePreviewDecision({
       approvalId: 'approval-old',
