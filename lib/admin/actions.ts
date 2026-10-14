@@ -7,6 +7,7 @@ import { writeProjectActivity, formatActivitySummary } from '@/lib/portal/activi
 import { notificationHooks } from '@/lib/portal/notifications'
 import { automationHooks } from '@/lib/automation/hooks'
 import { syncProjectProgressFromEta } from '@/lib/admin/sync-project-eta'
+import { parseDependencyCustomerActionKey } from '@/lib/portal/dependency-actions'
 import { notifyCustomerAccountMembers } from '@/lib/admin/notify-customers'
 import { buildStaffCommentWrite } from '@/lib/files/comments'
 import { canDeleteProjectFile } from '@/lib/files/access'
@@ -346,6 +347,8 @@ export async function upsertMilestoneAction(
           : status === 'COMPLETED'
             ? existing.completedAt
             : null
+      const nextWeight = input.progressWeight ?? existing.progressWeight
+      if (nextWeight < 0 || nextWeight > 100) return { ok: false, error: 'invalid' }
       await prisma.projectMilestone.update({
         where: { id: input.id },
         data: {
@@ -353,7 +356,7 @@ export async function upsertMilestoneAction(
           description: input.description?.trim() || null,
           sortOrder: input.sortOrder ?? existing.sortOrder,
           status,
-          progressWeight: input.progressWeight ?? existing.progressWeight,
+          progressWeight: nextWeight,
           targetDate: input.targetDate !== undefined ? (input.targetDate ? new Date(input.targetDate) : null) : undefined,
           completedAt,
         },
@@ -394,6 +397,8 @@ export async function upsertMilestoneAction(
         }
       }
     } else {
+      const weight = input.progressWeight ?? 10
+      if (weight < 0 || weight > 100) return { ok: false, error: 'invalid' }
       await prisma.projectMilestone.create({
         data: {
           projectId,
@@ -401,7 +406,7 @@ export async function upsertMilestoneAction(
           description: input.description?.trim() || null,
           sortOrder: input.sortOrder ?? 0,
           status: input.status ?? 'PENDING',
-          progressWeight: input.progressWeight ?? 10,
+          progressWeight: weight,
           targetDate: input.targetDate ? new Date(input.targetDate) : null,
         },
       })
@@ -490,6 +495,8 @@ export async function upsertDependencyAction(
     status?: DependencyStatus
     dueDate?: string | null
     milestoneId?: string | null
+    customerActionKey?: string | null
+    allowsCustomerAck?: boolean
   },
 ): Promise<AdminActionResult> {
   try {
@@ -497,6 +504,15 @@ export async function upsertDependencyAction(
     const project = await loadProjectForStaff(projectId)
     const title = input.title.trim()
     if (!title) return { ok: false, error: 'empty' }
+    const actionKey =
+      input.customerActionKey === undefined
+        ? undefined
+        : input.customerActionKey
+          ? parseDependencyCustomerActionKey(input.customerActionKey)
+          : null
+    if (input.customerActionKey && actionKey === null && input.customerActionKey !== '') {
+      return { ok: false, error: 'invalid' }
+    }
 
     if (input.milestoneId) {
       try {
@@ -518,6 +534,8 @@ export async function upsertDependencyAction(
           status,
           dueDate: input.dueDate !== undefined ? (input.dueDate ? new Date(input.dueDate) : null) : undefined,
           milestoneId: input.milestoneId !== undefined ? input.milestoneId : undefined,
+          customerActionKey: actionKey === undefined ? undefined : actionKey,
+          allowsCustomerAck: input.allowsCustomerAck ?? undefined,
           resolvedAt: status === 'RESOLVED' ? new Date() : null,
         },
       })
@@ -538,6 +556,8 @@ export async function upsertDependencyAction(
           status: input.status ?? 'REQUESTED',
           dueDate: input.dueDate ? new Date(input.dueDate) : null,
           milestoneId: input.milestoneId || null,
+          customerActionKey: actionKey ?? null,
+          allowsCustomerAck: input.allowsCustomerAck ?? false,
         },
       })
       await writeProjectActivity({
@@ -741,6 +761,7 @@ export async function updateChangeRequestStatusAction(
   changeRequestId: string,
   status: ChangeRequestStatus,
   internalNote?: string,
+  customerReply?: string,
 ): Promise<AdminActionResult> {
   try {
     const staff = await requireStaff()
@@ -753,8 +774,9 @@ export async function updateChangeRequestStatusAction(
     await writeProjectActivity({
       projectId: cr.projectId,
       actorUserId: staff.id,
-      eventType: 'CHANGE_REQUEST_SUBMITTED',
-      summary: `Change request status updated: ${cr.title} → ${status}`,
+      eventType: 'CHANGE_REQUEST_UPDATED',
+      summary: formatActivitySummary('CHANGE_REQUEST_UPDATED', `${cr.title} → ${status}`),
+      metadata: { changeRequestId: cr.id, status },
     })
     if (internalNote?.trim()) {
       await prisma.projectComment.create({
@@ -763,8 +785,32 @@ export async function updateChangeRequestStatusAction(
           authorUserId: staff.id,
           body: internalNote.trim(),
           visibility: 'INTERNAL',
+          changeRequestId: cr.id,
         },
       })
+    }
+    const reply = customerReply?.trim()
+    if (reply) {
+      await prisma.projectComment.create({
+        data: {
+          projectId: cr.projectId,
+          authorUserId: staff.id,
+          body: reply,
+          visibility: 'CUSTOMER',
+          changeRequestId: cr.id,
+        },
+      })
+      await bestEffort(
+        notifyCustomerAccountMembers({
+          customerAccountId: cr.project.customerAccountId,
+          type: 'CHANGE_REQUEST_UPDATE',
+          title: 'Reply on your change request',
+          body: reply.slice(0, 120),
+          actionUrl: '/dashboard/requests',
+          templateKey: 'changeRequestUpdate',
+          templateVars: { title: cr.title, status },
+        }),
+      )
     }
     await notifyCustomerAccountMembers({
       customerAccountId: cr.project.customerAccountId,

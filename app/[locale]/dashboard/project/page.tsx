@@ -1,25 +1,24 @@
+import Link from 'next/link'
 import { getPageContext } from '@/lib/i18n/server'
 import { requireCustomerMembership, getActiveProject } from '@/lib/portal/authz'
 import { getProjectDetail } from '@/lib/portal/queries'
-import { PageTitle, SectionCard, StatusBadge } from '@/components/dashboard/primitives'
-import { DependencyResolveButton } from '@/components/dashboard/forms'
+import { PageTitle, SectionCard } from '@/components/dashboard/primitives'
 import { EmptyState } from '@/components/dashboard/primitives'
-import { enumLabel, localizeStoredActivity } from '@/lib/i18n/labels'
 import { WebsitePreviewSection } from '@/components/dashboard/website-preview-section'
 import { CollaborationLinks } from '@/components/dashboard/collaboration-links'
+import { ProjectDeliverySummary } from '@/components/dashboard/project-delivery-summary'
+import { MilestoneRoadmap } from '@/components/dashboard/milestone-roadmap'
+import { DependencyActionCenter } from '@/components/dashboard/dependency-action-center'
+import { ActivityTimeline } from '@/components/dashboard/activity-timeline'
 
 export const dynamic = 'force-dynamic'
-
-function fmtDate(d: Date | null | undefined, locale: string) {
-  if (!d) return '—'
-  return new Intl.DateTimeFormat(locale === 'es' ? 'es' : 'en', { dateStyle: 'medium' }).format(d)
-}
 
 export default async function ProjectPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale, dict } = await getPageContext(params)
   const portal = await requireCustomerMembership()
   const active = await getActiveProject(portal.customerAccount.id)
   const d = dict.dashboard
+  const prefix = locale === 'es' ? '/es' : ''
 
   if (!active) {
     return (
@@ -48,87 +47,37 @@ export default async function ProjectPage({ params }: { params: Promise<{ locale
         copy={d}
       />
       <div className="mb-6">
-        <CollaborationLinks localePrefix={locale === 'es' ? '/es' : ''} copy={d} />
+        <CollaborationLinks localePrefix={prefix} copy={d} />
       </div>
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <StatusBadge label={enumLabel(d.projectStatuses, project.status)} />
-        <StatusBadge label={`${eta.progressPercent}%`} />
-        {eta && <StatusBadge label={enumLabel(d.etaStates, eta.state)} tone={eta.state === 'at_risk' ? 'warn' : 'default'} />}
-      </div>
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="mb-6 grid gap-6 lg:grid-cols-2">
         <SectionCard title={d.progress}>
-          <dl className="grid gap-2 text-sm">
-            <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">{d.startDate}</dt>
-              <dd>{fmtDate(project.startDate, locale)}</dd>
-            </div>
-            <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">{d.targetDate}</dt>
-              <dd>{fmtDate(project.targetDate, locale)}</dd>
-            </div>
-            <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">{d.eta}</dt>
-              <dd>{fmtDate(eta.estimatedCompletionDate, locale)}</dd>
-            </div>
-          </dl>
+          <ProjectDeliverySummary
+            projectName={project.name}
+            projectStatus={project.status}
+            eta={eta}
+            locale={locale}
+            copy={d}
+          />
         </SectionCard>
         <SectionCard title={d.actionItems}>
-          <ul className="flex flex-col gap-3 text-sm">
-            {dependencies
-              .filter((dep) => dep.status === 'REQUESTED' || dep.status === 'IN_PROGRESS')
-              .map((dep) => (
-                <li key={dep.id} className="flex justify-between gap-3">
-                  <span>{dep.title}</span>
-                  <DependencyResolveButton dependencyId={dep.id} label={d.resolve} />
-                </li>
-              ))}
-          </ul>
+          <DependencyActionCenter
+            dependencies={dependencies}
+            localePrefix={prefix}
+            locale={locale}
+            copy={d}
+          />
         </SectionCard>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <div className="mb-6">
         <SectionCard title={d.milestonesHeading}>
-          <ol className="flex flex-col gap-3">
-            {milestones.map((m) => (
-              <li key={m.id} className="rounded-lg border p-3 text-sm">
-                <p className="font-medium">{m.title}</p>
-                <p className="text-muted-foreground">{enumLabel(d.milestoneStatuses, m.status)}</p>
-              </li>
-            ))}
-          </ol>
-        </SectionCard>
-        <SectionCard title={d.tasksHeading}>
-          <div className="grid gap-4">
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{d.webxxlSide}</p>
-              <ul className="flex flex-col gap-1 text-sm">
-                {tasks.filter((t) => t.assignedSide === 'WEBXXL').map((t) => (
-                  <li key={t.id}>{t.title} — {enumLabel(d.taskStatuses, t.status)}</li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{d.customerSide}</p>
-              <ul className="flex flex-col gap-1 text-sm">
-                {tasks.filter((t) => t.assignedSide === 'CUSTOMER').map((t) => (
-                  <li key={t.id}>{t.title} — {enumLabel(d.taskStatuses, t.status)}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
+          <MilestoneRoadmap milestones={milestones} tasks={tasks} locale={locale} copy={d} />
         </SectionCard>
       </div>
 
-      <div className="mt-6">
+      <div className="mb-6">
         <SectionCard title={d.recentActivity}>
-          <ul className="flex flex-col gap-2 text-sm">
-            {activities.map((a) => (
-              <li key={a.id}>
-                <p>{localizeStoredActivity(a.summary, a.eventType, d.activityLabels)}</p>
-                <p className="text-xs text-muted-foreground">{fmtDate(a.createdAt, locale)}</p>
-              </li>
-            ))}
-          </ul>
+          <ActivityTimeline activities={activities} locale={locale} activityLabels={d.activityLabels} emptyLabel={d.activityEmpty} />
         </SectionCard>
       </div>
     </>

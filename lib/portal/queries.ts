@@ -26,6 +26,7 @@ export async function getDashboardOverview(portal: PortalUser) {
     prisma.projectDependency.findMany({
       where: { projectId: project.id, status: { in: ['REQUESTED', 'IN_PROGRESS'] } },
       orderBy: { requestedFromCustomerAt: 'desc' },
+      include: { milestone: { select: { title: true } } },
     }),
     prisma.projectApproval.findMany({
       where: { projectId: project.id, status: 'PENDING' },
@@ -49,6 +50,7 @@ export async function getDashboardOverview(portal: PortalUser) {
     targetDate: project.targetDate,
     estimatedCompletionDate: project.estimatedCompletionDate,
     milestones: milestones.map((m) => ({
+      id: m.id,
       title: m.title,
       status: m.status,
       progressWeight: m.progressWeight,
@@ -84,7 +86,11 @@ export async function getProjectDetail(portal: PortalUser, projectId: string) {
   const [milestones, tasks, dependencies, activities] = await Promise.all([
     prisma.projectMilestone.findMany({ where: { projectId }, orderBy: { sortOrder: 'asc' } }),
     prisma.projectTask.findMany({ where: { projectId }, orderBy: { createdAt: 'asc' } }),
-    prisma.projectDependency.findMany({ where: { projectId }, orderBy: { requestedFromCustomerAt: 'desc' } }),
+    prisma.projectDependency.findMany({
+      where: { projectId },
+      orderBy: { requestedFromCustomerAt: 'desc' },
+      include: { milestone: { select: { title: true } } },
+    }),
     prisma.projectActivity.findMany({ where: { projectId }, orderBy: { createdAt: 'desc' }, take: 30 }),
   ])
 
@@ -93,6 +99,7 @@ export async function getProjectDetail(portal: PortalUser, projectId: string) {
     targetDate: project.targetDate,
     estimatedCompletionDate: project.estimatedCompletionDate,
     milestones: milestones.map((m) => ({
+      id: m.id,
       title: m.title,
       status: m.status,
       progressWeight: m.progressWeight,

@@ -1,6 +1,8 @@
 import type { DependencyStatus, MilestoneStatus, ProjectStatus } from '@prisma/client'
+import { calculateProjectProgress } from '@/lib/portal/progress'
 
 export type EtaMilestone = {
+  id?: string
   title: string
   status: MilestoneStatus
   progressWeight: number
@@ -27,25 +29,43 @@ export type EtaState = 'pending_setup' | 'waiting_on_customer' | 'on_track' | 'a
 export type EtaResult = {
   progressPercent: number
   currentMilestoneTitle: string | null
-  estimatedCompletionDate: Date | null
+  nextMilestoneTitle: string | null
+  /** Staff-recorded or calculated forecast only — never inferred from % complete. */
+  forecastDate: Date | null
+  /** Project target date (planning), shown separately from forecast. */
+  targetDate: Date | null
   state: EtaState
   stateLabel: string
+  /** @deprecated use forecastDate in new UI */
+  estimatedCompletionDate: Date | null
 }
 
-function clamp(n: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, n))
+function nextPendingMilestone(milestones: EtaMilestone[], afterTitle: string | null): EtaMilestone | null {
+  const ordered = [...milestones]
+  if (afterTitle) {
+    const idx = ordered.findIndex((m) => m.title === afterTitle)
+    if (idx >= 0) {
+      return ordered.slice(idx + 1).find((m) => m.status === 'PENDING' || m.status === 'IN_PROGRESS') ?? null
+    }
+  }
+  return ordered.find((m) => m.status === 'PENDING' || m.status === 'IN_PROGRESS') ?? null
 }
 
 export function calculateProjectEta(input: EtaInput): EtaResult {
   const now = input.now ?? new Date()
+  const targetDate = input.targetDate
+  const forecastDate = input.estimatedCompletionDate ?? null
 
   if (input.projectStatus === 'COMPLETED') {
     return {
       progressPercent: 100,
       currentMilestoneTitle: null,
-      estimatedCompletionDate: input.estimatedCompletionDate ?? input.targetDate,
+      nextMilestoneTitle: null,
+      forecastDate: forecastDate ?? targetDate,
+      targetDate,
       state: 'complete',
       stateLabel: 'Complete',
+      estimatedCompletionDate: forecastDate ?? targetDate,
     }
   }
 
@@ -53,37 +73,42 @@ export function calculateProjectEta(input: EtaInput): EtaResult {
     return {
       progressPercent: 0,
       currentMilestoneTitle: null,
-      estimatedCompletionDate: null,
+      nextMilestoneTitle: null,
+      forecastDate: null,
+      targetDate,
       state: 'pending_setup',
       stateLabel: 'Estimate pending project setup',
+      estimatedCompletionDate: null,
     }
   }
 
-  const totalWeight = input.milestones.reduce((sum, m) => sum + Math.max(0, m.progressWeight), 0) || 1
-  const completedWeight = input.milestones
-    .filter((m) => m.status === 'COMPLETED')
-    .reduce((sum, m) => sum + Math.max(0, m.progressWeight), 0)
-  const progressPercent = clamp(Math.round((completedWeight / totalWeight) * 100), 0, 100)
+  const progressPercent = calculateProjectProgress(input.milestones)
 
   const current =
     input.milestones.find((m) => m.status === 'IN_PROGRESS') ??
     input.milestones.find((m) => m.status === 'PENDING') ??
     null
 
+  const next = nextPendingMilestone(
+    input.milestones,
+    current?.status === 'IN_PROGRESS' ? current.title : null,
+  )
+
   const openCustomerDeps = input.customerOpenDependencies.filter((d) => d.status === 'REQUESTED' || d.status === 'IN_PROGRESS')
   const overdueCustomerDep = openCustomerDeps.some((d) => d.dueDate && d.dueDate < now)
 
-  let estimatedCompletionDate = input.estimatedCompletionDate ?? input.targetDate
-
-  if (!estimatedCompletionDate && input.targetDate) {
-    estimatedCompletionDate = input.targetDate
+  const base = {
+    progressPercent,
+    currentMilestoneTitle: current?.title ?? null,
+    nextMilestoneTitle: next?.title ?? null,
+    forecastDate,
+    targetDate,
+    estimatedCompletionDate: forecastDate,
   }
 
   if (openCustomerDeps.length > 0) {
     return {
-      progressPercent,
-      currentMilestoneTitle: current?.title ?? null,
-      estimatedCompletionDate,
+      ...base,
       state: 'waiting_on_customer',
       stateLabel: 'Waiting on customer',
     }
@@ -91,38 +116,30 @@ export function calculateProjectEta(input: EtaInput): EtaResult {
 
   if (input.projectStatus === 'ON_HOLD') {
     return {
-      progressPercent,
-      currentMilestoneTitle: current?.title ?? null,
-      estimatedCompletionDate,
+      ...base,
       state: 'delayed',
       stateLabel: 'Delayed',
     }
   }
 
-  if (overdueCustomerDep || (input.targetDate && input.targetDate < now && progressPercent < 100)) {
+  if (overdueCustomerDep || (targetDate && targetDate < now && progressPercent < 100)) {
     return {
-      progressPercent,
-      currentMilestoneTitle: current?.title ?? null,
-      estimatedCompletionDate,
+      ...base,
       state: 'at_risk',
       stateLabel: 'At risk',
     }
   }
 
-  if (input.targetDate && input.targetDate < now) {
+  if (targetDate && targetDate < now) {
     return {
-      progressPercent,
-      currentMilestoneTitle: current?.title ?? null,
-      estimatedCompletionDate,
+      ...base,
       state: 'delayed',
       stateLabel: 'Delayed',
     }
   }
 
   return {
-    progressPercent,
-    currentMilestoneTitle: current?.title ?? null,
-    estimatedCompletionDate,
+    ...base,
     state: 'on_track',
     stateLabel: 'On track',
   }

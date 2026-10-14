@@ -412,6 +412,8 @@ export const adminEn = {
     addTask: 'Add task',
     actionItem: 'Customer action item',
     requestAction: 'Request action',
+    dependencyActionNone: 'No dashboard link (describe in title)',
+    dependencyAllowAck: 'Allow customer acknowledgment button',
     approvalTitle: 'Approval title',
     approvalContext: 'Context (optional)',
     requestApproval: 'Request approval',
