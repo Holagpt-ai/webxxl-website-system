@@ -4,7 +4,7 @@ import { getWebxxlReleaseConfigStatus } from '@/lib/release-config'
 
 describe('batch28 WebXXL release config', () => {
   it('tracks latest ABMED catalog deployment for registration', () => {
-    expect(ABMED_CLINICAL_RESEARCH_PREVIEW.versionLabel).toBe('b05e0a6')
+    expect(ABMED_CLINICAL_RESEARCH_PREVIEW.versionLabel).toBe('cce66a0')
     expect(ABMED_CLINICAL_RESEARCH_PREVIEW.deploymentId).toMatch(/^dpl_/)
   })
 
