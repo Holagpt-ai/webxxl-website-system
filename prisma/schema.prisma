@@ -90,6 +90,14 @@ enum ChangeRequestStatus {
   DECLINED
 }
 
+enum ChangeRequestCategory {
+  DESIGN
+  CONTENT
+  MEDIA
+  FUNCTIONALITY
+  OTHER
+}
+
 enum ChangeRequestPriority {
   LOW
   NORMAL
@@ -214,6 +222,7 @@ enum ProjectActivityEventType {
   APPROVAL_APPROVED
   CHANGES_REQUESTED
   CHANGE_REQUEST_SUBMITTED
+  CHANGE_REQUEST_UPDATED
   SUPPORT_REQUEST_CREATED
   WEBSITE_PREVIEW_REGISTERED
 }
@@ -570,13 +579,16 @@ model ProjectComment {
   authorUserId String
   body         String            @db.Text
   visibility   CommentVisibility @default(CUSTOMER)
+  changeRequestId String?
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  author  User    @relation(fields: [authorUserId], references: [id], onDelete: Cascade)
+  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author        User           @relation(fields: [authorUserId], references: [id], onDelete: Cascade)
+  changeRequest ChangeRequest? @relation(fields: [changeRequestId], references: [id], onDelete: SetNull)
 
   @@index([projectId, createdAt])
+  @@index([changeRequestId])
 }
 
 model ProjectFile {
@@ -648,6 +660,8 @@ model ChangeRequest {
   description   String                @db.Text
   status        ChangeRequestStatus   @default(SUBMITTED)
   priority      ChangeRequestPriority @default(NORMAL)
+  category      ChangeRequestCategory @default(OTHER)
+  websitePreviewVersionId String?
   createdAt     DateTime              @default(now())
   updatedAt     DateTime              @updatedAt
 
@@ -656,12 +670,16 @@ model ChangeRequest {
   fileLinks   ProjectFileLink[]
   managedSite ManagedSite?      @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
   siteChanges ManagedSiteChange[]
+  /// Set when this request is the single bound change record for a preview decision.
   websitePreviewVersion WebsitePreviewVersion?
+  previewVersionRef WebsitePreviewVersion? @relation("ChangeRequestPreviewVersion", fields: [websitePreviewVersionId], references: [id], onDelete: SetNull)
+  comments    ProjectComment[]
 
   managedSiteId String?
 
   @@index([projectId])
   @@index([managedSiteId])
+  @@index([websitePreviewVersionId])
 }
 
 model SupportRequest {
@@ -1113,6 +1131,7 @@ model WebsitePreviewVersion {
   registeredBy  User?            @relation("WebsitePreviewRegistrar", fields: [registeredById], references: [id], onDelete: SetNull)
   approval      ProjectApproval? @relation(fields: [approvalId], references: [id], onDelete: SetNull)
   changeRequest ChangeRequest?   @relation(fields: [changeRequestId], references: [id], onDelete: SetNull)
+  linkedChangeRequests ChangeRequest[] @relation("ChangeRequestPreviewVersion")
 
   @@unique([provider, deploymentId])
   @@index([previewId, registeredAt])

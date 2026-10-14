@@ -16,9 +16,9 @@ export const ABMED_CLINICAL_RESEARCH_LEGACY_PREVIEW = {
   status: 'READY_FOR_REVIEW',
 } as const
 
-/** Latest production-verified deployment (Batch 20.2 on main, Oct 14 2026). */
-export const ABMED_CLINICAL_RESEARCH_PREVIEW = {
-  key: 'abmed-clinical-research',
+/** Batch 21 production (394a5d8 / concierge scroll). Preserved for review history. */
+export const ABMED_CLINICAL_RESEARCH_PREVIEW_394A5D8 = {
+  key: 'abmed-clinical-research-394a5d8',
   provider: 'VERCEL',
   displayName: 'ABMED Clinical Research',
   aliasUrl: 'https://abmed-clinical-research.vercel.app',
@@ -26,6 +26,19 @@ export const ABMED_CLINICAL_RESEARCH_PREVIEW = {
   deploymentId: 'dpl_3QdtG4N99p9qfe91L3BwqT4vS5b8',
   sourceRevision: '2b2be46da156c2e5123b9bf2e2f650f4bc5634d0',
   versionLabel: '394a5d8',
+  status: 'READY_FOR_REVIEW',
+} as const
+
+/** Latest production-verified deployment (Batch 23 UI polish on main, Oct 14 2026). */
+export const ABMED_CLINICAL_RESEARCH_PREVIEW = {
+  key: 'abmed-clinical-research',
+  provider: 'VERCEL',
+  displayName: 'ABMED Clinical Research',
+  aliasUrl: 'https://abmed-clinical-research.vercel.app',
+  registeredUrl: 'https://abmed-clinical-research-2874ke7st-tone4real-7828s-projects.vercel.app/',
+  deploymentId: 'dpl_LjyDWEu97w1tgeTG47rtHJsdnJr7',
+  sourceRevision: 'fc919f5e390d9ee506ebccd95b90480aae39214e',
+  versionLabel: 'fc919f5',
   status: 'READY_FOR_REVIEW',
   customerAccountId: 'abmed-account',
   customerAccountSlug: 'abmed',
@@ -35,6 +48,7 @@ export const ABMED_CLINICAL_RESEARCH_PREVIEW = {
 
 const ABMED_GUARDED_DEPLOYMENT_IDS = new Set<string>([
   ABMED_CLINICAL_RESEARCH_LEGACY_PREVIEW.deploymentId,
+  ABMED_CLINICAL_RESEARCH_PREVIEW_394A5D8.deploymentId,
   ABMED_CLINICAL_RESEARCH_PREVIEW.deploymentId,
 ])
 

@@ -408,14 +408,15 @@ export function ApprovalForm({ projectId }: { projectId: string }) {
 export function ChangeRequestStatusForm({ changeRequestId, current }: { changeRequestId: string; current: string }) {
   const [status, setStatus] = useState(current)
   const [note, setNote] = useState('')
+  const [customerReply, setCustomerReply] = useState('')
   const [pending, startTransition] = useTransition()
   const { admin: copy, dashboard: dash } = useAdminCopy()
   return (
     <form
-      className="flex flex-col gap-2"
+      className="flex min-w-[14rem] flex-col gap-2"
       onSubmit={(e) => {
         e.preventDefault()
-        startTransition(() => void updateChangeRequestStatusAction(changeRequestId, status as never, note))
+        startTransition(() => void updateChangeRequestStatusAction(changeRequestId, status as never, note, customerReply))
       }}
     >
       <select className="rounded-md border bg-background px-2 py-1 text-sm" value={status} onChange={(e) => setStatus(e.target.value)}>
@@ -425,6 +426,7 @@ export function ChangeRequestStatusForm({ changeRequestId, current }: { changeRe
           </option>
         ))}
       </select>
+      <Textarea placeholder={copy.projects.customerReply} value={customerReply} onChange={(e) => setCustomerReply(e.target.value)} rows={2} />
       <Textarea placeholder={copy.projects.internalNote} value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
       <Button type="submit" size="sm" disabled={pending}>
         {copy.update}
