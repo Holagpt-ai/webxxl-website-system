@@ -225,7 +225,7 @@ describe('batch6 invite and membership actions', () => {
       role: 'MEMBER',
       locale: 'en',
     })
-    expect(result).toEqual({ ok: true })
+    expect(result).toEqual({ ok: true, inviteSent: true })
     expect(hoisted.prisma.user.create).toHaveBeenCalled()
     expect(hoisted.memberships).toHaveLength(1)
     expect(hoisted.memberships[0].invitedAt).toBeTruthy()

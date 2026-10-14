@@ -55,7 +55,7 @@ describe('website preview URL and deployment validation', () => {
     expect(parsed.ok).toBe(true)
     if (!parsed.ok) return
     expect(parsed.value.aliasUrl).toBe('https://abmed-clinical-research.vercel.app/')
-    expect(parsed.value.registeredUrl).toBe(ABMED_CLINICAL_RESEARCH_PREVIEW.registeredUrl)
+    expect(parsed.value.registeredUrl).toBe(`${ABMED_CLINICAL_RESEARCH_PREVIEW.registeredUrl}/`)
     expect(parsed.value.deploymentId).toBe(ABMED_CLINICAL_RESEARCH_PREVIEW.deploymentId)
     expect(parsed.value.registeredUrl).not.toBe(parsed.value.aliasUrl)
   })
