@@ -113,8 +113,11 @@ export default async function AdminProjectDetailPage({ params }: Props) {
           <DependencyForm projectId={project.id} />
           <ul className="mt-4 flex flex-col gap-2 text-sm">
             {dependencies.map((d) => (
-              <li key={d.id}>
+              <li key={d.id} className="text-sm">
                 {d.title} · <StatusBadge label={enumLabel(dict.dashboard.dependencyStatuses, d.status)} />
+                {d.customerActionKey && (
+                  <span className="ml-1 text-xs text-muted-foreground">({d.customerActionKey})</span>
+                )}
               </li>
             ))}
           </ul>

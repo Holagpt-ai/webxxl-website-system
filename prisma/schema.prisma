@@ -546,6 +546,8 @@ model ProjectDependency {
   title                   String
   description             String?          @db.Text
   status                  DependencyStatus @default(REQUESTED)
+  customerActionKey       String?
+  allowsCustomerAck       Boolean          @default(false)
   requestedFromCustomerAt DateTime         @default(now())
   dueDate                 DateTime?
   resolvedAt              DateTime?

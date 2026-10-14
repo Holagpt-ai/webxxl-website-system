@@ -358,20 +358,48 @@ export function TaskStatusSelect({ projectId, taskId, title, status }: { project
 
 export function DependencyForm({ projectId }: { projectId: string }) {
   const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [customerActionKey, setCustomerActionKey] = useState('')
+  const [allowsCustomerAck, setAllowsCustomerAck] = useState(false)
   const [pending, startTransition] = useTransition()
-  const { admin: copy } = useAdminCopy()
+  const { admin: copy, dashboard: dash } = useAdminCopy()
   return (
     <form
-      className="flex flex-wrap gap-2"
+      className="flex flex-col gap-2"
       onSubmit={(e) => {
         e.preventDefault()
         startTransition(async () => {
-          await upsertDependencyAction(projectId, { title })
+          await upsertDependencyAction(projectId, {
+            title,
+            description,
+            customerActionKey: customerActionKey || null,
+            allowsCustomerAck,
+          })
           setTitle('')
+          setDescription('')
+          setCustomerActionKey('')
+          setAllowsCustomerAck(false)
         })
       }}
     >
-      <Input placeholder={copy.projects.actionItem} value={title} onChange={(e) => setTitle(e.target.value)} required className="flex-1" />
+      <Input placeholder={copy.projects.actionItem} value={title} onChange={(e) => setTitle(e.target.value)} required />
+      <Textarea placeholder={copy.projects.approvalContext} value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+      <select
+        className="rounded-md border bg-background px-2 py-1 text-sm"
+        value={customerActionKey}
+        onChange={(e) => setCustomerActionKey(e.target.value)}
+      >
+        <option value="">{copy.projects.dependencyActionNone}</option>
+        {(['PROJECT', 'FILES', 'APPROVALS', 'MESSAGES', 'REQUESTS', 'WEBSITE_REVIEW'] as const).map((key) => (
+          <option key={key} value={key}>
+            {dash.dependencyActionLabels[key]}
+          </option>
+        ))}
+      </select>
+      <label className="flex items-center gap-2 text-xs text-muted-foreground">
+        <input type="checkbox" checked={allowsCustomerAck} onChange={(e) => setAllowsCustomerAck(e.target.checked)} />
+        {copy.projects.dependencyAllowAck}
+      </label>
       <Button type="submit" disabled={pending}>
         {copy.projects.requestAction}
       </Button>

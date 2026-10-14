@@ -25,8 +25,19 @@ function uploadErrorMessage(
   return labels.failed
 }
 
-export function CommentForm({ projectId, submitLabel }: { projectId: string; submitLabel: string }) {
+export function CommentForm({
+  projectId,
+  submitLabel,
+  successMessage,
+  errorMessage,
+}: {
+  projectId: string
+  submitLabel: string
+  successMessage: string
+  errorMessage: string
+}) {
   const [body, setBody] = useState('')
+  const [feedback, setFeedback] = useState<'ok' | 'error' | null>(null)
   const [pending, startTransition] = useTransition()
   return (
     <form
@@ -34,13 +45,21 @@ export function CommentForm({ projectId, submitLabel }: { projectId: string; sub
       onSubmit={(e) => {
         e.preventDefault()
         startTransition(async () => {
-          await postCommentAction(projectId, body)
+          setFeedback(null)
+          const result = await postCommentAction(projectId, body)
+          if (!result.ok) {
+            setFeedback('error')
+            return
+          }
           setBody('')
+          setFeedback('ok')
         })
       }}
     >
       <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={4} required />
-      <Button type="submit" disabled={pending}>
+      {feedback === 'ok' && <p className="text-sm text-success">{successMessage}</p>}
+      {feedback === 'error' && <p className="text-sm text-destructive">{errorMessage}</p>}
+      <Button type="submit" disabled={pending || !body.trim()}>
         {submitLabel}
       </Button>
     </form>
@@ -86,23 +105,39 @@ export function ChangeRequestForm({
   projectId,
   submitLabel,
   priorityLabel,
+  categoryLabel,
   attachLabel,
   titlePlaceholder,
   priorityLabels,
+  categoryLabels,
+  reviewingDeploymentLabel,
+  websitePreviewVersionId,
+  deploymentVersionLabel,
+  successMessage,
+  errorMessage,
   files = [],
 }: {
   projectId: string
   submitLabel: string
   priorityLabel: string
+  categoryLabel: string
   attachLabel: string
   titlePlaceholder: string
   priorityLabels: { LOW: string; NORMAL: string; HIGH: string; URGENT: string }
+  categoryLabels: { DESIGN: string; CONTENT: string; MEDIA: string; FUNCTIONALITY: string; OTHER: string }
+  reviewingDeploymentLabel: string
+  websitePreviewVersionId?: string | null
+  deploymentVersionLabel?: string | null
+  successMessage: string
+  errorMessage: string
   files?: { id: string; originalName: string }[]
 }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'>('NORMAL')
+  const [category, setCategory] = useState<'DESIGN' | 'CONTENT' | 'MEDIA' | 'FUNCTIONALITY' | 'OTHER'>('DESIGN')
   const [fileIds, setFileIds] = useState<string[]>([])
+  const [feedback, setFeedback] = useState<'ok' | 'error' | null>(null)
   const [pending, startTransition] = useTransition()
   return (
     <form
@@ -110,17 +145,43 @@ export function ChangeRequestForm({
       onSubmit={(e) => {
         e.preventDefault()
         startTransition(async () => {
-          const result = await submitChangeRequestAction(projectId, title, description, priority, fileIds)
-          if (result.ok) {
-            setTitle('')
-            setDescription('')
-            setFileIds([])
+          setFeedback(null)
+          const result = await submitChangeRequestAction(projectId, title, description, priority, fileIds, {
+            category,
+            websitePreviewVersionId: websitePreviewVersionId ?? null,
+          })
+          if (!result.ok) {
+            setFeedback('error')
+            return
           }
+          setTitle('')
+          setDescription('')
+          setFileIds([])
+          setFeedback('ok')
         })
       }}
     >
+      {deploymentVersionLabel && websitePreviewVersionId && (
+        <p className="rounded-lg border bg-secondary/50 px-3 py-2 text-sm text-muted-foreground">
+          {reviewingDeploymentLabel}: <span className="font-semibold text-foreground">{deploymentVersionLabel}</span>
+        </p>
+      )}
       <Input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder={titlePlaceholder} />
       <Textarea value={description} onChange={(e) => setDescription(e.target.value)} required rows={4} />
+      <div>
+        <Label>{categoryLabel}</Label>
+        <select
+          className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm"
+          value={category}
+          onChange={(e) => setCategory(e.target.value as typeof category)}
+        >
+          <option value="DESIGN">{categoryLabels.DESIGN}</option>
+          <option value="CONTENT">{categoryLabels.CONTENT}</option>
+          <option value="MEDIA">{categoryLabels.MEDIA}</option>
+          <option value="FUNCTIONALITY">{categoryLabels.FUNCTIONALITY}</option>
+          <option value="OTHER">{categoryLabels.OTHER}</option>
+        </select>
+      </div>
       <div>
         <Label>{priorityLabel}</Label>
         <select
@@ -137,7 +198,9 @@ export function ChangeRequestForm({
       {files.length > 0 && (
         <FileCheckboxGroup label={attachLabel} files={files} selected={fileIds} onChange={setFileIds} />
       )}
-      <Button type="submit" disabled={pending}>
+      {feedback === 'ok' && <p className="text-sm text-success">{successMessage}</p>}
+      {feedback === 'error' && <p className="text-sm text-destructive">{errorMessage}</p>}
+      <Button type="submit" disabled={pending || !title.trim() || !description.trim()}>
         {submitLabel}
       </Button>
     </form>

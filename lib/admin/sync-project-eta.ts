@@ -23,6 +23,7 @@ export async function syncProjectProgressFromEta(projectId: string, options?: Sy
     targetDate: project.targetDate,
     estimatedCompletionDate: project.estimatedCompletionDate,
     milestones: milestones.map((m) => ({
+      id: m.id,
       title: m.title,
       status: m.status,
       progressWeight: m.progressWeight,
@@ -36,7 +37,7 @@ export async function syncProjectProgressFromEta(projectId: string, options?: Sy
     where: { id: projectId },
     data: {
       ...(options?.preserveProgressPercent ? {} : { progressPercent: eta.progressPercent }),
-      estimatedCompletionDate: eta.estimatedCompletionDate,
+      estimatedCompletionDate: eta.forecastDate,
     },
   })
 

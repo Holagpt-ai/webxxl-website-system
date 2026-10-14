@@ -412,6 +412,8 @@ export const adminEs = {
     addTask: 'Agregar tarea',
     actionItem: 'Acción para el cliente',
     requestAction: 'Solicitar acción',
+    dependencyActionNone: 'Sin enlace al panel (describir en el título)',
+    dependencyAllowAck: 'Permitir botón de confirmación del cliente',
     approvalTitle: 'Título de la aprobación',
     approvalContext: 'Contexto (opcional)',
     requestApproval: 'Solicitar aprobación',

@@ -191,6 +191,7 @@ export async function listChangeRequestQueue() {
       submittedBy: { select: { email: true, name: true } },
       fileLinks: { include: { projectFile: { select: { id: true, originalName: true } } } },
       managedSite: { select: { id: true, name: true, domain: true } },
+      previewVersionRef: { select: { versionLabel: true, deploymentId: true } },
     },
   })
 }
