@@ -23,6 +23,7 @@ const hoisted = vi.hoisted(() => ({
   userFindUnique: vi.fn(),
   userCreate: vi.fn(),
   membershipUpsert: vi.fn(),
+  membershipUpdate: vi.fn(async () => ({})),
 }))
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
@@ -43,12 +44,13 @@ vi.mock('@/lib/db', () => ({
       findFirst: hoisted.customerAccountFindFirst,
       findUnique: hoisted.customerAccountFindUnique,
       create: hoisted.customerAccountCreate,
+      updateMany: vi.fn(async () => ({ count: 1 })),
     },
     project: { create: hoisted.projectCreate },
     leadActivity: { create: hoisted.leadActivityCreate },
     newsletterSubscriber: { upsert: hoisted.newsletterUpsert },
     user: { findUnique: hoisted.userFindUnique, create: hoisted.userCreate },
-    customerMembership: { findUnique: vi.fn(), upsert: hoisted.membershipUpsert },
+    customerMembership: { findUnique: vi.fn(), upsert: hoisted.membershipUpsert, update: hoisted.membershipUpdate },
     $transaction: async (fn: (tx: unknown) => Promise<unknown>) =>
       fn({
         salesLead: {
@@ -62,6 +64,9 @@ vi.mock('@/lib/db', () => ({
           create: hoisted.customerAccountCreate,
         },
         project: { create: hoisted.projectCreate },
+        projectMilestone: { create: vi.fn(async () => ({ id: 'ms-1' })) },
+        projectTask: { create: vi.fn(async () => ({})) },
+        projectDependency: { create: vi.fn(async () => ({})) },
       }),
   },
 }))

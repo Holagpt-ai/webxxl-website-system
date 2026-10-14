@@ -550,8 +550,18 @@ export const adminEs = {
     convertedReady: 'Conversión correcta — la cuenta y el proyecto están listos.',
     convertedIdempotent: 'La conversión ya estaba hecha — no se creó un cliente ni un proyecto duplicado.',
     inviteSent: 'Invitación al portal enviada.',
+    invitePendingEmail:
+      'Cuenta de cliente creada. Invitación por correo pendiente de configuración.',
     inviteFailed:
       'La invitación al portal falló ({error}). Abre la ficha del cliente para reenviarla — no hace falta convertir de nuevo.',
+    projectTypeLabel: 'Tipo de proyecto',
+    templateLabel: 'Plantilla de proyecto',
+    templateHelp:
+      'Los leads de sitio web usan por defecto Sitio web empresarial estándar (8 hitos, 3 dependencias). Elija “Sin plantilla” solo para proyectos que no sean sitio web.',
+    templateNone: 'Sin plantilla (hitos manuales)',
+    handoffTitle: 'Traspaso tras conversión',
+    handoffInviteNote:
+      'Reenvíe invitaciones al portal desde la cuenta del cliente si el correo estaba pendiente — la conversión no crea proyectos duplicados.',
     stages: {
       NEW: 'Nuevo',
       CONTACTED: 'Contactado',

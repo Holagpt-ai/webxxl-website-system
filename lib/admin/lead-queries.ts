@@ -38,7 +38,7 @@ export async function getSalesLeadDetail(leadId: string) {
     include: {
       assignedTo: { select: { id: true, name: true, email: true } },
       customerAccount: { select: { id: true, businessName: true, slug: true } },
-      project: { select: { id: true, name: true, status: true } },
+      project: { select: { id: true, name: true, status: true, templateId: true, templateVersion: true } },
       convertedBy: { select: { id: true, name: true, email: true } },
       activities: {
         orderBy: { createdAt: 'desc' },

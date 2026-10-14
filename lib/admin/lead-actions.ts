@@ -117,6 +117,7 @@ export async function convertLeadAction(input: {
   projectName?: string
   projectType?: ProjectType
   projectSummary?: string
+  templateId?: string | null
   sendInvite?: boolean
   inviteRole?: MembershipRole
   locale?: CustomerAccessLocale

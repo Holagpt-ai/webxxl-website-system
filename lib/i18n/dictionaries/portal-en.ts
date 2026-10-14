@@ -550,7 +550,16 @@ export const adminEn = {
     convertedReady: 'Conversion succeeded — customer account and project are ready.',
     convertedIdempotent: 'Conversion already completed — no duplicate customer or project was created.',
     inviteSent: 'Portal invitation sent.',
+    invitePendingEmail:
+      'Customer account created. Email invitation pending configuration.',
     inviteFailed: 'Portal invitation failed ({error}). Open the customer record to resend the invitation — no need to convert again.',
+    projectTypeLabel: 'Project type',
+    templateLabel: 'Project template',
+    templateHelp: 'Website leads default to Standard Business Website (8 milestones, 3 customer dependencies). Choose “No template” only for non-website projects.',
+    templateNone: 'No template (manual milestones)',
+    handoffTitle: 'Conversion handoff',
+    handoffInviteNote:
+      'Resend portal invitations from the customer account if email delivery was pending — conversion will not create duplicate projects.',
     stages: {
       NEW: 'New',
       CONTACTED: 'Contacted',
