@@ -14,6 +14,7 @@ import {
   attachApprovalFilesAction,
   createApprovalRequestAction,
   createProjectAction,
+  createProjectFromTemplateAction,
   deleteProjectFileAction,
   postStaffProjectCommentAction,
   removeMembershipAction,
@@ -89,8 +90,11 @@ export function InviteCustomerForm({ customerId }: { customerId: string }) {
             role: role as never,
             locale,
           })
-          if (result.ok) setEmail('')
-          else setError(actionErrorLabel(result.error, copy.errors))
+          if (result.ok) {
+            setEmail('')
+            if (!result.inviteSent && result.inviteError) setError(copy.customers.invitePending)
+            else setError(null)
+          } else setError(actionErrorLabel(result.error, copy.errors))
         })
       }}
     >
@@ -195,26 +199,76 @@ export function MembershipRowActions({
 
 export function CreateProjectForm({ customerAccountId }: { customerAccountId: string }) {
   const [name, setName] = useState('')
+  const [summary, setSummary] = useState('')
+  const [templateId, setTemplateId] = useState('standard-business-website')
+  const [targetDate, setTargetDate] = useState('')
+  const [useTemplate, setUseTemplate] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
   const { admin: copy } = useAdminCopy()
+  const onboarding = copy.onboarding
   return (
     <form
-      className="flex flex-wrap items-end gap-2"
+      className="flex flex-col gap-3"
       onSubmit={(e) => {
         e.preventDefault()
+        setError(null)
         startTransition(async () => {
-          await createProjectAction({ customerAccountId, name, type: 'WEBSITE' })
-          setName('')
+          const result = useTemplate
+            ? await createProjectFromTemplateAction({
+                customerAccountId,
+                name,
+                templateId,
+                summary: summary.trim() || undefined,
+                targetDate: targetDate.trim() || undefined,
+              })
+            : await createProjectAction({ customerAccountId, name, type: 'WEBSITE', summary: summary.trim() || undefined })
+          if (!result.ok) setError(actionErrorLabel(result.error, copy.errors))
+          else {
+            setName('')
+            setSummary('')
+            setTargetDate('')
+          }
         })
       }}
     >
-      <div className="min-w-[200px] flex-1">
-        <Label htmlFor="proj-name">{copy.customers.newProject}</Label>
-        <Input id="proj-name" value={name} onChange={(e) => setName(e.target.value)} required />
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="min-w-[200px] flex-1">
+          <Label htmlFor="proj-name">{copy.customers.newProject}</Label>
+          <Input id="proj-name" value={name} onChange={(e) => setName(e.target.value)} required />
+        </div>
+        <Button type="submit" disabled={pending}>
+          {copy.create}
+        </Button>
       </div>
-      <Button type="submit" disabled={pending}>
-        {copy.create}
-      </Button>
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={useTemplate} onChange={(e) => setUseTemplate(e.target.checked)} />
+        {onboarding.useTemplate}
+      </label>
+      {useTemplate ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <Label htmlFor="proj-template">{onboarding.template}</Label>
+            <select
+              id="proj-template"
+              className="mt-1 block w-full rounded-md border bg-background px-3 py-2 text-sm"
+              value={templateId}
+              onChange={(e) => setTemplateId(e.target.value)}
+            >
+              <option value="standard-business-website">{onboarding.standardTemplateLabel}</option>
+            </select>
+          </div>
+          <div>
+            <Label htmlFor="proj-target">{onboarding.targetDate}</Label>
+            <Input id="proj-target" type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} />
+          </div>
+        </div>
+      ) : null}
+      <div>
+        <Label htmlFor="proj-summary">{onboarding.projectSummary}</Label>
+        <Textarea id="proj-summary" value={summary} onChange={(e) => setSummary(e.target.value)} rows={2} />
+      </div>
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
     </form>
   )
 }

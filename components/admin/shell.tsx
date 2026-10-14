@@ -15,7 +15,11 @@ import type { Locale } from '@/lib/i18n/config'
 
 const NAV: { href: string; key: keyof Dictionary['admin']['nav']; match: (p: string | null) => boolean }[] = [
   { href: '/admin', key: 'overview', match: (p) => p === '/admin' || !!p?.endsWith('/admin') },
-  { href: '/admin/customers', key: 'customers', match: (p) => !!p?.includes('/admin/customers') },
+  {
+    href: '/admin/customers',
+    key: 'customers',
+    match: (p) => !!p?.includes('/admin/customers') || !!p?.includes('/admin/onboarding'),
+  },
   { href: '/admin/leads', key: 'leads', match: (p) => !!p?.includes('/admin/leads') },
   { href: '/admin/service-orders', key: 'serviceOrders', match: (p) => !!p?.includes('/admin/service-orders') },
   { href: '/admin/infrastructure', key: 'infrastructure', match: (p) => !!p?.includes('/admin/infrastructure') },

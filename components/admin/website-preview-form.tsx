@@ -63,26 +63,31 @@ export function WebsitePreviewForm({ projectId }: { projectId: string }) {
       }}
     >
       <p className="text-sm text-muted-foreground">{copy.description}</p>
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => {
-          const verified = abmedClinicalResearchRegistration()
-          setFields({
-            provider: verified.provider,
-            displayName: verified.displayName,
-            aliasUrl: verified.aliasUrl,
-            registeredUrl: verified.registeredUrl,
-            deploymentId: verified.deploymentId,
-            versionLabel: verified.versionLabel,
-            sourceRevision: verified.sourceRevision,
-            status: verified.status,
-          })
-          setMessage(copy.abmedGuard)
-        }}
-      >
-        {copy.fillAbmed}
-      </Button>
+      <details className="rounded-md border bg-muted/30 p-3 text-sm">
+        <summary className="cursor-pointer font-medium">{copy.legacyCatalog}</summary>
+        <p className="mt-2 text-muted-foreground">{copy.legacyCatalogHelp}</p>
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-2"
+          onClick={() => {
+            const verified = abmedClinicalResearchRegistration()
+            setFields({
+              provider: verified.provider,
+              displayName: verified.displayName,
+              aliasUrl: verified.aliasUrl,
+              registeredUrl: verified.registeredUrl,
+              deploymentId: verified.deploymentId,
+              versionLabel: verified.versionLabel,
+              sourceRevision: verified.sourceRevision,
+              status: verified.status,
+            })
+            setMessage(copy.abmedGuard)
+          }}
+        >
+          {copy.fillAbmed}
+        </Button>
+      </details>
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <Label htmlFor="preview-provider">{copy.provider}</Label>
