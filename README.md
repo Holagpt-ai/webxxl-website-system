@@ -31,3 +31,11 @@ To learn more, take a look at the following resources:
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 - [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
+
+## Platform architecture
+
+The WebXXL Master Blueprint and Technical Architecture Document v1.0.0 is the authoritative architecture reference:
+
+- [Platform blueprint](docs/platform/README.md)
+- [Session start](docs/platform/docs/00-SESSION-START.md)
+- [Master TAD](docs/platform/docs/01-MASTER-TAD.md)
