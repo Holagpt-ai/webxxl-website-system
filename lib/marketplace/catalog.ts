@@ -1,6 +1,8 @@
 import type { FeatureFlag } from '@/config/features'
 import { isEnabled } from '@/config/features'
 export type ServiceBillingClass = 'ONE_TIME' | 'RECURRING'
+export type ServicePricingMode = 'INCLUDED_FREE' | 'RECURRING' | 'ONE_TIME' | 'METERED_EXTERNAL'
+export type FreeServiceEligibilityCohort = 'UNRESOLVED' | 'SUBSCRIBER_ONLY' | 'ALL_SIGNUPS' | 'HYBRID'
 export type MarketplaceServiceAvailability = 'AVAILABLE' | 'COMING_SOON' | 'UNAVAILABLE'
 
 export type MarketplaceCategory =
@@ -22,6 +24,9 @@ export type MarketplaceServiceDefinition = {
   iconRef?: string
   pricingPresentation: { en: string; es: string }
   billingClass: ServiceBillingClass
+  /** Forward-looking classification. Does not change historical quotes or displayed catalog prices. */
+  pricingMode?: ServicePricingMode
+  eligibleSubscriberCohort?: FreeServiceEligibilityCohort
   availability: MarketplaceServiceAvailability
   requiresProject: boolean
   /** When fulfilled, may map to CustomerService.serviceKey from the portal registry. */

@@ -1,6 +1,19 @@
 # 02 — Verified Repository Baseline and Honest Status
 
-**Inspection:** GitHub connector read of `Holagpt-ai/webxxl-website-system`, default branch `main`, on 2026-10-17. Repository tree SHA as observed: `3a5ba5dc137b26f712d0e95eced8ead39dab4996` (**tree SHA, not commit SHA**). This was a focused source inspection, **not a build/deployment inspection or exhaustive branch audit**. A separate historical `feature/client-dashboard` branch exists, but **main** is the authoritative starting point. Observed dashboard screenshot supplied by owner (2026-10-17) depicts the current working customer Overview.
+**Inspection:** GitHub connector read of `Holagpt-ai/webxxl-website-system`, default branch `main`, on 2026-10-17. Original documentation inspection tree SHA: `3a5ba5dc137b26f712d0e95eced8ead39dab4996` (**tree SHA, not commit SHA**). **Authoritative `main` after DOC-00:** commit `9b0886afc4b312450a589a6fa6768612312a2ef8` (PR #32, TAD v1.0.0). This was a focused source inspection, **not a build/deployment inspection or exhaustive branch audit**. A separate historical `feature/client-dashboard` branch exists, but **main** is the authoritative starting point. Observed dashboard screenshot supplied by owner (2026-10-17) depicts the current working customer Overview.
+
+## FOUND-01 source update (2026-10-17) — implemented in branch, not merged or deployed
+
+| Area | Evidence | Honest status |
+|---|---|---|
+| Billing group identity | `prisma/schema.prisma` models `BillingGroup`, `BillingGroupMembership`, `BillingGroupRole`, `BillingProfile`, `SiteSpendingPolicy` | **Implemented in source** on `feature/webxxl-found-01`. Additive migration `20261017220000_found01_platform_identity` is **not applied** to production |
+| Shared wallet contracts | `lib/platform/wallet/*` plus Prisma `CreditWallet`, `WalletLedgerEntry`, `CreditReservation`, `MessageUsage` | **Contract + synthetic engine implemented and unit-tested**. No live top-up, Twilio send, or payment execution |
+| Authorization split | `lib/platform/billing-authz.ts`, `lib/platform/account-isolation.ts` | Group billing rights are independent of `CustomerMembership` / CRM access. Existing Auth.js and `lib/portal/authz.ts` unchanged |
+| Entitlements | `lib/platform/entitlements.ts`; catalog types in `lib/marketplace/catalog.ts` | FREE vs PAID classifications exist. Existing marketplace quote strings and historical order amounts are unchanged. OPEN-001 eligibility remains `UNRESOLVED` |
+| Provider registry | `lib/platform/providers/*` | Typed replaceable interfaces. Existing Postiz stub, Resend email, worker, and billing identifiers are wrapped. Twenty, Chatwoot, Paperclip, Twilio, and payment processors are **not installed** |
+| AI tool registry | `lib/platform/ai-tools/*` | Deny-by-default contracts only. No autonomous agents activated. `purchasableAiEmployees` flag is `false` |
+| ABMED data | `lib/platform/fixtures/abmed.ts` | Synthetic test identities only. Live `abmed-account` memberships, projects, and approvals were **not migrated** |
+| Production / Vercel | none | **Not deployed**. Dashboard UI unchanged |
 
 ## Existing source facts that must be reused
 
@@ -14,7 +27,7 @@
 | Version/owner review | `docs/owner-review-package.md`, `docs/batch30-project-delivery-checklist.md` | Existing immutable preview approval and separate owner review; do not conflate with domain cutover |
 | Module registry | `lib/portal/modules.ts`, `config/features.ts` | Existing service and navigation module pattern |
 | Service marketplace | `app/[locale]/dashboard/services/page.tsx`, `lib/marketplace/{catalog,billing,orders,queries}.ts` | Existing service orders/entitlements; payments not fully implemented |
-| Existing source schema | `prisma/schema.prisma` | 38 inspected Prisma models, including CustomerAccount, CustomerMembership, Project, ManagedSite, SalesLead, LeadActivity, ServiceOrder, CustomerService, AutomationEvent and AutomationDeliveryJob |
+| Existing source schema | `prisma/schema.prisma` | Original inspection: 38 models, including CustomerAccount, CustomerMembership, Project, ManagedSite, SalesLead, LeadActivity, ServiceOrder, CustomerService, AutomationEvent and AutomationDeliveryJob. FOUND-01 **extends** this schema additively; existing models remain |
 | Site changes | `ManagedSite`, `ManagedSiteCapability`, `ManagedSiteChange` | Existing website change and approval primitives |
 | Internal automation | `lib/automation/worker.ts`, `AutomationEvent`, `AutomationDeliveryJob` | Existing notification event/delivery system; SMS/WhatsApp disabled in inspected config |
 | Postiz connector | `lib/integrations/scheduler.ts` | URL default `https://app.webbxxl.com`, HEAD availability checker, link-out; **stats returns null even if token configured** |
@@ -23,11 +36,11 @@
 
 ## Known source/policy mismatch — resolve without deleting orders
 
-`lib/marketplace/catalog.ts` currently advertises **SEO & local visibility as quoted monthly/project service**, **CRM & follow-up automation as custom quote**, and **Marketing & ad campaigns as quote per campaign**. Approved future policy is that the **core CRM, local SEO visibility, AI marketing production, landing-page drafts, social automation and creative generation are FREE/included**, with website subscriptions, SMS and separate third-party services paid. The implementation must reclassify **future offers** and add free entitlements without retroactively altering historical contract/order records. If an advanced paid service outside the free core is contemplated, the owner must approve its exact scope and pricing first.
+`lib/marketplace/catalog.ts` still advertises **SEO & local visibility as quoted monthly/project service**, **CRM & follow-up automation as custom quote**, and **Marketing & ad campaigns as quote per campaign**. FOUND-01 did **not** change those production-facing prices. A parallel entitlement catalog now classifies the approved FREE core services and paid website/SMS/hosting/domain/email offerings. Historical `ServiceOrder` quotes remain intact. OPEN-001 (free prospect eligibility) is still unresolved and configurable.
 
 ## Existing role nuance
 
-`User.role` includes `CUSTOMER`, `STAFF`, `ADMIN`; `CustomerMembership.role` has `OWNER`, `MEMBER`. Current `requireCustomerMembership()` selects authorized account from cookie-backed memberships. Group-wallet rights **do not exist by implication** and must be modeled separately; staff/admin should use distinct server-side capabilities. Do not assert database RLS protects Prisma server activity without independently verifying it.
+`User.role` includes `CUSTOMER`, `STAFF`, `ADMIN`; `CustomerMembership.role` has `OWNER`, `MEMBER`. Current `requireCustomerMembership()` selects authorized account from cookie-backed memberships. FOUND-01 adds separate `BillingGroupRole` contracts (`GROUP_OWNER`, `BILLING_ADMIN`, `BILLING_VIEWER`). Those roles do **not** grant sibling CRM access. Staff/admin should continue to use distinct server-side capabilities. Do not assert database RLS protects Prisma server activity without independently verifying it.
 
 ## Existing launch commitments to preserve
 

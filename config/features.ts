@@ -24,6 +24,7 @@ export const features = {
   automationSmsChannel: false,
   automationWhatsappChannel: false,
   automationPushChannel: false,
+  purchasableAiEmployees: false,
 } as const
 
 export type FeatureFlag = keyof typeof features

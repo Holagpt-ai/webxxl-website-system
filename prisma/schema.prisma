@@ -400,6 +400,9 @@ model User {
   automationDeliveries     AutomationDeliveryJob[]  @relation("AutomationDeliveryRecipient")
   notificationPreferences  CustomerNotificationPreference[]
   ownerReviewDecisions     ProjectOwnerReviewDecision[] @relation("OwnerReviewDecider")
+  billingGroupRoles        BillingGroupRole[]
+  authorizedBillingMemberships BillingGroupMembership[] @relation("BillingMembershipAuthorizer")
+  walletLedgerEntries      WalletLedgerEntry[] @relation("WalletLedgerActor")
 }
 
 model Account {
@@ -462,6 +465,13 @@ model CustomerAccount {
   automationEvents        AutomationEvent[]
   notificationPreferences CustomerNotificationPreference[]
   websitePreviews              WebsitePreview[]
+  billingGroupMemberships      BillingGroupMembership[]
+  spendingPolicies             SiteSpendingPolicy[]
+  creditReservations           CreditReservation[]
+  walletLedgerEntries          WalletLedgerEntry[]
+  messageUsage                 MessageUsage[]
+  agentToolGrants              AgentToolGrant[]
+  agentToolInvocations         AgentToolInvocation[]
 }
 
 model CustomerMembership {
@@ -796,6 +806,10 @@ model ManagedSite {
   capabilities    ManagedSiteCapability[]
   changes         ManagedSiteChange[]
   changeRequests  ChangeRequest[]
+  walletLedgerEntries WalletLedgerEntry[]
+  messageUsage        MessageUsage[]
+  agentToolGrants     AgentToolGrant[]
+  agentToolInvocations AgentToolInvocation[]
 
   @@index([customerAccountId])
   @@index([projectId])
@@ -924,11 +938,13 @@ model ServiceOrder {
   billingProvider     String?
   billingProviderRef  String?
   customerServiceId   String?
+  billingGroupId      String?
   submissionFingerprint String
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
 
   customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  billingGroup    BillingGroup?   @relation(fields: [billingGroupId], references: [id], onDelete: SetNull)
   project         Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
   requestedBy     User            @relation("ServiceOrderRequester", fields: [requestedById], references: [id], onDelete: Cascade)
   assignedTo      User?           @relation("ServiceOrderAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
@@ -938,6 +954,7 @@ model ServiceOrder {
   @@index([status, createdAt])
   @@index([serviceKey])
   @@index([submissionFingerprint, createdAt])
+  @@index([billingGroupId])
 }
 
 model ServiceOrderActivity {
@@ -1173,4 +1190,315 @@ model WebsitePreviewVersion {
 
   @@unique([provider, deploymentId])
   @@index([previewId, registeredAt])
+}
+
+enum BillingGroupStatus {
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+enum BillingGroupMembershipStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  UNLINKED
+}
+
+enum BillingGroupRoleKind {
+  GROUP_OWNER
+  BILLING_ADMIN
+  BILLING_VIEWER
+}
+
+enum CreditWalletStatus {
+  ACTIVE
+  FROZEN
+  CLOSED
+}
+
+enum WalletLedgerEntryType {
+  TOP_UP
+  SETTLE
+  RELEASE
+  REFUND
+  ADJUSTMENT
+}
+
+enum CreditReservationStatus {
+  HELD
+  PARTIALLY_SETTLED
+  SETTLED
+  RELEASED
+  EXPIRED
+}
+
+enum MessageUsageStatus {
+  QUOTED
+  RESERVED
+  SETTLED
+  RELEASED
+}
+
+enum ProviderConnectionStatus {
+  NOT_CONNECTED
+  CONNECTING
+  VERIFIED
+  DEGRADED
+  REVOKED
+}
+
+enum AgentToolDecision {
+  ALLOWED
+  DENIED
+}
+
+/// Financial aggregation only. Never grants CRM, contacts, or site operating access.
+model BillingGroup {
+  id                   String             @id @default(cuid())
+  name                 String
+  slug                 String             @unique
+  status               BillingGroupStatus @default(ACTIVE)
+  defaultCurrency      String             @default("USD")
+  payerContactId       String?
+  billingPolicyVersion String             @default("v1")
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  memberships      BillingGroupMembership[]
+  roles            BillingGroupRole[]
+  profiles         BillingProfile[]
+  wallets          CreditWallet[]
+  spendingPolicies SiteSpendingPolicy[]
+  serviceOrders    ServiceOrder[]
+  messageUsage     MessageUsage[]
+}
+
+model BillingGroupMembership {
+  id                 String                        @id @default(cuid())
+  billingGroupId     String
+  customerAccountId  String
+  status             BillingGroupMembershipStatus  @default(PENDING)
+  validFrom          DateTime
+  validTo            DateTime?
+  authorizedByUserId String?
+  walletUseAllowed   Boolean                       @default(true)
+  spendingPolicyId   String?
+  /// Set to customerAccountId while this is the unique active funding link; null when inactive.
+  activeFundingKey   String?                       @unique
+  createdAt          DateTime                      @default(now())
+  updatedAt          DateTime                      @updatedAt
+
+  billingGroup    BillingGroup       @relation(fields: [billingGroupId], references: [id], onDelete: Cascade)
+  customerAccount CustomerAccount    @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  authorizedBy    User?              @relation("BillingMembershipAuthorizer", fields: [authorizedByUserId], references: [id], onDelete: SetNull)
+  spendingPolicy  SiteSpendingPolicy? @relation(fields: [spendingPolicyId], references: [id], onDelete: SetNull)
+
+  @@index([billingGroupId, status])
+  @@index([customerAccountId, status])
+  @@index([billingGroupId, customerAccountId, validFrom])
+}
+
+model BillingGroupRole {
+  id              String               @id @default(cuid())
+  billingGroupId  String
+  userId          String
+  role            BillingGroupRoleKind
+  capabilityFlags Json?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  billingGroup BillingGroup @relation(fields: [billingGroupId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([billingGroupId, userId])
+  @@index([userId])
+}
+
+/// Tokenized payer identity. Never stores card data.
+model BillingProfile {
+  id                String   @id @default(cuid())
+  billingGroupId    String
+  legalPayerName    String
+  billingAddressRef String?
+  taxRef            String?
+  currency          String   @default("USD")
+  defaultMethodRef  String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  billingGroup BillingGroup @relation(fields: [billingGroupId], references: [id], onDelete: Cascade)
+
+  @@index([billingGroupId])
+}
+
+model SiteSpendingPolicy {
+  id                 String   @id @default(cuid())
+  billingGroupId     String
+  customerAccountId  String
+  dailyLimit         Int?
+  monthlyLimit       Int?
+  maxCampaignCredits Int?
+  allowedChannels    Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  billingGroup    BillingGroup              @relation(fields: [billingGroupId], references: [id], onDelete: Cascade)
+  customerAccount CustomerAccount           @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  memberships     BillingGroupMembership[]
+
+  @@unique([billingGroupId, customerAccountId])
+}
+
+/// One wallet per credit type per billing group. Balance is derived from ledger minus holds.
+model CreditWallet {
+  id             String             @id @default(cuid())
+  billingGroupId String
+  creditType     String             @default("MESSAGING")
+  unit           String             @default("CREDITS")
+  status         CreditWalletStatus @default(ACTIVE)
+  ledgerSequence Int                @default(0)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  billingGroup  BillingGroup         @relation(fields: [billingGroupId], references: [id], onDelete: Cascade)
+  ledgerEntries WalletLedgerEntry[]
+  reservations  CreditReservation[]
+  messageUsage  MessageUsage[]
+
+  @@unique([billingGroupId, creditType])
+}
+
+model WalletLedgerEntry {
+  id                String                @id @default(cuid())
+  walletId          String
+  customerAccountId String?
+  managedSiteId     String?
+  campaignId        String?
+  orderId           String?
+  type              WalletLedgerEntryType
+  deltaCredits      Int
+  priceVersion      String
+  reservationId     String?
+  providerRef       String?
+  idempotencyKey    String                @unique
+  effectiveAt       DateTime              @default(now())
+  createdAt         DateTime              @default(now())
+  actorUserId       String?
+
+  wallet          CreditWallet     @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  customerAccount CustomerAccount? @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)
+  managedSite     ManagedSite?     @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  actor           User?            @relation("WalletLedgerActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([walletId, createdAt])
+  @@index([customerAccountId, createdAt])
+  @@index([reservationId])
+}
+
+model CreditReservation {
+  id              String                  @id @default(cuid())
+  walletId        String
+  originAccountId String
+  amount          Int
+  settledAmount   Int                     @default(0)
+  status          CreditReservationStatus @default(HELD)
+  expiresAt       DateTime
+  correlationId   String
+  campaignId      String?
+  idempotencyKey  String                  @unique
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  wallet        CreditWallet    @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  originAccount CustomerAccount @relation(fields: [originAccountId], references: [id], onDelete: Restrict)
+  messageUsage  MessageUsage[]
+
+  @@index([walletId, status])
+  @@index([originAccountId])
+  @@index([correlationId])
+}
+
+model MessageUsage {
+  id                String             @id @default(cuid())
+  billingGroupId    String
+  customerAccountId String
+  managedSiteId     String?
+  walletId          String
+  reservationId     String?
+  channel           String
+  units             Int
+  credits           Int
+  status            MessageUsageStatus
+  idempotencyKey    String             @unique
+  createdAt         DateTime           @default(now())
+
+  billingGroup    BillingGroup       @relation(fields: [billingGroupId], references: [id], onDelete: Cascade)
+  customerAccount CustomerAccount    @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  managedSite     ManagedSite?       @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  wallet          CreditWallet       @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  reservation     CreditReservation? @relation(fields: [reservationId], references: [id], onDelete: SetNull)
+
+  @@index([billingGroupId, createdAt])
+  @@index([customerAccountId, createdAt])
+  @@index([walletId, createdAt])
+}
+
+model ProviderConnection {
+  id                 String                    @id @default(cuid())
+  ownerScope         String
+  ownerId            String
+  providerKey        String
+  externalAccountRef String?
+  secretRef          String?
+  status             ProviderConnectionStatus  @default(NOT_CONNECTED)
+  permissions        Json?
+  lastVerifiedAt     DateTime?
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+
+  @@unique([ownerScope, ownerId, providerKey])
+  @@index([providerKey, status])
+}
+
+model AgentToolGrant {
+  id                String    @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String?
+  actorId           String
+  actorType         String
+  toolKey           String
+  approvalRequired  Boolean   @default(true)
+  expiresAt         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  managedSite     ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+
+  @@index([customerAccountId, toolKey])
+  @@index([actorId, toolKey])
+}
+
+model AgentToolInvocation {
+  id                String            @id @default(cuid())
+  grantId           String?
+  actorId           String
+  actorType         String
+  customerAccountId String
+  managedSiteId     String?
+  toolKey           String
+  requestId         String
+  correlationId     String?
+  approvalId        String?
+  inputHash         String
+  decision          AgentToolDecision
+  denialReason      String?
+  createdAt         DateTime          @default(now())
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  managedSite     ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+
+  @@unique([requestId, toolKey])
+  @@index([customerAccountId, createdAt])
 }
