@@ -407,6 +407,10 @@ model User {
   workforceApprovalsGiven  WorkforceApproval[] @relation("WorkforceApprover")
   workforcePauseControls   WorkforcePauseControl[] @relation("WorkforcePauseOperator")
   workforceAuditEvents     WorkforceAuditEvent[] @relation("WorkforceAuditActor")
+  socialCampaignsCreated   SocialCampaign[] @relation("SocialCampaignCreator")
+  socialCampaignApprovals  SocialCampaignApproval[] @relation("SocialCampaignApprover")
+  marketingRequestsCreated MarketingRequest[] @relation("MarketingRequestCreator")
+  socialWorkspacesAuthorized SocialProviderWorkspaceMapping[]
 }
 
 model Account {
@@ -477,6 +481,12 @@ model CustomerAccount {
   agentToolGrants              AgentToolGrant[]
   agentToolInvocations         AgentToolInvocation[]
   workforceTasks               WorkforceTask[]
+  socialProviderWorkspaces     SocialProviderWorkspaceMapping[]
+  businessSocialConnections    BusinessSocialConnection[]
+  socialCampaigns              SocialCampaign[]
+  marketingRequests            MarketingRequest[]
+  marketingArtifacts           MarketingArtifact[]
+  marketingStudioUsage         MarketingStudioUsage[]
 }
 
 model CustomerMembership {
@@ -815,6 +825,12 @@ model ManagedSite {
   messageUsage        MessageUsage[]
   agentToolGrants     AgentToolGrant[]
   agentToolInvocations AgentToolInvocation[]
+  socialProviderWorkspaces  SocialProviderWorkspaceMapping[]
+  businessSocialConnections BusinessSocialConnection[]
+  socialCampaigns           SocialCampaign[]
+  marketingRequests         MarketingRequest[]
+  marketingArtifacts        MarketingArtifact[]
+  marketingStudioUsage      MarketingStudioUsage[]
 
   @@index([customerAccountId])
   @@index([projectId])
@@ -1735,4 +1751,324 @@ model WorkforcePauseControl {
   operator User @relation("WorkforcePauseOperator", fields: [setByUserId], references: [id], onDelete: Restrict)
 
   @@index([scope, targetKey, active])
+}
+
+enum SocialChannelConnectionState {
+  NOT_CONNECTED
+  PENDING_AUTHORIZATION
+  CONNECTED
+  DEGRADED
+  EXPIRED
+  REVOKED
+  UNAVAILABLE
+}
+
+enum SocialCampaignStatus {
+  DRAFT
+  AWAITING_APPROVAL
+  APPROVED
+  SCHEDULING
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+  CANCELLED
+}
+
+enum SocialPublicationStatus {
+  PENDING
+  SCHEDULED
+  SCHEDULING_UNKNOWN
+  PUBLISHING
+  PUBLISHED
+  FAILED
+  CANCELLED
+  RECONCILIATION_REQUIRED
+}
+
+enum SocialSchedulingIntentStatus {
+  PENDING
+  DISPATCHED
+  ACKNOWLEDGED
+  UNKNOWN
+  FAILED
+  CANCELLED
+}
+
+enum MarketingRequestType {
+  SOCIAL_CAMPAIGN
+  SOCIAL_POST
+  LANDING_PAGE
+  AD_CREATIVE
+  SEO_FIX
+  CAMPAIGN_PLAN
+}
+
+enum MarketingRequestStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum MarketingArtifactType {
+  SOCIAL_CAMPAIGN
+  SOCIAL_POST
+  LANDING_PAGE
+  AD_CREATIVE
+  SEO_FIX
+  CAMPAIGN_PLAN
+}
+
+enum SocialApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+  REVOKED
+}
+
+model SocialProviderWorkspaceMapping {
+  id                   String                     @id @default(cuid())
+  customerAccountId    String
+  managedSiteId        String?
+  providerKey          String                     @default("postiz")
+  externalWorkspaceRef String
+  secretRef            String
+  connectionState      SocialChannelConnectionState @default(NOT_CONNECTED)
+  authorizedByUserId   String?
+  lastVerifiedAt       DateTime?
+  revokedAt            DateTime?
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  authorizedBy    User?           @relation(fields: [authorizedByUserId], references: [id], onDelete: SetNull)
+  connections     BusinessSocialConnection[]
+
+  @@unique([customerAccountId, providerKey, externalWorkspaceRef])
+  @@index([customerAccountId, connectionState])
+}
+
+model BusinessSocialConnection {
+  id                 String                     @id @default(cuid())
+  customerAccountId  String
+  managedSiteId      String?
+  workspaceMappingId String
+  providerKey        String                     @default("postiz")
+  platform           String
+  externalChannelRef String
+  displayName        String
+  connectionState    SocialChannelConnectionState @default(NOT_CONNECTED)
+  permissions        Json?
+  secretRef          String?
+  lastVerifiedAt     DateTime?
+  revokedAt          DateTime?
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+
+  customerAccount  CustomerAccount              @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite      ManagedSite?                 @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  workspaceMapping SocialProviderWorkspaceMapping @relation(fields: [workspaceMappingId], references: [id], onDelete: Restrict)
+  schedulingIntents SocialSchedulingIntent[]
+  publications     SocialPublication[]
+
+  @@unique([customerAccountId, externalChannelRef])
+  @@index([customerAccountId, connectionState])
+}
+
+model SocialCampaign {
+  id                 String               @id @default(cuid())
+  customerAccountId  String
+  managedSiteId      String?
+  createdByUserId    String
+  goal               String
+  targetAudience     String?
+  brandProfile       String?
+  locale             String               @default("en")
+  targetPlatforms    Json
+  startDate          DateTime?
+  endDate            DateTime?
+  status             SocialCampaignStatus @default(DRAFT)
+  activeRevisionId   String?
+  approvedRevisionId String?
+  errorCode          String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  createdBy       User            @relation("SocialCampaignCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  revisions       SocialCampaignRevision[]
+  approvals       SocialCampaignApproval[]
+  schedulingIntents SocialSchedulingIntent[]
+  publications    SocialPublication[]
+
+  @@index([customerAccountId, status])
+  @@index([managedSiteId, createdAt])
+}
+
+model SocialCampaignRevision {
+  id               String   @id @default(cuid())
+  campaignId       String
+  revisionNumber   Int
+  contentHash      String
+  captionEn        String
+  captionEs        String?
+  mediaRefs        Json
+  platformPayloads Json
+  targetChannelIds Json
+  scheduledAt      DateTime?
+  createdAt        DateTime @default(now())
+
+  campaign  SocialCampaign @relation(fields: [campaignId], references: [id], onDelete: Restrict)
+  approvals SocialCampaignApproval[]
+  schedulingIntents SocialSchedulingIntent[]
+  publications SocialPublication[]
+
+  @@unique([campaignId, revisionNumber])
+  @@index([campaignId, contentHash])
+}
+
+model SocialCampaignApproval {
+  id             String              @id @default(cuid())
+  campaignId     String
+  revisionId     String
+  status         SocialApprovalStatus @default(PENDING)
+  approverUserId String?
+  contentHash    String
+  approvedScope  Json?
+  policyVersion  String
+  expiresAt      DateTime
+  maxUses        Int                 @default(1)
+  useCount       Int                 @default(0)
+  decidedAt      DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  campaign   SocialCampaign         @relation(fields: [campaignId], references: [id], onDelete: Restrict)
+  revision   SocialCampaignRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  approver   User?                  @relation("SocialCampaignApprover", fields: [approverUserId], references: [id], onDelete: SetNull)
+  schedulingIntents SocialSchedulingIntent[]
+
+  @@index([campaignId, status])
+}
+
+model SocialSchedulingIntent {
+  id                 String                       @id @default(cuid())
+  idempotencyKey     String                       @unique
+  campaignId         String
+  revisionId         String
+  approvalId         String
+  customerAccountId  String
+  channelId          String
+  scheduledAt        DateTime
+  status             SocialSchedulingIntentStatus @default(PENDING)
+  externalPostRef    String?
+  dispatchLeaseOwner String?
+  lastErrorCode      String?
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+
+  campaign  SocialCampaign         @relation(fields: [campaignId], references: [id], onDelete: Restrict)
+  revision  SocialCampaignRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  approval  SocialCampaignApproval @relation(fields: [approvalId], references: [id], onDelete: Restrict)
+  channel   BusinessSocialConnection @relation(fields: [channelId], references: [id], onDelete: Restrict)
+  publications SocialPublication[]
+
+  @@index([customerAccountId, status])
+}
+
+model SocialPublication {
+  id                 String                  @id @default(cuid())
+  campaignId         String
+  revisionId         String
+  schedulingIntentId String
+  customerAccountId  String
+  channelId          String
+  status             SocialPublicationStatus @default(PENDING)
+  externalPostRef    String?
+  publishedUrl       String?
+  publishedAt        DateTime?
+  metrics            Json?
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+
+  campaign         SocialCampaign         @relation(fields: [campaignId], references: [id], onDelete: Restrict)
+  revision         SocialCampaignRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  schedulingIntent SocialSchedulingIntent @relation(fields: [schedulingIntentId], references: [id], onDelete: Restrict)
+  channel          BusinessSocialConnection @relation(fields: [channelId], references: [id], onDelete: Restrict)
+  events           SocialPublicationEvent[]
+
+  @@index([customerAccountId, status])
+}
+
+model SocialPublicationEvent {
+  id            String   @id @default(cuid())
+  publicationId String
+  eventKind     String
+  detail        Json?
+  createdAt     DateTime @default(now())
+
+  publication SocialPublication @relation(fields: [publicationId], references: [id], onDelete: Restrict)
+
+  @@index([publicationId, createdAt])
+}
+
+model MarketingRequest {
+  id                String                 @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String?
+  requestType       MarketingRequestType
+  status            MarketingRequestStatus @default(DRAFT)
+  brief             String                 @db.Text
+  locale            String                 @default("en")
+  audience          String?
+  goal              String?
+  sourceRefs        Json
+  artifactIds       Json
+  createdByUserId   String
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  createdBy       User            @relation("MarketingRequestCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  @@index([customerAccountId, status])
+}
+
+model MarketingArtifact {
+  id                String                @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String?
+  artifactType      MarketingArtifactType
+  revisionHash      String
+  payload           Json
+  provenance        String
+  createdAt         DateTime              @default(now())
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+
+  @@index([customerAccountId, artifactType])
+}
+
+model MarketingStudioUsage {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String?
+  periodKey         String
+  operation         String
+  units             Int      @default(1)
+  source            String
+  idempotencyKey    String?  @unique
+  createdAt         DateTime @default(now())
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+
+  @@index([customerAccountId, periodKey, operation])
 }

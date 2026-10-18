@@ -21,6 +21,17 @@
 | Paperclip adapter | `lib/platform/providers/paperclip-workforce.ts` | Pin **v2026.325.0** reference; returns **NOT_CONFIGURED** until live pilot; **Paperclip not running** |
 | Production | — | **Not activated**; no LLM keys; no GitHub writes; UI unchanged (v0.app) |
 
+## SOCIAL-04 (2026-10-18) — Marketing Studio backend; live Postiz publishing OFF
+
+| Area | Evidence | Honest status |
+|---|---|---|
+| Domain services | `lib/platform/social/*`, `config/social-marketing.ts` | Campaign/revision/approval/scheduling gateway, quotas, marketing requests — **Vitest covered** |
+| Postiz adapter | `lib/platform/providers/postiz-social.ts`, `postiz-http.ts` | Typed Public API (`/integrations`, `/posts`) per **docs.postiz.com**; reference app pin **v2.25.1**; **NOT_CONFIGURED** without credentials/flags |
+| Persistence | Prisma migration `20261018170000_social04_marketing_studio` | **Pending apply** (not production/staging) |
+| API routes | `app/api/v1/social/*` | Auth.js membership + backend flags; schedule/approve return **501/503** until pilot hydration |
+| OPEN-001 eligibility | `lib/platform/entitlements.ts` | **POLICY_UNRESOLVED** — no silent enrollment change |
+| Production | — | **No live posts**; `POSTIZ_LIVE_PUBLISHING_ENABLED=false` default; app.webbxxl.com untouched |
+
 ## INFRA-02 (2026-10-18) — repository infrastructure only; live staging BLOCKED
 
 | Area | Evidence | Honest status |

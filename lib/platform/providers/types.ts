@@ -25,7 +25,11 @@ export type ProviderAuthContext = {
 
 export type ProviderResult<T> =
   | { ok: true; value: T }
-  | { ok: false; code: 'NOT_CONFIGURED' | 'UNAUTHORIZED' | 'DENIED' | 'UNAVAILABLE'; message: string }
+  | {
+      ok: false
+      code: 'NOT_CONFIGURED' | 'UNAUTHORIZED' | 'DENIED' | 'UNAVAILABLE' | 'UNKNOWN'
+      message: string
+    }
 
 export type PlatformProvider = {
   kind: ProviderKind
@@ -46,9 +50,29 @@ export type ConversationProvider = PlatformProvider & {
   listConversations(context: ProviderAuthContext): Promise<ProviderResult<never[]>>
 }
 
+export type SocialChannelSummary = {
+  id: string
+  name: string
+  providerIdentifier: string
+}
+
 export type SocialPublisherProvider = PlatformProvider & {
   kind: 'social'
-  listChannels(context: ProviderAuthContext): Promise<ProviderResult<never[]>>
+  listChannels(context: ProviderAuthContext): Promise<ProviderResult<SocialChannelSummary[]>>
+  getChannelStatus?(
+    context: ProviderAuthContext,
+    externalIntegrationId: string,
+  ): Promise<ProviderResult<{ connected: boolean; name: string; providerIdentifier: string }>>
+  schedulePost?(input: {
+    customerAccountId: string
+    externalIntegrationId: string
+    caption: string
+    scheduledAt: Date
+    platformType: string
+    idempotencyKey: string
+  }): Promise<ProviderResult<{ externalPostId: string }> | { ok: false; code: 'UNKNOWN'; message: string }>
+  getPostStatus?(externalPostId: string): Promise<ProviderResult<{ state: string; releaseURL?: string; publishDate?: string }>>
+  cancelScheduledPost?(externalPostId: string): Promise<ProviderResult<{ cancelled: boolean; providerConfirmed: boolean }>>
 }
 
 export type WorkforceProvider = PlatformProvider & {

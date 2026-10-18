@@ -1,6 +1,6 @@
 # 08 — FREE Marketing Studio, Postiz Activation & AI Creative Production
 
-**Current baseline:** `lib/integrations/scheduler.ts` (on `main`) exposes Postiz scheduler URL default `https://app.webbxxl.com`, HEAD health and external link. `getSchedulerStats()` returns `null`; no validated API/customer publishing connection. **Postiz is NOT declared activated or working**. Owner requires activation as part of this build, FREE to eligible WebXXL customers.
+**Current baseline:** `lib/integrations/scheduler.ts` exposes Postiz scheduler URL default `https://app.webbxxl.com`, HEAD health and external link. **SOCIAL-04 (2026-10-18)** adds `lib/platform/social/*`, typed Postiz Public API adapter (`postiz-social.ts`, reference app pin **v2.25.1**), campaign/approval/scheduling gateway, and Prisma migration `20261018170000_social04_marketing_studio`. **Live Postiz publishing remains NOT ACTIVATED** (`POSTIZ_LIVE_PUBLISHING_ENABLED=false`). Deployed Postiz version/API credentials and connected social platforms at app.webbxxl.com remain **UNVERIFIED**. FREE Marketing Studio software fee policy (**OPEN-001** eligibility) is unchanged.
 
 ## 1. FREE Marketing Studio product scope
 
