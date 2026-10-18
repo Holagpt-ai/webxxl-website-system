@@ -124,13 +124,14 @@ describe('FOUND-01A partial reservation holds', () => {
       amount: 200,
       correlationId: 'expire-me',
       idempotencyKey: 'hold-expire',
-      expiresAt: new Date('2026-01-01T00:00:00.000Z'),
+      expiresAt: new Date('2026-11-01T00:00:00.000Z'),
+      at: new Date('2026-10-18T00:00:00.000Z'),
     })
     expect(expiring.ok).toBe(true)
-    expireHeldReservations(expiredStore, new Date('2026-02-01T00:00:00.000Z'))
+    expireHeldReservations(expiredStore, new Date('2026-12-01T00:00:00.000Z'))
     const w = expiredStore.wallets.values().next().value
     if (!w) throw new Error('wallet missing')
-    const balance = computeWalletBalance(expiredStore, w, new Date('2026-02-01T00:00:00.000Z'))
+    const balance = computeWalletBalance(expiredStore, w, new Date('2026-12-01T00:00:00.000Z'))
     expect(balance.availableBalance).toBe(500)
   })
 })

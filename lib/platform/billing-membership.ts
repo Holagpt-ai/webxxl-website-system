@@ -40,6 +40,20 @@ export function assertActiveFundingKey(membership: BillingGroupMembershipRecord,
   return membership.customerAccountId
 }
 
+function buildProposedActiveMembership(
+  membership: BillingGroupMembershipRecord,
+  at: Date,
+): BillingGroupMembershipRecord {
+  return {
+    ...membership,
+    status: 'ACTIVE',
+    validFrom: membership.validFrom > at ? at : membership.validFrom,
+    validTo: null,
+    walletUseAllowed: true,
+    activeFundingKey: membership.customerAccountId,
+  }
+}
+
 export function activateFundingMembership(
   memberships: BillingGroupMembershipRecord[],
   membershipId: string,
@@ -47,12 +61,16 @@ export function activateFundingMembership(
 ): { ok: true; membership: BillingGroupMembershipRecord } | { ok: false; reason: 'NOT_FOUND' | 'ACTIVE_FUNDING_CONFLICT' } {
   const membership = memberships.find((item) => item.id === membershipId)
   if (!membership) return { ok: false, reason: 'NOT_FOUND' }
-  membership.status = 'ACTIVE'
-  membership.validFrom = membership.validFrom > at ? at : membership.validFrom
-  membership.validTo = null
-  membership.walletUseAllowed = true
-  const conflict = findActiveFundingConflict(memberships, membership, at)
+
+  const proposed = buildProposedActiveMembership(membership, at)
+  const membershipsWithProposal = memberships.map((item) => (item.id === membershipId ? proposed : item))
+  const conflict = findActiveFundingConflict(membershipsWithProposal, proposed, at)
   if (conflict) return { ok: false, reason: 'ACTIVE_FUNDING_CONFLICT' }
-  membership.activeFundingKey = membership.customerAccountId
+
+  membership.status = proposed.status
+  membership.validFrom = proposed.validFrom
+  membership.validTo = proposed.validTo
+  membership.walletUseAllowed = proposed.walletUseAllowed
+  membership.activeFundingKey = proposed.activeFundingKey
   return { ok: true, membership }
 }

@@ -46,6 +46,8 @@ export type InMemoryPlatformStore = {
   reservations: CreditReservationRecord[]
   policies: SiteSpendingPolicyRecord[]
   usage: MessageUsageRecord[]
+  /** Server-configured automation identities allowed to act as wallet SERVICE actors. */
+  trustedWalletServiceActors: Set<string>
 }
 
 export function createEmptyPlatformStore(): InMemoryPlatformStore {
@@ -64,6 +66,7 @@ export function createEmptyPlatformStore(): InMemoryPlatformStore {
     reservations: [],
     policies: [],
     usage: [],
+    trustedWalletServiceActors: new Set(),
   }
 }
 

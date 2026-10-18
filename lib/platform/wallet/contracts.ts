@@ -14,6 +14,7 @@ import type {
 
 export type ReserveCreditsInput = {
   actorUserId: string
+  /** Ignored unless actorUserId is registered in the server trusted wallet service actor set. */
   actorType?: WalletActorType
   billingGroupId: string
   customerAccountId: string
