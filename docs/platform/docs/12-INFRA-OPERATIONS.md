@@ -46,7 +46,7 @@ Each stack uses pinned images/digests, separate deployment manifests and volume 
 | Service | Compose project | Local bind (staging file) | Upstream pin documented in repo |
 |---|---|---|---|
 | Chatwoot | `webxxl-stg-chatwoot` | `127.0.0.1:13000` | `chatwoot/chatwoot:v4.18.0-ce` |
-| Postiz (separate staging) | `webxxl-stg-postiz` | `127.0.0.1:14007` (+ Temporal UI `14080`) | Overlay on [gitroomhq/postiz-docker-compose](https://github.com/gitroomhq/postiz-docker-compose); app tag **v2.25.1** reference |
+| Postiz (separate staging) | `webxxl-stg-postiz` | `127.0.0.1:14007` only (Temporal UI/gRPC not host-published) | Overlay on [gitroomhq/postiz-docker-compose](https://github.com/gitroomhq/postiz-docker-compose); app tag **v2.25.1**; Compose **v2.24+** merge tags |
 | Paperclip | `webxxl-stg-paperclip` | `127.0.0.1:13100` | Build from [paperclipai/paperclip](https://github.com/paperclipai/paperclip) tag **v2026.325.0** + override |
 
 ## 4. Suggested subdomains (reserved — not created)

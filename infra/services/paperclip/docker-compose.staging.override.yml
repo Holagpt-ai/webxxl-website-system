@@ -1,16 +1,21 @@
-# Use with upstream paperclip repo (see README). Project name enforced for isolation.
+# Merge with upstream paperclip docker/docker-compose.yml (tag v2026.325.0).
+# Requires Docker Compose v2.24+ for !reset / !override list merge tags.
+#   docker compose -f docker-compose.yml -f docker-compose.staging.override.yml config
 
 name: webxxl-stg-paperclip
 
 services:
   server:
-    ports:
+    ports: !override
       - "127.0.0.1:13100:3100"
     environment:
+      DATABASE_URL: postgres://${PAPERCLIP_POSTGRES_USER:?Set PAPERCLIP_POSTGRES_USER}:${PAPERCLIP_POSTGRES_PASSWORD:?Set PAPERCLIP_POSTGRES_PASSWORD}@db:5432/${PAPERCLIP_POSTGRES_DB:-paperclip}
       PAPERCLIP_PUBLIC_URL: ${PAPERCLIP_PUBLIC_URL:-http://127.0.0.1:13100}
       PAPERCLIP_DEPLOYMENT_MODE: authenticated
       PAPERCLIP_DEPLOYMENT_EXPOSURE: private
       PAPERCLIP_SECRETS_STRICT_MODE: "true"
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET on host}
+      PAPERCLIP_TOOL_ACTION_SIGNING_SECRET: ${PAPERCLIP_TOOL_ACTION_SIGNING_SECRET:?Set PAPERCLIP_TOOL_ACTION_SIGNING_SECRET on host}
     logging:
       driver: json-file
       options:
@@ -23,6 +28,11 @@ services:
           memory: 4G
 
   db:
+    ports: !reset []
+    environment:
+      POSTGRES_USER: ${PAPERCLIP_POSTGRES_USER:?Set PAPERCLIP_POSTGRES_USER on host}
+      POSTGRES_PASSWORD: ${PAPERCLIP_POSTGRES_PASSWORD:?Set PAPERCLIP_POSTGRES_PASSWORD on host}
+      POSTGRES_DB: ${PAPERCLIP_POSTGRES_DB:-paperclip}
     logging:
       driver: json-file
       options:

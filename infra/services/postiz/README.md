@@ -26,7 +26,8 @@ PostgreSQL, Redis, Postiz app, **Temporal** workflow stack — plan **≥4 GB RA
 
 ### Health
 
-- Frontend: `http://127.0.0.1:14007` (overlay port)
+- Frontend: `http://127.0.0.1:14007` (only host-published app port in INFRA-02A overlay)
+- Temporal UI and gRPC: **not** host-published in staging overlay (internal Docker networks only)
 - Readiness: HTTP 200 on `/` or auth redirect; API requires token (`POSTIZ_API_TOKEN` in WebXXL — not enabled in FOUND-01/INFRA-02)
 
 ### WebXXL division of responsibility

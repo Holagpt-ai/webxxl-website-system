@@ -4,24 +4,24 @@
 
 name: webxxl-stg-chatwoot
 
-services:
-  base: &base
-    image: chatwoot/chatwoot:v4.18.0-ce
-    env_file:
-      - .env
-    volumes:
-      - storage_data:/app/storage
-    networks:
-      - chatwoot_internal
-    logging: &json_log
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "5"
-    restart: unless-stopped
+x-chatwoot-app: &chatwoot_app
+  image: chatwoot/chatwoot:v4.18.0-ce
+  env_file:
+    - .env
+  volumes:
+    - storage_data:/app/storage
+  networks:
+    - chatwoot_internal
+  logging: &json_log
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "5"
+  restart: unless-stopped
 
+services:
   rails:
-    <<: *base
+    <<: *chatwoot_app
     depends_on:
       postgres:
         condition: service_healthy
@@ -48,7 +48,7 @@ services:
           memory: 2G
 
   sidekiq:
-    <<: *base
+    <<: *chatwoot_app
     depends_on:
       postgres:
         condition: service_healthy
