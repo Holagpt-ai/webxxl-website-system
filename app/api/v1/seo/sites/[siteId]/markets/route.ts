@@ -15,14 +15,7 @@ export async function POST(request: Request, { params }: Params) {
       services?: string[]
       radiusKm?: number
       keywordThemes?: string[]
-      candidateCompetitors?: {
-        displayName: string
-        placeId?: string
-        categoryMatch: number
-        serviceOverlap: number
-        geoRelevance: number
-        observedEvidence: number
-      }[]
+      candidateCompetitors?: unknown
     }
     if (!body.name || !body.category) {
       return NextResponse.json({ code: 'VALIDATION', message: 'name and category required' }, { status: 400 })

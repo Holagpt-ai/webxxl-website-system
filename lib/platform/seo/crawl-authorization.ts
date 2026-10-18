@@ -1,3 +1,4 @@
+import { isIP } from 'node:net'
 import { SEO_CRAWL_MAX_URL_LENGTH } from '@/config/seo-backend'
 import type { SeoResult } from '@/lib/platform/seo/types'
 
@@ -9,6 +10,19 @@ const BLOCKED_HOSTS = new Set([
   'metadata.google.internal',
   '169.254.169.254',
 ])
+
+export type CrawlBlockReason = 'NON_PUBLIC_DESTINATION' | 'SCOPE' | 'PROTOCOL' | 'OTHER'
+
+export function normalizeHostname(host: string): string {
+  return host.toLowerCase().replace(/\.$/, '')
+}
+
+/** Strip URL hostname brackets so IPv6 literals parse consistently. */
+export function unwrapHostnameForIpCheck(hostname: string): string {
+  const h = normalizeHostname(hostname)
+  if (h.startsWith('[') && h.endsWith(']')) return h.slice(1, -1)
+  return h
+}
 
 function isPrivateIpv4(host: string): boolean {
   const parts = host.split('.').map(Number)
@@ -22,26 +36,58 @@ function isPrivateIpv4(host: string): boolean {
   return false
 }
 
-/** Block unique-local, link-local, and documented private IPv6 ranges (URL hostname form). */
-export function isBlockedIpv6Host(host: string): boolean {
-  const h = host.toLowerCase()
-  if (h === '::1' || h === '::') return true
-  if (h.startsWith('fe80:')) return true
+function isNonPublicIpv6(ip: string): boolean {
+  const h = ip.toLowerCase()
+  if (h === '::' || h === '::1') return true
+  if (h.startsWith('fe80:') || h.startsWith('fe8') || h.startsWith('fe9') || h.startsWith('fea') || h.startsWith('feb')) {
+    return true
+  }
   if (h.startsWith('fc') || h.startsWith('fd')) return true
-  if (h.startsWith('[::1]')) return true
+  if (h.startsWith('::ffff:')) {
+    const tail = h.slice('::ffff:'.length)
+    if (isIP(tail) === 4 && isPrivateIpv4(tail)) return true
+    const hexMapped = tail.match(/^([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i)
+    if (hexMapped) {
+      const hi = parseInt(hexMapped[1]!, 16)
+      const lo = parseInt(hexMapped[2]!, 16)
+      const dotted = `${(hi >> 8) & 0xff}.${hi & 0xff}.${(lo >> 8) & 0xff}.${lo & 0xff}`
+      if (isPrivateIpv4(dotted)) return true
+    }
+  }
+  const embeddedIpv4 = h.match(/(\d{1,3}(?:\.\d{1,3}){3})$/)
+  if (embeddedIpv4 && isPrivateIpv4(embeddedIpv4[1]!)) return true
   return false
+}
+
+/**
+ * Destination safety before allowlist checks.
+ * Proves private targets are blocked by address class, not missing scope.
+ */
+export function classifyNonPublicDestination(hostname: string): SeoResult<true> {
+  const host = unwrapHostnameForIpCheck(hostname)
+  if (BLOCKED_HOSTS.has(host) || host.endsWith('.local')) {
+    return { ok: false, code: 'CRAWL_BLOCKED', message: 'Private or local target blocked' }
+  }
+
+  const version = isIP(host)
+  if (version === 4) {
+    if (isPrivateIpv4(host)) {
+      return { ok: false, code: 'CRAWL_BLOCKED', message: 'Private or local target blocked' }
+    }
+    return { ok: true, value: true }
+  }
+  if (version === 6) {
+    if (isNonPublicIpv6(host)) {
+      return { ok: false, code: 'CRAWL_BLOCKED', message: 'Private or local target blocked' }
+    }
+    return { ok: true, value: true }
+  }
+
+  return { ok: true, value: true }
 }
 
 export function isBlockedDestinationHost(hostname: string): boolean {
-  const host = normalizeHostname(hostname)
-  if (BLOCKED_HOSTS.has(host) || host.endsWith('.local')) return true
-  if (isPrivateIpv4(host)) return true
-  if (host.includes(':') && isBlockedIpv6Host(host)) return true
-  return false
-}
-
-export function normalizeHostname(host: string): string {
-  return host.toLowerCase().replace(/\.$/, '')
+  return !classifyNonPublicDestination(hostname).ok
 }
 
 /** Crawl only verified public hosts on standard HTTP(S) ports. */
@@ -66,17 +112,17 @@ export function validateCrawlTargetUrl(input: {
     return { ok: false, code: 'CRAWL_BLOCKED', message: 'Non-standard port blocked' }
   }
   const hostname = normalizeHostname(parsed.hostname)
-  if (isBlockedDestinationHost(hostname)) {
-    return { ok: false, code: 'CRAWL_BLOCKED', message: 'Private or local target blocked' }
-  }
-  const allowed = input.allowedHosts.map(normalizeHostname)
-  if (!allowed.includes(hostname)) {
+  const destination = classifyNonPublicDestination(hostname)
+  if (!destination.ok) return destination
+  const allowed = input.allowedHosts.map((h) => unwrapHostnameForIpCheck(h))
+  const hostForScope = unwrapHostnameForIpCheck(hostname)
+  if (!allowed.includes(hostForScope)) {
     return { ok: false, code: 'CRAWL_BLOCKED', message: 'Host not in authorized crawl scope' }
   }
   if (parsed.username || parsed.password) {
     return { ok: false, code: 'CRAWL_BLOCKED', message: 'Credential URLs blocked' }
   }
-  return { ok: true, value: { hostname, port } }
+  return { ok: true, value: { hostname: hostForScope, port } }
 }
 
 export function validateRedirectTarget(input: {

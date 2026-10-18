@@ -27,19 +27,24 @@ export async function GET(_request: Request, { params }: Params) {
       orderBy: { ingestedAt: 'desc' },
     })
 
-    const keywordWhere = {
-      managedSiteId: siteId,
-      customerAccountId: actor.customerAccountId,
-      provider: 'GSC' as const,
-      ...(snapshot
-        ? {
-            date: { gte: snapshot.dateRangeStart, lte: snapshot.dateRangeEnd },
-          }
-        : {}),
+    if (!snapshot) {
+      return NextResponse.json({
+        gsc: buildGscPerformanceFromObservations({
+          connectionDataState: connection.dataState,
+          propertyRef: connection.propertyRef,
+          rows: [],
+          requireVerifiedSnapshotWindow: true,
+        }),
+      })
     }
 
     const keywords = await prisma.seoKeywordObservation.findMany({
-      where: keywordWhere,
+      where: {
+        managedSiteId: siteId,
+        customerAccountId: actor.customerAccountId,
+        provider: 'GSC',
+        date: { gte: snapshot.dateRangeStart, lte: snapshot.dateRangeEnd },
+      },
       take: 25000,
     })
 
@@ -57,13 +62,12 @@ export async function GET(_request: Request, { params }: Params) {
         date: k.date,
         dataState: k.dataState,
       })),
-      snapshot: snapshot
-        ? {
-            start: snapshot.dateRangeStart.toISOString().slice(0, 10),
-            end: snapshot.dateRangeEnd.toISOString().slice(0, 10),
-            observedAt: snapshot.observedAt.toISOString(),
-          }
-        : null,
+      snapshot: {
+        start: snapshot.dateRangeStart.toISOString().slice(0, 10),
+        end: snapshot.dateRangeEnd.toISOString().slice(0, 10),
+        observedAt: snapshot.observedAt.toISOString(),
+        methodologyVersion: snapshot.methodologyVersion,
+      },
     })
 
     return NextResponse.json({ gsc })

@@ -42,8 +42,30 @@ export function buildGscPerformanceFromObservations(input: {
   connectionDataState: string
   propertyRef: string
   rows: PersistedKeywordRow[]
-  snapshot?: { start: string; end: string; observedAt: string; rowCount?: number } | null
+  snapshot?: { start: string; end: string; observedAt: string; rowCount?: number; methodologyVersion?: string } | null
+  /** When true and no snapshot metadata, do not aggregate historical keyword rows. */
+  requireVerifiedSnapshotWindow?: boolean
 }): GscPerformanceReadModel {
+  if (input.requireVerifiedSnapshotWindow && !input.snapshot) {
+    return {
+      dataState: 'PARTIAL',
+      propertyRef: input.propertyRef,
+      averagePositionLabel: 'GSC average position (not fixed rank)',
+      clicks: null,
+      impressions: null,
+      ctr: null,
+      averagePosition: null,
+      completeness: {
+        rowCount: 0,
+        dedupedRowCount: 0,
+        distinctDates: 0,
+        aggregationMethod: 'query_page_date_deduped_sum',
+        limitations: [
+          'No verified GSC snapshot window for this property; historical observations are not aggregated',
+        ],
+      },
+    }
+  }
   const base: GscPerformanceReadModel = {
     dataState: 'NOT_CONNECTED',
     averagePositionLabel: 'GSC average position (not fixed rank)',

@@ -2,6 +2,7 @@ import { isSeoCrawlerEnabled } from '@/config/seo-backend'
 import { SEO_CRAWL_MAX_DEPTH, SEO_CRAWL_MAX_PAGES } from '@/config/seo-backend'
 import { createCrawlBudget, defaultCrawlBudgetLimits } from '@/lib/platform/seo/crawl-budget'
 import { parseHtmlSeoSignals } from '@/lib/platform/seo/crawl-html-parse'
+import { isSyntheticCrawlTestBypass } from '@/lib/platform/seo/crawl-test-gate'
 import { validateCrawlTargetUrl, validateRedirectTarget } from '@/lib/platform/seo/crawl-authorization'
 import type { SeoResult } from '@/lib/platform/seo/types'
 
@@ -52,7 +53,8 @@ export async function runBoundedSiteCrawl(input: {
   /** Vitest-only: allow injectable transport when global crawler flag is off. */
   testBypassLiveNetworkGate?: boolean
 }): Promise<SeoResult<BoundedCrawlResult>> {
-  if (!isSeoCrawlerEnabled() && !input.testBypassLiveNetworkGate) {
+  const testBypass = isSyntheticCrawlTestBypass(input.testBypassLiveNetworkGate)
+  if (!isSeoCrawlerEnabled() && !testBypass) {
     return {
       ok: false,
       code: 'CRAWL_BLOCKED',

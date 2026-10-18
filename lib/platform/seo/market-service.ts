@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+import { sanitizeOwnerSubmittedCompetitors } from '@/lib/platform/seo/competitor-public-input'
 import {
   rankCompetitorCandidates,
   validateCompetitorCandidate,
@@ -15,19 +16,23 @@ export async function createCompetitorMarket(input: {
   services?: string[]
   radiusKm?: number
   keywordThemes?: string[]
-  candidateCompetitors?: CompetitorCandidate[]
+  /** Raw API payload — sanitized to OWNER_SUPPLIED only. */
+  candidateCompetitors?: unknown
 }): Promise<SeoResult<{ marketId: string; competitors: ReturnType<typeof rankCompetitorCandidates> }>> {
   const site = await prisma.managedSite.findFirst({
     where: { id: input.managedSiteId, customerAccountId: input.customerAccountId },
   })
   if (!site) return { ok: false, code: 'NOT_FOUND', message: 'Managed site not found' }
 
-  const candidates = input.candidateCompetitors ?? []
+  const sanitized = sanitizeOwnerSubmittedCompetitors(input.candidateCompetitors)
+  if (!sanitized.ok) return sanitized
+  const candidates: CompetitorCandidate[] = sanitized.value
+
   if (candidates.length > SEO_SCAN_MAX_CANDIDATE_COMPETITORS) {
     return { ok: false, code: 'VALIDATION', message: 'Too many competitor candidates' }
   }
   for (const c of candidates) {
-    const valid = validateCompetitorCandidate({ ...c, provenance: c.provenance ?? 'OWNER_SUPPLIED' })
+    const valid = validateCompetitorCandidate(c)
     if (!valid.ok) return { ok: false, code: 'VALIDATION', message: valid.message }
   }
 
@@ -44,12 +49,7 @@ export async function createCompetitorMarket(input: {
     },
   })
 
-  const ranked = rankCompetitorCandidates(
-    candidates.map((c) => ({
-      ...c,
-      provenance: c.provenance ?? 'OWNER_SUPPLIED',
-    })),
-  )
+  const ranked = rankCompetitorCandidates(candidates)
 
   if (ranked.length) {
     await prisma.competitorProfile.createMany({

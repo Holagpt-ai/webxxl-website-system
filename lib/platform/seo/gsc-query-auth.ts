@@ -25,8 +25,14 @@ export function authorizeGscSearchAnalyticsQuery(input: {
   if (!input.connection) {
     return { ok: false, code: 'NOT_CONFIGURED', message: 'No GSC connection for site' }
   }
+  if (input.connection.customerAccountId !== input.contextAccountId) {
+    return { ok: false, code: 'FORBIDDEN', message: 'GSC connection account mismatch' }
+  }
   if (input.connection.revokedAt || input.connection.verificationState === 'REVOKED') {
     return { ok: false, code: 'FORBIDDEN', message: 'GSC connection revoked' }
+  }
+  if (input.connection.verificationState !== 'VERIFIED') {
+    return { ok: false, code: 'FORBIDDEN', message: 'GSC connection not verified' }
   }
   if (input.connection.dataState === 'NOT_CONNECTED') {
     return { ok: false, code: 'NOT_CONFIGURED', message: 'GSC connection not active' }
