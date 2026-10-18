@@ -24,7 +24,7 @@
 | Eligible email provider | [Resend](https://resend.com/) | Multi-domain non-PHI email | Existing registration work; sender verification and live activation deferred; PHI restrictions |
 | AI voice managed | [ElevenLabs](https://elevenlabs.io/) | Conversational AI voice via authorized telephony | Future candidate; regulated outbound disabled |
 | AI voice open source | [LiveKit Agents](https://github.com/livekit/agents) | Real-time voice/SIP agent framework | Future alternative; telephony/consent/hosting gate |
-| Search performance | [Search Console API](https://developers.google.com/webmaster-tools/v1/searchanalytics/query) | Property organic metrics and URLs | Owner OAuth verified site; Google quotas/delays |
+| Search performance | [Search Console API](https://developers.google.com/webmaster-tools/v1/searchanalytics/query) | Property organic metrics and URLs | **SEO-07:** `google-gsc-seo.ts` typed Search Analytics + mock transport; `SEO_GSC_API_ENABLED=false`; owner OAuth verified site; Google quotas/delays |
 | Website traffic | [Google Analytics Data API](https://developers.google.com/analytics/devguides/reporting/data/v1) | GA4 traffic/engagement/conversions | Property and OAuth setup |
 | Maps/listing performance | [Business Profile Performance API](https://developers.google.com/my-business/reference/performance/rest) | Owned business location/listing | Appropriate Business Profile/API approval |
 | Competitor discovery | [Google Places Text Search](https://developers.google.com/maps/documentation/places/web-service/reference/rest/v1/places/searchText) | Nearby relevant business discovery | Paid/quota/ToS, not proof of exact keyword rank |

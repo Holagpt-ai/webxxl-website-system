@@ -56,7 +56,11 @@ Do not bulk-generate thin doorway pages or fake neighborhood pages; unique usefu
 
 Per-site crawling/API cadence tuned to quotas and plan rules (FREE software to customer). Batch GSC pulls, cache snapshots, retry after quotas reset, bill external provider costs to WebXXL unless owner explicitly introduces a chargeable optional third-party product. Implement global fair-use/rate throttling, cost monitoring, incremental refresh and source reconciliation; analytics page loads should **not** trigger new expensive vendor API calls.
 
-## 8. Acceptance
+## 8. SEO-07 backend implementation (2026-10-18)
+
+Implemented on branch `feature/webxxl-seo-07` (not merged): Prisma SEO models (`SiteAnalyticsConnection`, `SeoSiteProfile`, crawl/inventory/findings/snapshots/metrics/keywords, competitor market, opportunities, work evidence, provider sync runs); `config/seo-backend.ts` feature flags default **false**; bounded crawler with host allow-list, redirect/body/byte limits, and localhost/private/metadata blocking; GSC Search Analytics adapter with mocked transport, average-position semantics, and no zero-fill for missing rows; account-scoped APIs under `/api/v1/seo/sites/*`; dashboard read model DTO for v0.app; deterministic opportunity rules; AI handoff denies auto-publish without approved `ManagedSiteChange`. Validation: **Prisma validate OK**, **Vitest `seo07-foundation`**, migration **not applied**.
+
+## 9. Acceptance
 
 - Two sites in same billing group connect different Google properties and never display each other's data.
 - GSC position labelled 'Average position' and date range, not current live rank; no phantom rank grid.

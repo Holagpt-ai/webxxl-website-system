@@ -93,8 +93,17 @@ The server recomputes/validates all IDs from actor membership, not from user inp
 | `POST /api/v1/social/campaigns/{id}/approve` | business approver | artifact version, channels, dates | immutable policy approval |
 | `POST /api/v1/social/campaigns/{id}/schedule` | approved service actor | approvalRef | Postiz adapter posts approved content; saves external IDs |
 | `GET /api/v1/social/publications` | account reader | date/platform filters | confirmed status + Postiz provenance |
-| `GET /api/v1/seo/sites/{id}/overview` | site reader | range, locale/market | sourced snapshots, freshness and coverage |
-| `POST /api/v1/seo/sites/{id}/connect/{source}` | site owner | OAuth initiation | redirect or connection state, least scopes |
+| `GET /api/v1/seo/sites` | `seo.read` + membership | — | managed sites for operating account (`SEO_BACKEND_ENABLED`) |
+| `GET /api/v1/seo/sites/{id}/overview` | `seo.read` | — | dashboard DTO sections A–J with honest data states |
+| `GET /api/v1/seo/sites/{id}/pages` | `seo.read` | status, pagination | page inventory rows |
+| `GET /api/v1/seo/sites/{id}/findings` | `seo.read` | pagination | crawl/rule findings |
+| `GET /api/v1/seo/sites/{id}/opportunities` | `seo.read` | pagination | evidence-backed opportunities |
+| `GET /api/v1/seo/sites/{id}/connections` | `seo.read` | — | analytics connection metadata (no secrets) |
+| `GET /api/v1/seo/sites/{id}/performance` | `seo.read` | — | stored GSC observations or `NOT_CONNECTED` |
+| `GET /api/v1/seo/sites/{id}/competitors` | `seo.read` | — | markets + top competitor profiles |
+| `POST /api/v1/seo/sites/{id}/markets` | `seo.market.manage` | market definition | ranked competitor candidates (synthetic/live gated) |
+| `POST /api/v1/seo/sites/{id}/scan-previews` | `seo.scan.prepare` | idempotency key | crawl run **prepared/blocked** — not arbitrary URL crawl |
+| `POST /api/v1/seo/sites/{id}/connect/{source}` | `seo.configure` (future) | OAuth initiation | **not implemented in SEO-07** — contracts only |
 | `POST /api/v1/marketing/requests` | marketing user | deliverable, site, brief, locale | job and source-bound deliverable request |
 | `POST /api/v1/marketing/artifacts/{id}/approve` | approver | exact version, policy | AI handoff to PR/Postiz as appropriate |
 | `GET/POST /api/v1/agents/instances` | account AI administrator | template, site, limits | preview/config only while future SKU disabled |

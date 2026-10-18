@@ -213,9 +213,15 @@ export type VoiceAgentProvider = PlatformProvider & {
   startCall(context: ProviderAuthContext): Promise<ProviderResult<never>>
 }
 
+export type SeoSourceOverview = {
+  status: 'NOT_CONNECTED' | 'READY' | 'PARTIAL' | 'NOT_SUPPORTED'
+  propertyRef?: string
+  provider?: 'GSC' | 'GA4' | 'GBP' | 'PLACES' | 'RANK_VENDOR'
+}
+
 export type SeoSourceProvider = PlatformProvider & {
   kind: 'seo'
-  readOverview(context: ProviderAuthContext): Promise<ProviderResult<{ status: 'NOT_CONNECTED' }>>
+  readOverview(context: ProviderAuthContext): Promise<ProviderResult<SeoSourceOverview>>
 }
 
 export type DomainRegistrarProvider = PlatformProvider & {
