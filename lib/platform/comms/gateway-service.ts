@@ -1,11 +1,8 @@
-import {
-  isAiCommunicationActionsEnabled,
-  isCommunicationsOutboundEnabled,
-  isSmsSendEnabled,
-} from '@/config/comms-backend'
+import { isCommunicationsOutboundEnabled, isSmsSendEnabled } from '@/config/comms-backend'
 import { prisma } from '@/lib/db'
 import { evaluateChatwootDirectSendBypass, evaluateCommunicationPolicy } from '@/lib/platform/comms/policy-engine'
 import { buildCommunicationContentHash } from '@/lib/platform/comms/intent-hash'
+import { resolveEffectiveAiActor, resolveServerDataClassification } from '@/lib/platform/comms/intent-auth'
 import type { CommsResult } from '@/lib/platform/comms/types'
 import type { CrmConsentChannel, CrmConsentPurpose, CommsDataClassification } from '@prisma/client'
 
@@ -23,15 +20,44 @@ export async function prepareCommunicationIntent(input: {
   dataClassification?: CommsDataClassification
   aiActor?: boolean
 }): Promise<CommsResult<{ intentId: string; status: string; policyDecision: string }>> {
+  const contentHash = buildCommunicationContentHash({
+    customerAccountId: input.customerAccountId,
+    senderIdentityId: input.senderIdentityId ?? null,
+    recipient: input.recipientAddress,
+    channel: input.channel,
+    purpose: input.purpose,
+    contentVersion: input.contentVersion,
+    policyVersion: input.policyVersion,
+  })
+
   const existing = await prisma.communicationIntent.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
   if (existing) {
     if (existing.customerAccountId !== input.customerAccountId) {
       return { ok: false, code: 'CONFLICT', message: 'Intent idempotency key bound to another account' }
     }
+    if (existing.contentHash !== contentHash) {
+      return { ok: false, code: 'CONFLICT', message: 'Intent idempotency key reused with different fingerprint' }
+    }
     return {
       ok: true,
       value: { intentId: existing.id, status: existing.status, policyDecision: existing.policyDecision },
     }
+  }
+
+  let senderClassification: CommsDataClassification | null = null
+  if (input.senderIdentityId) {
+    const sender = await prisma.senderIdentity.findFirst({
+      where: {
+        id: input.senderIdentityId,
+        customerAccountId: input.customerAccountId,
+        revokedAt: null,
+      },
+    })
+    if (!sender) return { ok: false, code: 'NOT_FOUND', message: 'Sender identity not found for account' }
+    if (sender.channel !== input.channel) {
+      return { ok: false, code: 'FORBIDDEN', message: 'Sender identity channel mismatch' }
+    }
+    senderClassification = sender.dataClassification
   }
 
   let suppressed = false
@@ -47,6 +73,7 @@ export async function prepareCommunicationIntent(input: {
         contactId: input.crmContactId,
         channel: input.channel,
         purpose: input.purpose,
+        active: true,
       },
     })
     suppressed = Boolean(suppression)
@@ -62,6 +89,16 @@ export async function prepareCommunicationIntent(input: {
     consentStatus = consent?.status === 'GRANTED' ? 'GRANTED' : consent ? 'REVOKED' : 'UNKNOWN'
   }
 
+  const dataClassification = resolveServerDataClassification({
+    clientClassification: input.dataClassification,
+    senderClassification,
+  })
+  const aiActorEffective = await resolveEffectiveAiActor({
+    actorUserId: input.actorUserId,
+    customerAccountId: input.customerAccountId,
+    clientAiActor: input.aiActor,
+  })
+
   const policyDecision = evaluateCommunicationPolicy({
     customerAccountId: input.customerAccountId,
     contactId: input.crmContactId,
@@ -73,19 +110,9 @@ export async function prepareCommunicationIntent(input: {
     suppressed,
     providerConnected: false,
     walletQuoteAvailable: false,
-    dataClassification: input.dataClassification ?? 'GENERAL_BUSINESS',
+    dataClassification,
     approvedRegulatedWorkflow: false,
-    aiActor: Boolean(input.aiActor),
-  })
-
-  const contentHash = buildCommunicationContentHash({
-    customerAccountId: input.customerAccountId,
-    senderIdentityId: input.senderIdentityId ?? null,
-    recipient: input.recipientAddress,
-    channel: input.channel,
-    purpose: input.purpose,
-    contentVersion: input.contentVersion,
-    policyVersion: input.policyVersion,
+    aiActor: aiActorEffective,
   })
 
   let status: 'DRAFT' | 'BLOCKED' | 'PENDING_APPROVAL' = 'DRAFT'
@@ -105,7 +132,7 @@ export async function prepareCommunicationIntent(input: {
       status,
       contentHash,
       policyDecision,
-      dataClassification: input.dataClassification ?? 'GENERAL_BUSINESS',
+      dataClassification,
       approvalRequired: policyDecision === 'REQUIRES_APPROVAL',
       idempotencyKey: input.idempotencyKey,
       recipients: {
@@ -125,7 +152,7 @@ export async function prepareCommunicationIntent(input: {
       actorUserId: input.actorUserId,
       operation: 'intent.prepare',
       resourceRef: intent.id,
-      detail: { policyDecision, channel: input.channel },
+      detail: { policyDecision, channel: input.channel, aiActorEffective },
     },
   })
 
@@ -163,8 +190,5 @@ export function denyChatwootNativeBillableSend(): CommsResult<{ allowed: false; 
 }
 
 export function denyAiSelfAuthorizedSend(): CommsResult<{ allowed: false }> {
-  if (isAiCommunicationActionsEnabled()) {
-    return { ok: false, code: 'FORBIDDEN', message: 'AI communication actions remain approval-gated' }
-  }
   return { ok: true, value: { allowed: false } }
 }

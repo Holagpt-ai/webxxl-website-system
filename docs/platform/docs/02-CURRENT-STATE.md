@@ -43,6 +43,8 @@
 | Wallet / transport | `gateway-service.ts`, `quote-service.ts` | **No credit debit/reservation**; outbound dispatch **NOT_CONFIGURED** |
 | OPEN-001 | `core.communications` entitlement | **POLICY_UNRESOLVED** (inbox software ≠ free SMS) |
 
+**COMMS-06A (in PR #38):** Webhook relay auth binds `x-webxxl-chatwoot-timestamp` into HMAC; scoped `eventDedupeKey`; trusted receipt processor (`processCommsWebhookReceiptById`) — HTTP ingest leaves **PENDING** until worker activated; channel-aware timeline mapping; intent fingerprint conflicts; synthetic quotes gated by `COMMS_SYNTHETIC_QUOTE_ENABLED`.
+
 ## SOCIAL-04 (2026-10-18) — Marketing Studio backend; live Postiz publishing OFF
 
 | Area | Evidence | Honest status |

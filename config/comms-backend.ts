@@ -49,3 +49,8 @@ export const COMMS_LIST_MAX_TAKE = Number(process.env.COMMS_LIST_MAX_TAKE ?? '10
 export const COMMS_QUOTE_MAX_RECIPIENTS = Number(process.env.COMMS_QUOTE_MAX_RECIPIENTS ?? '200')
 export const COMMS_CONVERSATION_STALE_MINUTES = Number(process.env.COMMS_CONVERSATION_STALE_MINUTES ?? '60')
 export const COMMS_WEBHOOK_REPLAY_TOLERANCE_SECONDS = Number(process.env.COMMS_WEBHOOK_REPLAY_TOLERANCE_SECONDS ?? '300')
+
+/** Synthetic 200-contact quotes are test/staff-only; never for public production callers. */
+export function isCommsSyntheticQuoteAllowed(): boolean {
+  return envFlag('COMMS_SYNTHETIC_QUOTE_ENABLED', false)
+}

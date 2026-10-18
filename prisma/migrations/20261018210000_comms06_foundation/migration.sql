@@ -8,7 +8,7 @@ CREATE TYPE "CommsConversationStatus" AS ENUM ('OPEN', 'PENDING', 'RESOLVED', 'S
 CREATE TYPE "CommsWebhookReceiptStatus" AS ENUM ('RECEIVED', 'QUARANTINED', 'REJECTED');
 
 -- CreateEnum
-CREATE TYPE "CommsWebhookProcessingStatus" AS ENUM ('PENDING', 'PROCESSED', 'FAILED', 'DUPLICATE');
+CREATE TYPE "CommsWebhookProcessingStatus" AS ENUM ('PENDING', 'PROCESSING', 'PROCESSED', 'FAILED', 'DUPLICATE');
 
 -- CreateEnum
 CREATE TYPE "CommunicationIntentStatus" AS ENUM ('DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'BLOCKED', 'AWAITING_WALLET', 'READY', 'DISPATCHING', 'ACCEPTED_BY_PROVIDER', 'DELIVERED', 'FAILED', 'RECONCILIATION_REQUIRED', 'CANCELLED');
@@ -95,13 +95,19 @@ CREATE TABLE "CommsWebhookReceipt" (
     "providerKey" TEXT NOT NULL,
     "providerInstanceId" TEXT,
     "customerAccountId" TEXT,
+    "tenantMappingId" TEXT,
+    "externalAccountId" TEXT,
     "externalEventId" TEXT NOT NULL,
     "eventType" TEXT NOT NULL,
     "payloadHash" TEXT NOT NULL,
+    "eventDedupeKey" TEXT NOT NULL,
     "idempotencyKey" TEXT NOT NULL,
+    "relayTimestampSeconds" INTEGER,
     "receiptStatus" "CommsWebhookReceiptStatus" NOT NULL DEFAULT 'RECEIVED',
     "processingStatus" "CommsWebhookProcessingStatus" NOT NULL DEFAULT 'PENDING',
     "quarantineReason" TEXT,
+    "claimedAt" TIMESTAMP(3),
+    "claimedBy" TEXT,
     "receivedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "processedAt" TIMESTAMP(3),
     "sanitizedDetail" JSONB,
@@ -299,13 +305,16 @@ CREATE INDEX "ChatwootConversationMapping_customerAccountId_webxxlStatus_las_idx
 CREATE UNIQUE INDEX "ChatwootSyncCursor_tenantMappingId_cursorKey_key" ON "ChatwootSyncCursor"("tenantMappingId", "cursorKey");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "CommsWebhookReceipt_eventDedupeKey_key" ON "CommsWebhookReceipt"("eventDedupeKey");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "CommsWebhookReceipt_idempotencyKey_key" ON "CommsWebhookReceipt"("idempotencyKey");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "CommsWebhookReceipt_providerKey_externalEventId_key" ON "CommsWebhookReceipt"("providerKey", "externalEventId");
+CREATE INDEX "CommsWebhookReceipt_customerAccountId_receivedAt_idx" ON "CommsWebhookReceipt"("customerAccountId", "receivedAt");
 
 -- CreateIndex
-CREATE INDEX "CommsWebhookReceipt_customerAccountId_receivedAt_idx" ON "CommsWebhookReceipt"("customerAccountId", "receivedAt");
+CREATE INDEX "CommsWebhookReceipt_providerKey_providerInstanceId_externalA_idx" ON "CommsWebhookReceipt"("providerKey", "providerInstanceId", "externalAccountId", "eventType");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ContactReconciliationCandidate_customerAccountId_sourceSystem_key" ON "ContactReconciliationCandidate"("customerAccountId", "sourceSystem", "externalContactRef");

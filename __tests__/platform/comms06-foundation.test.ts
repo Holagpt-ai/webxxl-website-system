@@ -1,4 +1,4 @@
-import { createHmac } from 'node:crypto'
+import { buildChatwootRelaySignature } from '@/lib/platform/comms/relay-sign'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   ABMED_AESTHETICS_ACCOUNT_ID,
@@ -73,7 +73,9 @@ describe('COMMS-06 foundation', () => {
     const auth = verifyChatwootRelaySignature({
       rawBody: '{}',
       signatureHeader: 'abc',
+      timestampHeader: `${Math.floor(Date.now() / 1000)}`,
       relaySecret: null,
+      toleranceSeconds: 300,
     })
     expect(auth.ok).toBe(false)
   })
@@ -188,11 +190,14 @@ describe('COMMS-06 foundation', () => {
   it('Webhook signature verification accepts valid HMAC', () => {
     const secret = 'relay-secret'
     const rawBody = '{"event":"message_created","account":{"id":1}}'
-    const sig = createHmac('sha256', secret).update(rawBody).digest('hex')
+    const ts = Math.floor(Date.now() / 1000)
+    const sig = buildChatwootRelaySignature({ relaySecret: secret, relayTimestampSeconds: ts, rawBody })
     const ok = verifyChatwootRelaySignature({
       rawBody,
       signatureHeader: sig,
+      timestampHeader: String(ts),
       relaySecret: secret,
+      toleranceSeconds: 300,
     })
     expect(ok.ok).toBe(true)
   })

@@ -5,57 +5,75 @@ import {
   translateChatwootConversationStatus,
 } from '@/lib/platform/comms/conversation-service'
 import { resolveInboundChatwootContact } from '@/lib/platform/comms/contact-resolution-service'
+import {
+  classifyInboundTimelineEvent,
+  inboxChannelKindFromChatwootType,
+  webxxlChannelLabel,
+} from '@/lib/platform/comms/channel-classifier'
+import { isRecognizedOptOutBody, processInboundOptOut } from '@/lib/platform/comms/opt-out-service'
 import type { ChatwootWebhookEnvelope } from '@/lib/platform/comms/webhook-schemas'
 import type { CommsResult } from '@/lib/platform/comms/types'
-import type { CrmTimelineEventKind } from '@prisma/client'
+import type { CrmConsentChannel } from '@prisma/client'
 
-function timelineKindForEvent(event: ChatwootWebhookEnvelope['event'], messageType?: string | number): CrmTimelineEventKind {
-  if (event === 'message_created') {
-    const mt = String(messageType ?? '').toLowerCase()
-    if (mt.includes('incoming') || mt === '0') return 'INBOUND_SMS'
-    if (mt.includes('outgoing') || mt === '1') return 'HUMAN_REPLY'
-    return 'WEB_CHAT_STARTED'
-  }
-  if (event === 'conversation_created') return 'WEB_CHAT_STARTED'
-  return 'NOTE'
+function parseMessageTimestamp(envelope: ChatwootWebhookEnvelope): Date | null {
+  const raw = envelope.message?.created_at
+  if (raw == null) return null
+  const asNumber = typeof raw === 'number' ? raw : Number(raw)
+  if (!Number.isFinite(asNumber)) return null
+  return new Date(asNumber * 1000)
 }
 
-export async function processChatwootWebhookReceipt(input: {
+function optOutChannelFromInbox(kind: ReturnType<typeof inboxChannelKindFromChatwootType>): CrmConsentChannel | null {
+  if (kind === 'SMS') return 'SMS'
+  if (kind === 'EMAIL') return 'EMAIL'
+  if (kind === 'WHATSAPP') return 'WHATSAPP'
+  return null
+}
+
+export async function processTrustedChatwootReceiptPayload(input: {
   receiptId: string
   customerAccountId: string
   tenantMappingId: string
   envelope: ChatwootWebhookEnvelope
-  idempotencyKey: string
+  inboxId: string | null
+  eventDedupeKey: string
 }): Promise<CommsResult<{ processed: boolean }>> {
-  const receipt = await prisma.commsWebhookReceipt.findUnique({ where: { id: input.receiptId } })
-  if (!receipt) return { ok: false, code: 'NOT_FOUND', message: 'Receipt not found' }
-  if (receipt.processingStatus === 'PROCESSED' || receipt.processingStatus === 'DUPLICATE') {
-    return { ok: true, value: { processed: false } }
-  }
+  const inboxMapping = input.inboxId
+    ? await prisma.chatwootInboxMapping.findFirst({
+        where: {
+          tenantMappingId: input.tenantMappingId,
+          externalInboxId: input.inboxId,
+          customerAccountId: input.customerAccountId,
+          verificationState: 'VERIFIED',
+        },
+      })
+    : null
 
-  const conversationExternalId = input.envelope.conversation?.id != null ? String(input.envelope.conversation.id) : null
-  const inboxId =
-    input.envelope.inbox?.id != null
-      ? String(input.envelope.inbox.id)
-      : input.envelope.conversation?.inbox_id != null
-        ? String(input.envelope.conversation.inbox_id)
-        : 'unknown'
+  const inboxChannelKind = inboxChannelKindFromChatwootType(inboxMapping?.channelType)
+  const channelLabel = webxxlChannelLabel(inboxChannelKind)
+
+  const conversationExternalId =
+    input.envelope.conversation?.id != null ? String(input.envelope.conversation.id) : null
+  const inboxId = input.inboxId ?? 'unknown'
 
   let crmContactId: string | undefined
   const resolution = await resolveInboundChatwootContact({
     customerAccountId: input.customerAccountId,
-    externalContactRef: String(input.envelope.message?.id ?? conversationExternalId ?? input.idempotencyKey),
+    email: undefined,
+    phone: undefined,
+    externalContactRef: String(input.envelope.message?.id ?? conversationExternalId ?? input.eventDedupeKey),
   })
   if (resolution.ok && resolution.value.kind === 'MATCHED') {
     crmContactId = resolution.value.crmContactId
   }
 
-  if (conversationExternalId) {
-    const eventAt = new Date()
-    const status = input.envelope.conversation?.status
-      ? translateChatwootConversationStatus(input.envelope.conversation.status)
-      : undefined
+  const eventAt = parseMessageTimestamp(input.envelope)
+  const status = input.envelope.conversation?.status
+    ? translateChatwootConversationStatus(input.envelope.conversation.status)
+    : undefined
 
+  if (conversationExternalId) {
+    const activityAt = eventAt ?? undefined
     await prisma.chatwootConversationMapping.upsert({
       where: {
         customerAccountId_externalConversationId: {
@@ -68,60 +86,85 @@ export async function processChatwootWebhookReceipt(input: {
         tenantMappingId: input.tenantMappingId,
         externalConversationId: conversationExternalId,
         externalInboxId: inboxId,
-        channel: 'web_chat',
+        channel: channelLabel,
         crmContactId: crmContactId ?? null,
         webxxlStatus: status ?? 'OPEN',
-        lastActivityAt: eventAt,
-        lastSyncAt: eventAt,
+        lastActivityAt: activityAt ?? null,
+        lastSyncAt: new Date(),
         coverageState: crmContactId ? 'PARTIAL' : 'UNKNOWN',
       },
       update: {
-        lastSyncAt: eventAt,
+        lastSyncAt: new Date(),
+        channel: channelLabel,
         webxxlStatus: status ?? undefined,
         crmContactId: crmContactId ?? undefined,
+        ...(activityAt ? { lastActivityAt: activityAt } : {}),
       },
     })
 
-    const existing = await prisma.chatwootConversationMapping.findFirst({
-      where: { customerAccountId: input.customerAccountId, externalConversationId: conversationExternalId },
-    })
-    if (existing?.lastActivityAt) {
-      const merged = mergeConversationActivityTimestamps({
-        currentLast: existing.lastActivityAt,
-        eventAt,
+    if (activityAt) {
+      const existing = await prisma.chatwootConversationMapping.findFirst({
+        where: { customerAccountId: input.customerAccountId, externalConversationId: conversationExternalId },
       })
-      await prisma.chatwootConversationMapping.update({
-        where: { id: existing.id },
-        data: { lastActivityAt: merged.lastActivityAt },
-      })
+      if (existing?.lastActivityAt) {
+        const merged = mergeConversationActivityTimestamps({
+          currentLast: existing.lastActivityAt,
+          eventAt: activityAt,
+        })
+        await prisma.chatwootConversationMapping.update({
+          where: { id: existing.id },
+          data: { lastActivityAt: merged.lastActivityAt },
+        })
+      }
     }
   }
 
-  if (crmContactId) {
-    const kind = timelineKindForEvent(input.envelope.event, input.envelope.message?.message_type)
-    const eventAt =
-      typeof input.envelope.message?.created_at === 'number'
-        ? new Date(input.envelope.message.created_at * 1000)
-        : new Date()
-    const timeline = await appendCrmTimelineEvent({
+  const messageBody = input.envelope.message?.content ?? ''
+  const optOutChannel = optOutChannelFromInbox(inboxChannelKind)
+  if (
+    crmContactId &&
+    optOutChannel &&
+    input.envelope.event === 'message_created' &&
+    isRecognizedOptOutBody(messageBody)
+  ) {
+    const stop = await processInboundOptOut({
       customerAccountId: input.customerAccountId,
       contactId: crmContactId,
-      eventKind: kind,
-      sourceSystem: 'chatwoot.webhook',
-      externalEventId: input.idempotencyKey,
-      idempotencyKey: `chatwoot:${input.idempotencyKey}`,
-      eventAt,
-      detail: { event: input.envelope.event, conversationId: conversationExternalId },
+      channel: optOutChannel as 'SMS' | 'EMAIL' | 'WHATSAPP',
+      body: messageBody,
+      source: `chatwoot:${input.receiptId}`,
+      idempotencyKey: `stop:${input.eventDedupeKey}`,
+      trustedSenderResolved: Boolean(inboxMapping),
     })
-    if (!timeline.ok && timeline.code !== 'CONFLICT') {
-      return { ok: false, code: 'VALIDATION', message: timeline.message }
+    if (!stop.ok && stop.code !== 'CONFLICT') {
+      return stop
     }
   }
 
-  await prisma.commsWebhookReceipt.update({
-    where: { id: input.receiptId },
-    data: { processingStatus: 'PROCESSED', processedAt: new Date() },
-  })
+  if (crmContactId && input.envelope.event === 'message_created') {
+    const senderType =
+      typeof input.envelope.meta?.sender_type === 'string' ? input.envelope.meta.sender_type : undefined
+    const kind = classifyInboundTimelineEvent({
+      inboxChannel: inboxChannelKind,
+      messageType: input.envelope.message?.message_type,
+      senderType,
+    })
+    if (kind && eventAt) {
+      const timeline = await appendCrmTimelineEvent({
+        customerAccountId: input.customerAccountId,
+        contactId: crmContactId,
+        eventKind: kind,
+        sourceSystem: 'chatwoot.webhook',
+        externalEventId: input.eventDedupeKey,
+        idempotencyKey: `chatwoot:${input.eventDedupeKey}`,
+        eventAt,
+        detail: { event: input.envelope.event, conversationId: conversationExternalId, channel: channelLabel },
+      })
+      if (!timeline.ok && timeline.code !== 'CONFLICT') {
+        return { ok: false, code: 'VALIDATION', message: timeline.message }
+      }
+    }
+  }
 
   return { ok: true, value: { processed: true } }
 }

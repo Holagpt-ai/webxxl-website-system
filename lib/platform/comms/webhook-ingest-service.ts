@@ -1,31 +1,34 @@
-import { createHash } from 'node:crypto'
-import { COMMS_WEBHOOK_MAX_BODY_BYTES, COMMS_WEBHOOK_REPLAY_TOLERANCE_SECONDS } from '@/config/comms-backend'
 import { prisma } from '@/lib/db'
-import {
-  externalEventIdFromEnvelope,
-  parseChatwootWebhookEnvelope,
-  type ChatwootWebhookEnvelope,
-} from '@/lib/platform/comms/webhook-schemas'
-import { verifyChatwootRelaySignature, verifyWebhookTimestamp } from '@/lib/platform/comms/webhook-auth'
+import { COMMS_WEBHOOK_MAX_BODY_BYTES } from '@/config/comms-backend'
+import { parseChatwootWebhookEnvelope, type ChatwootWebhookEnvelope } from '@/lib/platform/comms/webhook-schemas'
+import { verifyChatwootRelaySignature } from '@/lib/platform/comms/webhook-auth'
 import { resolveChatwootTenantByExternalAccount, assertInboxAuthorizedForTenant } from '@/lib/platform/comms/tenant-resolve'
+import {
+  buildWebhookEventDedupeKey,
+  buildWebhookIdempotencyKey,
+  buildWebhookPayloadFingerprint,
+  scopedExternalEventRef,
+} from '@/lib/platform/comms/webhook-dedupe'
 import type { CommsResult } from '@/lib/platform/comms/types'
 
 export async function ingestChatwootWebhook(input: {
   providerInstanceId: string
   rawBody: string
   signatureHeader: string | null
+  timestampHeader: string | null
   relaySecret: string | null
-  idempotencyKey: string
-}): Promise<CommsResult<{ receiptId: string; status: 'ACCEPTED' | 'DUPLICATE' | 'QUARANTINED' }>> {
+  clientIdempotencyKey: string | null
+  toleranceSeconds: number
+}): Promise<
+  CommsResult<{
+    receiptId: string
+    status: 'ACCEPTED' | 'DUPLICATE' | 'QUARANTINED'
+    processingStatus: 'PENDING'
+  }>
+> {
   if (Buffer.byteLength(input.rawBody, 'utf8') > COMMS_WEBHOOK_MAX_BODY_BYTES) {
     return { ok: false, code: 'VALIDATION', message: 'Webhook body too large' }
   }
-  const auth = verifyChatwootRelaySignature({
-    rawBody: input.rawBody,
-    signatureHeader: input.signatureHeader,
-    relaySecret: input.relaySecret,
-  })
-  if (!auth.ok) return auth
 
   let parsed: ChatwootWebhookEnvelope
   try {
@@ -37,36 +40,85 @@ export async function ingestChatwootWebhook(input: {
     return { ok: false, code: 'VALIDATION', message: 'Invalid webhook payload' }
   }
 
-  const externalEventId = externalEventIdFromEnvelope(parsed)
-  const payloadHash = createHash('sha256').update(input.rawBody).digest('hex')
-
-  const existing = await prisma.commsWebhookReceipt.findUnique({
-    where: { idempotencyKey: input.idempotencyKey },
+  const auth = verifyChatwootRelaySignature({
+    rawBody: input.rawBody,
+    signatureHeader: input.signatureHeader,
+    timestampHeader: input.timestampHeader,
+    relaySecret: input.relaySecret,
+    toleranceSeconds: input.toleranceSeconds,
   })
-  if (existing) {
-    if (existing.payloadHash !== payloadHash) {
-      return { ok: false, code: 'CONFLICT', message: 'Webhook idempotency key reused with different payload' }
+  if (!auth.ok) return auth
+
+  const payloadHash = buildWebhookPayloadFingerprint(input.rawBody)
+  const externalAccountId = parsed.account?.id != null ? String(parsed.account.id) : null
+  const externalEventRef = scopedExternalEventRef(parsed, payloadHash)
+  const eventDedupeKey =
+    externalAccountId != null
+      ? buildWebhookEventDedupeKey({
+          providerInstanceId: input.providerInstanceId,
+          externalAccountId,
+          eventType: parsed.event,
+          externalEventRef,
+        })
+      : buildWebhookEventDedupeKey({
+          providerInstanceId: input.providerInstanceId,
+          externalAccountId: 'unknown',
+          eventType: parsed.event,
+          externalEventRef,
+        })
+
+  const idempotencyKey = buildWebhookIdempotencyKey({
+    eventDedupeKey,
+    clientIdempotencyKey: input.clientIdempotencyKey,
+  })
+
+  const existingByDedupe = await prisma.commsWebhookReceipt.findUnique({ where: { eventDedupeKey } })
+  if (existingByDedupe) {
+    if (existingByDedupe.payloadHash !== payloadHash) {
+      return { ok: false, code: 'CONFLICT', message: 'Duplicate event reference with different payload' }
     }
-    return { ok: true, value: { receiptId: existing.id, status: 'DUPLICATE' } }
+    return {
+      ok: true,
+      value: { receiptId: existingByDedupe.id, status: 'DUPLICATE', processingStatus: 'PENDING' },
+    }
   }
 
-  const externalAccountId = parsed.account?.id != null ? String(parsed.account.id) : null
+  const existingByIdempotency = await prisma.commsWebhookReceipt.findUnique({ where: { idempotencyKey } })
+  if (existingByIdempotency) {
+    if (existingByIdempotency.payloadHash !== payloadHash) {
+      return { ok: false, code: 'CONFLICT', message: 'Webhook idempotency key reused with different payload' }
+    }
+    return {
+      ok: true,
+      value: { receiptId: existingByIdempotency.id, status: 'DUPLICATE', processingStatus: 'PENDING' },
+    }
+  }
+
+  const inboxId =
+    parsed.inbox?.id != null
+      ? String(parsed.inbox.id)
+      : parsed.conversation?.inbox_id != null
+        ? String(parsed.conversation.inbox_id)
+        : null
+
   if (!externalAccountId) {
     const receipt = await prisma.commsWebhookReceipt.create({
       data: {
         providerKey: 'chatwoot',
         providerInstanceId: input.providerInstanceId,
-        externalEventId,
+        externalEventId: externalEventRef,
         eventType: parsed.event,
         payloadHash,
-        idempotencyKey: input.idempotencyKey,
+        eventDedupeKey,
+        idempotencyKey,
+        relayTimestampSeconds: auth.value.relayTimestampSeconds,
         receiptStatus: 'QUARANTINED',
         processingStatus: 'FAILED',
         quarantineReason: 'UNKNOWN_TENANT',
-        sanitizedDetail: { event: parsed.event },
+        sanitizedDetail: { event: parsed.event, payloadHash },
       },
     })
-    return { ok: true, value: { receiptId: receipt.id, status: 'QUARANTINED' } }
+    return { ok: true, value: { receiptId: receipt.id, status: 'QUARANTINED', processingStatus: 'PENDING' } }
   }
 
   const tenant = await resolveChatwootTenantByExternalAccount({
@@ -78,25 +130,21 @@ export async function ingestChatwootWebhook(input: {
       data: {
         providerKey: 'chatwoot',
         providerInstanceId: input.providerInstanceId,
-        externalEventId,
+        externalEventId: externalEventRef,
         eventType: parsed.event,
         payloadHash,
-        idempotencyKey: input.idempotencyKey,
+        eventDedupeKey,
+        idempotencyKey,
+        relayTimestampSeconds: auth.value.relayTimestampSeconds,
         receiptStatus: 'QUARANTINED',
         processingStatus: 'FAILED',
         quarantineReason: 'UNMAPPED_TENANT',
-        sanitizedDetail: { event: parsed.event, externalAccountId },
+        sanitizedDetail: { event: parsed.event, externalAccountId, payloadHash },
       },
     })
-    return { ok: true, value: { receiptId: receipt.id, status: 'QUARANTINED' } }
+    return { ok: true, value: { receiptId: receipt.id, status: 'QUARANTINED', processingStatus: 'PENDING' } }
   }
 
-  const inboxId =
-    parsed.inbox?.id != null
-      ? String(parsed.inbox.id)
-      : parsed.conversation?.inbox_id != null
-        ? String(parsed.conversation.inbox_id)
-        : null
   if (inboxId) {
     const inboxOk = await assertInboxAuthorizedForTenant(tenant.value, inboxId)
     if (!inboxOk.ok) {
@@ -105,46 +153,50 @@ export async function ingestChatwootWebhook(input: {
           providerKey: 'chatwoot',
           providerInstanceId: input.providerInstanceId,
           customerAccountId: tenant.value.customerAccountId,
-          externalEventId,
+          tenantMappingId: tenant.value.tenantMappingId,
+          externalAccountId,
+          externalEventId: externalEventRef,
           eventType: parsed.event,
           payloadHash,
-          idempotencyKey: input.idempotencyKey,
+          eventDedupeKey,
+          idempotencyKey,
+          relayTimestampSeconds: auth.value.relayTimestampSeconds,
           receiptStatus: 'QUARANTINED',
           processingStatus: 'FAILED',
           quarantineReason: 'UNAUTHORIZED_INBOX',
-          sanitizedDetail: { event: parsed.event, inboxId },
+          sanitizedDetail: { event: parsed.event, inboxId, payloadHash },
         },
       })
-      return { ok: true, value: { receiptId: receipt.id, status: 'QUARANTINED' } }
+      return { ok: true, value: { receiptId: receipt.id, status: 'QUARANTINED', processingStatus: 'PENDING' } }
     }
   }
-
-  const ts =
-    typeof parsed.message?.created_at === 'number'
-      ? parsed.message.created_at
-      : typeof parsed.message?.created_at === 'string'
-        ? Number(parsed.message.created_at)
-        : undefined
-  const tsOk = verifyWebhookTimestamp({
-    eventTimestamp: Number.isFinite(ts) ? ts : undefined,
-    toleranceSeconds: COMMS_WEBHOOK_REPLAY_TOLERANCE_SECONDS,
-  })
-  if (!tsOk.ok) return tsOk
 
   const receipt = await prisma.commsWebhookReceipt.create({
     data: {
       providerKey: 'chatwoot',
       providerInstanceId: input.providerInstanceId,
       customerAccountId: tenant.value.customerAccountId,
-      externalEventId,
+      tenantMappingId: tenant.value.tenantMappingId,
+      externalAccountId,
+      externalEventId: externalEventRef,
       eventType: parsed.event,
       payloadHash,
-      idempotencyKey: input.idempotencyKey,
+      eventDedupeKey,
+      idempotencyKey,
+      relayTimestampSeconds: auth.value.relayTimestampSeconds,
       receiptStatus: 'RECEIVED',
       processingStatus: 'PENDING',
-      sanitizedDetail: { event: parsed.event, externalAccountId, inboxId },
+      sanitizedDetail: JSON.parse(
+        JSON.stringify({
+          envelope: parsed,
+          tenantMappingId: tenant.value.tenantMappingId,
+          externalAccountId,
+          inboxId,
+          payloadHash,
+        }),
+      ),
     },
   })
 
-  return { ok: true, value: { receiptId: receipt.id, status: 'ACCEPTED' } }
+  return { ok: true, value: { receiptId: receipt.id, status: 'ACCEPTED', processingStatus: 'PENDING' } }
 }

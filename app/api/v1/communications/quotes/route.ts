@@ -23,6 +23,7 @@ export async function POST(request: Request) {
       purpose: body.purpose,
       recipientContactIds: body.recipientContactIds,
       synthetic200: body.synthetic200,
+      allowSyntheticEvaluation: actor.isStaff,
     })
     if (!result.ok) {
       return NextResponse.json({ code: result.code, message: result.message }, { status: commsResultHttpStatus(result.code) })

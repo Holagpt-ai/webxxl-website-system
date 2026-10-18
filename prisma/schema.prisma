@@ -2719,6 +2719,7 @@ enum CommsWebhookReceiptStatus {
 
 enum CommsWebhookProcessingStatus {
   PENDING
+  PROCESSING
   PROCESSED
   FAILED
   DUPLICATE
@@ -2845,25 +2846,31 @@ model ChatwootSyncCursor {
 }
 
 model CommsWebhookReceipt {
-  id                 String                       @id @default(cuid())
-  providerKey        String
-  providerInstanceId String?
-  customerAccountId  String?
-  externalEventId    String
-  eventType          String
-  payloadHash        String
-  idempotencyKey     String                       @unique
-  receiptStatus      CommsWebhookReceiptStatus    @default(RECEIVED)
-  processingStatus   CommsWebhookProcessingStatus @default(PENDING)
-  quarantineReason   String?
-  receivedAt         DateTime                     @default(now())
-  processedAt        DateTime?
-  sanitizedDetail    Json?
+  id                    String                       @id @default(cuid())
+  providerKey           String
+  providerInstanceId    String?
+  customerAccountId     String?
+  tenantMappingId       String?
+  externalAccountId     String?
+  externalEventId       String
+  eventType             String
+  payloadHash           String
+  eventDedupeKey        String                       @unique
+  idempotencyKey        String                       @unique
+  relayTimestampSeconds Int?
+  receiptStatus         CommsWebhookReceiptStatus    @default(RECEIVED)
+  processingStatus      CommsWebhookProcessingStatus @default(PENDING)
+  quarantineReason      String?
+  claimedAt             DateTime?
+  claimedBy             String?
+  receivedAt            DateTime                     @default(now())
+  processedAt           DateTime?
+  sanitizedDetail       Json?
 
   customerAccount CustomerAccount? @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)
 
-  @@unique([providerKey, externalEventId])
   @@index([customerAccountId, receivedAt])
+  @@index([providerKey, providerInstanceId, externalAccountId, eventType])
 }
 
 model ContactReconciliationCandidate {
