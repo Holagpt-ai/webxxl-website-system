@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { CRM_LIST_MAX_TAKE } from '@/config/crm-backend'
 import { prisma } from '@/lib/db'
 import { createCrmContact } from '@/lib/platform/crm/contact-service'
 import { crmResultHttpStatus } from '@/lib/platform/crm/crm-api-map'
@@ -6,9 +7,9 @@ import { requireCrmApiActor, CrmApiError } from '@/lib/platform/crm/route-auth'
 
 export async function GET(request: Request) {
   try {
-    const actor = await requireCrmApiActor()
+    const actor = await requireCrmApiActor('crm.read')
     const url = new URL(request.url)
-    const take = Math.min(Number(url.searchParams.get('take') ?? '50'), 100)
+    const take = Math.min(Math.max(Number(url.searchParams.get('take') ?? '50'), 1), CRM_LIST_MAX_TAKE)
     const contacts = await prisma.crmContact.findMany({
       where: { customerAccountId: actor.customerAccountId, status: 'ACTIVE' },
       orderBy: { updatedAt: 'desc' },
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const actor = await requireCrmApiActor()
+    const actor = await requireCrmApiActor('crm.write')
     const body = (await request.json()) as {
       givenName?: string
       familyName?: string

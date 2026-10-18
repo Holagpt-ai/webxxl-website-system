@@ -7,7 +7,7 @@ import type { SegmentFilterGroup } from '@/lib/platform/crm/segment-engine'
 
 export async function GET() {
   try {
-    const actor = await requireCrmApiActor()
+    const actor = await requireCrmApiActor('crm.read')
     const segments = await prisma.crmSegment.findMany({ where: { customerAccountId: actor.customerAccountId } })
     return NextResponse.json({ segments })
   } catch (error) {
@@ -20,12 +20,12 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const actor = await requireCrmApiActor()
     const body = (await request.json()) as { name?: string; filterDefinition?: SegmentFilterGroup; evaluateOnly?: boolean }
     if (!body.filterDefinition) {
       return NextResponse.json({ code: 'VALIDATION_ERROR', message: 'filterDefinition required' }, { status: 400 })
     }
     if (body.evaluateOnly) {
+      const actor = await requireCrmApiActor('crm.read')
       const evaluated = await evaluateSegmentForAccount(actor.customerAccountId, body.filterDefinition)
       if (!evaluated.ok) {
         return NextResponse.json({ code: evaluated.code, message: evaluated.message }, { status: crmResultHttpStatus(evaluated.code) })
@@ -33,6 +33,7 @@ export async function POST(request: Request) {
       return NextResponse.json(evaluated.value)
     }
     if (!body.name) return NextResponse.json({ code: 'VALIDATION_ERROR', message: 'name required' }, { status: 400 })
+    const actor = await requireCrmApiActor('crm.admin')
     const created = await createDynamicSegment({
       customerAccountId: actor.customerAccountId,
       name: body.name,

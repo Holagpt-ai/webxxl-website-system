@@ -1,19 +1,13 @@
 import { isCrmBackendEnabled } from '@/config/crm-backend'
 import { evaluateEntitlementAccess, getServiceEntitlement } from '@/lib/platform/entitlements'
+import { isStaffRole } from '@/lib/admin/roles'
 import { requireCustomerMembership } from '@/lib/portal/authz'
+import { assertCrmPermission, type CrmPermission } from '@/lib/platform/crm/permissions'
+import { CrmApiError } from '@/lib/platform/crm/crm-api-error'
 
-export class CrmApiError extends Error {
-  constructor(
-    public status: number,
-    message: string,
-    public code = 'FORBIDDEN',
-  ) {
-    super(message)
-    this.name = 'CrmApiError'
-  }
-}
+export { CrmApiError }
 
-export async function requireCrmApiActor() {
+export async function requireCrmApiActor(requiredPermission: CrmPermission = 'crm.read') {
   if (!isCrmBackendEnabled()) {
     throw new CrmApiError(503, 'CRM backend is disabled', 'CRM_DISABLED')
   }
@@ -23,11 +17,20 @@ export async function requireCrmApiActor() {
   if (access.access === 'DISABLED') {
     throw new CrmApiError(403, 'CRM entitlement disabled', 'FORBIDDEN')
   }
+  if (access.access === 'POLICY_UNRESOLVED') {
+    throw new CrmApiError(503, 'CRM FREE eligibility unresolved (OPEN-001)', 'POLICY_UNRESOLVED')
+  }
   const portal = await requireCustomerMembership()
+  const permissionActor = {
+    membershipRole: portal.membership.role,
+    isStaff: isStaffRole(portal.role),
+  }
+  assertCrmPermission(permissionActor, requiredPermission)
   return {
     userId: portal.id,
     customerAccountId: portal.customerAccount.id,
     membershipRole: portal.membership.role,
     entitlementAccess: access.access,
+    isStaff: permissionActor.isStaff,
   }
 }

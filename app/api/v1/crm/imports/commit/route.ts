@@ -5,7 +5,7 @@ import { requireCrmApiActor, CrmApiError } from '@/lib/platform/crm/route-auth'
 
 export async function POST(request: Request) {
   try {
-    const actor = await requireCrmApiActor()
+    const actor = await requireCrmApiActor('crm.import')
     const body = (await request.json()) as { jobId?: string; commitIdempotencyKey?: string }
     if (!body.jobId || !body.commitIdempotencyKey) {
       return NextResponse.json({ code: 'VALIDATION_ERROR', message: 'jobId and commitIdempotencyKey required' }, { status: 400 })
@@ -14,6 +14,7 @@ export async function POST(request: Request) {
       customerAccountId: actor.customerAccountId,
       jobId: body.jobId,
       commitIdempotencyKey: body.commitIdempotencyKey,
+      actorUserId: actor.userId,
     })
     if (!committed.ok) {
       return NextResponse.json({ code: committed.code, message: committed.message }, { status: crmResultHttpStatus(committed.code) })

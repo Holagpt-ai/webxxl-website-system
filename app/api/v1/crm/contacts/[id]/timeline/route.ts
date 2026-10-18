@@ -7,7 +7,7 @@ type Params = { params: Promise<{ id: string }> }
 export async function GET(_request: Request, { params }: Params) {
   try {
     const { id } = await params
-    const actor = await requireCrmApiActor()
+    const actor = await requireCrmApiActor('crm.read')
     const events = await listContactTimeline(id, actor.customerAccountId)
     return NextResponse.json({ events })
   } catch (error) {

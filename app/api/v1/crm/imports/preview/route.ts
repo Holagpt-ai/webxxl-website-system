@@ -5,7 +5,7 @@ import { requireCrmApiActor, CrmApiError } from '@/lib/platform/crm/route-auth'
 
 export async function POST(request: Request) {
   try {
-    const actor = await requireCrmApiActor()
+    const actor = await requireCrmApiActor('crm.import')
     const body = (await request.json()) as {
       fileName?: string
       rows?: Record<string, string>[]

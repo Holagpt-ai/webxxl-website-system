@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+import { assertCrmContactOwnedByAccount } from '@/lib/platform/crm/contact-guard'
 import type { CrmResult } from '@/lib/platform/crm/types'
 
 export async function createCrmTask(input: {
@@ -18,8 +19,8 @@ export async function createCrmTask(input: {
     if (existing) return { ok: true, value: { id: existing.id } }
   }
   if (input.contactId) {
-    const contact = await prisma.crmContact.findFirst({ where: { id: input.contactId, customerAccountId: input.customerAccountId } })
-    if (!contact) return { ok: false, code: 'VALIDATION_ERROR', message: 'Task contact scope mismatch' }
+    const contact = await assertCrmContactOwnedByAccount(input.contactId, input.customerAccountId)
+    if (!contact.ok) return contact
   }
   if (input.dealId) {
     const deal = await prisma.crmDeal.findFirst({ where: { id: input.dealId, customerAccountId: input.customerAccountId } })

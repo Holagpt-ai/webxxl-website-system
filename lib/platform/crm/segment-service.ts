@@ -1,3 +1,4 @@
+import { CRM_SEGMENT_EVAL_MAX_CONTACTS } from '@/config/crm-backend'
 import { prisma } from '@/lib/db'
 import {
   evaluateSegmentGroup,
@@ -32,6 +33,14 @@ export async function evaluateSegmentForAccount(
 ): Promise<CrmResult<{ contactIds: string[]; summary: ReturnType<typeof summarizeSegmentPopulation> }>> {
   const valid = validateSegmentFilterGroup(filterDefinition)
   if (!valid.ok) return { ok: false, code: 'VALIDATION_ERROR', message: valid.message }
+  const total = await prisma.crmContact.count({ where: { customerAccountId, status: 'ACTIVE' } })
+  if (total > CRM_SEGMENT_EVAL_MAX_CONTACTS) {
+    return {
+      ok: false,
+      code: 'QUOTA_EXCEEDED',
+      message: 'Segment evaluation contact population exceeds synchronous limit',
+    }
+  }
   const contacts = await prisma.crmContact.findMany({
     where: { customerAccountId, status: 'ACTIVE' },
     include: {

@@ -33,3 +33,9 @@ export const CRM_IMPORT_MAX_FIELDS = Number(process.env.CRM_IMPORT_MAX_FIELDS ??
 export const CRM_EXPORT_PAGE_SIZE = Number(process.env.CRM_EXPORT_PAGE_SIZE ?? '500')
 
 export const CRM_DEFAULT_FOLLOW_UP_DAYS = Number(process.env.CRM_DEFAULT_FOLLOW_UP_DAYS ?? '4')
+
+export const CRM_SEGMENT_MAX_RULES = Number(process.env.CRM_SEGMENT_MAX_RULES ?? '20')
+export const CRM_SEGMENT_MAX_VALUE_LENGTH = Number(process.env.CRM_SEGMENT_MAX_VALUE_LENGTH ?? '256')
+export const CRM_SEGMENT_EVAL_MAX_CONTACTS = Number(process.env.CRM_SEGMENT_EVAL_MAX_CONTACTS ?? '5000')
+export const CRM_LIST_DEFAULT_TAKE = Number(process.env.CRM_LIST_DEFAULT_TAKE ?? '50')
+export const CRM_LIST_MAX_TAKE = Number(process.env.CRM_LIST_MAX_TAKE ?? '100')

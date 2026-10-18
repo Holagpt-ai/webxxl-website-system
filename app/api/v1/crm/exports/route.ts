@@ -5,13 +5,14 @@ import { requireCrmApiActor, CrmApiError } from '@/lib/platform/crm/route-auth'
 
 export async function POST(request: Request) {
   try {
-    const actor = await requireCrmApiActor()
+    const actor = await requireCrmApiActor('crm.export')
     const body = (await request.json()) as { cursor?: string; take?: number; targetAccountId?: string }
     if (body.targetAccountId && body.targetAccountId !== actor.customerAccountId) {
       return NextResponse.json({ code: 'FORBIDDEN', message: 'Cross-account export denied' }, { status: 403 })
     }
     const exported = await exportContactsCsvPage({
       customerAccountId: actor.customerAccountId,
+      actorUserId: actor.userId,
       cursor: body.cursor,
       take: body.take,
     })

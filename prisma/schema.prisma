@@ -501,6 +501,7 @@ model CustomerAccount {
   crmExternalMappings          CrmExternalObjectMapping[]
   crmSalesLeadBridges          CrmSalesLeadBridge[]
   chatwootContactMappings      ChatwootContactMapping[]
+  crmDataAccessAudits          CrmDataAccessAudit[]
 }
 
 model CustomerMembership {
@@ -2240,6 +2241,7 @@ model CrmContact {
   segmentMembers  CrmSegmentMember[]
   chatwootMappings ChatwootContactMapping[]
 
+  @@unique([customerAccountId, id])
   @@index([customerAccountId, status])
   @@index([customerAccountId, lastActivityAt])
   @@index([managedSiteId])
@@ -2587,6 +2589,7 @@ model CrmImportJob {
   previewReport     Json?
   errorReport       Json?
   commitIdempotencyKey String?         @unique
+  committedContactCount Int?
   createdByUserId   String
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
@@ -2595,6 +2598,20 @@ model CrmImportJob {
   rows            CrmImportRow[]
 
   @@index([customerAccountId, status])
+}
+
+model CrmDataAccessAudit {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  actorUserId       String
+  operation         String
+  resourceRef       String
+  detail            Json?
+  createdAt         DateTime @default(now())
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+
+  @@index([customerAccountId, operation, createdAt])
 }
 
 model CrmImportRow {

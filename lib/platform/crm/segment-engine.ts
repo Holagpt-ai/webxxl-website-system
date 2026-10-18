@@ -1,3 +1,4 @@
+import { CRM_SEGMENT_MAX_RULES, CRM_SEGMENT_MAX_VALUE_LENGTH } from '@/config/crm-backend'
 import type { CrmConsentChannel, CrmConsentPurpose, CrmConsentStatus } from '@prisma/client'
 
 export type SegmentContactView = {
@@ -50,10 +51,22 @@ const ALLOWED_FIELDS = new Set<SegmentFilterField>([
 
 export function validateSegmentFilterGroup(group: SegmentFilterGroup): { ok: true } | { ok: false; message: string } {
   if (group.logic !== 'AND' && group.logic !== 'OR') return { ok: false, message: 'Invalid filter logic' }
+  if (group.rules.length > CRM_SEGMENT_MAX_RULES) {
+    return { ok: false, message: 'Segment filter rule limit exceeded' }
+  }
   for (const rule of group.rules) {
     if (!ALLOWED_FIELDS.has(rule.field)) return { ok: false, message: `Field not allowed: ${rule.field}` }
     if (!['eq', 'neq', 'gte', 'lte', 'in'].includes(rule.operator)) {
       return { ok: false, message: `Operator not allowed: ${rule.operator}` }
+    }
+    const valueLength =
+      typeof rule.value === 'string'
+        ? rule.value.length
+        : Array.isArray(rule.value)
+          ? rule.value.join(',').length
+          : 0
+    if (valueLength > CRM_SEGMENT_MAX_VALUE_LENGTH) {
+      return { ok: false, message: 'Segment filter value too long' }
     }
   }
   return { ok: true }

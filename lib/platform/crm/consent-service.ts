@@ -1,6 +1,32 @@
 import type { CrmConsentChannel, CrmConsentPurpose, CrmConsentStatus } from '@prisma/client'
 import { prisma } from '@/lib/db'
+import { assertCrmContactOwnedByAccount } from '@/lib/platform/crm/contact-guard'
 import type { CrmResult } from '@/lib/platform/crm/types'
+
+function consentPayloadMatches(
+  existing: {
+    customerAccountId: string
+    contactId: string
+    channel: CrmConsentChannel
+    purpose: CrmConsentPurpose
+    status: CrmConsentStatus
+  },
+  input: {
+    customerAccountId: string
+    contactId: string
+    channel: CrmConsentChannel
+    purpose: CrmConsentPurpose
+    status: CrmConsentStatus
+  },
+): boolean {
+  return (
+    existing.customerAccountId === input.customerAccountId &&
+    existing.contactId === input.contactId &&
+    existing.channel === input.channel &&
+    existing.purpose === input.purpose &&
+    existing.status === input.status
+  )
+}
 
 export async function recordContactConsent(input: {
   customerAccountId: string
@@ -13,11 +39,14 @@ export async function recordContactConsent(input: {
   termsVersion?: string
   idempotencyKey?: string
 }): Promise<CrmResult<{ id: string }>> {
+  const owned = await assertCrmContactOwnedByAccount(input.contactId, input.customerAccountId)
+  if (!owned.ok) return owned
+
   if (input.idempotencyKey) {
     const existing = await prisma.contactConsent.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
     if (existing) {
-      if (existing.customerAccountId !== input.customerAccountId) {
-        return { ok: false, code: 'CONFLICT', message: 'Idempotency key conflict' }
+      if (!consentPayloadMatches(existing, input)) {
+        return { ok: false, code: 'CONFLICT', message: 'Consent idempotency key reused with different payload' }
       }
       return { ok: true, value: { id: existing.id } }
     }
@@ -47,9 +76,20 @@ export async function recordContactSuppression(input: {
   source: string
   idempotencyKey?: string
 }): Promise<CrmResult<{ id: string }>> {
+  const owned = await assertCrmContactOwnedByAccount(input.contactId, input.customerAccountId)
+  if (!owned.ok) return owned
+
   if (input.idempotencyKey) {
     const existing = await prisma.contactSuppression.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
-    if (existing) return { ok: true, value: { id: existing.id } }
+    if (existing) {
+      if (existing.customerAccountId !== input.customerAccountId || existing.contactId !== input.contactId) {
+        return { ok: false, code: 'CONFLICT', message: 'Suppression idempotency key conflict' }
+      }
+      if (existing.channel !== input.channel || existing.purpose !== input.purpose) {
+        return { ok: false, code: 'CONFLICT', message: 'Suppression idempotency key reused with different payload' }
+      }
+      return { ok: true, value: { id: existing.id } }
+    }
   }
   const row = await prisma.contactSuppression.create({
     data: {

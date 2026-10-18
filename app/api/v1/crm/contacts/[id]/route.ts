@@ -8,7 +8,7 @@ type Params = { params: Promise<{ id: string }> }
 export async function GET(_request: Request, { params }: Params) {
   try {
     const { id } = await params
-    const actor = await requireCrmApiActor()
+    const actor = await requireCrmApiActor('crm.read')
     const contact = await getCrmContactForAccount(id, actor.customerAccountId)
     if (!contact.ok) {
       return NextResponse.json({ code: contact.code, message: contact.message }, { status: crmResultHttpStatus(contact.code) })
@@ -25,7 +25,7 @@ export async function GET(_request: Request, { params }: Params) {
 export async function PATCH(request: Request, { params }: Params) {
   try {
     const { id } = await params
-    const actor = await requireCrmApiActor()
+    const actor = await requireCrmApiActor('crm.write')
     const body = (await request.json()) as { givenName?: string; familyName?: string; preferredName?: string; jobTitle?: string }
     const updated = await updateCrmContact(id, actor.customerAccountId, body)
     if (!updated.ok) {

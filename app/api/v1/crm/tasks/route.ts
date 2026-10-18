@@ -6,7 +6,7 @@ import { requireCrmApiActor, CrmApiError } from '@/lib/platform/crm/route-auth'
 
 export async function GET() {
   try {
-    const actor = await requireCrmApiActor()
+    const actor = await requireCrmApiActor('crm.read')
     const tasks = await prisma.crmTask.findMany({
       where: { customerAccountId: actor.customerAccountId },
       orderBy: { dueAt: 'asc' },
@@ -23,7 +23,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const actor = await requireCrmApiActor()
+    const actor = await requireCrmApiActor('crm.write')
     const body = (await request.json()) as { title?: string; contactId?: string; dealId?: string; dueAt?: string; idempotencyKey?: string }
     if (!body.title) return NextResponse.json({ code: 'VALIDATION_ERROR', message: 'title required' }, { status: 400 })
     const created = await createCrmTask({
