@@ -1,5 +1,6 @@
 import { isSocialMarketingEnabled } from '@/config/social-marketing'
-import { stableSocialContentHash } from '@/lib/platform/social/hash'
+import { validateTargetChannelIdsForAccount } from '@/lib/platform/social/channel-validation'
+import { computeSocialRevisionContentHash } from '@/lib/platform/social/revision-content'
 import { nextSocialId, type SocialStore } from '@/lib/platform/social/in-memory-store'
 import { assertWithinQuota, recordMarketingStudioUsage } from '@/lib/platform/social/quota-service'
 import { assertSocialCampaignTransition } from '@/lib/platform/social/transitions'
@@ -75,15 +76,22 @@ export function addSocialCampaignRevision(
   if (!campaign || campaign.customerAccountId !== input.customerAccountId) {
     return { ok: false, code: 'NOT_FOUND', message: 'Campaign not found' }
   }
+  const channelGate = validateTargetChannelIdsForAccount(
+    store,
+    input.customerAccountId,
+    campaign.managedSiteId,
+    input.targetChannelIds,
+  )
+  if (!channelGate.ok) return channelGate
   const prior = [...store.revisions.values()].filter((r) => r.campaignId === campaign.id)
   const revisionNumber = prior.length + 1
-  const contentHash = stableSocialContentHash({
+  const contentHash = computeSocialRevisionContentHash({
     captionEn: input.captionEn,
     captionEs: input.captionEs,
     mediaRefs: input.mediaRefs ?? [],
     platformPayloads: input.platformPayloads ?? {},
     targetChannelIds: input.targetChannelIds,
-    scheduledAt: input.scheduledAt?.toISOString(),
+    scheduledAt: input.scheduledAt,
   })
   const revision: SocialCampaignRevisionRecord = {
     id: nextSocialId('socrev'),

@@ -1,5 +1,6 @@
 import { marketingStudioDefaultPeriodKey, marketingStudioQuotaPolicy } from '@/config/social-marketing'
 import { nextSocialId, type SocialStore } from '@/lib/platform/social/in-memory-store'
+import { assertValidQuotaPolicy } from '@/lib/platform/social/quota-policy'
 import type { SocialResult } from '@/lib/platform/social/types'
 
 function usageCount(store: SocialStore, customerAccountId: string, periodKey: string, operation: string): number {
@@ -44,7 +45,9 @@ export function assertWithinQuota(
   customerAccountId: string,
   operation: 'draft' | 'schedule' | 'content_plan' | 'postiz_api',
 ): SocialResult<true> {
-  const policy = marketingStudioQuotaPolicy()
+  const policyCheck = assertValidQuotaPolicy()
+  if (!policyCheck.ok) return policyCheck
+  const policy = policyCheck.value
   const periodKey = marketingStudioDefaultPeriodKey()
   const map = {
     draft: policy.draftsPerAccountMonth,

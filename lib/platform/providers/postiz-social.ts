@@ -12,6 +12,11 @@ import {
   type PostizPost,
 } from '@/lib/platform/providers/postiz-http'
 import type { ProviderAuthContext, ProviderResult, SocialPublisherProvider } from '@/lib/platform/providers/types'
+import {
+  getPostizChannelStatusForAccount,
+  listPostizChannelsForAccount,
+} from '@/lib/platform/social/connections-postiz'
+import type { SocialStore } from '@/lib/platform/social/in-memory-store'
 import type { SocialPlatformKey } from '@/lib/platform/social/types'
 
 export const POSTIZ_REFERENCE_APP_TAG = 'v2.25.1'
@@ -185,8 +190,26 @@ export function createPostizSocialPublisher(options?: {
 export function createPostizSocialProvider(options?: {
   transport?: PostizHttpTransport
   secretResolver?: (ref: string) => string | null
+  getSocialStore?: () => SocialStore | undefined
+  ignoreEnvGates?: boolean
 }): SocialPublisherProvider {
   const publisher = createPostizSocialPublisher(options)
+  const storeOrFail = (context: ProviderAuthContext): SocialStore | ProviderResult<never> => {
+    if (!context.customerAccountId) {
+      return { ok: false, code: 'UNAUTHORIZED', message: 'Customer account required' }
+    }
+    const store = options?.getSocialStore?.()
+    if (!store) {
+      return {
+        ok: false,
+        code: 'DENIED',
+        message:
+          'Postiz tenant boundary unavailable; configure per-account workspace mapping (fail closed). See postiz-isolation.ts.',
+      }
+    }
+    return store
+  }
+
   return {
     kind: 'social',
     key: 'postiz',
@@ -194,20 +217,57 @@ export function createPostizSocialProvider(options?: {
     availability: 'NOT_ACTIVATED',
     replaceable: true,
     installed: false,
-    async listChannels(context: ProviderAuthContext) {
-      if (!context.customerAccountId) {
-        return { ok: false, code: 'UNAUTHORIZED', message: 'Customer account required' }
+    async listChannels(context) {
+      const storeResult = storeOrFail(context)
+      if (!('connections' in storeResult)) return storeResult
+      const listed = await listPostizChannelsForAccount(
+        storeResult,
+        context.customerAccountId,
+        context.managedSiteId,
+        publisher,
+        { verifyWithApi: isPostizApiEnabled() || options?.ignoreEnvGates === true },
+      )
+      if (!listed.ok) {
+        const code =
+          listed.code === 'WORKSPACE_ISOLATION_REQUIRED' || listed.code === 'INTEGRATION_NOT_AUTHORIZED'
+            ? 'DENIED'
+            : (listed.code as 'NOT_CONFIGURED' | 'UNAUTHORIZED' | 'DENIED' | 'UNAVAILABLE')
+        return { ok: false, code, message: listed.message }
       }
-      const listed = await publisher.listIntegrations()
-      if (!listed.ok) return listed
-      return { ok: true, value: listed.value as never[] }
+      return { ok: true, value: listed.value }
     },
     async getChannelStatus(context, externalIntegrationId) {
-      const listed = await publisher.listIntegrations()
-      if (!listed.ok) return listed
-      const match = listed.value.find((row) => row.id === externalIntegrationId)
-      if (!match) return { ok: false, code: 'DENIED', message: 'Integration not visible to credentials' }
-      return { ok: true, value: { connected: true, name: match.name, providerIdentifier: match.providerIdentifier } }
+      const storeResult = storeOrFail(context)
+      if (!('connections' in storeResult)) return storeResult
+      const connection = [...storeResult.connections.values()].find(
+        (row) =>
+          row.customerAccountId === context.customerAccountId && row.externalChannelRef === externalIntegrationId,
+      )
+      if (!connection) {
+        return { ok: false, code: 'DENIED', message: 'Integration not mapped to customer account' }
+      }
+      const status = await getPostizChannelStatusForAccount(
+        storeResult,
+        context.customerAccountId,
+        connection.id,
+        publisher,
+        { verifyWithApi: isPostizApiEnabled() || options?.ignoreEnvGates === true },
+      )
+      if (!status.ok) {
+        const code =
+          status.code === 'WORKSPACE_ISOLATION_REQUIRED' || status.code === 'INTEGRATION_NOT_AUTHORIZED'
+            ? 'DENIED'
+            : (status.code as 'NOT_CONFIGURED' | 'UNAUTHORIZED' | 'DENIED' | 'UNAVAILABLE')
+        return { ok: false, code, message: status.message }
+      }
+      return {
+        ok: true,
+        value: {
+          connected: status.value.connected,
+          name: status.value.name,
+          providerIdentifier: status.value.providerIdentifier,
+        },
+      }
     },
     schedulePost: publisher.schedulePost.bind(publisher),
     getPostStatus: publisher.getPostStatus.bind(publisher),

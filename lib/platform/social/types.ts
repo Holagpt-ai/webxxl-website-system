@@ -143,6 +143,7 @@ export type SocialCampaignApprovalRecord = {
 export type SocialSchedulingIntentRecord = {
   id: string
   idempotencyKey: string
+  requestFingerprint: string
   campaignId: string
   revisionId: string
   approvalId: string

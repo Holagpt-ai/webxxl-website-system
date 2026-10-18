@@ -374,7 +374,7 @@ describe('SOCIAL-04 Marketing Studio backend', () => {
       scheduledAt,
     })
     expect(res.ok).toBe(false)
-    if (!res.ok) expect(['NOT_CONFIGURED', 'CHANNEL_NOT_CONNECTED']).toContain(res.code)
+    if (!res.ok) expect(res.code).toBe('NOT_CONFIGURED')
   })
 
   it('builds synthetic 30-day editorial plan with EN/ES variants', () => {

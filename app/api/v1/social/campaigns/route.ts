@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { createSocialCampaignWithQuota } from '@/lib/platform/social/campaign-create-service'
 import { requireSocialApiActor, SocialApiError } from '@/lib/platform/social/route-auth'
+import { socialResultHttpStatus } from '@/lib/platform/social/social-api-map'
 
 export async function GET() {
   try {
@@ -15,7 +17,8 @@ export async function GET() {
     if (error instanceof SocialApiError) {
       return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
     }
-    return NextResponse.json({ code: 'UNAUTHORIZED', message: 'Unauthorized' }, { status: 401 })
+    console.error('social campaigns GET failed', error)
+    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to load campaigns' }, { status: 500 })
   }
 }
 
@@ -28,28 +31,32 @@ export async function POST(request: Request) {
       targetPlatforms?: string[]
       targetAudience?: string
       brandProfile?: string
+      idempotencyKey?: string
     }
     if (!body.goal || !body.locale || !Array.isArray(body.targetPlatforms) || body.targetPlatforms.length === 0) {
       return NextResponse.json({ code: 'INVALID_BODY', message: 'goal, locale and targetPlatforms required' }, { status: 400 })
     }
-    const campaign = await prisma.socialCampaign.create({
-      data: {
-        customerAccountId: actor.customerAccountId,
-        managedSiteId: actor.managedSiteId,
-        createdByUserId: actor.userId,
-        goal: body.goal,
-        locale: body.locale,
-        targetPlatforms: body.targetPlatforms,
-        targetAudience: body.targetAudience,
-        brandProfile: body.brandProfile,
-        status: 'DRAFT',
-      },
+    const created = await createSocialCampaignWithQuota({
+      customerAccountId: actor.customerAccountId,
+      managedSiteId: actor.managedSiteId,
+      createdByUserId: actor.userId,
+      goal: body.goal,
+      locale: body.locale,
+      targetPlatforms: body.targetPlatforms,
+      targetAudience: body.targetAudience,
+      brandProfile: body.brandProfile,
+      idempotencyKey: body.idempotencyKey,
     })
+    if (!created.ok) {
+      return NextResponse.json({ code: created.code, message: created.message }, { status: socialResultHttpStatus(created.code) })
+    }
+    const campaign = await prisma.socialCampaign.findUnique({ where: { id: created.value.id } })
     return NextResponse.json({ campaign }, { status: 201 })
   } catch (error) {
     if (error instanceof SocialApiError) {
       return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
     }
-    return NextResponse.json({ code: 'UNAUTHORIZED', message: 'Unauthorized' }, { status: 401 })
+    console.error('social campaigns POST failed', error)
+    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to create campaign' }, { status: 500 })
   }
 }
