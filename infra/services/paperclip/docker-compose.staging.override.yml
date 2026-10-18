@@ -1,0 +1,45 @@
+# Use with upstream paperclip repo (see README). Project name enforced for isolation.
+
+name: webxxl-stg-paperclip
+
+services:
+  server:
+    ports:
+      - "127.0.0.1:13100:3100"
+    environment:
+      PAPERCLIP_PUBLIC_URL: ${PAPERCLIP_PUBLIC_URL:-http://127.0.0.1:13100}
+      PAPERCLIP_DEPLOYMENT_MODE: authenticated
+      PAPERCLIP_DEPLOYMENT_EXPOSURE: private
+      PAPERCLIP_SECRETS_STRICT_MODE: "true"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+
+  db:
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+networks:
+  default:
+    name: webxxl_stg_paperclip_net
+
+volumes:
+  pgdata:
+    name: webxxl_stg_paperclip_pgdata
+  paperclip-data:
+    name: webxxl_stg_paperclip_data

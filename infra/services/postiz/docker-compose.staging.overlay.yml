@@ -1,0 +1,32 @@
+# Apply on staging host AFTER cloning gitroomhq/postiz-docker-compose:
+#   docker compose -f docker-compose.yaml -f /path/to/webxxl/infra/services/postiz/docker-compose.staging.overlay.yml config
+#
+# Do not apply this overlay to app.webbxxl.com production.
+
+name: webxxl-stg-postiz
+
+services:
+  postiz:
+    ports:
+      - "127.0.0.1:14007:5000"
+    logging: &json_log
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+
+  temporal-ui:
+    ports:
+      - "127.0.0.1:14080:8080"
+
+networks:
+  default:
+    name: webxxl_stg_postiz_net
+
+# Upstream volume names vary by clone; on first `config` review, rename volumes explicitly if needed:
+# postiz-uploads -> webxxl_stg_postiz_uploads (host-specific migration step documented in STAGING-GATE)

@@ -40,7 +40,7 @@ const chatwoot: ConversationProvider = candidate({
   replaceable: true,
   installed: false,
   async listConversations() {
-    return { ok: false, code: 'NOT_CONFIGURED', message: 'Chatwoot is not installed in FOUND-01.' }
+    return { ok: false, code: 'NOT_CONFIGURED', message: 'Chatwoot staging compose is defined in INFRA-02; service is not activated until COMMS-06.' }
   },
 })
 
@@ -52,7 +52,7 @@ const paperclip: WorkforceProvider = candidate({
   replaceable: true,
   installed: false,
   async listAgents() {
-    return { ok: false, code: 'NOT_CONFIGURED', message: 'Paperclip is not installed in FOUND-01.' }
+    return { ok: false, code: 'NOT_CONFIGURED', message: 'Paperclip staging boundary documented in INFRA-02; WorkforceProvider activation is AGENT-03.' }
   },
 })
 

@@ -1,6 +1,6 @@
 # 12 — Deployment Topology, Hostinger/Docker, Vercel and Operations
 
-**Status:** target topology. Hostinger VPS capacity, Docker container placement, Postiz activation, secrets and actual Vercel environments must be inspected before deployments. Do not change/restart live Stocksist services during this initiative. `www.webbxxl.com` was shown as current customer portal; canonical domain/DNS must be verified before subdomain changes.
+**Status:** target topology plus **INFRA-02 repository assets** (`infra/services/**`). Hostinger VPS capacity, Docker placement, and live staging startup remain **BLOCKED** pending owner inventory. Do not change/restart live Stocksist services. Postiz at `app.webbxxl.com` is an **existing** deployment (read-only probe 2026-10-18: Postiz register UI); separate staging uses project `webxxl-stg-postiz` only on an approved host.
 
 ## 1. Deployment diagram
 
@@ -39,7 +39,15 @@ Owner provides/screenshots or Cursor reads authorized Hostinger VPS: operating s
 - `staging`: realistic encrypted test data only, replica schemas, isolated services, provider sandbox/test identities, small controlled cost and approved social test accounts.
 - `production`: separate secret store, domain/TLS and DB/service accounts, explicit user authorization, permitted channels, backup runbooks and live provider registrations.
 
-Each stack uses pinned images/digests, separate deployment manifests and volume ownership, healthcheck, container resource limits, restart policy and downtime notifications. Service deployment lives in separate `infra/services/*` or its own infrastructure repo, **not by copying third-party source into WebXXL Next.js tree**. Retain upgrade rollback and security patch windows.
+Each stack uses pinned images/digests, separate deployment manifests and volume ownership, healthcheck, container resource limits, restart policy and downtime notifications. Service deployment lives in `infra/services/*` (INFRA-02) or its own infrastructure repo, **not by copying third-party application source into WebXXL Next.js tree**. Staging gate: [infra/services/shared/STAGING-GATE.md](../../../infra/services/shared/STAGING-GATE.md). Retain upgrade rollback and security patch windows.
+
+### INFRA-02 pinned staging references (repository)
+
+| Service | Compose project | Local bind (staging file) | Upstream pin documented in repo |
+|---|---|---|---|
+| Chatwoot | `webxxl-stg-chatwoot` | `127.0.0.1:13000` | `chatwoot/chatwoot:v4.18.0-ce` |
+| Postiz (separate staging) | `webxxl-stg-postiz` | `127.0.0.1:14007` (+ Temporal UI `14080`) | Overlay on [gitroomhq/postiz-docker-compose](https://github.com/gitroomhq/postiz-docker-compose); app tag **v2.25.1** reference |
+| Paperclip | `webxxl-stg-paperclip` | `127.0.0.1:13100` | Build from [paperclipai/paperclip](https://github.com/paperclipai/paperclip) tag **v2026.325.0** + override |
 
 ## 4. Suggested subdomains (reserved — not created)
 
