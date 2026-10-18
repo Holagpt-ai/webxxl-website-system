@@ -1,6 +1,7 @@
 import type { Prisma, WorkflowJobStatus } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { isWorkflowDurableExecutionAllowed, isWorkflowRepairEnabled } from '@/config/workflow-backend'
+import { abandonOpenWorkflowAttempts, attemptsExhausted } from '@/lib/platform/workflow/attempt-lifecycle'
 import { casTransitionWorkflowJobTx } from '@/lib/platform/workflow/job-transition'
 import { prismaWorkflowProvider } from '@/lib/platform/workflow/prisma-provider'
 import { computeWorkflowBackoffMs } from '@/lib/platform/workflow/retry-policy'
@@ -22,7 +23,7 @@ function recoveryTargetStatus(job: {
   if (job.lastErrorClass === 'UNKNOWN_EXTERNAL_OUTCOME') {
     return 'AWAITING_RECONCILIATION'
   }
-  if (job.attemptCount >= job.maxAttempts) {
+  if (attemptsExhausted(job)) {
     return 'DEAD_LETTER'
   }
   return 'RETRY_WAIT'
@@ -42,11 +43,21 @@ export async function recoverAbandonedJobs(now = new Date()): Promise<number> {
 
   let recovered = 0
   for (const job of rows) {
-    const toStatus = recoveryTargetStatus(job)
+    await abandonOpenWorkflowAttempts({
+      workflowJobId: job.id,
+      leaseToken: job.leaseToken,
+      leaseFence: job.leaseFence,
+      reason: 'LEASE_EXPIRED_ABANDONED',
+    })
+
+    const jobAfterAbandon = await prisma.workflowJob.findUnique({ where: { id: job.id } })
+    if (!jobAfterAbandon) continue
+
+    const toStatus = recoveryTargetStatus(jobAfterAbandon)
     const nextAttemptAt =
       toStatus === 'RETRY_WAIT'
-        ? new Date(now.getTime() + computeWorkflowBackoffMs(job.attemptCount + 1))
-        : job.nextAttemptAt
+        ? new Date(now.getTime() + computeWorkflowBackoffMs(jobAfterAbandon.attemptCount))
+        : jobAfterAbandon.nextAttemptAt
 
     const row = await casTransitionWorkflowJobTx({
       jobId: job.id,
@@ -61,10 +72,12 @@ export async function recoverAbandonedJobs(now = new Date()): Promise<number> {
         leaseExpiresAt: null,
         leaseFence: { increment: 1 },
         nextAttemptAt,
-        lastErrorCode: job.lastErrorCode ?? 'LEASE_EXPIRED',
+        lastErrorCode: jobAfterAbandon.lastErrorCode ?? 'LEASE_EXPIRED',
+        lastErrorClass:
+          toStatus === 'AWAITING_RECONCILIATION' ? ('UNKNOWN_EXTERNAL_OUTCOME' as const) : jobAfterAbandon.lastErrorClass,
       },
       eventType: 'RECOVERED',
-      eventDetail: { reason: 'expired_lease', previousStatus: job.status },
+      eventDetail: { reason: 'expired_lease', previousStatus: job.status, attemptCount: jobAfterAbandon.attemptCount },
     })
     if (row) {
       recovered += 1
@@ -72,8 +85,8 @@ export async function recoverAbandonedJobs(now = new Date()): Promise<number> {
         await prisma.workflowDeadLetter.create({
           data: {
             workflowJobId: job.id,
-            reason: job.lastErrorCode ?? 'LEASE_EXPIRED_MAX_ATTEMPTS',
-            errorClass: job.lastErrorClass ?? undefined,
+            reason: jobAfterAbandon.lastErrorCode ?? 'LEASE_EXPIRED_MAX_ATTEMPTS',
+            errorClass: jobAfterAbandon.lastErrorClass ?? undefined,
           },
         })
       }

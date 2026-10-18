@@ -1,5 +1,6 @@
+import type { WorkflowJob, WorkflowOutbox } from '@prisma/client'
 import type { EnqueueWorkflowJobInput } from '@/lib/platform/workflow/types'
-import { buildWorkflowRequestFingerprint } from '@/lib/platform/workflow/fingerprint'
+import { buildEnqueueFingerprint, buildWorkflowRequestFingerprint } from '@/lib/platform/workflow/fingerprint'
 
 export const WORKFLOW_OUTBOX_ENVELOPE_VERSION = 1 as const
 
@@ -46,4 +47,49 @@ export function parseWorkflowOutboxEnvelope(payloadRef: unknown): WorkflowOutbox
   if (typeof row.eventKey !== 'string' || typeof row.correlationId !== 'string') return null
   if (typeof row.requestFingerprint !== 'string') return null
   return row as WorkflowOutboxEnvelope
+}
+
+export function canonicalEnqueueFingerprint(enqueue: EnqueueWorkflowJobInput): string {
+  return buildEnqueueFingerprint(enqueue)
+}
+
+/** Validates immutable outbox identity before dispatch or replay. */
+export function validateOutboxEnvelopeForRow(
+  row: Pick<WorkflowOutbox, 'eventKey' | 'customerAccountId' | 'jobKind' | 'requestFingerprint'>,
+  envelope: WorkflowOutboxEnvelope,
+): { ok: true } | { ok: false; reason: string } {
+  if (envelope.eventKey !== row.eventKey) return { ok: false, reason: 'event_key_mismatch' }
+  if (envelope.requestFingerprint !== row.requestFingerprint) return { ok: false, reason: 'fingerprint_mismatch' }
+  if (row.jobKind !== envelope.enqueue.jobKind) return { ok: false, reason: 'job_kind_mismatch' }
+  const rowAccount = row.customerAccountId ?? null
+  const enqueueAccount = envelope.enqueue.customerAccountId ?? null
+  if (rowAccount !== enqueueAccount) return { ok: false, reason: 'tenant_mismatch' }
+  const rebuilt = buildWorkflowRequestFingerprint({
+    customerAccountId: envelope.enqueue.customerAccountId,
+    managedSiteId: envelope.enqueue.managedSiteId,
+    billingGroupId: envelope.enqueue.billingGroupId,
+    jobKind: envelope.enqueue.jobKind,
+    sourceType: envelope.enqueue.sourceType,
+    sourceId: envelope.enqueue.sourceId,
+    sourceRevisionHash: envelope.enqueue.sourceRevisionHash,
+    payloadRef: envelope.payloadRef,
+  })
+  if (rebuilt !== envelope.requestFingerprint) return { ok: false, reason: 'canonical_fingerprint_drift' }
+  return { ok: true }
+}
+
+export function workflowJobMatchesOutboxEnvelope(
+  job: Pick<
+    WorkflowJob,
+    'idempotencyKey' | 'requestFingerprint' | 'customerAccountId' | 'jobKind' | 'sourceType' | 'sourceId'
+  >,
+  envelope: WorkflowOutboxEnvelope,
+): boolean {
+  if (job.idempotencyKey !== envelope.enqueue.idempotencyKey) return false
+  if (job.requestFingerprint !== canonicalEnqueueFingerprint(envelope.enqueue)) return false
+  if ((job.customerAccountId ?? null) !== (envelope.enqueue.customerAccountId ?? null)) return false
+  if (job.jobKind !== envelope.enqueue.jobKind) return false
+  if (job.sourceType !== envelope.enqueue.sourceType) return false
+  if (job.sourceId !== envelope.enqueue.sourceId) return false
+  return true
 }

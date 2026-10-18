@@ -107,6 +107,8 @@
 
 **AUTO-10A (in PR #42):** CAS job transitions + fenced lease checks; fairness releases excess claims (no stranded `CLAIMED`); typed outbox envelope + `SKIP LOCKED` dispatch dedupe; worker attempt records + handler exception isolation; automatic expired-lease recovery without `WORKFLOW_REPAIR_ENABLED`; staff-gated platform workflow reads; handler tenant binding for COMMS/MKT/SEO; legacy notification expired-PROCESSING recovery.
 
+**AUTO-10B (in PR #42):** Monotonic `WorkflowAttempt` lifecycle with abandoned-attempt finalization; crashed attempts count toward `maxAttempts`; external notification unknown outcomes quarantined (no auto-resend); outbox replay tenant/fingerprint validation + dispatch lease; unexpired lease required on worker completions; COMMS jobs require account-bound receipts; global concurrency admission documented as best-effort.
+
 ## INFRA-02 (2026-10-18) — repository infrastructure only; live staging BLOCKED
 
 | Area | Evidence | Honest status |

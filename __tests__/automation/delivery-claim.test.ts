@@ -61,6 +61,8 @@ describe('automation delivery claim (AUTO-10)', () => {
         attempts: 1,
         claimFence: 4,
         lastErrorClass: null,
+        channel: 'IN_APP',
+        providerRef: null,
       },
     ])
     updateMany.mockResolvedValueOnce({ count: 1 })
@@ -69,7 +71,7 @@ describe('automation delivery claim (AUTO-10)', () => {
     expect(updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ claimFence: 4, claimExpiresAt: { lt: now } }),
-        data: expect.objectContaining({ claimFence: 5 }),
+        data: expect.objectContaining({ claimFence: 5, status: 'FAILED' }),
       }),
     )
   })

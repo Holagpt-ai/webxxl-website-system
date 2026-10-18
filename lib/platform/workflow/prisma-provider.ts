@@ -99,6 +99,7 @@ export class PrismaWorkflowProvider implements WorkflowProvider {
     const leaseExpires = new Date(now.getTime() + leaseTtlMs)
     const workerId = input.workerId
 
+    // Best-effort admission: unlocked count can race across workers; batch caps + per-account release remain strict.
     const globalActive = await prisma.workflowJob.count({
       where: { status: { in: ['CLAIMED', 'RUNNING'] } },
     })
@@ -199,9 +200,10 @@ export class PrismaWorkflowProvider implements WorkflowProvider {
   async complete(input: CompleteJobInput): Promise<WorkflowResult<WorkflowJobSnapshot>> {
     const row = await casTransitionWorkflowJobTx({
       jobId: input.jobId,
-      fromStatuses: ['RUNNING', 'CLAIMED'],
+      fromStatuses: ['RUNNING'],
       toStatus: 'COMPLETED',
       expectedLease: { token: input.leaseToken, fence: input.leaseFence },
+      requireUnexpiredLease: true,
       data: {
         resultRef: input.resultRef ?? null,
         completedAt: new Date(),
@@ -219,9 +221,10 @@ export class PrismaWorkflowProvider implements WorkflowProvider {
     const toStatus = input.terminal ? 'FAILED_TERMINAL' : 'DEAD_LETTER'
     const row = await casTransitionWorkflowJobTx({
       jobId: input.jobId,
-      fromStatuses: ['RUNNING', 'CLAIMED', 'RETRY_WAIT', 'AWAITING_RECONCILIATION'],
+      fromStatuses: ['RUNNING'],
       toStatus,
       expectedLease: { token: input.leaseToken, fence: input.leaseFence },
+      requireUnexpiredLease: true,
       data: {
         lastErrorCode: input.errorCode,
         lastErrorClass: input.errorClass,
@@ -248,11 +251,11 @@ export class PrismaWorkflowProvider implements WorkflowProvider {
   async retry(input: RetryJobInput): Promise<WorkflowResult<WorkflowJobSnapshot>> {
     const row = await casTransitionWorkflowJobTx({
       jobId: input.jobId,
-      fromStatuses: ['RUNNING', 'CLAIMED'],
+      fromStatuses: ['RUNNING'],
       toStatus: 'RETRY_WAIT',
       expectedLease: { token: input.leaseToken, fence: input.leaseFence },
+      requireUnexpiredLease: true,
       data: {
-        attemptCount: { increment: 1 },
         nextAttemptAt: input.nextAttemptAt,
         lastErrorCode: input.errorCode,
         lastErrorClass: input.errorClass,
@@ -275,9 +278,10 @@ export class PrismaWorkflowProvider implements WorkflowProvider {
   }): Promise<WorkflowResult<WorkflowJobSnapshot>> {
     const row = await casTransitionWorkflowJobTx({
       jobId: input.jobId,
-      fromStatuses: ['RUNNING', 'CLAIMED'],
+      fromStatuses: ['RUNNING'],
       toStatus: 'BLOCKED',
       expectedLease: { token: input.leaseToken, fence: input.leaseFence },
+      requireUnexpiredLease: true,
       data: {
         lastErrorCode: input.errorCode,
         leaseOwner: null,
@@ -299,9 +303,10 @@ export class PrismaWorkflowProvider implements WorkflowProvider {
   }): Promise<WorkflowResult<WorkflowJobSnapshot>> {
     const row = await casTransitionWorkflowJobTx({
       jobId: input.jobId,
-      fromStatuses: ['RUNNING', 'CLAIMED'],
+      fromStatuses: ['RUNNING'],
       toStatus: 'AWAITING_RECONCILIATION',
       expectedLease: { token: input.leaseToken, fence: input.leaseFence },
+      requireUnexpiredLease: true,
       data: {
         lastErrorCode: input.errorCode,
         resultRef: input.resultRef ?? null,

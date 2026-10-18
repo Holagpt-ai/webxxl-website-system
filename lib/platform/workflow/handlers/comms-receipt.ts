@@ -11,6 +11,9 @@ export async function executeCommsReceiptWorkflow(
   if (!isWorkflowDurableExecutionAllowed() || !isCommsReceiptWorkerEnabled()) {
     return { outcome: 'BLOCKED', errorCode: 'NOT_CONFIGURED' }
   }
+  if (!ctx.job.customerAccountId) {
+    return { outcome: 'FAILED_TERMINAL', errorClass: 'PERMANENT', errorCode: 'MISSING_ACCOUNT' }
+  }
   const receiptId = payload.receiptId
   if (typeof receiptId !== 'string' || !receiptId) {
     return { outcome: 'FAILED_TERMINAL', errorClass: 'CONFIGURATION_MISSING', errorCode: 'MISSING_RECEIPT_ID' }
@@ -22,7 +25,7 @@ export async function executeCommsReceiptWorkflow(
   if (!receipt) {
     return { outcome: 'FAILED_TERMINAL', errorClass: 'PERMANENT', errorCode: 'RECEIPT_NOT_FOUND' }
   }
-  if (ctx.job.customerAccountId && receipt.customerAccountId !== ctx.job.customerAccountId) {
+  if (receipt.customerAccountId !== ctx.job.customerAccountId) {
     return { outcome: 'FAILED_TERMINAL', errorClass: 'PERMANENT', errorCode: 'FOREIGN_RECEIPT' }
   }
   const result = await processCommsWebhookReceiptById({

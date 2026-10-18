@@ -14,6 +14,10 @@ import {
   recoverExpiredAutomationDeliveryClaims,
   tryClaimAutomationDeliveryJob,
 } from '@/lib/automation/delivery-claim'
+import {
+  DELIVERY_OUTCOME_UNKNOWN_EXTERNAL,
+  isExternalDeliveryChannel,
+} from '@/lib/automation/delivery-outcome'
 
 const CHANNELS: Record<AutomationDeliveryChannel, NotificationChannel> = {
   IN_APP: inAppChannel,
@@ -84,6 +88,24 @@ export async function processAutomationDeliveryBatch(limit = 25): Promise<Worker
 
       const attempts = job.attempts + 1
       const errorClass = result.error
+      if (
+        isExternalDeliveryChannel(job.channel) &&
+        (errorClass === 'unknown' || errorClass === 'provider_rejected')
+      ) {
+        const committed = await commitAutomationDeliveryJobClaim({
+          jobId: job.id,
+          claimToken: claim.claimToken,
+          claimFence: claim.fence,
+          data: {
+            status: 'DEAD',
+            attempts,
+            lastErrorClass: DELIVERY_OUTCOME_UNKNOWN_EXTERNAL,
+            nextAttemptAt: new Date('2099-01-01T00:00:00.000Z'),
+          },
+        })
+        if (committed) dead += 1
+        continue
+      }
       if (attempts >= job.maxAttempts || errorClass === 'disabled' || errorClass === 'invalid_recipient') {
         const committed = await commitAutomationDeliveryJobClaim({
           jobId: job.id,
@@ -110,6 +132,21 @@ export async function processAutomationDeliveryBatch(limit = 25): Promise<Worker
     } catch (error) {
       const attempts = job.attempts + 1
       const errorClass = classifyDeliveryError(error)
+      if (isExternalDeliveryChannel(job.channel)) {
+        const committed = await commitAutomationDeliveryJobClaim({
+          jobId: job.id,
+          claimToken: claim.claimToken,
+          claimFence: claim.fence,
+          data: {
+            status: 'DEAD',
+            attempts,
+            lastErrorClass: DELIVERY_OUTCOME_UNKNOWN_EXTERNAL,
+            nextAttemptAt: new Date('2099-01-01T00:00:00.000Z'),
+          },
+        })
+        if (committed) dead += 1
+        continue
+      }
       if (attempts >= job.maxAttempts) {
         const committed = await commitAutomationDeliveryJobClaim({
           jobId: job.id,
