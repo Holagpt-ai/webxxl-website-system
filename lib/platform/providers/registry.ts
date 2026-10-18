@@ -7,6 +7,7 @@ import { createPostizSocialProvider } from '@/lib/platform/providers/postiz-soci
 import { createTwentyCrmProvider } from '@/lib/platform/providers/twenty-crm'
 import { createWebxxlNativeCrmProvider } from '@/lib/platform/providers/webxxl-native-crm'
 import { createPaperclipWorkforceProvider } from '@/lib/platform/providers/paperclip-workforce'
+import { createChatwootConversationProvider } from '@/lib/platform/providers/chatwoot-conversation'
 import { createSyntheticWorkforceProvider } from '@/lib/platform/workforce/synthetic-provider'
 import type {
   AnyPlatformProvider,
@@ -27,16 +28,10 @@ function candidate<T extends AnyPlatformProvider>(provider: T): T {
 const webxxlNativeCrm = createWebxxlNativeCrmProvider()
 const twentyCrm = createTwentyCrmProvider()
 
-const chatwoot: ConversationProvider = candidate({
-  kind: 'conversation',
-  key: 'chatwoot',
-  displayName: 'Chatwoot',
-  availability: 'CANDIDATE',
-  replaceable: true,
-  installed: false,
-  async listConversations() {
-    return { ok: false, code: 'NOT_CONFIGURED', message: 'Chatwoot staging compose is defined in INFRA-02; service is not activated until COMMS-06.' }
-  },
+const chatwoot: ConversationProvider = createChatwootConversationProvider({
+  baseUrl: process.env.CHATWOOT_BASE_URL ?? 'http://localhost:3000',
+  resolveApiAccessToken: async () => null,
+  resolveExternalAccountId: async () => null,
 })
 
 const syntheticWorkforce = createSyntheticWorkforceProvider()

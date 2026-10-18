@@ -2,6 +2,10 @@
 
 **Status:** normative target model; **not** current Prisma schema nor applied SQL. Reconcile with `prisma/schema.prisma` and existing migrations first. The model names below are logical names, not a directive to create duplicate tables.
 
+## COMMS-06 persistence (implemented in schema; migration pending apply)
+
+`ChatwootTenantMapping`, `ChatwootInboxMapping`, `ChatwootConversationMapping`, `ChatwootSyncCursor`, `CommsWebhookReceipt`, `ContactReconciliationCandidate`, `MessagingTenant`, `SenderIdentity`, `CommunicationQuote`, `CommunicationIntent`, `CommunicationRecipient`, `CommunicationApproval`, `CommunicationDispatchAttempt`, `CommunicationProviderEvent`, `CommunicationAuditEvent` — see migration `20261018210000_comms06_foundation`. Reuses `ChatwootContactMapping`, CRM consent/suppression/timeline, `MessageUsage`, and wallet models without duplicating authoritative ledgers.
+
 ## Existing anchors (verified from `main`)
 
 `User`, `CustomerAccount`, `CustomerMembership`, `Project`, `ProjectMilestone`, `ProjectTask`, `ProjectDependency`, `ProjectActivity`, `ProjectApproval`, `WebsitePreview`, `WebsitePreviewVersion`, `ManagedSite`, `ManagedSiteCapability`, `ManagedSiteChange`, `SalesLead`, `LeadActivity`, `CustomerService`, `ServiceOrder`, `ServiceOrderActivity`, `AutomationEvent`, `AutomationDeliveryJob`, `ManagedDomain`, `HostingService`, `BusinessEmailService`. Reuse/extend these where possible. Existing `SalesLead` is **not yet evidence** of a full contact CRM. `AutomationEvent`/`AutomationDeliveryJob` already have dedupe keys and should be respected.

@@ -36,6 +36,16 @@ export const PLATFORM_ENTITLEMENTS: ServiceEntitlementDefinition[] = [
     fairUsePolicy: 'Included software service; carrier and provider usage remain separately billed.',
   },
   {
+    entitlementKey: 'core.communications',
+    name: 'Unified communications',
+    pricingMode: 'INCLUDED_FREE',
+    includedOrPaid: 'INCLUDED_FREE',
+    eligibleSubscriberCohort: 'UNRESOLVED',
+    purchasable: false,
+    providerPassThrough: false,
+    fairUsePolicy: 'Included inbox software; SMS/email/voice carrier usage billed separately via wallet.',
+  },
+  {
     entitlementKey: 'core.marketing-studio',
     name: 'Marketing Studio',
     pricingMode: 'INCLUDED_FREE',

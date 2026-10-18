@@ -32,6 +32,19 @@
 | SalesLead | `SalesLead`, `LeadActivity`, `saleslead-bridge.ts` | **Unchanged**; bridge candidates only — no bulk migration |
 | OPEN-001 | `core.crm` entitlement | **POLICY_UNRESOLVED** |
 
+## COMMS-06 (2026-10-18) — unified communications backend; live Chatwoot/SMS/email OFF
+
+| Area | Evidence | Honest status |
+|---|---|---|
+| Domain services | `lib/platform/comms/*`, `config/comms-backend.ts` | Tenant mapping, conversations, webhook ingest, policy engine, messaging gateway **preparation**, quotes/intents, opt-out prep — **Vitest (synthetic/mocked)** |
+| Chatwoot adapter | `lib/platform/providers/chatwoot-conversation.ts`, `chatwoot-http.ts` | Application API paths per **developers.chatwoot.com**; pin **v4.18.0-ce** (INFRA-02 compose only); **no live instance verified** |
+| Persistence | Prisma migration `20261018210000_comms06_foundation` | **Pending apply** (not production/staging) |
+| API routes | `app/api/v1/communications/*` | Auth.js membership + feature flags default **false**; webhook route **503** until relay auth configured |
+| Wallet / transport | `gateway-service.ts`, `quote-service.ts` | **No credit debit/reservation**; outbound dispatch **NOT_CONFIGURED** |
+| OPEN-001 | `core.communications` entitlement | **POLICY_UNRESOLVED** (inbox software ≠ free SMS) |
+
+**COMMS-06A (in PR #38):** Webhook relay auth binds `x-webxxl-chatwoot-timestamp` into HMAC; scoped `eventDedupeKey`; trusted receipt processor (`processCommsWebhookReceiptById`) — HTTP ingest leaves **PENDING** until worker activated; channel-aware timeline mapping; intent fingerprint conflicts; synthetic quotes gated by `COMMS_SYNTHETIC_QUOTE_ENABLED`.
+
 ## SOCIAL-04 (2026-10-18) — Marketing Studio backend; live Postiz publishing OFF
 
 | Area | Evidence | Honest status |

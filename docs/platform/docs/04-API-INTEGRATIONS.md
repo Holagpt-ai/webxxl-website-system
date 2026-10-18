@@ -78,7 +78,12 @@ The server recomputes/validates all IDs from actor membership, not from user inp
 | `GET/POST /api/v1/crm/segments` | CRM roles | filters/rules | saved static/dynamic segments |
 | `GET /api/v1/crm/contacts/{id}/timeline` | CRM reader | pagination | source-attributed omnichannel timeline |
 | `POST /api/v1/crm/tasks` | agent/human tool grant | lead, assignee, deadline | create task and account event |
-| `POST /api/v1/communications/quotes` | campaign manager | recipients, content, sender, purpose | eligibility and credit estimate, reason codes |
+| `POST /api/v1/communications/quotes` | `comms.quote` | channel, purpose, recipient scope | dry-run eligibility counts; **COST_UNAVAILABLE** without configured unit cost |
+| `POST /api/v1/communications/intents` | `comms.intent.prepare` | channel, purpose, recipient, idempotency | immutable content hash + policy decision; **no dispatch** |
+| `GET /api/v1/communications/intents/{id}` | `comms.read` | — | intent status, recipients, dispatch attempts (metadata only) |
+| `GET /api/v1/communications/inboxes` | `comms.read` | — | verified Chatwoot inbox mappings for operating account |
+| `GET /api/v1/communications/connections` | `comms.read` | — | Chatwoot mapping state; outbound flags honest OFF |
+| `POST /api/v1/communications/webhooks/chatwoot` | relay HMAC | signed body + idempotency | **503 until** `CHATWOOT_WEBHOOK_INGEST_ENABLED` + relay secret; quarantine unknown tenants |
 | `POST /api/v1/communications/campaigns` | campaign creator | draft + consent scope | DRAFT only, immutable revision hash |
 | `POST /api/v1/communications/campaigns/{id}/approve` | authorized approver | exact hash, budget | authorization; reserve credits transactionally |
 | `POST /api/v1/communications/campaigns/{id}/dispatch` | service actor | approved campaign | enqueue per-recipient messages; never bypass wallet |
