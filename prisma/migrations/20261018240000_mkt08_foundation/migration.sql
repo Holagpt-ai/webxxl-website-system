@@ -47,7 +47,9 @@ CREATE TABLE "MarketingRequestStatusEvent" (
     CONSTRAINT "MarketingRequestStatusEvent_pkey" PRIMARY KEY ("id")
 );
 CREATE INDEX "MarketingRequestStatusEvent_marketingRequestId_createdAt_idx" ON "MarketingRequestStatusEvent"("marketingRequestId", "createdAt");
+CREATE INDEX "MarketingRequestStatusEvent_customerAccountId_createdAt_idx" ON "MarketingRequestStatusEvent"("customerAccountId", "createdAt");
 ALTER TABLE "MarketingRequestStatusEvent" ADD CONSTRAINT "MarketingRequestStatusEvent_marketingRequestId_fkey" FOREIGN KEY ("marketingRequestId") REFERENCES "MarketingRequest"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "MarketingRequestStatusEvent" ADD CONSTRAINT "MarketingRequestStatusEvent_customerAccountId_fkey" FOREIGN KEY ("customerAccountId") REFERENCES "CustomerAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 CREATE TABLE "MarketingArtifactRevision" (
     "id" TEXT NOT NULL,
@@ -79,6 +81,7 @@ CREATE UNIQUE INDEX "MarketingArtifactRevision_customerAccountId_revisionHash_ke
 CREATE INDEX "MarketingArtifactRevision_marketingRequestId_createdAt_idx" ON "MarketingArtifactRevision"("marketingRequestId", "createdAt");
 ALTER TABLE "MarketingArtifactRevision" ADD CONSTRAINT "MarketingArtifactRevision_marketingRequestId_fkey" FOREIGN KEY ("marketingRequestId") REFERENCES "MarketingRequest"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE "MarketingArtifactRevision" ADD CONSTRAINT "MarketingArtifactRevision_marketingArtifactId_fkey" FOREIGN KEY ("marketingArtifactId") REFERENCES "MarketingArtifact"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "MarketingArtifactRevision" ADD CONSTRAINT "MarketingArtifactRevision_customerAccountId_fkey" FOREIGN KEY ("customerAccountId") REFERENCES "CustomerAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 CREATE TABLE "MarketingArtifactReview" (
     "id" TEXT NOT NULL,
@@ -104,6 +107,7 @@ CREATE INDEX "MarketingArtifactReview_customerAccountId_status_idx" ON "Marketin
 CREATE INDEX "MarketingArtifactReview_revisionHash_idx" ON "MarketingArtifactReview"("revisionHash");
 ALTER TABLE "MarketingArtifactReview" ADD CONSTRAINT "MarketingArtifactReview_marketingRequestId_fkey" FOREIGN KEY ("marketingRequestId") REFERENCES "MarketingRequest"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "MarketingArtifactReview" ADD CONSTRAINT "MarketingArtifactReview_marketingArtifactId_fkey" FOREIGN KEY ("marketingArtifactId") REFERENCES "MarketingArtifact"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "MarketingArtifactReview" ADD CONSTRAINT "MarketingArtifactReview_customerAccountId_fkey" FOREIGN KEY ("customerAccountId") REFERENCES "CustomerAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 CREATE TABLE "MarketingBrandContextVersion" (
     "id" TEXT NOT NULL,
@@ -178,6 +182,8 @@ CREATE UNIQUE INDEX "MarketingLeadFollowUpEvaluation_idempotencyKey_key" ON "Mar
 CREATE INDEX "MarketingLeadFollowUpEvaluation_customerAccountId_coverageState_idx" ON "MarketingLeadFollowUpEvaluation"("customerAccountId", "coverageState");
 ALTER TABLE "MarketingLeadFollowUpEvaluation" ADD CONSTRAINT "MarketingLeadFollowUpEvaluation_customerAccountId_fkey" FOREIGN KEY ("customerAccountId") REFERENCES "CustomerAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "MarketingLeadFollowUpEvaluation" ADD CONSTRAINT "MarketingLeadFollowUpEvaluation_managedSiteId_fkey" FOREIGN KEY ("managedSiteId") REFERENCES "ManagedSite"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "MarketingLeadFollowUpEvaluation" ADD CONSTRAINT "MarketingLeadFollowUpEvaluation_crmContactId_fkey" FOREIGN KEY ("crmContactId") REFERENCES "CrmContact"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+CREATE INDEX "MarketingLeadFollowUpEvaluation_customerAccountId_crmContactId_idx" ON "MarketingLeadFollowUpEvaluation"("customerAccountId", "crmContactId");
 
 CREATE TABLE "MarketingWorkflowRun" (
     "id" TEXT NOT NULL,

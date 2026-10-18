@@ -20,6 +20,7 @@ export async function POST(request: Request, { params }: Params) {
     if (!evaluation) return NextResponse.json({ code: 'NOT_FOUND', message: 'Evaluation not found' }, { status: 404 })
     const prepared = await prepareFollowUpCallbackTask({
       customerAccountId: actor.customerAccountId,
+      evaluationId: evaluation.id,
       contactId: evaluation.crmContactId,
       assignedUserId: body.assignedUserId,
       idempotencyKey: body.idempotencyKey,

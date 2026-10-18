@@ -43,7 +43,7 @@ export async function POST(request: Request) {
       customerAccountId: actor.customerAccountId,
       userId: actor.userId,
       managedSiteId: body.managedSiteId,
-      category: body.category,
+      category: body.category as import('@/lib/platform/marketing/types').MarketingRequestCategory,
       goal: body.goal,
       brief: body.brief,
       locale: body.locale ?? 'en',

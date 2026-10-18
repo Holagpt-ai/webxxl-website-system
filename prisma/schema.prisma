@@ -491,6 +491,9 @@ model CustomerAccount {
   marketingLeadFollowUpPolicies MarketingLeadFollowUpPolicy[]
   marketingLeadFollowUpEvaluations MarketingLeadFollowUpEvaluation[]
   marketingWorkflowRuns        MarketingWorkflowRun[]
+  marketingRequestStatusEvents MarketingRequestStatusEvent[]
+  marketingArtifactRevisions   MarketingArtifactRevision[]
+  marketingArtifactReviews     MarketingArtifactReview[]
   crmContacts                  CrmContact[]
   crmCompanies                 CrmCompany[]
   crmPipelines                 CrmPipeline[]
@@ -2159,9 +2162,11 @@ model MarketingRequestStatusEvent {
   reason            String?
   createdAt         DateTime               @default(now())
 
+  customerAccount  CustomerAccount  @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
   marketingRequest MarketingRequest @relation(fields: [marketingRequestId], references: [id], onDelete: Restrict)
 
   @@index([marketingRequestId, createdAt])
+  @@index([customerAccountId, createdAt])
 }
 
 model MarketingArtifact {
@@ -2214,6 +2219,7 @@ model MarketingArtifactRevision {
   createdByUserId          String?
   createdAt                DateTime                @default(now())
 
+  customerAccount   CustomerAccount    @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
   marketingRequest  MarketingRequest?  @relation(fields: [marketingRequestId], references: [id], onDelete: SetNull)
   marketingArtifact MarketingArtifact  @relation(fields: [marketingArtifactId], references: [id], onDelete: Restrict)
 
@@ -2241,6 +2247,7 @@ model MarketingArtifactReview {
   usageLimit          Int?
   createdAt           DateTime                      @default(now())
 
+  customerAccount   CustomerAccount   @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
   marketingRequest  MarketingRequest  @relation(fields: [marketingRequestId], references: [id], onDelete: Restrict)
   marketingArtifact MarketingArtifact @relation(fields: [marketingArtifactId], references: [id], onDelete: Restrict)
 
@@ -2319,9 +2326,11 @@ model MarketingLeadFollowUpEvaluation {
 
   customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
   managedSite     ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  crmContact      CrmContact      @relation(fields: [crmContactId], references: [id], onDelete: Restrict)
 
   @@unique([customerAccountId, dedupeKey])
   @@index([customerAccountId, coverageState])
+  @@index([customerAccountId, crmContactId])
 }
 
 model MarketingWorkflowRun {
@@ -2508,6 +2517,7 @@ model CrmContact {
   segmentMembers  CrmSegmentMember[]
   chatwootMappings             ChatwootContactMapping[]
   chatwootConversationMappings ChatwootConversationMapping[]
+  marketingLeadFollowUpEvaluations MarketingLeadFollowUpEvaluation[]
 
   @@unique([customerAccountId, id])
   @@index([customerAccountId, status])

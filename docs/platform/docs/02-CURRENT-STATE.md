@@ -80,6 +80,8 @@
 | Feature flags | `MKT_*` in `config/mkt-backend.ts` | All default **false**; does not enable SOCIAL/CRM/COMMS/SEO/workforce production flags |
 | Production | — | **Not deployed**; no Postiz schedule, no ad spend, no site file writes |
 
+**MKT-08A (in PR #40):** Follow-up task staff membership checks, timeline-based coverage (no `tasks.length` outreach proxy), atomic approval `updateMany`, SHA-256 request fingerprints, non-swallowed FSM transitions, brand `complianceReviewState` trust, tenant FK hardening in pending migration — **Vitest `mkt08a-integrity`**.
+
 ## INFRA-02 (2026-10-18) — repository infrastructure only; live staging BLOCKED
 
 | Area | Evidence | Honest status |
