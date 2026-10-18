@@ -40,6 +40,8 @@ Tool descriptor includes `name`, `schema`, `allowedActorTypes`, `accountScope`, 
 
 ## 3. Internal Paperclip pilot
 
+**AGENT-03 (2026-10-18):** WebXXL backend now owns internal task, approval, budget, pause, and tool execution gateway contracts under `lib/platform/workforce/*`. Five internal agent roles are registered with live execution **disabled** by default. Paperclip remains an external control plane reference (`WorkforceProvider` pin v2026.325.0); no Paperclip containers or LLM keys are activated in this batch.
+
 1. Confirm upstream repo version, API/agent adapters, maintenance/security notices, self-host licensing, isolation and admin authentication **before** deployment.
 2. Deploy isolated from Stocksist/WebXXL production; separate Docker Compose/volumes/secrets/network and bounded CPU/RAM.
 3. Define `WebXXL Internal Workforce`: five agents (Project Manager, Engineer, QA, Documentation, Operations). Import only reviewed role configurations, not huge unattended swarms.

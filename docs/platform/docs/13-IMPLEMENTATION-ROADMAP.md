@@ -11,7 +11,7 @@
 | **DOC-00** Spec freeze | Current docs | Reconcile README/TAD against real main code and schema, create versioned documentation PR, no product code | Review screenshot fidelity of wireframes | Approve TAD version, free eligibility open questions | No contradictory modules/routes/pricing; docs committed after approval |
 | **FOUND-01** Shared identity/data | DOC-00 | **Implemented in source (unmerged):** `BillingGroup` / membership / roles / profile / spending policy, wallet contracts, entitlement classifications, provider + AI tool registries, additive migration. **Not deployed. Production migration not applied.** | Context header/account/group display contracts — still v0.app, not started | Identify ABMED group payer and operating account owners | Focused FOUND-01 unit tests cover isolation, 1000→650 synthetic wallet, FREE vs PAID, denied AI tools, existing project auth |
 | **INFRA-02** Isolated service staging | FOUND-01 + VPS inventory | **In progress (repo):** `infra/services/**`, staging scripts, inventory + Postiz probe, integration contracts. **Live staging BLOCKED** until VPS approval | None except status/shell mocks later | Hostinger VPS specs, backups, DNS; approve resources; `WEBXXL_STAGING_CONFIRM` | Existing Stocksist/WebXXL unchanged; signed-off isolated services |
-| **AGENT-03** Internal AI workforce | INFRA-02 | Paperclip adapter, Cursor/GitHub sandbox agent workflows, tool registry, budgets, audit and emergency pause | Admin workforce screens when APIs ready | Cursor Cloud/API and GitHub access, budget cap | PR-only safe agent task with trace/cost |
+| **AGENT-03** Internal AI workforce | INFRA-02 | **In progress (repo):** five internal agents, task/approval/budget/pause engine, synthetic workflows, Paperclip adapter stub (pin v2026.325.0); **live execution OFF** | Admin workforce screens when APIs ready | Cursor Cloud/API and GitHub access, budget cap; enable flags only after pilot | Synthetic supervised workflows pass; no production agents |
 | **SOCIAL-04** Activate Postiz + FREE Marketing Studio | INFRA-02, FOUND-01 | Verified authenticated Postiz API, mappings, draft/approve/schedule/status, agent content preparation, links to existing approvals, future analytics sync | Marketing Studio FREE, campaign studio/calendar, channels, deliverables | Approve social app connections, test channels, content policy | Approved test publication with actual ID; no cross-account posting |
 | **CRM-05** Robust CRM backend pilot | FOUND-01, INFRA-02 | Twenty licensing/multiworkspace POC vs alternatives; `CrmProvider`, contact/company/deal/task/segments, import/export, event timeline | CRM FREE list, filter, contact 360, pipelines, tasks | Approve final CRM vendor after POC; sample fields/segments | Full contact feature matrix; independent account workspaces |
 | **COMMS-06** Chatwoot and messaging policy | CRM-05 + FOUND-01 | Chatwoot mapping/API channel, consent/suppression, quote/approval gateway, provider mocks, inbound event ingestion | Communication inbox, contact timeline, approvals | Determine sender identities and permitted contact use | No provider path bypasses consent/billing, synthetic data only |
@@ -72,7 +72,18 @@ Deliverables: infra/services (Chatwoot compose, Postiz overlay + existing instan
 Live staging: BLOCKED (no Hostinger mutation; VPS capacity unknown)
 Postiz app.webbxxl.com: reachable Postiz UI; do not overwrite
 Tests: __tests__/infra/infra02-static-validation.test.ts + validate-config scripts
-Next batch after merge + owner approval: AGENT-03 (Paperclip adapter) or SOCIAL-04 (Postiz API) on approved staging host
+Next batch after merge + owner approval: SOCIAL-04 (Postiz API) on approved staging or AGENT-03 pilot after Paperclip staging + flags
+
+## AGENT-03 status (2026-10-18)
+
+```
+Batch ID: AGENT-03 / TAD v1.0.0 / Cursor
+Prerequisites: INFRA-02 merged @ 7277f94
+Deliverables: lib/platform/workforce/*, config/workforce.ts, paperclip-workforce adapter, migration 20261018130000_agent03_internal_workforce
+Runtime: INTERNAL_WORKFORCE_ENABLED=false, PAPERCLIP_EXECUTION_ENABLED=false (default)
+Tests: __tests__/platform/agent03-workforce.test.ts (synthetic only)
+Next: owner-approved Paperclip staging pilot + Cursor/GitHub scoped integration (not in this batch)
+```
 ```
 
 ## Effort expectations — directional only
