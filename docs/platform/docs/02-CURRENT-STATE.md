@@ -1,6 +1,6 @@
 # 02 — Verified Repository Baseline and Honest Status
 
-**Inspection:** GitHub `main` on 2026-10-18. **DOC-00 merged:** `9b0886afc4b312450a589a6fa6768612312a2ef8` (PR #32). **FOUND-01 merged:** `68c5fde5345813899e2db34ac422a90cb5956f52` (PR #33). Production Vercel deployment and Supabase migration application remain separate gates.
+**Inspection:** GitHub `main` on 2026-10-18. **DOC-00 merged:** `9b0886afc4b312450a589a6fa6768612312a2ef8` (PR #32). **FOUND-01 merged:** `68c5fde5345813899e2db34ac422a90cb5956f52` (PR #33). **INFRA-02 merged:** `7277f94bdceb064600315a702f77d3d29d66eaed` (PR #34). Production Vercel deployment and Supabase migration application remain separate gates.
 
 ## FOUND-01 — merged on GitHub; production migration not applied from INFRA-02
 
@@ -8,6 +8,18 @@
 |---|---|---|
 | Billing group / wallet / providers / AI tools | `lib/platform/**`, additive Prisma migration `20261017220000_found01_platform_identity` | **Merged to `main`**. **Production DB migration not applied** in this batch |
 | Tests | `__tests__/platform/found01*.test.ts` | Present on `main`; not re-run as full CI gate in INFRA-02 |
+
+## AGENT-03 (2026-10-18) — internal workforce backend; live execution OFF
+
+| Area | Evidence | Honest status |
+|---|---|---|
+| Internal agents | `lib/platform/workforce/internal-agents.ts` (5 roles) | **Defined and unit-tested**; default **paused**, `liveExecutionEnabled=false` |
+| Task / execution engine | `lib/platform/workforce/*`, Prisma migration `20261018130000_agent03_internal_workforce` | **In-memory engine + schema**; WebXXL-owned task IDs; synthetic provider default |
+| Approvals / tools | `approval-service.ts`, `execution-gateway.ts`, `operator-auth.ts` | **AGENT-03A:** trusted human operator boundary; task AUTHORIZED only via service; tool grants with approval policy always verified |
+| Budget / pause | `budget-service.ts`, `pause-service.ts`, `config/workforce.ts` | **AGENT-03A:** integer subunit validation, release preserves settled cost, UTC month period key; pause/resume requires trusted operator |
+| History protection | Prisma `ON DELETE RESTRICT` on execution/tool-call/approval | Task rows cannot cascade-delete material workforce history (pending migration) |
+| Paperclip adapter | `lib/platform/providers/paperclip-workforce.ts` | Pin **v2026.325.0** reference; returns **NOT_CONFIGURED** until live pilot; **Paperclip not running** |
+| Production | — | **Not activated**; no LLM keys; no GitHub writes; UI unchanged (v0.app) |
 
 ## INFRA-02 (2026-10-18) — repository infrastructure only; live staging BLOCKED
 

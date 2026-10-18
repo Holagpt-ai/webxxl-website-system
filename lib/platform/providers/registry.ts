@@ -4,6 +4,8 @@ import {
   existingResendEmailProvider,
   existingWorkerWorkflowProvider,
 } from '@/lib/platform/providers/existing-adapters'
+import { createPaperclipWorkforceProvider } from '@/lib/platform/providers/paperclip-workforce'
+import { createSyntheticWorkforceProvider } from '@/lib/platform/workforce/synthetic-provider'
 import type {
   AnyPlatformProvider,
   ConversationProvider,
@@ -44,17 +46,8 @@ const chatwoot: ConversationProvider = candidate({
   },
 })
 
-const paperclip: WorkforceProvider = candidate({
-  kind: 'workforce',
-  key: 'paperclip',
-  displayName: 'Paperclip',
-  availability: 'CANDIDATE',
-  replaceable: true,
-  installed: false,
-  async listAgents() {
-    return { ok: false, code: 'NOT_CONFIGURED', message: 'Paperclip staging boundary documented in INFRA-02; WorkforceProvider activation is AGENT-03.' }
-  },
-})
+const syntheticWorkforce = createSyntheticWorkforceProvider()
+const paperclip = createPaperclipWorkforceProvider()
 
 const twilio: SmsProvider = candidate({
   kind: 'sms',
@@ -120,6 +113,7 @@ const DEFAULT_PROVIDERS: AnyPlatformProvider[] = [
   twentyCrm,
   chatwoot,
   existingPostizSocialProvider,
+  syntheticWorkforce,
   paperclip,
   existingWorkerWorkflowProvider,
   twilio,

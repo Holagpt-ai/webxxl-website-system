@@ -403,6 +403,10 @@ model User {
   billingGroupRoles        BillingGroupRole[]
   authorizedBillingMemberships BillingGroupMembership[] @relation("BillingMembershipAuthorizer")
   walletLedgerEntries      WalletLedgerEntry[] @relation("WalletLedgerActor")
+  workforceTasksRequested  WorkforceTask[]     @relation("WorkforceTaskRequester")
+  workforceApprovalsGiven  WorkforceApproval[] @relation("WorkforceApprover")
+  workforcePauseControls   WorkforcePauseControl[] @relation("WorkforcePauseOperator")
+  workforceAuditEvents     WorkforceAuditEvent[] @relation("WorkforceAuditActor")
 }
 
 model Account {
@@ -472,6 +476,7 @@ model CustomerAccount {
   messageUsage                 MessageUsage[]
   agentToolGrants              AgentToolGrant[]
   agentToolInvocations         AgentToolInvocation[]
+  workforceTasks               WorkforceTask[]
 }
 
 model CustomerMembership {
@@ -1501,4 +1506,233 @@ model AgentToolInvocation {
 
   @@unique([requestId, toolKey])
   @@index([customerAccountId, createdAt])
+}
+
+enum WorkforceTaskStatus {
+  DRAFT
+  QUEUED
+  AWAITING_APPROVAL
+  AUTHORIZED
+  RUNNING
+  COMPLETED
+  FAILED
+  PAUSED
+  CANCELLED
+}
+
+enum WorkforceExecutionPhase {
+  TASK_PREPARED
+  TASK_AUTHORIZED
+  PROVIDER_ACCEPTED
+  WORK_IN_PROGRESS
+  ARTIFACT_PRODUCED
+  REVIEW_REQUIRED
+  COMPLETED
+}
+
+enum WorkforceApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+  REVOKED
+}
+
+enum WorkforcePauseScope {
+  GLOBAL
+  AGENT
+  TASK
+  PROVIDER
+}
+
+/// Versioned internal workforce agent catalog (WebXXL-owned IDs).
+model InternalAgentDefinition {
+  id                 String   @id
+  roleKey            String   @unique
+  displayName        String
+  configVersion      String
+  riskTier           Int
+  providerAdapterKey String   @default("synthetic")
+  liveExecutionEnabled Boolean @default(false)
+  paused             Boolean  @default(true)
+  allowedToolKeys    Json
+  deniedActions      Json
+  budgetLimitSubunits Int?
+  maxConcurrency     Int      @default(1)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  configurations InternalAgentConfiguration[]
+  tasks          WorkforceTask[]
+}
+
+model InternalAgentConfiguration {
+  id           String   @id @default(cuid())
+  definitionId String
+  version      String
+  payload      Json
+  effectiveAt  DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  definition InternalAgentDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  @@unique([definitionId, version])
+}
+
+/// WebXXL-owned internal workforce task (Paperclip IDs stored separately).
+model WorkforceTask {
+  id                  String                  @id @default(cuid())
+  idempotencyKey      String                  @unique
+  correlationId       String?
+  status              WorkforceTaskStatus     @default(DRAFT)
+  executionPhase      WorkforceExecutionPhase?
+  internalAgentKey    String
+  definitionId        String?
+  requestedByUserId   String?
+  customerAccountId   String?
+  managedSiteId       String?
+  projectId           String?
+  capability          String
+  inputArtifactRef    String?
+  inputHash           String
+  approvalRequired    Boolean                 @default(true)
+  dependsOnTaskId     String?
+  providerKey         String                  @default("synthetic")
+  externalProviderRunId String?
+  externalProviderRef String?
+  resultArtifactRef   String?
+  errorCode           String?
+  errorClass          String?
+  attemptCount        Int                     @default(0)
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+  completedAt         DateTime?
+
+  definition   InternalAgentDefinition? @relation(fields: [definitionId], references: [id], onDelete: SetNull)
+  requester    User?                    @relation("WorkforceTaskRequester", fields: [requestedByUserId], references: [id], onDelete: SetNull)
+  customerAccount CustomerAccount?      @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)
+  executions   WorkforceExecution[]
+  toolCalls    WorkforceToolCall[]
+  approvals    WorkforceApproval[]
+  budgetUsage  WorkforceBudgetUsage[]
+  auditEvents  WorkforceAuditEvent[]
+
+  @@index([status, updatedAt])
+  @@index([internalAgentKey, status])
+  @@index([customerAccountId, createdAt])
+  @@index([correlationId])
+}
+
+model WorkforceExecution {
+  id                    String                  @id @default(cuid())
+  taskId                String
+  attemptNumber         Int
+  phase                 WorkforceExecutionPhase
+  providerKey           String
+  externalProviderRunId String?
+  status                WorkforceTaskStatus
+  startedAt             DateTime                @default(now())
+  finishedAt            DateTime?
+  resultArtifactRef     String?
+  errorCode             String?
+
+  task WorkforceTask @relation(fields: [taskId], references: [id], onDelete: Restrict)
+
+  @@unique([taskId, attemptNumber])
+  @@index([providerKey, startedAt])
+}
+
+model WorkforceToolCall {
+  id                String   @id @default(cuid())
+  taskId            String
+  executionId       String?
+  toolKey           String
+  requestId         String
+  inputHash         String
+  approvalId        String?
+  decision          AgentToolDecision
+  denialReason      String?
+  customerAccountId String?
+  managedSiteId     String?
+  actorId           String
+  actorType         String
+  createdAt         DateTime @default(now())
+
+  task WorkforceTask @relation(fields: [taskId], references: [id], onDelete: Restrict)
+
+  @@unique([requestId, toolKey])
+  @@index([taskId, createdAt])
+}
+
+model WorkforceApproval {
+  id               String                  @id @default(cuid())
+  taskId           String
+  status           WorkforceApprovalStatus @default(PENDING)
+  approverUserId   String?
+  capability       String
+  artifactHash     String
+  approvedScope    Json?
+  expiresAt        DateTime
+  maxUses          Int                     @default(1)
+  useCount         Int                     @default(0)
+  decidedAt        DateTime?
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  task      WorkforceTask @relation(fields: [taskId], references: [id], onDelete: Restrict)
+  approver  User?         @relation("WorkforceApprover", fields: [approverUserId], references: [id], onDelete: SetNull)
+
+  @@index([taskId, status])
+  @@index([approverUserId, createdAt])
+}
+
+model WorkforceBudgetUsage {
+  id              String   @id @default(cuid())
+  taskId          String?
+  internalAgentKey String
+  idempotencyKey  String   @unique
+  periodKey       String
+  amountSubunits  Int      @default(0)
+  costSubunits    Int      @default(0)
+  tokenUnits      Int      @default(0)
+  reservedSubunits Int     @default(0)
+  settledSubunits Int      @default(0)
+  released        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  task WorkforceTask? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([internalAgentKey, periodKey])
+}
+
+model WorkforceAuditEvent {
+  id          String   @id @default(cuid())
+  taskId      String?
+  actorUserId String?
+  actorType   String
+  eventKind   String
+  detail      Json?
+  createdAt   DateTime @default(now())
+
+  task  WorkforceTask? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  actor User?          @relation("WorkforceAuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([taskId, createdAt])
+  @@index([eventKind, createdAt])
+}
+
+model WorkforcePauseControl {
+  id           String              @id @default(cuid())
+  scope        WorkforcePauseScope
+  targetKey    String
+  active       Boolean             @default(true)
+  reason       String?
+  setByUserId  String
+  createdAt    DateTime            @default(now())
+  releasedAt   DateTime?
+
+  operator User @relation("WorkforcePauseOperator", fields: [setByUserId], references: [id], onDelete: Restrict)
+
+  @@index([scope, targetKey, active])
 }
