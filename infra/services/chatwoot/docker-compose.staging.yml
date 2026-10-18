@@ -1,0 +1,119 @@
+# WebXXL staging Chatwoot — isolated project `webxxl-stg-chatwoot`
+# Derived from upstream docker-compose.production.yaml (Chatwoot develop branch, 2026-10-18)
+# Official reference: https://github.com/chatwoot/chatwoot/blob/develop/docker-compose.production.yaml
+
+name: webxxl-stg-chatwoot
+
+x-chatwoot-app: &chatwoot_app
+  image: chatwoot/chatwoot:v4.18.0-ce
+  env_file:
+    - .env
+  volumes:
+    - storage_data:/app/storage
+  networks:
+    - chatwoot_internal
+  logging: &json_log
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "5"
+  restart: unless-stopped
+
+services:
+  rails:
+    <<: *chatwoot_app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "127.0.0.1:13000:3000"
+    environment:
+      NODE_ENV: production
+      RAILS_ENV: production
+      INSTALLATION_ENV: docker
+    entrypoint: docker/entrypoints/rails.sh
+    command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+
+  sidekiq:
+    <<: *chatwoot_app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      RAILS_ENV: production
+      INSTALLATION_ENV: docker
+    command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    networks:
+      - chatwoot_internal
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: chatwoot
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in host .env}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d chatwoot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging: *json_log
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks:
+      - chatwoot_internal
+    command: ["sh", "-c", "redis-server --requirepass \"$$REDIS_PASSWORD\""]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in host .env}
+    volumes:
+      - redis_data:/data
+    logging: *json_log
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+networks:
+  chatwoot_internal:
+    name: webxxl_stg_chatwoot_net
+    driver: bridge
+
+volumes:
+  storage_data:
+    name: webxxl_stg_chatwoot_storage_data
+  postgres_data:
+    name: webxxl_stg_chatwoot_postgres_data
+  redis_data:
+    name: webxxl_stg_chatwoot_redis_data

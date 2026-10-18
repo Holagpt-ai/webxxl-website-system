@@ -68,3 +68,5 @@ TAD version after approval:
 | Date | Version | Event |
 |---|---|---|
 | 2026-10-17 | 1.0.0 | Initial consolidated documentation deliverable derived from owner-approved project direction and focused GitHub main/screenshot review. Does not claim deployment or GitHub commit. |
+| 2026-10-18 | 1.0.0-doc | FOUND-01 merged PR #33 @ `68c5fde`. INFRA-02 repository staging assets added; live Hostinger staging explicitly **BLOCKED**; Postiz at `app.webbxxl.com` inventoried read-only, not reinstalled. |
+| 2026-10-18 | 1.0.0-doc | INFRA-02A: Docker Compose merge hardening (`!reset`/`!override`), Chatwoot `x-` anchor fix, effective `docker compose config` validation. |

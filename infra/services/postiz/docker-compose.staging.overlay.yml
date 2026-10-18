@@ -1,0 +1,95 @@
+# Merge with cloned gitroomhq/postiz-docker-compose docker-compose.yaml.
+# Requires Docker Compose v2.24+ for !reset / !override.
+#   docker compose -f docker-compose.yaml -f docker-compose.staging.overlay.yml config
+# Do NOT apply to https://app.webbxxl.com
+
+name: webxxl-stg-postiz
+
+services:
+  postiz:
+    image: ghcr.io/gitroomhq/postiz-app:v2.25.1
+    container_name: !reset null
+    ports: !override
+      - "127.0.0.1:14007:5000"
+    environment: !override
+      MAIN_URL: ${POSTIZ_MAIN_URL:-http://127.0.0.1:14007}
+      FRONTEND_URL: ${POSTIZ_FRONTEND_URL:-http://127.0.0.1:14007}
+      NEXT_PUBLIC_BACKEND_URL: ${POSTIZ_NEXT_PUBLIC_BACKEND_URL:-http://127.0.0.1:14007/api}
+      JWT_SECRET: ${POSTIZ_JWT_SECRET:?Set POSTIZ_JWT_SECRET on host}
+      DATABASE_URL: ${POSTIZ_DATABASE_URL:?Set POSTIZ_DATABASE_URL on host}
+      REDIS_URL: ${POSTIZ_REDIS_URL:-redis://postiz-redis:6379}
+      BACKEND_INTERNAL_URL: http://localhost:3000
+      TEMPORAL_ADDRESS: temporal:7233
+      IS_GENERAL: "true"
+      DISABLE_REGISTRATION: ${POSTIZ_DISABLE_REGISTRATION:-true}
+      RUN_CRON: "true"
+      STORAGE_PROVIDER: local
+      UPLOAD_DIRECTORY: /uploads
+      NEXT_PUBLIC_UPLOAD_DIRECTORY: /uploads
+    logging: &json_log
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+
+  postiz-postgres:
+    container_name: !reset null
+    environment:
+      POSTGRES_PASSWORD: ${POSTIZ_POSTGRES_PASSWORD:?Set POSTIZ_POSTGRES_PASSWORD on host}
+      POSTGRES_USER: ${POSTIZ_POSTGRES_USER:?Set POSTIZ_POSTGRES_USER on host}
+      POSTGRES_DB: ${POSTIZ_POSTGRES_DB:?Set POSTIZ_POSTGRES_DB on host}
+    ports: !reset []
+
+  postiz-redis:
+    container_name: !reset null
+    ports: !reset []
+
+  temporal-elasticsearch:
+    container_name: !reset null
+    ports: !reset []
+
+  temporal-postgresql:
+    container_name: !reset null
+    ports: !reset []
+    environment:
+      POSTGRES_PASSWORD: ${TEMPORAL_POSTGRES_PASSWORD:?Set TEMPORAL_POSTGRES_PASSWORD on host}
+      POSTGRES_USER: ${TEMPORAL_POSTGRES_USER:-temporal}
+
+  temporal:
+    container_name: !reset null
+    ports: !reset []
+    environment:
+      POSTGRES_PWD: ${TEMPORAL_POSTGRES_PASSWORD:?Set TEMPORAL_POSTGRES_PASSWORD on host}
+      POSTGRES_USER: ${TEMPORAL_POSTGRES_USER:-temporal}
+
+  temporal-admin-tools:
+    container_name: !reset null
+
+  temporal-ui:
+    container_name: !reset null
+    ports: !reset []
+
+networks:
+  postiz-network:
+    name: webxxl_stg_postiz_net
+  temporal-network:
+    name: webxxl_stg_postiz_temporal_net
+
+volumes:
+  postgres-volume:
+    name: webxxl_stg_postiz_postgres_data
+  postiz-redis-data:
+    name: webxxl_stg_postiz_redis_data
+  postiz-config:
+    name: webxxl_stg_postiz_config
+  postiz-uploads:
+    name: webxxl_stg_postiz_uploads
+  temporal-postgres-data:
+    name: webxxl_stg_postiz_temporal_postgres_data
+  temporal-elasticsearch-data:
+    name: webxxl_stg_postiz_temporal_es_data

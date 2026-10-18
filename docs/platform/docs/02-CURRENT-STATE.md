@@ -1,8 +1,25 @@
 # 02 — Verified Repository Baseline and Honest Status
 
-**Inspection:** GitHub connector read of `Holagpt-ai/webxxl-website-system`, default branch `main`, on 2026-10-17. Original documentation inspection tree SHA: `3a5ba5dc137b26f712d0e95eced8ead39dab4996` (**tree SHA, not commit SHA**). **Authoritative `main` after DOC-00:** commit `9b0886afc4b312450a589a6fa6768612312a2ef8` (PR #32, TAD v1.0.0). This was a focused source inspection, **not a build/deployment inspection or exhaustive branch audit**. A separate historical `feature/client-dashboard` branch exists, but **main** is the authoritative starting point. Observed dashboard screenshot supplied by owner (2026-10-17) depicts the current working customer Overview.
+**Inspection:** GitHub `main` on 2026-10-18. **DOC-00 merged:** `9b0886afc4b312450a589a6fa6768612312a2ef8` (PR #32). **FOUND-01 merged:** `68c5fde5345813899e2db34ac422a90cb5956f52` (PR #33). Production Vercel deployment and Supabase migration application remain separate gates.
 
-## FOUND-01 source update (2026-10-17) — implemented in branch, not merged or deployed
+## FOUND-01 — merged on GitHub; production migration not applied from INFRA-02
+
+| Area | Evidence | Honest status |
+|---|---|---|
+| Billing group / wallet / providers / AI tools | `lib/platform/**`, additive Prisma migration `20261017220000_found01_platform_identity` | **Merged to `main`**. **Production DB migration not applied** in this batch |
+| Tests | `__tests__/platform/found01*.test.ts` | Present on `main`; not re-run as full CI gate in INFRA-02 |
+
+## INFRA-02 (2026-10-18) — repository infrastructure only; live staging BLOCKED
+
+| Area | Evidence | Honest status |
+|---|---|---|
+| Isolated service compose | `infra/services/{chatwoot,postiz,paperclip,shared,scripts}/**` | **Deployment-ready staging definitions** with pinned upstream references; **not executed** on Hostinger |
+| VPS inventory | `infra/services/shared/inventory-2026-10-18.md` | Hostinger capacity **unknown**; no SSH/hPanel access from Cursor |
+| Postiz existing URL | `https://app.webbxxl.com` probed read-only | **Postiz UI confirmed**; version/social links **not verified**; **not reinstalled** |
+| Integration contracts | `lib/platform/integrations/isolated-services.ts`, `chatwoot-account-mapping.ts`, `lib/integrations/postiz-discovery.ts` | Staging endpoint registry + tenant mapping rules; providers remain **NOT_ACTIVATED** |
+| Chatwoot / Paperclip / Postiz staging | Compose/overlays + scripts | **Not live** until owner approves isolated host + `WEBXXL_STAGING_CONFIRM` |
+
+## FOUND-01 historical branch note (pre-merge documentation snapshot)
 
 | Area | Evidence | Honest status |
 |---|---|---|

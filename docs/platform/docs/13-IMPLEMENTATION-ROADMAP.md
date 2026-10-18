@@ -10,7 +10,7 @@
 |---|---|---|---|---|---|
 | **DOC-00** Spec freeze | Current docs | Reconcile README/TAD against real main code and schema, create versioned documentation PR, no product code | Review screenshot fidelity of wireframes | Approve TAD version, free eligibility open questions | No contradictory modules/routes/pricing; docs committed after approval |
 | **FOUND-01** Shared identity/data | DOC-00 | **Implemented in source (unmerged):** `BillingGroup` / membership / roles / profile / spending policy, wallet contracts, entitlement classifications, provider + AI tool registries, additive migration. **Not deployed. Production migration not applied.** | Context header/account/group display contracts — still v0.app, not started | Identify ABMED group payer and operating account owners | Focused FOUND-01 unit tests cover isolation, 1000→650 synthetic wallet, FREE vs PAID, denied AI tools, existing project auth |
-| **INFRA-02** Isolated service staging | FOUND-01 + VPS inventory | Container plans, pinned Paperclip/Chatwoot/Postiz health, secret/network isolation; CRM trial staging | None except status/shell mocks later | Hostinger VPS specs, backups, DNS; approve resources | Existing Stocksist/WebXXL unchanged; signed-off isolated services |
+| **INFRA-02** Isolated service staging | FOUND-01 + VPS inventory | **In progress (repo):** `infra/services/**`, staging scripts, inventory + Postiz probe, integration contracts. **Live staging BLOCKED** until VPS approval | None except status/shell mocks later | Hostinger VPS specs, backups, DNS; approve resources; `WEBXXL_STAGING_CONFIRM` | Existing Stocksist/WebXXL unchanged; signed-off isolated services |
 | **AGENT-03** Internal AI workforce | INFRA-02 | Paperclip adapter, Cursor/GitHub sandbox agent workflows, tool registry, budgets, audit and emergency pause | Admin workforce screens when APIs ready | Cursor Cloud/API and GitHub access, budget cap | PR-only safe agent task with trace/cost |
 | **SOCIAL-04** Activate Postiz + FREE Marketing Studio | INFRA-02, FOUND-01 | Verified authenticated Postiz API, mappings, draft/approve/schedule/status, agent content preparation, links to existing approvals, future analytics sync | Marketing Studio FREE, campaign studio/calendar, channels, deliverables | Approve social app connections, test channels, content policy | Approved test publication with actual ID; no cross-account posting |
 | **CRM-05** Robust CRM backend pilot | FOUND-01, INFRA-02 | Twenty licensing/multiworkspace POC vs alternatives; `CrmProvider`, contact/company/deal/task/segments, import/export, event timeline | CRM FREE list, filter, contact 360, pipelines, tasks | Approve final CRM vendor after POC; sample fields/segments | Full contact feature matrix; independent account workspaces |
@@ -55,19 +55,24 @@
 
 For each third-party service: actual version+license, admin access, supported feature/edition, tenant mapping, OAuth/secret scope, self-host operating cost, APIs and webhooks, test environment, limits, failover/data export, exit plan. For Twenty, Chatwoot and Postiz specifically check that community edition and branding/embedding strategy lawfully support our commercial model. Provider approval is per integration; no one vendor locks WebXXL data model.
 
-## FOUND-01 status (2026-10-17)
+## FOUND-01 status (merged 2026-10-18)
 
 ```
 Batch ID: FOUND-01 / TAD v1.0.0 / Cursor
-Inputs and prerequisites: DOC-00 merged on main at 9b0886afc4b312450a589a6fa6768612312a2ef8
-Exact changed files and migrations: lib/platform/**, prisma schema + 20261017220000_found01_platform_identity, catalog type fields, features.purchasableAiEmployees, docs 02/13
-Existing workflows preserved: Auth.js, CustomerAccount/Membership, projects, previews, approvals, marketplace quotes, dashboard UI
-Actual tests: focused Vitest FOUND-01 suite (synthetic ABMED only)
-Git branch/commit/PR / merged?: feature/webxxl-found-01, unmerged, not deployed
-Preview/staging/production status (separate): unchanged
-External dependencies and user next actions: owner identifies ABMED group payer; no provider registrations required for this batch
-Blocked/deferred with reason: OPEN-001 eligibility unresolved; live wallet/SMS/payment remain WALLET-09 / COMMERCE-11
-Next one implementable batch: INFRA-02 isolated service staging after VPS inventory, or SOCIAL-04 / CRM-05 backend contracts if infrastructure is not ready
+Merged: PR #33 @ 68c5fde5345813899e2db34ac422a90cb5956f52
+Production migration: NOT APPLIED from INFRA-02
+Next: INFRA-02 PR (repository assets) → owner VPS gate → AGENT-03 / SOCIAL-04 / COMMS-06
+```
+
+## INFRA-02 status (2026-10-18)
+
+```
+Batch ID: INFRA-02 / TAD v1.0.0 / Cursor
+Deliverables: infra/services (Chatwoot compose, Postiz overlay + existing instance doc, Paperclip override), scripts, inventory, lib/platform/integrations/*
+Live staging: BLOCKED (no Hostinger mutation; VPS capacity unknown)
+Postiz app.webbxxl.com: reachable Postiz UI; do not overwrite
+Tests: __tests__/infra/infra02-static-validation.test.ts + validate-config scripts
+Next batch after merge + owner approval: AGENT-03 (Paperclip adapter) or SOCIAL-04 (Postiz API) on approved staging host
 ```
 
 ## Effort expectations — directional only

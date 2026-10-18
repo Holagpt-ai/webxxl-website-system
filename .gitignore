@@ -8,8 +8,11 @@ __v0_jsx-dev-runtime.ts
 
 # Environment variables
 .env*.local
+infra/services/**/.env
+infra/services/**/postiz.env
 
 # Common ignores
 node_modules
 .next/
 .DS_Store
+tsconfig.tsbuildinfo
