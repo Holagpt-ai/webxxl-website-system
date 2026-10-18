@@ -142,5 +142,7 @@ export type WalletDenial =
   | 'CHANNEL_NOT_ALLOWED'
   | 'WALLET_FROZEN'
   | 'COST_UNAVAILABLE'
+  | 'POLICY_TIMEZONE_UNSUPPORTED'
+  | 'QUOTE_UNAVAILABLE'
 
 export type WalletResult<T> = { ok: true; value: T } | { ok: false; error: WalletDenial }

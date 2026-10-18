@@ -142,20 +142,32 @@ export function createMemoryWalletPrisma(seed: {
           if (where.type && entry.type !== where.type) return false
           return true
         }),
-      findUnique: async ({ where }: { where: { idempotencyKey: string } }) =>
-        ledger.find((e) => e.idempotencyKey === where.idempotencyKey) ?? null,
+      findUnique: async ({ where }: { where: { idempotencyKey?: string; id?: string } }) => {
+        if (where.id) return ledger.find((e) => e.id === where.id) ?? null
+        if (where.idempotencyKey) return ledger.find((e) => e.idempotencyKey === where.idempotencyKey) ?? null
+        return null
+      },
       aggregate: async ({
         where,
-        _sum,
       }: {
-        where: { walletId?: string; customerAccountId?: string; type?: string; originalLedgerEntryId?: string }
+        where: {
+          walletId?: string
+          customerAccountId?: string
+          type?: string
+          originalLedgerEntryId?: string
+        }
         _sum: { deltaCredits: boolean }
       }) => {
         const rows = ledger.filter((entry) => {
           if (where.walletId && entry.walletId !== where.walletId) return false
           if (where.customerAccountId && entry.customerAccountId !== where.customerAccountId) return false
           if (where.type && entry.type !== where.type) return false
-          if (where.originalLedgerEntryId && entry.originalLedgerEntryId !== where.originalLedgerEntryId) return false
+          if (
+            where.originalLedgerEntryId != null &&
+            entry.originalLedgerEntryId !== where.originalLedgerEntryId
+          ) {
+            return false
+          }
           return true
         })
         return { _sum: { deltaCredits: rows.reduce((s, r) => s + r.deltaCredits, 0) } }
@@ -266,6 +278,16 @@ export function createMemoryWalletPrisma(seed: {
         return { count: 1 }
       },
     },
+    billingGroup: {
+      findUnique: async ({ where }: { where: { id: string } }) =>
+        where.id === seed.billingGroupId ? { id: seed.billingGroupId, status: 'ACTIVE' } : null,
+    },
+    customerMembership: {
+      findFirst: async () => null,
+    },
+    billingGroupRole: {
+      findUnique: async () => null,
+    },
     billingGroupMembership: {
       findMany: async ({ where }: { where: { billingGroupId?: string; customerAccountId?: string } }) =>
         seed.memberships.filter((m) => {
@@ -307,8 +329,17 @@ export function createMemoryWalletPrisma(seed: {
             r.externalEventId === where.providerKey_externalEventId.externalEventId,
         ) ?? null,
       create: async ({ data }: { data: Record<string, unknown> }) => {
-        providerReceipts.push(data)
-        return data
+        const dup = providerReceipts.find(
+          (r) => r.providerKey === data.providerKey && r.externalEventId === data.externalEventId,
+        )
+        if (dup) {
+          const err = new Error('Unique constraint') as Error & { code: string }
+          err.code = 'P2002'
+          throw err
+        }
+        const row = { id: cid('rcpt'), ...data }
+        providerReceipts.push(row)
+        return row
       },
     },
     walletTopUpQuote: {

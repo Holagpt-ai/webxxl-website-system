@@ -37,7 +37,8 @@ export async function POST(request: Request) {
       payerUserId: actor.userId,
     })
     if (!result.ok) {
-      return NextResponse.json({ code: result.error, message: 'Top-up quote rejected' }, { status: 409 })
+      const status = result.error === 'QUOTE_UNAVAILABLE' ? 503 : 409
+      return NextResponse.json({ code: result.error, message: 'Top-up quote rejected' }, { status })
     }
     return NextResponse.json(
       {

@@ -16,9 +16,19 @@ export async function GET(request: Request, { params }: Params) {
     if (!wallet) return NextResponse.json({ code: 'NOT_FOUND', message: 'Wallet not found' }, { status: 404 })
 
     if (actor.scopedAccountId) {
+      if (managedSiteId != null) {
+        const site = await prisma.managedSite.findFirst({
+          where: { id: managedSiteId, customerAccountId: actor.scopedAccountId },
+        })
+        if (!site) {
+          return NextResponse.json({ code: 'FORBIDDEN', message: 'Site not owned by operating account' }, { status: 403 })
+        }
+      }
       const settled = await getAccountWalletUsage(prisma, wallet.id, actor.scopedAccountId)
       const siteSettled =
-        managedSiteId != null ? await getSiteWalletUsage(prisma, wallet.id, managedSiteId) : undefined
+        managedSiteId != null
+          ? await getSiteWalletUsage(prisma, wallet.id, managedSiteId)
+          : undefined
       return NextResponse.json({
         usage: {
           customerAccountId: actor.scopedAccountId,

@@ -6,15 +6,28 @@ import {
   reservationOpenHoldAmount,
   OPEN_HOLD_STATUSES,
 } from '@/lib/platform/wallet/balance'
-import { resolveDurableWalletActor } from '@/lib/platform/wallet/durable-actor'
+import { assertWalletMutationAuthorized } from '@/lib/platform/wallet/durable-authz'
+import {
+  buildReservationRequestFingerprint,
+  reservationFingerprintMatches,
+} from '@/lib/platform/wallet/reservation-fingerprint'
+import {
+  buildProviderEventFingerprint,
+  isBillableProviderNormalizedStatus,
+} from '@/lib/platform/wallet/provider-reconciliation'
+import { isWalletProviderReconciliationEnabled, isWalletSettlementEnabled } from '@/config/wallet-backend'
 import type {
-  ReleaseCreditsInput,
-  RefundCreditsInput,
-  ReserveCreditsInput,
-  SettleCreditsInput,
-} from '@/lib/platform/wallet/contracts'
-import { buildReservationRequestFingerprint } from '@/lib/platform/wallet/reservation-fingerprint'
-import { evaluateSpendingPolicy, sumOpenHoldsForReservations } from '@/lib/platform/wallet/spending-policy'
+  DurableRefundCreditsInput,
+  DurableReleaseCreditsInput,
+  DurableReserveCreditsInput,
+  DurableSettleCreditsInput,
+} from '@/lib/platform/wallet/durable-contracts'
+import {
+  evaluateSpendingPolicy,
+  getPolicyPeriodStarts,
+  sumOpenHoldsForReservations,
+  sumSettledCredits,
+} from '@/lib/platform/wallet/spending-policy'
 import type { CreditReservationRecord, WalletBalance, WalletLedgerEntryRecord, WalletResult } from '@/lib/platform/wallet/types'
 import { validateCreditAmount } from '@/lib/platform/wallet/validation'
 import { WALLET_RESERVATION_MAX_RETRIES } from '@/config/wallet-backend'
@@ -231,27 +244,123 @@ function isSerializationError(error: unknown): boolean {
   return msg.includes('could not serialize') || msg.includes('deadlock') || msg.includes('p2034')
 }
 
+function isPrismaUniqueViolation(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && (error as { code: string }).code === 'P2002'
+}
+
+async function loadPolicyUsageContext(
+  tx: Tx,
+  input: {
+    walletId: string
+    billingGroupId: string
+    customerAccountId: string
+    managedSiteId?: string | null
+    at: Date
+    policyTimezone: string
+  },
+) {
+  const periods = getPolicyPeriodStarts(input.at, input.policyTimezone)
+  if (!periods.ok) return periods
+
+  const accountLedger = await tx.walletLedgerEntry.findMany({
+    where: { walletId: input.walletId, customerAccountId: input.customerAccountId, type: 'SETTLE' },
+    select: { deltaCredits: true, effectiveAt: true },
+  })
+  const siteLedger = input.managedSiteId
+    ? await tx.walletLedgerEntry.findMany({
+        where: { walletId: input.walletId, managedSiteId: input.managedSiteId, type: 'SETTLE' },
+        select: { deltaCredits: true, effectiveAt: true },
+      })
+    : []
+  const groupLedger = await tx.walletLedgerEntry.findMany({
+    where: { walletId: input.walletId, type: 'SETTLE' },
+    select: { deltaCredits: true, effectiveAt: true },
+  })
+
+  const accountReservations = await tx.creditReservation.findMany({
+    where: { walletId: input.walletId, originAccountId: input.customerAccountId, status: { in: OPEN_HOLD_STATUSES } },
+    select: {
+      amount: true,
+      settledAmount: true,
+      status: true,
+      expiresAt: true,
+      createdAt: true,
+    },
+  })
+  const siteReservations = input.managedSiteId
+    ? await tx.creditReservation.findMany({
+        where: { walletId: input.walletId, managedSiteId: input.managedSiteId, status: { in: OPEN_HOLD_STATUSES } },
+        select: {
+          amount: true,
+          settledAmount: true,
+          status: true,
+          expiresAt: true,
+          createdAt: true,
+        },
+      })
+    : []
+  const groupReservations = await tx.creditReservation.findMany({
+    where: { walletId: input.walletId, status: { in: OPEN_HOLD_STATUSES } },
+    select: {
+      amount: true,
+      settledAmount: true,
+      status: true,
+      expiresAt: true,
+      createdAt: true,
+    },
+  })
+
+  return {
+    ok: true as const,
+    context: {
+      at: input.at,
+      hasManagedSiteScope: Boolean(input.managedSiteId),
+      accountDailySettled: sumSettledCredits(accountLedger, periods.dayStartUtc),
+      accountDailyOpenHolds: sumOpenHoldsForReservations(accountReservations, input.at, periods.dayStartUtc),
+      accountMonthlySettled: sumSettledCredits(accountLedger, periods.monthStartUtc),
+      accountMonthlyOpenHolds: sumOpenHoldsForReservations(accountReservations, input.at, periods.monthStartUtc),
+      siteDailySettled: sumSettledCredits(siteLedger, periods.dayStartUtc),
+      siteDailyOpenHolds: sumOpenHoldsForReservations(siteReservations, input.at, periods.dayStartUtc),
+      groupSettledInMonth: sumSettledCredits(groupLedger, periods.monthStartUtc),
+      groupOpenHolds: sumOpenHoldsForReservations(groupReservations, input.at),
+    },
+  }
+}
+
+function validateReservationIdempotencyReplay(
+  existing: Parameters<typeof mapReservation>[0],
+  input: DurableReserveCreditsInput,
+  expectedFingerprint: string,
+): WalletResult<CreditReservationRecord> {
+  if (existing.originAccountId !== input.customerAccountId) {
+    return { ok: false, error: 'IDEMPOTENCY_CONFLICT' }
+  }
+  if (!reservationFingerprintMatches(existing.requestFingerprint, expectedFingerprint)) {
+    return { ok: false, error: 'IDEMPOTENCY_CONFLICT' }
+  }
+  return { ok: true, value: mapReservation(existing) }
+}
+
 export async function reserveCredits(
   prisma: PrismaClient,
-  input: ReserveCreditsInput,
+  input: DurableReserveCreditsInput,
 ): Promise<WalletResult<CreditReservationRecord>> {
   const at = input.at ?? new Date()
   const amountCheck = validateCreditAmount(input.amount)
   if (!amountCheck.ok) return { ok: false, error: 'INVALID_AMOUNT' }
   if (input.expiresAt <= at) return { ok: false, error: 'RESERVATION_EXPIRED' }
-  const resolved = resolveDurableWalletActor(input.actorUserId, input.actorType)
-  if (!resolved.ok) return resolved
 
   for (let attempt = 0; attempt < WALLET_RESERVATION_MAX_RETRIES; attempt++) {
     try {
       return await prisma.$transaction(async (tx) => {
-        const existing = await tx.creditReservation.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
-        if (existing) {
-          if (existing.originAccountId !== input.customerAccountId || existing.amount !== input.amount) {
-            return { ok: false, error: 'IDEMPOTENCY_CONFLICT' }
-          }
-          return { ok: true, value: mapReservation(existing) }
-        }
+        const auth = await assertWalletMutationAuthorized(tx, {
+          principal: input.principal,
+          operation: 'RESERVE',
+          billingGroupId: input.billingGroupId,
+          customerAccountId: input.customerAccountId,
+          at,
+        })
+        if (!auth.ok) return auth
 
         const wallet = await tx.creditWallet.findUnique({
           where: { billingGroupId_creditType: { billingGroupId: input.billingGroupId, creditType: 'MESSAGING' } },
@@ -259,6 +368,25 @@ export async function reserveCredits(
         if (!wallet) return { ok: false, error: 'WALLET_NOT_FOUND' }
         if (wallet.status !== 'ACTIVE') {
           return { ok: false, error: wallet.status === 'FROZEN' ? 'WALLET_FROZEN' : 'WALLET_INACTIVE' }
+        }
+
+        const requestFingerprint = buildReservationRequestFingerprint({
+          billingGroupId: input.billingGroupId,
+          walletId: wallet.id,
+          customerAccountId: input.customerAccountId,
+          managedSiteId: input.managedSiteId,
+          channel: input.channel,
+          usagePurpose: input.usagePurpose,
+          amount: input.amount,
+          rateVersion: input.rateVersion,
+          correlationId: input.correlationId,
+          campaignId: input.campaignId,
+          expiresAt: input.expiresAt,
+        })
+
+        const existing = await tx.creditReservation.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
+        if (existing) {
+          return validateReservationIdempotencyReplay(existing, input, requestFingerprint)
         }
 
         const funded = await assertFundingMembership(tx, input.billingGroupId, input.customerAccountId, at)
@@ -283,28 +411,16 @@ export async function reserveCredits(
             },
           },
         })
-
-        const openReservations = await tx.creditReservation.findMany({
-          where: {
-            walletId: wallet.id,
-            originAccountId: input.customerAccountId,
-            status: { in: OPEN_HOLD_STATUSES },
-          },
-        })
-        const accountOpenHolds = sumOpenHoldsForReservations(
-          openReservations.map((item) => ({
-            amount: item.amount,
-            settledAmount: item.settledAmount,
-            status: item.status,
-            expiresAt: item.expiresAt,
-          })),
+        const policyTimezone = policy?.policyTimezone ?? 'UTC'
+        const usage = await loadPolicyUsageContext(tx, {
+          walletId: wallet.id,
+          billingGroupId: input.billingGroupId,
+          customerAccountId: input.customerAccountId,
+          managedSiteId: input.managedSiteId,
           at,
-        )
-        const accountSettled = await tx.walletLedgerEntry.aggregate({
-          where: { walletId: wallet.id, customerAccountId: input.customerAccountId, type: 'SETTLE' },
-          _sum: { deltaCredits: true },
+          policyTimezone,
         })
-        const accountSettledCredits = Math.abs(accountSettled._sum.deltaCredits ?? 0)
+        if (!usage.ok) return { ok: false, error: usage.error }
 
         const policyDecision = evaluateSpendingPolicy({
           policy: policy
@@ -320,60 +436,52 @@ export async function reserveCredits(
             : null,
           channel: input.channel,
           requestedCredits: input.amount,
-          context: {
-            at,
-            accountSettledCredits,
-            accountOpenHolds,
-          },
+          context: usage.context,
         })
         if (!policyDecision.ok) return { ok: false, error: policyDecision.error }
 
-        const requestFingerprint = buildReservationRequestFingerprint({
-          walletId: wallet.id,
-          customerAccountId: input.customerAccountId,
-          managedSiteId: input.managedSiteId,
-          channel: input.channel,
-          usagePurpose: input.usagePurpose,
-          amount: input.amount,
-          rateVersion: input.rateVersion,
-          correlationId: input.correlationId,
-        })
+        try {
+          const created = await tx.creditReservation.create({
+            data: {
+              walletId: wallet.id,
+              originAccountId: input.customerAccountId,
+              managedSiteId: input.managedSiteId,
+              channel: input.channel,
+              usagePurpose: input.usagePurpose,
+              rateVersion: input.rateVersion,
+              requestFingerprint,
+              amount: input.amount,
+              settledAmount: 0,
+              status: 'HELD',
+              expiresAt: input.expiresAt,
+              correlationId: input.correlationId,
+              campaignId: input.campaignId,
+              idempotencyKey: input.idempotencyKey,
+            },
+          })
 
-        const created = await tx.creditReservation.create({
-          data: {
-            walletId: wallet.id,
-            originAccountId: input.customerAccountId,
-            managedSiteId: input.managedSiteId,
-            channel: input.channel,
-            usagePurpose: input.usagePurpose,
-            rateVersion: input.rateVersion,
-            requestFingerprint,
-            amount: input.amount,
-            settledAmount: 0,
-            status: 'HELD',
-            expiresAt: input.expiresAt,
-            correlationId: input.correlationId,
-            campaignId: input.campaignId,
-            idempotencyKey: input.idempotencyKey,
-          },
-        })
+          await tx.messageUsage.create({
+            data: {
+              billingGroupId: input.billingGroupId,
+              customerAccountId: input.customerAccountId,
+              managedSiteId: input.managedSiteId,
+              walletId: wallet.id,
+              reservationId: created.id,
+              channel: input.channel ?? 'SMS',
+              units: input.amount,
+              credits: input.amount,
+              status: 'RESERVED',
+              idempotencyKey: `usage_${input.idempotencyKey}`,
+            },
+          })
 
-        await tx.messageUsage.create({
-          data: {
-            billingGroupId: input.billingGroupId,
-            customerAccountId: input.customerAccountId,
-            managedSiteId: input.managedSiteId,
-            walletId: wallet.id,
-            reservationId: created.id,
-            channel: input.channel ?? 'SMS',
-            units: input.amount,
-            credits: input.amount,
-            status: 'RESERVED',
-            idempotencyKey: `usage_${input.idempotencyKey}`,
-          },
-        })
-
-        return { ok: true, value: mapReservation(created) }
+          return { ok: true, value: mapReservation(created) }
+        } catch (error) {
+          if (!isPrismaUniqueViolation(error)) throw error
+          const raced = await tx.creditReservation.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
+          if (!raced) throw error
+          return validateReservationIdempotencyReplay(raced, input, requestFingerprint)
+        }
       })
     } catch (error) {
       if (isSerializationError(error) && attempt + 1 < WALLET_RESERVATION_MAX_RETRIES) continue
@@ -385,8 +493,9 @@ export async function reserveCredits(
 
 async function settleReservationInTx(
   tx: Tx,
-  input: SettleCreditsInput,
+  input: DurableSettleCreditsInput,
   at: Date,
+  actorUserId: string,
 ): Promise<WalletResult<WalletLedgerEntryRecord>> {
   const existingLedger = await tx.walletLedgerEntry.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
   if (existingLedger) return { ok: true, value: mapLedger(existingLedger) }
@@ -395,6 +504,7 @@ async function settleReservationInTx(
   if (!reservation) return { ok: false, error: 'RESERVATION_NOT_FOUND' }
   const wallet = await tx.creditWallet.findUnique({ where: { id: reservation.walletId } })
   if (!wallet) return { ok: false, error: 'WALLET_NOT_FOUND' }
+  if (wallet.status !== 'ACTIVE') return { ok: false, error: 'WALLET_INACTIVE' }
 
   await lockWalletRow(tx, wallet.id)
 
@@ -437,7 +547,7 @@ async function settleReservationInTx(
       reservationId: reservation.id,
       providerRef: input.providerRef,
       idempotencyKey: input.idempotencyKey,
-      actorUserId: input.actorUserId,
+      actorUserId,
     },
   })
 
@@ -456,29 +566,48 @@ async function settleReservationInTx(
 
 export async function settleReservation(
   prisma: PrismaClient,
-  input: SettleCreditsInput,
+  input: DurableSettleCreditsInput,
 ): Promise<WalletResult<WalletLedgerEntryRecord>> {
   const at = new Date()
   const amountCheck = validateCreditAmount(input.amount)
   if (!amountCheck.ok) return { ok: false, error: 'INVALID_AMOUNT' }
-  const resolved = resolveDurableWalletActor(input.actorUserId, input.actorType)
-  if (!resolved.ok) return resolved
-
-  return prisma.$transaction(async (tx) => settleReservationInTx(tx, input, at))
-}
-
-export async function releaseReservation(
-  prisma: PrismaClient,
-  input: ReleaseCreditsInput,
-): Promise<WalletResult<CreditReservationRecord>> {
-  const resolved = resolveDurableWalletActor(input.actorUserId, input.actorType)
-  if (!resolved.ok) return resolved
+  if (!isWalletSettlementEnabled() && input.principal.kind === 'USER') {
+    return { ok: false, error: 'UNAUTHORIZED_SETTLE' }
+  }
 
   return prisma.$transaction(async (tx) => {
     const reservation = await tx.creditReservation.findUnique({ where: { id: input.reservationId } })
     if (!reservation) return { ok: false, error: 'RESERVATION_NOT_FOUND' }
     const wallet = await tx.creditWallet.findUnique({ where: { id: reservation.walletId } })
     if (!wallet) return { ok: false, error: 'WALLET_NOT_FOUND' }
+    const auth = await assertWalletMutationAuthorized(tx, {
+      principal: input.principal,
+      operation: 'SETTLE',
+      billingGroupId: wallet.billingGroupId,
+      at,
+    })
+    if (!auth.ok) return auth
+    return settleReservationInTx(tx, input, at, auth.actorUserId)
+  })
+}
+
+export async function releaseReservation(
+  prisma: PrismaClient,
+  input: DurableReleaseCreditsInput,
+): Promise<WalletResult<CreditReservationRecord>> {
+  const at = new Date()
+  return prisma.$transaction(async (tx) => {
+    const reservation = await tx.creditReservation.findUnique({ where: { id: input.reservationId } })
+    if (!reservation) return { ok: false, error: 'RESERVATION_NOT_FOUND' }
+    const wallet = await tx.creditWallet.findUnique({ where: { id: reservation.walletId } })
+    if (!wallet) return { ok: false, error: 'WALLET_NOT_FOUND' }
+    const auth = await assertWalletMutationAuthorized(tx, {
+      principal: input.principal,
+      operation: 'RELEASE',
+      billingGroupId: wallet.billingGroupId,
+      at,
+    })
+    if (!auth.ok) return auth
     await lockWalletRow(tx, wallet.id)
 
     if (reservation.status === 'RELEASED') return { ok: true, value: mapReservation(reservation) }
@@ -508,7 +637,7 @@ export async function releaseReservation(
             priceVersion: reservation.rateVersion ?? 'wallet09-v1',
             reservationId: reservation.id,
             idempotencyKey: input.idempotencyKey,
-            actorUserId: input.actorUserId,
+            actorUserId: auth.actorUserId,
           },
         })
       }
@@ -529,11 +658,21 @@ export async function releaseReservation(
 export async function expireReservation(
   prisma: PrismaClient,
   reservationId: string,
+  principal: import('@/lib/platform/wallet/mutation-principal').WalletMutationPrincipal,
   at = new Date(),
 ): Promise<WalletResult<CreditReservationRecord>> {
   return prisma.$transaction(async (tx) => {
     const reservation = await tx.creditReservation.findUnique({ where: { id: reservationId } })
     if (!reservation) return { ok: false, error: 'RESERVATION_NOT_FOUND' }
+    const wallet = await tx.creditWallet.findUnique({ where: { id: reservation.walletId } })
+    if (!wallet) return { ok: false, error: 'WALLET_NOT_FOUND' }
+    const auth = await assertWalletMutationAuthorized(tx, {
+      principal,
+      operation: 'EXPIRE',
+      billingGroupId: wallet.billingGroupId,
+      at,
+    })
+    if (!auth.ok) return auth
     if (!OPEN_HOLD_STATUSES.includes(reservation.status)) {
       return { ok: true, value: mapReservation(reservation) }
     }
@@ -554,12 +693,10 @@ export async function expireReservation(
 
 export async function refundCredits(
   prisma: PrismaClient,
-  input: RefundCreditsInput,
+  input: DurableRefundCreditsInput,
 ): Promise<WalletResult<WalletLedgerEntryRecord>> {
   const amountCheck = validateCreditAmount(input.amount)
   if (!amountCheck.ok) return { ok: false, error: 'INVALID_AMOUNT' }
-  const resolved = resolveDurableWalletActor(input.actorUserId, input.actorType)
-  if (!resolved.ok) return resolved
 
   return prisma.$transaction(async (tx) => {
     const existing = await tx.walletLedgerEntry.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
@@ -568,31 +705,42 @@ export async function refundCredits(
     const wallet = await tx.creditWallet.findUnique({ where: { id: input.walletId } })
     if (!wallet || wallet.status !== 'ACTIVE') return { ok: false, error: 'WALLET_NOT_FOUND' }
 
-    if (input.originalLedgerId) {
-      const original = await tx.walletLedgerEntry.findUnique({ where: { id: input.originalLedgerId } })
-      if (!original || original.type !== 'SETTLE') return { ok: false, error: 'INVALID_AMOUNT' }
-      const priorRefunds = await tx.walletLedgerEntry.aggregate({
-        where: { originalLedgerEntryId: input.originalLedgerId, type: 'REFUND' },
-        _sum: { deltaCredits: true },
-      })
-      const alreadyRefunded = priorRefunds._sum.deltaCredits ?? 0
-      const eligible = Math.abs(original.deltaCredits) - alreadyRefunded
-      if (input.amount > eligible) return { ok: false, error: 'INVALID_AMOUNT' }
+    const auth = await assertWalletMutationAuthorized(tx, {
+      principal: input.principal,
+      operation: 'REFUND',
+      billingGroupId: wallet.billingGroupId,
+      at: new Date(),
+    })
+    if (!auth.ok) return auth
+
+    const original = await tx.walletLedgerEntry.findUnique({ where: { id: input.originalLedgerId } })
+    if (!original || original.type !== 'SETTLE' || original.walletId !== wallet.id) {
+      return { ok: false, error: 'INVALID_AMOUNT' }
     }
 
     await lockWalletRow(tx, wallet.id)
+
+    const priorRefunds = await tx.walletLedgerEntry.aggregate({
+      where: { originalLedgerEntryId: input.originalLedgerId, type: 'REFUND' },
+      _sum: { deltaCredits: true },
+    })
+    const alreadyRefunded = priorRefunds._sum.deltaCredits ?? 0
+    const eligible = Math.abs(original.deltaCredits) - alreadyRefunded
+    if (input.amount > eligible) return { ok: false, error: 'INVALID_AMOUNT' }
+
     const entry = await tx.walletLedgerEntry.create({
       data: {
         walletId: wallet.id,
-        customerAccountId: input.customerAccountId,
+        customerAccountId: original.customerAccountId,
+        managedSiteId: original.managedSiteId,
         type: 'REFUND',
         deltaCredits: input.amount,
-        priceVersion: input.priceVersion ?? 'wallet09-v1',
+        priceVersion: input.priceVersion ?? original.priceVersion,
         originalLedgerEntryId: input.originalLedgerId,
-        refundReason: 'wallet09-compensating-entry',
-        reservationId: input.originalLedgerId ?? null,
+        refundReason: input.refundReason ?? 'wallet09-compensating-entry',
+        reservationId: original.reservationId,
         idempotencyKey: input.idempotencyKey,
-        actorUserId: input.actorUserId,
+        actorUserId: auth.actorUserId,
       },
     })
     await tx.creditWallet.update({
@@ -606,6 +754,7 @@ export async function refundCredits(
 export async function reconcileProviderSettlementEvent(
   prisma: PrismaClient,
   input: {
+    principal: import('@/lib/platform/wallet/mutation-principal').WalletMutationPrincipal
     providerKey: string
     externalEventId: string
     payloadHash: string
@@ -614,10 +763,28 @@ export async function reconcileProviderSettlementEvent(
     settleAmount: number
     providerRef: string
     idempotencyKey: string
-    actorUserId: string
+    eventFingerprint: string
     managedSiteId?: string
   },
 ): Promise<WalletResult<WalletLedgerEntryRecord>> {
+  if (!isWalletProviderReconciliationEnabled()) {
+    return { ok: false, error: 'UNAUTHORIZED_SETTLE' }
+  }
+  if (!isBillableProviderNormalizedStatus(input.normalizedStatus)) {
+    return { ok: false, error: 'UNAUTHORIZED_SETTLE' }
+  }
+  const expectedFingerprint = buildProviderEventFingerprint({
+    providerKey: input.providerKey,
+    externalEventId: input.externalEventId,
+    payloadHash: input.payloadHash,
+    reservationId: input.reservationId,
+    settleAmount: input.settleAmount,
+  })
+  if (input.eventFingerprint !== expectedFingerprint) {
+    return { ok: false, error: 'UNAUTHORIZED_SETTLE' }
+  }
+
+  const at = new Date()
   return prisma.$transaction(async (tx) => {
     const receipt = await tx.walletProviderEventReceipt.findUnique({
       where: { providerKey_externalEventId: { providerKey: input.providerKey, externalEventId: input.externalEventId } },
@@ -629,74 +796,62 @@ export async function reconcileProviderSettlementEvent(
 
     const reservation = await tx.creditReservation.findUnique({ where: { id: input.reservationId } })
     if (!reservation) return { ok: false, error: 'RESERVATION_NOT_FOUND' }
+    const wallet = await tx.creditWallet.findUnique({ where: { id: reservation.walletId } })
+    if (!wallet) return { ok: false, error: 'WALLET_NOT_FOUND' }
+
+    const auth = await assertWalletMutationAuthorized(tx, {
+      principal: input.principal,
+      operation: 'RECONCILE',
+      billingGroupId: wallet.billingGroupId,
+      at,
+    })
+    if (!auth.ok) return auth
+
+    if (input.settleAmount > reservation.amount - reservation.settledAmount) {
+      return { ok: false, error: 'INSUFFICIENT_CREDITS' }
+    }
 
     const settleResult = await settleReservationInTx(
       tx,
       {
-        actorUserId: input.actorUserId,
-        actorType: 'SERVICE',
+        principal: input.principal,
         reservationId: input.reservationId,
         amount: input.settleAmount,
         providerRef: input.providerRef,
         idempotencyKey: input.idempotencyKey,
-        managedSiteId: input.managedSiteId,
+        managedSiteId: input.managedSiteId ?? reservation.managedSiteId ?? undefined,
       },
-      new Date(),
+      at,
+      auth.actorUserId,
     )
     if (!settleResult.ok) return settleResult
 
-    await tx.walletProviderEventReceipt.create({
-      data: {
-        providerKey: input.providerKey,
-        externalEventId: input.externalEventId,
-        walletId: reservation.walletId,
-        reservationId: reservation.id,
-        ledgerEntryId: settleResult.value.id,
-        payloadHash: input.payloadHash,
-        normalizedStatus: input.normalizedStatus,
-      },
-    })
+    try {
+      await tx.walletProviderEventReceipt.create({
+        data: {
+          providerKey: input.providerKey,
+          externalEventId: input.externalEventId,
+          walletId: reservation.walletId,
+          reservationId: reservation.id,
+          ledgerEntryId: settleResult.value.id,
+          payloadHash: input.payloadHash,
+          normalizedStatus: input.normalizedStatus,
+        },
+      })
+    } catch (error) {
+      if (isPrismaUniqueViolation(error)) {
+        const replay = await tx.walletProviderEventReceipt.findUnique({
+          where: {
+            providerKey_externalEventId: { providerKey: input.providerKey, externalEventId: input.externalEventId },
+          },
+        })
+        if (replay?.ledgerEntryId) {
+          const ledger = await tx.walletLedgerEntry.findUnique({ where: { id: replay.ledgerEntryId } })
+          if (ledger) return { ok: true, value: mapLedger(ledger) }
+        }
+      }
+      throw error
+    }
     return settleResult
-  })
-}
-
-/** Test/synthetic funding only — production mint requires WalletFundingEvidence (COMMERCE-11). */
-export async function seedSyntheticWalletTopUp(
-  prisma: PrismaClient,
-  input: {
-    billingGroupId: string
-    amount: number
-    idempotencyKey: string
-    actorUserId: string
-    evidenceRef?: string
-  },
-): Promise<WalletResult<WalletLedgerEntryRecord>> {
-  const amountCheck = validateCreditAmount(input.amount)
-  if (!amountCheck.ok) return { ok: false, error: 'INVALID_AMOUNT' }
-  if (!input.evidenceRef?.startsWith('synthetic-test:')) {
-    return { ok: false, error: 'UNAUTHORIZED_SETTLE' }
-  }
-
-  return prisma.$transaction(async (tx) => {
-    const wallet = await tx.creditWallet.findUnique({
-      where: { billingGroupId_creditType: { billingGroupId: input.billingGroupId, creditType: 'MESSAGING' } },
-    })
-    if (!wallet) return { ok: false, error: 'WALLET_NOT_FOUND' }
-    const existing = await tx.walletLedgerEntry.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
-    if (existing) return { ok: true, value: mapLedger(existing) }
-    await lockWalletRow(tx, wallet.id)
-    const entry = await tx.walletLedgerEntry.create({
-      data: {
-        walletId: wallet.id,
-        type: 'TOP_UP',
-        deltaCredits: input.amount,
-        priceVersion: 'wallet09-synthetic-v1',
-        providerRef: input.evidenceRef,
-        idempotencyKey: input.idempotencyKey,
-        actorUserId: input.actorUserId,
-      },
-    })
-    await tx.creditWallet.update({ where: { id: wallet.id }, data: { ledgerSequence: { increment: 1 } } })
-    return { ok: true, value: mapLedger(entry) }
   })
 }

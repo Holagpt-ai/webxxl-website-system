@@ -97,6 +97,8 @@
 | Tests | `__tests__/platform/wallet09-foundation.test.ts` | ABMED 1000→650 durable path via **in-memory Prisma simulator**; concurrent hold race; partial settle/release; provider replay idempotency. **Live PostgreSQL concurrency not verified** in CI |
 | Production | — | **No Twilio/Resend live calls**, **no card checkout**, **no webhook settlement**, **no credit mint from quotes**, **no migration apply** |
 
+**WALLET-09A (in PR #41):** Server-only `WalletMutationPrincipal` for durable mutations; synthetic TOP_UP restricted to Vitest + `WALLET_SYNTHETIC_FUNDING_ENABLED`; full reservation fingerprint replay; refund ledger integrity; timezone-aware spending caps; COMMS quote/intent binding; provider reconciliation fingerprints; usage API site ownership — **Vitest `wallet09a-integrity`**.
+
 ## INFRA-02 (2026-10-18) — repository infrastructure only; live staging BLOCKED
 
 | Area | Evidence | Honest status |

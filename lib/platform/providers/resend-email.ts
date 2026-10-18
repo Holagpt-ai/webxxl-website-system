@@ -1,4 +1,4 @@
-import { isResendTransportEnabled } from '@/config/wallet-backend'
+import { isResendTransportEnabled, isWalletProviderMockTransportAllowed } from '@/config/wallet-backend'
 import { estimateMessagingCost } from '@/lib/platform/wallet/rate-plan'
 import type { EmailProvider, ProviderAuthContext, ProviderResult } from '@/lib/platform/providers/types'
 import type { HttpJsonTransport, MessagingEmailAdapter, TransportLifecycleStatus } from '@/lib/platform/providers/messaging-transport'
@@ -63,7 +63,7 @@ export function createResendEmailProvider(options?: {
         html: input.html,
       }
 
-      if (transport) {
+      if (transport && isWalletProviderMockTransportAllowed()) {
         const response = await transport.postJson(
           'https://api.resend.com/emails',
           { Authorization: 'Bearer mock', 'Content-Type': 'application/json' },

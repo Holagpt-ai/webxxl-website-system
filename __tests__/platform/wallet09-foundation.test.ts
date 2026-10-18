@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs'
 import path from 'path'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import {
   ABMED_AESTHETICS_ACCOUNT_ID,
   ABMED_CLINICAL_ACCOUNT_ID,
@@ -20,11 +20,12 @@ import {
   reconcileProviderSettlementEvent,
   releaseReservation,
   reserveCredits,
-  seedSyntheticWalletTopUp,
   settleReservation,
 } from '@/lib/platform/wallet/durable-service'
+import { buildProviderEventFingerprint } from '@/lib/platform/wallet/provider-reconciliation'
 import { mintCreditsFromFundingEvidence, prepareWalletTopUpQuote } from '@/lib/platform/wallet/top-up-quote'
 import { createMemoryWalletPrisma } from '@/lib/platform/wallet/test/memory-wallet-prisma'
+import { seedSyntheticWalletTopUpForTests } from '@/lib/platform/wallet/test/synthetic-funding'
 import {
   isResendTransportEnabled,
   isTwilioAdapterEnabled,
@@ -32,7 +33,11 @@ import {
   isWalletReservationEnabled,
 } from '@/config/wallet-backend'
 import { createWalletContractService, seedWalletTopUp } from '@/lib/platform/wallet/service'
+
 const now = new Date('2026-10-18T12:00:00.000Z')
+const RESERVE_PRINCIPAL = { kind: 'SERVICE' as const, serviceId: 'wallet-reservation' as const }
+const SETTLE_PRINCIPAL = { kind: 'SERVICE' as const, serviceId: 'wallet-settlement' as const }
+const RECONCILE_PRINCIPAL = { kind: 'SERVICE' as const, serviceId: 'wallet-reconciliation' as const }
 
 function abmedMemoryDb() {
   return createMemoryWalletPrisma({
@@ -65,7 +70,21 @@ function abmedMemoryDb() {
   })
 }
 
+async function fundAbmed(prisma: ReturnType<typeof abmedMemoryDb>['prisma'], amount: number, key: string) {
+  return seedSyntheticWalletTopUpForTests(prisma, {
+    billingGroupId: ABMED_GROUP_ID,
+    amount,
+    idempotencyKey: key,
+    principal: SETTLE_PRINCIPAL,
+  })
+}
+
 describe('WALLET-09 foundation', () => {
+  beforeAll(() => {
+    process.env.WALLET_SYNTHETIC_FUNDING_ENABLED = 'true'
+    process.env.WALLET_PROVIDER_RECONCILIATION_ENABLED = 'true'
+  })
+
   it('AF: wallet feature flags default OFF', () => {
     expect(isWalletBackendEnabled()).toBe(false)
     expect(isWalletReservationEnabled()).toBe(false)
@@ -117,7 +136,13 @@ describe('WALLET-09 foundation', () => {
   })
 
   it('H: Twilio/Resend adapters stay prepared without live HTTP by default', async () => {
-    const twilio = createTwilioSmsProvider()
+    const twilio = createTwilioSmsProvider({
+      transport: {
+        async postJson() {
+          return { status: 200, json: { sid: 'SM_should_not_run' } }
+        },
+      },
+    })
     const resend = createResendEmailProvider()
     const ctx = {
       customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
@@ -145,19 +170,13 @@ describe('WALLET-09 foundation', () => {
 
   it('T: top-up quote without payment proof does not mint credits', async () => {
     const { prisma } = abmedMemoryDb()
-    await seedSyntheticWalletTopUp(prisma, {
-      billingGroupId: ABMED_GROUP_ID,
-      amount: SYNTHETIC_ABMED_USAGE.startingCredits,
-      idempotencyKey: 'topup_abmed',
-      actorUserId: 'billing_owner',
-      evidenceRef: 'synthetic-test:abmed',
-    })
+    await fundAbmed(prisma, SYNTHETIC_ABMED_USAGE.startingCredits, 'topup_abmed')
     const before = await getWalletBalance(prisma, ABMED_WALLET_ID, now)
     const quote = await prepareWalletTopUpQuote(prisma, {
       billingGroupId: ABMED_GROUP_ID,
       creditAmount: 1000,
       fiatMinorUnits: 9900,
-      priceVersion: 'pack-v1',
+      priceVersion: 'wallet09-pack-1000-v1',
       idempotencyKey: 'topup_quote_1',
       expiresAt: new Date(Date.now() + 60_000),
     })
@@ -170,17 +189,11 @@ describe('WALLET-09 foundation', () => {
 
   it('A: shared ABMED wallet 1000→650 with per-account attribution (durable path)', async () => {
     const { prisma } = abmedMemoryDb()
-    await seedSyntheticWalletTopUp(prisma, {
-      billingGroupId: ABMED_GROUP_ID,
-      amount: SYNTHETIC_ABMED_USAGE.startingCredits,
-      idempotencyKey: 'fund_abmed',
-      actorUserId: 'billing_owner',
-      evidenceRef: 'synthetic-test:abmed',
-    })
+    await fundAbmed(prisma, SYNTHETIC_ABMED_USAGE.startingCredits, 'fund_abmed')
 
     async function spend(accountId: string, amount: number, key: string) {
       const reserved = await reserveCredits(prisma, {
-        actorUserId: 'actor',
+        principal: RESERVE_PRINCIPAL,
         billingGroupId: ABMED_GROUP_ID,
         customerAccountId: accountId,
         amount,
@@ -193,8 +206,7 @@ describe('WALLET-09 foundation', () => {
       expect(reserved.ok).toBe(true)
       if (!reserved.ok) return
       const settled = await settleReservation(prisma, {
-        actorUserId: 'service:webxxl-wallet-settlement',
-        actorType: 'SERVICE',
+        principal: SETTLE_PRINCIPAL,
         reservationId: reserved.value.id,
         amount,
         idempotencyKey: `settle_${key}`,
@@ -216,15 +228,9 @@ describe('WALLET-09 foundation', () => {
 
   it('B: concurrent holds — only one 80-credit reservation succeeds on 100 available', async () => {
     const { prisma } = abmedMemoryDb()
-    await seedSyntheticWalletTopUp(prisma, {
-      billingGroupId: ABMED_GROUP_ID,
-      amount: 100,
-      idempotencyKey: 'fund_100',
-      actorUserId: 'billing_owner',
-      evidenceRef: 'synthetic-test:100',
-    })
+    await fundAbmed(prisma, 100, 'fund_100')
     const base = {
-      actorUserId: 'actor',
+      principal: RESERVE_PRINCIPAL,
       billingGroupId: ABMED_GROUP_ID,
       customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
       amount: 80,
@@ -246,15 +252,9 @@ describe('WALLET-09 foundation', () => {
 
   it('C: partial settlement then release — ledger debit 120 only', async () => {
     const { prisma, ledger } = abmedMemoryDb()
-    await seedSyntheticWalletTopUp(prisma, {
-      billingGroupId: ABMED_GROUP_ID,
-      amount: 500,
-      idempotencyKey: 'fund_partial',
-      actorUserId: 'billing_owner',
-      evidenceRef: 'synthetic-test:partial',
-    })
+    await fundAbmed(prisma, 500, 'fund_partial')
     const reserved = await reserveCredits(prisma, {
-      actorUserId: 'actor',
+      principal: RESERVE_PRINCIPAL,
       billingGroupId: ABMED_GROUP_ID,
       customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
       amount: 200,
@@ -267,15 +267,13 @@ describe('WALLET-09 foundation', () => {
     expect(reserved.ok).toBe(true)
     if (!reserved.ok) return
     await settleReservation(prisma, {
-      actorUserId: 'service:webxxl-wallet-settlement',
-      actorType: 'SERVICE',
+      principal: SETTLE_PRINCIPAL,
       reservationId: reserved.value.id,
       amount: 120,
       idempotencyKey: 'settle_partial',
     })
     await releaseReservation(prisma, {
-      actorUserId: 'service:webxxl-wallet-settlement',
-      actorType: 'SERVICE',
+      principal: SETTLE_PRINCIPAL,
       reservationId: reserved.value.id,
       idempotencyKey: 'release_partial',
     })
@@ -287,15 +285,9 @@ describe('WALLET-09 foundation', () => {
 
   it('D: duplicate provider callback debits once', async () => {
     const { prisma, ledger } = abmedMemoryDb()
-    await seedSyntheticWalletTopUp(prisma, {
-      billingGroupId: ABMED_GROUP_ID,
-      amount: 300,
-      idempotencyKey: 'fund_cb',
-      actorUserId: 'billing_owner',
-      evidenceRef: 'synthetic-test:cb',
-    })
+    await fundAbmed(prisma, 300, 'fund_cb')
     const reserved = await reserveCredits(prisma, {
-      actorUserId: 'actor',
+      principal: RESERVE_PRINCIPAL,
       billingGroupId: ABMED_GROUP_ID,
       customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
       amount: 50,
@@ -307,7 +299,15 @@ describe('WALLET-09 foundation', () => {
     })
     expect(reserved.ok).toBe(true)
     if (!reserved.ok) return
+    const eventFingerprint = buildProviderEventFingerprint({
+      providerKey: 'twilio',
+      externalEventId: 'evt_123',
+      payloadHash: 'hash',
+      reservationId: reserved.value.id,
+      settleAmount: 50,
+    })
     const payload = {
+      principal: RECONCILE_PRINCIPAL,
       providerKey: 'twilio',
       externalEventId: 'evt_123',
       payloadHash: 'hash',
@@ -316,7 +316,7 @@ describe('WALLET-09 foundation', () => {
       settleAmount: 50,
       providerRef: 'SM123',
       idempotencyKey: 'settle_evt_123',
-      actorUserId: 'service:webxxl-wallet-reconciliation',
+      eventFingerprint,
     }
     const first = await reconcileProviderSettlementEvent(prisma, payload)
     const second = await reconcileProviderSettlementEvent(prisma, payload)

@@ -17,15 +17,18 @@ export type SpendingPolicyRow = {
 
 export type PolicyUsageContext = {
   at: Date
-  accountSettledCredits: number
-  accountOpenHolds: number
-  siteSettledCredits?: number
-  siteOpenHolds?: number
-  groupSettledCredits?: number
-  groupOpenHolds?: number
+  hasManagedSiteScope: boolean
+  accountDailySettled: number
+  accountDailyOpenHolds: number
+  accountMonthlySettled: number
+  accountMonthlyOpenHolds: number
+  siteDailySettled: number
+  siteDailyOpenHolds: number
+  groupSettledInMonth: number
+  groupOpenHolds: number
 }
 
-export type PolicyDenial = 'POLICY_CAP_EXCEEDED' | 'CHANNEL_NOT_ALLOWED'
+export type PolicyDenial = 'POLICY_CAP_EXCEEDED' | 'CHANNEL_NOT_ALLOWED' | 'POLICY_TIMEZONE_UNSUPPORTED'
 
 function channelAllowed(policy: SpendingPolicyRow, channel?: string | null): boolean {
   if (!channel) return true
@@ -34,15 +37,58 @@ function channelAllowed(policy: SpendingPolicyRow, channel?: string | null): boo
   return raw.map(String).includes(channel)
 }
 
-function startOfUtcDay(at: Date): Date {
-  return new Date(Date.UTC(at.getUTCFullYear(), at.getUTCMonth(), at.getUTCDate()))
+type ZonedParts = { year: number; month: number; day: number }
+
+function zonedDateParts(at: Date, timeZone: string): ZonedParts | null {
+  try {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    })
+    const parts = formatter.formatToParts(at)
+    const year = Number(parts.find((p) => p.type === 'year')?.value)
+    const month = Number(parts.find((p) => p.type === 'month')?.value)
+    const day = Number(parts.find((p) => p.type === 'day')?.value)
+    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null
+    return { year, month, day }
+  } catch {
+    return null
+  }
 }
 
-function startOfUtcMonth(at: Date): Date {
-  return new Date(Date.UTC(at.getUTCFullYear(), at.getUTCMonth(), 1))
+/** Start of calendar day/month in policy timezone, expressed as UTC instant lower bound. */
+export function getPolicyPeriodStarts(
+  at: Date,
+  timeZone: string,
+): { ok: true; dayStartUtc: Date; monthStartUtc: Date } | { ok: false; error: 'POLICY_TIMEZONE_UNSUPPORTED' } {
+  const parts = zonedDateParts(at, timeZone)
+  if (!parts) return { ok: false, error: 'POLICY_TIMEZONE_UNSUPPORTED' }
+  const dayStartUtc = new Date(Date.UTC(parts.year, parts.month - 1, parts.day))
+  const monthStartUtc = new Date(Date.UTC(parts.year, parts.month - 1, 1))
+  return { ok: true, dayStartUtc, monthStartUtc }
 }
 
-/** Period usage includes settled debits plus outstanding holds (reservation accounting). */
+export function sumSettledCredits(entries: { deltaCredits: number; effectiveAt: Date }[], from: Date): number {
+  return entries
+    .filter((entry) => entry.effectiveAt >= from)
+    .reduce((sum, entry) => sum + Math.abs(Math.min(0, entry.deltaCredits)), 0)
+}
+
+export function sumOpenHoldsForReservations(
+  reservations: (BalanceReservationSlice & { createdAt?: Date })[],
+  at: Date,
+  from?: Date,
+): number {
+  return reservations.reduce((sum, item) => {
+    if (!OPEN_HOLD_STATUSES.includes(item.status)) return sum
+    if (from && item.createdAt && item.createdAt < from) return sum
+    return sum + reservationOpenHoldAmount(item, at)
+  }, 0)
+}
+
+/** Period usage includes settled debits plus outstanding holds created in the period. */
 export function evaluateSpendingPolicy(input: {
   policy: SpendingPolicyRow | null
   channel?: string | null
@@ -55,34 +101,29 @@ export function evaluateSpendingPolicy(input: {
   if (policy.maxCampaignCredits != null && input.requestedCredits > policy.maxCampaignCredits) {
     return { ok: false, error: 'POLICY_CAP_EXCEEDED' }
   }
-  const projectedAccount = input.context.accountSettledCredits + input.context.accountOpenHolds + input.requestedCredits
-  if (policy.dailyLimit != null && projectedAccount > policy.dailyLimit) {
+
+  const projectedDailyAccount =
+    input.context.accountDailySettled + input.context.accountDailyOpenHolds + input.requestedCredits
+  if (policy.dailyLimit != null && projectedDailyAccount > policy.dailyLimit) {
     return { ok: false, error: 'POLICY_CAP_EXCEEDED' }
   }
-  if (policy.monthlyLimit != null && projectedAccount > policy.monthlyLimit) {
+
+  const projectedMonthlyAccount =
+    input.context.accountMonthlySettled + input.context.accountMonthlyOpenHolds + input.requestedCredits
+  if (policy.monthlyLimit != null && projectedMonthlyAccount > policy.monthlyLimit) {
     return { ok: false, error: 'POLICY_CAP_EXCEEDED' }
   }
-  if (input.context.siteSettledCredits != null && policy.managedSiteDailyLimit != null) {
+
+  if (policy.managedSiteDailyLimit != null && input.context.hasManagedSiteScope) {
     const siteTotal =
-      input.context.siteSettledCredits + (input.context.siteOpenHolds ?? 0) + input.requestedCredits
+      input.context.siteDailySettled + input.context.siteDailyOpenHolds + input.requestedCredits
     if (siteTotal > policy.managedSiteDailyLimit) return { ok: false, error: 'POLICY_CAP_EXCEEDED' }
   }
-  if (policy.groupHardCap != null && input.context.groupSettledCredits != null) {
-    const groupTotal =
-      input.context.groupSettledCredits + (input.context.groupOpenHolds ?? 0) + input.requestedCredits
+
+  if (policy.groupHardCap != null) {
+    const groupTotal = input.context.groupSettledInMonth + input.context.groupOpenHolds + input.requestedCredits
     if (groupTotal > policy.groupHardCap) return { ok: false, error: 'POLICY_CAP_EXCEEDED' }
   }
+
   return { ok: true }
 }
-
-export function sumOpenHoldsForReservations(
-  reservations: BalanceReservationSlice[],
-  at: Date,
-): number {
-  return reservations.reduce((sum, item) => {
-    if (!OPEN_HOLD_STATUSES.includes(item.status)) return sum
-    return sum + reservationOpenHoldAmount(item, at)
-  }, 0)
-}
-
-export { startOfUtcDay, startOfUtcMonth }

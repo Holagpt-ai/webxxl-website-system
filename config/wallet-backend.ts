@@ -51,3 +51,13 @@ export const WALLET_LIST_DEFAULT_TAKE = Number(process.env.WALLET_LIST_DEFAULT_T
 export const WALLET_LIST_MAX_TAKE = Number(process.env.WALLET_LIST_MAX_TAKE ?? '200')
 
 export const WALLET_RESERVATION_MAX_RETRIES = Number(process.env.WALLET_RESERVATION_MAX_RETRIES ?? '3')
+
+/** Test-only synthetic TOP_UP minting (Vitest sets WALLET_SYNTHETIC_FUNDING_ENABLED=true). */
+export function isWalletSyntheticFundingAllowed(): boolean {
+  return process.env.NODE_ENV === 'test' && process.env.WALLET_SYNTHETIC_FUNDING_ENABLED === 'true'
+}
+
+/** Mock HTTP transports for provider adapters — never in production runtime. */
+export function isWalletProviderMockTransportAllowed(): boolean {
+  return process.env.NODE_ENV === 'test' && process.env.WALLET_PROVIDER_MOCK_TRANSPORT_ENABLED === 'true'
+}

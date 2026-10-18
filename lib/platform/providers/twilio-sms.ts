@@ -1,4 +1,4 @@
-import { isTwilioAdapterEnabled } from '@/config/wallet-backend'
+import { isTwilioAdapterEnabled, isWalletProviderMockTransportAllowed } from '@/config/wallet-backend'
 import { estimateMessagingCost } from '@/lib/platform/wallet/rate-plan'
 import type { ProviderAuthContext, ProviderResult, SmsProvider } from '@/lib/platform/providers/types'
 import type { HttpJsonTransport, MessagingSmsAdapter, TransportLifecycleStatus } from '@/lib/platform/providers/messaging-transport'
@@ -58,7 +58,7 @@ export function createTwilioSmsProvider(options?: {
         MessagingServiceSid: input.messagingTenantRef,
       }
 
-      if (transport) {
+      if (transport && isWalletProviderMockTransportAllowed()) {
         const response = await transport.postJson(
           'https://api.twilio.com/2010-04-01/Accounts/mock/Messages.json',
           { 'Content-Type': 'application/x-www-form-urlencoded' },
