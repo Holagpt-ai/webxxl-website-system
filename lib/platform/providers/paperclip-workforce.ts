@@ -13,8 +13,9 @@ function unavailable<T>(message: string): ProviderResult<T> {
 }
 
 /**
- * Paperclip adapter — live HTTP calls are gated off unless explicitly enabled.
- * Verified upstream reference: paperclipai/paperclip @ v2026.325.0 (INFRA-02).
+ * Paperclip adapter boundary — NOT a verified live API in AGENT-03/03A.
+ * Live HTTP calls remain gated off unless explicitly enabled and staged.
+ * Verified upstream reference tag only: paperclipai/paperclip @ v2026.325.0 (INFRA-02).
  */
 export function createPaperclipWorkforceProvider(): WorkforceProvider {
   return {

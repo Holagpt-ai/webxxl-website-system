@@ -9,6 +9,12 @@ import type {
   WorkforceToolCallRecord,
 } from '@/lib/platform/workforce/types'
 import type { AiToolGrant } from '@/lib/platform/ai-tools/types'
+import type { WorkforceHumanPermission } from '@/lib/platform/workforce/operator-auth'
+
+export type TrustedHumanOperatorRegistration = {
+  permissions: WorkforceHumanPermission[]
+  platformWide: boolean
+}
 
 export type WorkforceStore = {
   agents: Map<string, InternalAgentDefinitionRecord>
@@ -21,6 +27,8 @@ export type WorkforceStore = {
   toolCalls: Map<string, WorkforceToolCallRecord>
   toolGrants: AiToolGrant[]
   operatingMemberships: { userId: string; customerAccountId: string }[]
+  /** Server-resolved human operators (synthetic fixtures in tests; session-backed in production). */
+  trustedHumanOperators: Map<string, TrustedHumanOperatorRegistration>
 }
 
 export function createWorkforceStore(seedGrants: AiToolGrant[] = []): WorkforceStore {
@@ -37,7 +45,40 @@ export function createWorkforceStore(seedGrants: AiToolGrant[] = []): WorkforceS
     toolCalls: new Map(),
     toolGrants: seedGrants,
     operatingMemberships: [],
+    trustedHumanOperators: new Map(),
   }
+}
+
+/**
+ * Mirrors pending Prisma ON DELETE RESTRICT rules for workforce history tables.
+ */
+export function deleteWorkforceTaskIfAllowed(
+  store: WorkforceStore,
+  taskId: string,
+): { ok: true } | { ok: false; code: string; message: string } {
+  for (const approval of store.approvals.values()) {
+    if (approval.taskId === taskId) {
+      return {
+        ok: false,
+        code: 'TASK_HISTORY_PROTECTED',
+        message: 'Cannot delete task while approval records exist',
+      }
+    }
+  }
+  for (const call of store.toolCalls.values()) {
+    if (call.taskId === taskId) {
+      return {
+        ok: false,
+        code: 'TASK_HISTORY_PROTECTED',
+        message: 'Cannot delete task while tool-call records exist',
+      }
+    }
+  }
+  const task = store.tasks.get(taskId)
+  if (!task) return { ok: false, code: 'NOT_FOUND', message: 'Task not found' }
+  store.tasks.delete(taskId)
+  store.tasksByIdempotency.delete(task.idempotencyKey)
+  return { ok: true }
 }
 
 export function nextWorkforceId(prefix: string): string {

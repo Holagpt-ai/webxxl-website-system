@@ -144,6 +144,7 @@ CREATE TABLE "WorkforceBudgetUsage" (
     "internalAgentKey" TEXT NOT NULL,
     "idempotencyKey" TEXT NOT NULL,
     "periodKey" TEXT NOT NULL,
+    "amountSubunits" INTEGER NOT NULL DEFAULT 0,
     "costSubunits" INTEGER NOT NULL DEFAULT 0,
     "tokenUnits" INTEGER NOT NULL DEFAULT 0,
     "reservedSubunits" INTEGER NOT NULL DEFAULT 0,
@@ -194,11 +195,11 @@ ALTER TABLE "WorkforceTask" ADD CONSTRAINT "WorkforceTask_definitionId_fkey" FOR
 ALTER TABLE "WorkforceTask" ADD CONSTRAINT "WorkforceTask_requestedByUserId_fkey" FOREIGN KEY ("requestedByUserId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE "WorkforceTask" ADD CONSTRAINT "WorkforceTask_customerAccountId_fkey" FOREIGN KEY ("customerAccountId") REFERENCES "CustomerAccount"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
-ALTER TABLE "WorkforceExecution" ADD CONSTRAINT "WorkforceExecution_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "WorkforceTask"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "WorkforceExecution" ADD CONSTRAINT "WorkforceExecution_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "WorkforceTask"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
-ALTER TABLE "WorkforceToolCall" ADD CONSTRAINT "WorkforceToolCall_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "WorkforceTask"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "WorkforceToolCall" ADD CONSTRAINT "WorkforceToolCall_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "WorkforceTask"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
-ALTER TABLE "WorkforceApproval" ADD CONSTRAINT "WorkforceApproval_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "WorkforceTask"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "WorkforceApproval" ADD CONSTRAINT "WorkforceApproval_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "WorkforceTask"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "WorkforceApproval" ADD CONSTRAINT "WorkforceApproval_approverUserId_fkey" FOREIGN KEY ("approverUserId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 ALTER TABLE "WorkforceBudgetUsage" ADD CONSTRAINT "WorkforceBudgetUsage_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "WorkforceTask"("id") ON DELETE SET NULL ON UPDATE CASCADE;

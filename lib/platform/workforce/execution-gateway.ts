@@ -1,5 +1,6 @@
 import { isInternalWorkforceEnabled } from '@/config/workforce'
 import { evaluateAiToolInvocation } from '@/lib/platform/ai-tools/policy'
+import { getAiTool } from '@/lib/platform/ai-tools/registry'
 import { verifyWorkforceApprovalForExecution } from '@/lib/platform/workforce/approval-service'
 import { recordWorkforceAudit } from '@/lib/platform/workforce/audit'
 import { getInternalAgentDefinition } from '@/lib/platform/workforce/internal-agents'
@@ -7,14 +8,50 @@ import { nextWorkforceId, type WorkforceStore } from '@/lib/platform/workforce/i
 import { isWorkforcePaused } from '@/lib/platform/workforce/pause-service'
 import type { AuthorizeToolCallInput, WorkforceResult } from '@/lib/platform/workforce/types'
 
-function hasOperatingAccess(
+function hasOperatingGrantForAccount(
   store: WorkforceStore,
-  userId: string,
+  actorId: string,
+  actorType: string,
   customerAccountId: string,
+  toolKey: string,
 ): boolean {
-  return store.operatingMemberships.some(
-    (m) => m.userId === userId && m.customerAccountId === customerAccountId,
+  return store.toolGrants.some(
+    (grant) =>
+      grant.actorId === actorId &&
+      grant.actorType === actorType &&
+      grant.customerAccountId === customerAccountId &&
+      grant.toolKey === toolKey,
   )
+}
+
+function toolCallReplayKey(input: AuthorizeToolCallInput): string {
+  return [
+    input.requestId,
+    input.toolKey,
+    input.taskId,
+    input.actorId,
+    input.customerAccountId,
+    input.managedSiteId ?? '',
+    input.inputHash,
+    input.approvalId ?? '',
+  ].join('|')
+}
+
+function requiresVerifiedApproval(
+  store: WorkforceStore,
+  input: AuthorizeToolCallInput,
+): boolean {
+  const tool = getAiTool(input.toolKey)
+  if (!tool) return true
+  if (tool.approvalPolicy === 'REQUIRED') return true
+  const grant = store.toolGrants.find(
+    (item) =>
+      item.actorId === input.actorId &&
+      item.actorType === input.actorType &&
+      item.customerAccountId === input.customerAccountId &&
+      item.toolKey === input.toolKey,
+  )
+  return grant?.approvalRequired === true
 }
 
 export function authorizeWorkforceToolCall(
@@ -41,6 +78,9 @@ export function authorizeWorkforceToolCall(
 
   const agent = store.agents.get(task.internalAgentKey) ?? getInternalAgentDefinition(task.internalAgentKey)
   if (!agent) return { ok: false, code: 'UNKNOWN_AGENT', message: 'Agent missing' }
+  if (input.actorType === 'AGENT' && input.actorId !== task.internalAgentKey) {
+    return { ok: false, code: 'AGENT_ASSIGNMENT_MISMATCH', message: 'Agent is not assigned to task' }
+  }
   if (!agent.allowedToolKeys.includes(input.toolKey)) {
     return { ok: false, code: 'TOOL_NOT_ALLOWED', message: 'Tool not allowed for agent role' }
   }
@@ -48,11 +88,20 @@ export function authorizeWorkforceToolCall(
     return { ok: false, code: 'INPUT_HASH_MISMATCH', message: 'Input hash does not match task artifact' }
   }
 
-  const existingKey = `${input.requestId}:${input.toolKey}`
+  const replayKey = toolCallReplayKey(input)
   for (const call of store.toolCalls.values()) {
-    if (`${call.requestId}:${call.toolKey}` === existingKey) {
+    if (call.replayKey === replayKey) {
       if (call.decision === 'ALLOWED') return { ok: true, value: { allowed: true, toolCallId: call.id } }
       return { ok: false, code: call.denialReason ?? 'DENIED', message: 'Prior denial replayed' }
+    }
+  }
+
+  const protectedTool = requiresVerifiedApproval(store, input)
+  if (protectedTool && task.status !== 'AUTHORIZED' && task.status !== 'RUNNING') {
+    return {
+      ok: false,
+      code: 'INVALID_TASK_STATE',
+      message: 'Protected tool calls require AUTHORIZED or RUNNING task',
     }
   }
 
@@ -73,7 +122,7 @@ export function authorizeWorkforceToolCall(
 
   let denialReason = policy.decision === 'DENIED' ? policy.denialReason : undefined
 
-  if (policy.decision === 'ALLOWED' && task.approvalRequired) {
+  if (!denialReason && protectedTool) {
     if (!input.approvalId) {
       denialReason = 'APPROVAL_REQUIRED'
     } else {
@@ -85,6 +134,7 @@ export function authorizeWorkforceToolCall(
         actorId: input.actorId,
         actorType: input.actorType,
         at: input.at,
+        consumeUse: false,
       })
       if (!verified.ok) {
         denialReason = verified.code
@@ -93,23 +143,41 @@ export function authorizeWorkforceToolCall(
   }
 
   if (
+    !denialReason &&
     input.actorType === 'AGENT' &&
     input.customerAccountId &&
-    !hasOperatingAccess(store, input.actorId, input.customerAccountId)
+    !hasOperatingGrantForAccount(store, input.actorId, input.actorType, input.customerAccountId, input.toolKey)
   ) {
-    denialReason = 'NO_OPERATING_MEMBERSHIP'
+    denialReason = 'NO_EXPLICIT_TOOL_GRANT'
   }
 
+  if (!denialReason && protectedTool && input.approvalId) {
+    const consumed = verifyWorkforceApprovalForExecution(store, {
+      approvalId: input.approvalId,
+      taskId: task.id,
+      capability: task.capability,
+      artifactHash: task.inputHash,
+      actorId: input.actorId,
+      actorType: input.actorType,
+      at: input.at,
+      consumeUse: true,
+    })
+    if (!consumed.ok) {
+      denialReason = consumed.code
+    }
+  }
+
+  const finalDecision = denialReason ? 'DENIED' : 'ALLOWED'
   const toolCallId = nextWorkforceId('wftool')
-  const decision = denialReason ? 'DENIED' : 'ALLOWED'
   store.toolCalls.set(toolCallId, {
     id: toolCallId,
     taskId: task.id,
     toolKey: input.toolKey,
     requestId: input.requestId,
+    replayKey,
     inputHash: input.inputHash,
     approvalId: input.approvalId,
-    decision,
+    decision: finalDecision,
     denialReason,
     customerAccountId: input.customerAccountId,
     managedSiteId: input.managedSiteId,
@@ -121,11 +189,11 @@ export function authorizeWorkforceToolCall(
     taskId: task.id,
     actorUserId: input.actorType === 'USER' ? input.actorId : undefined,
     actorType: input.actorType,
-    eventKind: decision === 'ALLOWED' ? 'TOOL_ALLOWED' : 'TOOL_DENIED',
+    eventKind: finalDecision === 'ALLOWED' ? 'TOOL_ALLOWED' : 'TOOL_DENIED',
     detail: { toolKey: input.toolKey, denialReason },
   })
 
-  if (decision === 'DENIED') {
+  if (finalDecision === 'DENIED') {
     return { ok: false, code: denialReason ?? 'DENIED', message: 'Tool call denied' }
   }
   return { ok: true, value: { allowed: true, toolCallId } }

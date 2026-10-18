@@ -28,8 +28,13 @@ export function workforceGlobalBudgetSubunitsLimit(): number {
   return Number(process.env.INTERNAL_WORKFORCE_BUDGET_SUBUNITS ?? '100000')
 }
 
-export function workforceDefaultBudgetPeriodKey(): string {
-  return process.env.INTERNAL_WORKFORCE_BUDGET_PERIOD ?? '2026-10'
+/** UTC calendar month bucket for internal workforce cost attribution. */
+export function workforceDefaultBudgetPeriodKey(at: Date = new Date()): string {
+  const override = process.env.INTERNAL_WORKFORCE_BUDGET_PERIOD
+  if (override) return override
+  const year = at.getUTCFullYear()
+  const month = String(at.getUTCMonth() + 1).padStart(2, '0')
+  return `${year}-${month}`
 }
 
 export function paperclipBaseUrl(): string {

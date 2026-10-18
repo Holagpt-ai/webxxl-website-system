@@ -1636,7 +1636,7 @@ model WorkforceExecution {
   resultArtifactRef     String?
   errorCode             String?
 
-  task WorkforceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task WorkforceTask @relation(fields: [taskId], references: [id], onDelete: Restrict)
 
   @@unique([taskId, attemptNumber])
   @@index([providerKey, startedAt])
@@ -1658,7 +1658,7 @@ model WorkforceToolCall {
   actorType         String
   createdAt         DateTime @default(now())
 
-  task WorkforceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task WorkforceTask @relation(fields: [taskId], references: [id], onDelete: Restrict)
 
   @@unique([requestId, toolKey])
   @@index([taskId, createdAt])
@@ -1679,7 +1679,7 @@ model WorkforceApproval {
   createdAt        DateTime                @default(now())
   updatedAt        DateTime                @updatedAt
 
-  task      WorkforceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task      WorkforceTask @relation(fields: [taskId], references: [id], onDelete: Restrict)
   approver  User?         @relation("WorkforceApprover", fields: [approverUserId], references: [id], onDelete: SetNull)
 
   @@index([taskId, status])
@@ -1692,6 +1692,7 @@ model WorkforceBudgetUsage {
   internalAgentKey String
   idempotencyKey  String   @unique
   periodKey       String
+  amountSubunits  Int      @default(0)
   costSubunits    Int      @default(0)
   tokenUnits      Int      @default(0)
   reservedSubunits Int     @default(0)

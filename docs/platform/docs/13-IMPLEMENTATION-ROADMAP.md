@@ -81,9 +81,9 @@ Batch ID: AGENT-03 / TAD v1.0.0 / Cursor
 Prerequisites: INFRA-02 merged @ 7277f94
 Deliverables: lib/platform/workforce/*, config/workforce.ts, paperclip-workforce adapter, migration 20261018130000_agent03_internal_workforce
 Runtime: INTERNAL_WORKFORCE_ENABLED=false, PAPERCLIP_EXECUTION_ENABLED=false (default)
-Tests: __tests__/platform/agent03-workforce.test.ts (synthetic only)
+Tests: __tests__/platform/agent03-workforce.test.ts, __tests__/platform/agent03a-workforce-corrections.test.ts (synthetic only)
+AGENT-03A: operator-auth hardening, budget integrity, ON DELETE RESTRICT history protection (pending migration)
 Next: owner-approved Paperclip staging pilot + Cursor/GitHub scoped integration (not in this batch)
-```
 ```
 
 ## Effort expectations — directional only

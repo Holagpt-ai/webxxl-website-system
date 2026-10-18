@@ -6,14 +6,18 @@ import {
   ABMED_PHYSICIANS_ACCOUNT_ID,
 } from '@/lib/platform/fixtures/abmed'
 import { INTERNAL_AGENT_DEFINITIONS, INTERNAL_AGENT_KEYS } from '@/lib/platform/workforce/internal-agents'
-import { decideWorkforceApproval, createWorkforceApproval, verifyWorkforceApprovalForExecution } from '@/lib/platform/workforce/approval-service'
-import { reserveWorkforceBudget, settleWorkforceBudget } from '@/lib/platform/workforce/budget-service'
+import {
+  decideWorkforceApproval,
+  createWorkforceApproval,
+  verifyWorkforceApprovalForExecution,
+} from '@/lib/platform/workforce/approval-service'
+import { releaseWorkforceBudget, reserveWorkforceBudget, settleWorkforceBudget } from '@/lib/platform/workforce/budget-service'
 import { authorizeWorkforceToolCall } from '@/lib/platform/workforce/execution-gateway'
 import { activatePause, isWorkforcePaused, releasePause } from '@/lib/platform/workforce/pause-service'
 import {
-  runSupervisedDocumentationWorkflow,
-  runSupervisedEngineeringWorkflow,
-  runSupervisedOperationsWorkflow,
+  runSupervisedDocumentationWorkflowWithFixture,
+  runSupervisedEngineeringWorkflowWithFixture,
+  runSupervisedOperationsWorkflowWithFixture,
 } from '@/lib/platform/workforce/supervised-workflows'
 import {
   authorizeWorkforceTask,
@@ -25,7 +29,7 @@ import { assertTaskTransition } from '@/lib/platform/workforce/transitions'
 import {
   createAgent03TestStore,
   STAFF_APPROVER_USER_ID,
-  UNRELATED_CUSTOMER_ACCOUNT_ID,
+  trustedStaffApprover,
 } from '@/lib/platform/workforce/test-fixtures'
 
 describe('AGENT-03 internal workforce', () => {
@@ -46,6 +50,7 @@ describe('AGENT-03 internal workforce', () => {
   it('enforces task state transitions', () => {
     expect(assertTaskTransition('DRAFT', 'QUEUED', 'test').ok).toBe(true)
     expect(assertTaskTransition('COMPLETED', 'RUNNING', 'test').ok).toBe(false)
+    expect(assertTaskTransition('QUEUED', 'AUTHORIZED', 'test').ok).toBe(false)
   })
 
   it('creates tasks idempotently', () => {
@@ -85,7 +90,7 @@ describe('AGENT-03 internal workforce', () => {
     })
     decideWorkforceApproval(store, {
       approvalId: approval.id,
-      approverUserId: STAFF_APPROVER_USER_ID,
+      trustedOperator: trustedStaffApprover(),
       decision: 'APPROVED',
       taskAssignedAgentKey: INTERNAL_AGENT_KEYS.engineer,
     })
@@ -119,7 +124,12 @@ describe('AGENT-03 internal workforce', () => {
     })
     const denied = decideWorkforceApproval(store, {
       approvalId: approval.id,
-      approverUserId: INTERNAL_AGENT_KEYS.engineer,
+      trustedOperator: {
+        kind: 'verified_human',
+        userId: INTERNAL_AGENT_KEYS.engineer,
+        permissions: ['workforce.approve'],
+        platformWide: true,
+      },
       decision: 'APPROVED',
       taskAssignedAgentKey: INTERNAL_AGENT_KEYS.engineer,
     })
@@ -134,12 +144,30 @@ describe('AGENT-03 internal workforce', () => {
       customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
       capability: 'engineering.implement',
       inputPayload: { x: 1 },
-      approvalRequired: false,
+      approvalRequired: true,
     })
     expect(task.ok).toBe(true)
     if (!task.ok) return
     queueWorkforceTask(store, task.value.id)
-    transitionWorkforceTask(store, task.value.id, 'AUTHORIZED', 'test', { executionPhase: 'TASK_AUTHORIZED' })
+    transitionWorkforceTask(store, task.value.id, 'AWAITING_APPROVAL', 'needs_approval')
+    const approval = createWorkforceApproval(store, {
+      taskId: task.value.id,
+      capability: task.value.capability,
+      artifactHash: task.value.inputHash,
+      expiresAt: new Date(Date.now() + 60_000),
+    })
+    decideWorkforceApproval(store, {
+      approvalId: approval.id,
+      trustedOperator: trustedStaffApprover(),
+      decision: 'APPROVED',
+      taskAssignedAgentKey: INTERNAL_AGENT_KEYS.engineer,
+    })
+    authorizeWorkforceTask(store, task.value.id, {
+      budgetIdempotencyKey: 'budget_tool_scope',
+      estimatedSubunits: 100,
+      approvalId: approval.id,
+    })
+    transitionWorkforceTask(store, task.value.id, 'RUNNING', 'run')
 
     const unknown = authorizeWorkforceToolCall(store, {
       taskId: task.value.id,
@@ -160,6 +188,7 @@ describe('AGENT-03 internal workforce', () => {
       toolKey: 'projects.proposeUpdate',
       requestId: 'req_cross',
       inputHash: task.value.inputHash,
+      approvalId: approval.id,
     })
     expect(cross.ok).toBe(false)
   })
@@ -197,8 +226,7 @@ describe('AGENT-03 internal workforce', () => {
     const pause = activatePause(store, {
       scope: 'AGENT',
       targetKey: INTERNAL_AGENT_KEYS.engineer,
-      setByUserId: STAFF_APPROVER_USER_ID,
-      actorType: 'USER',
+      operatorUserId: STAFF_APPROVER_USER_ID,
     })
     expect(pause.ok).toBe(true)
     expect(isWorkforcePaused(store, { agentKey: INTERNAL_AGENT_KEYS.engineer })).toBe(true)
@@ -230,21 +258,18 @@ describe('AGENT-03 internal workforce', () => {
 
   it('runs three supervised synthetic workflows end-to-end', () => {
     const store = createAgent03TestStore()
-    const eng = runSupervisedEngineeringWorkflow(store, {
+    const eng = runSupervisedEngineeringWorkflowWithFixture(store, {
       staffUserId: STAFF_APPROVER_USER_ID,
       customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
       projectId: 'proj_test',
       inputPayload: { feature: 'auth hardening' },
-      approverUserId: STAFF_APPROVER_USER_ID,
     })
-    const doc = runSupervisedDocumentationWorkflow(store, {
+    const doc = runSupervisedDocumentationWorkflowWithFixture(store, {
       staffUserId: STAFF_APPROVER_USER_ID,
       customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
-      approverUserId: STAFF_APPROVER_USER_ID,
     })
-    const ops = runSupervisedOperationsWorkflow(store, {
+    const ops = runSupervisedOperationsWorkflowWithFixture(store, {
       staffUserId: STAFF_APPROVER_USER_ID,
-      approverUserId: STAFF_APPROVER_USER_ID,
     })
     expect(eng.ok && doc.ok && ops.ok).toBe(true)
     if (eng.ok) {

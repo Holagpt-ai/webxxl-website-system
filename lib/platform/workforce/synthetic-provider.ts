@@ -1,5 +1,6 @@
 import type { WorkforceProvider } from '@/lib/platform/providers/types'
-/** Deterministic in-process workforce provider for AGENT-03 tests and disabled runtime. */
+
+/** @internal TEST-ONLY / disabled-runtime deterministic provider — not production execution. */
 export function createSyntheticWorkforceProvider(): WorkforceProvider {
   return {
     kind: 'workforce',

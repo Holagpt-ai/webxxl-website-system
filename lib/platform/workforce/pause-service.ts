@@ -1,5 +1,6 @@
 import { recordWorkforceAudit } from '@/lib/platform/workforce/audit'
 import { nextWorkforceId, type WorkforceStore } from '@/lib/platform/workforce/in-memory-store'
+import { isInternalAgentIdentity, resolveTrustedWorkforceHuman } from '@/lib/platform/workforce/operator-auth'
 import type { WorkforcePauseScope, WorkforceResult } from '@/lib/platform/workforce/types'
 
 export function isWorkforcePaused(
@@ -21,13 +22,14 @@ export function activatePause(
   input: {
     scope: WorkforcePauseScope
     targetKey: string
-    setByUserId: string
+    operatorUserId: string
     reason?: string
-    actorType: 'USER'
   },
 ): WorkforceResult<{ pauseId: string }> {
-  if (input.actorType !== 'USER') {
-    return { ok: false, code: 'DENIED', message: 'Only human operators may activate pause controls' }
+  const operator = resolveTrustedWorkforceHuman(store, input.operatorUserId, 'workforce.pause')
+  if (!operator.ok) return operator
+  if (isInternalAgentIdentity(input.operatorUserId)) {
+    return { ok: false, code: 'AGENT_IMPERSONATION_DENIED', message: 'Agents cannot control pause policy' }
   }
   const id = nextWorkforceId('wfpause')
   store.pauses.push({
@@ -36,11 +38,11 @@ export function activatePause(
     targetKey: input.targetKey,
     active: true,
     reason: input.reason,
-    setByUserId: input.setByUserId,
+    setByUserId: operator.value.userId,
     createdAt: new Date(),
   })
   recordWorkforceAudit(store, {
-    actorUserId: input.setByUserId,
+    actorUserId: operator.value.userId,
     actorType: 'USER',
     eventKind: 'PAUSE_ACTIVATED',
     detail: { scope: input.scope, targetKey: input.targetKey },
@@ -53,12 +55,14 @@ export function releasePause(
   pauseId: string,
   operatorUserId: string,
 ): WorkforceResult<{ released: true }> {
+  const operator = resolveTrustedWorkforceHuman(store, operatorUserId, 'workforce.pause')
+  if (!operator.ok) return operator
   const pause = store.pauses.find((p) => p.id === pauseId && p.active)
   if (!pause) return { ok: false, code: 'NOT_FOUND', message: 'Active pause not found' }
   pause.active = false
   pause.releasedAt = new Date()
   recordWorkforceAudit(store, {
-    actorUserId: operatorUserId,
+    actorUserId: operator.value.userId,
     actorType: 'USER',
     eventKind: 'PAUSE_RELEASED',
     detail: { pauseId },

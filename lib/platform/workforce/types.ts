@@ -89,6 +89,7 @@ export type WorkforceBudgetUsageRecord = {
   internalAgentKey: string
   idempotencyKey: string
   periodKey: string
+  amountSubunits: number
   costSubunits: number
   tokenUnits: number
   reservedSubunits: number
@@ -122,6 +123,7 @@ export type WorkforceToolCallRecord = {
   taskId: string
   toolKey: string
   requestId: string
+  replayKey: string
   inputHash: string
   approvalId?: string
   decision: 'ALLOWED' | 'DENIED'

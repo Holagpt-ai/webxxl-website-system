@@ -1,5 +1,11 @@
 import { recordWorkforceAudit } from '@/lib/platform/workforce/audit'
 import { nextWorkforceId, type WorkforceStore } from '@/lib/platform/workforce/in-memory-store'
+import {
+  assertApproverScopeForTask,
+  isInternalAgentIdentity,
+  resolveTrustedWorkforceHuman,
+  type TrustedWorkforceHumanActor,
+} from '@/lib/platform/workforce/operator-auth'
 import type { WorkforceApprovalRecord, WorkforceResult } from '@/lib/platform/workforce/types'
 
 export function createWorkforceApproval(
@@ -32,31 +38,50 @@ export function decideWorkforceApproval(
   store: WorkforceStore,
   input: {
     approvalId: string
-    approverUserId: string
+    trustedOperator: TrustedWorkforceHumanActor
     decision: 'APPROVED' | 'REJECTED'
     taskAssignedAgentKey: string
     approvedScope?: Record<string, unknown>
   },
 ): WorkforceResult<WorkforceApprovalRecord> {
+  const operator = resolveTrustedWorkforceHuman(store, input.trustedOperator.userId, 'workforce.approve')
+  if (!operator.ok) return operator
+
   const approval = store.approvals.get(input.approvalId)
   if (!approval) return { ok: false, code: 'APPROVAL_NOT_FOUND', message: 'Approval record missing' }
   if (approval.status !== 'PENDING') {
     return { ok: false, code: 'APPROVAL_CLOSED', message: 'Approval already decided' }
   }
-  if (input.approverUserId === input.taskAssignedAgentKey) {
+  const task = store.tasks.get(approval.taskId)
+  if (!task) return { ok: false, code: 'NOT_FOUND', message: 'Task not found for approval' }
+  if (approval.capability !== task.capability) {
+    return { ok: false, code: 'APPROVAL_CAPABILITY_MISMATCH', message: 'Approval capability mismatch' }
+  }
+  if (approval.artifactHash !== task.inputHash) {
+    return { ok: false, code: 'APPROVAL_ARTIFACT_MISMATCH', message: 'Task payload changed since approval request' }
+  }
+  const at = new Date()
+  if (approval.expiresAt <= at) {
+    approval.status = 'EXPIRED'
+    return { ok: false, code: 'APPROVAL_EXPIRED', message: 'Approval expired before decision' }
+  }
+  if (operator.value.userId === input.taskAssignedAgentKey) {
     return { ok: false, code: 'SELF_APPROVAL_DENIED', message: 'Agents cannot approve their own tasks' }
   }
+  const scope = assertApproverScopeForTask(store, operator.value, task)
+  if (!scope.ok) return scope
+
   approval.status = input.decision
-  approval.approverUserId = input.approverUserId
+  approval.approverUserId = operator.value.userId
   approval.approvedScope = input.approvedScope
-  approval.decidedAt = new Date()
-  approval.updatedAt = new Date()
+  approval.decidedAt = at
+  approval.updatedAt = at
   recordWorkforceAudit(store, {
     taskId: approval.taskId,
-    actorUserId: input.approverUserId,
+    actorUserId: operator.value.userId,
     actorType: 'USER',
     eventKind: input.decision === 'APPROVED' ? 'APPROVAL_GRANTED' : 'APPROVAL_REJECTED',
-    detail: { approvalId: approval.id },
+    detail: { approvalId: approval.id, approverUserId: input.trustedOperator.userId },
   })
   return { ok: true, value: approval }
 }
@@ -71,6 +96,7 @@ export function verifyWorkforceApprovalForExecution(
     actorId: string
     actorType: string
     at?: Date
+    consumeUse?: boolean
   },
 ): WorkforceResult<{ approval: WorkforceApprovalRecord }> {
   const approval = store.approvals.get(input.approvalId)
@@ -95,13 +121,18 @@ export function verifyWorkforceApprovalForExecution(
   if (approval.status !== 'APPROVED') {
     return { ok: false, code: 'APPROVAL_PENDING', message: 'Approval not granted' }
   }
+  if (!approval.approverUserId || isInternalAgentIdentity(approval.approverUserId)) {
+    return { ok: false, code: 'APPROVAL_INVALID', message: 'Approval lacks verified human approver' }
+  }
   if (approval.useCount >= approval.maxUses) {
     return { ok: false, code: 'APPROVAL_EXHAUSTED', message: 'Approval use limit reached' }
   }
   if (input.actorType === 'AGENT' && approval.approverUserId === input.actorId) {
     return { ok: false, code: 'SELF_APPROVAL_DENIED', message: 'Agent cannot consume self-approval' }
   }
-  approval.useCount += 1
-  approval.updatedAt = new Date()
+  if (input.consumeUse !== false) {
+    approval.useCount += 1
+    approval.updatedAt = new Date()
+  }
   return { ok: true, value: { approval } }
 }

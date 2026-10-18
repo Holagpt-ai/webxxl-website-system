@@ -15,8 +15,9 @@
 |---|---|---|
 | Internal agents | `lib/platform/workforce/internal-agents.ts` (5 roles) | **Defined and unit-tested**; default **paused**, `liveExecutionEnabled=false` |
 | Task / execution engine | `lib/platform/workforce/*`, Prisma migration `20261018130000_agent03_internal_workforce` | **In-memory engine + schema**; WebXXL-owned task IDs; synthetic provider default |
-| Approvals / tools | `approval-service.ts`, `execution-gateway.ts` extends `evaluateAiToolInvocation` | Verified approval records; forged IDs rejected; no agent self-approval |
-| Budget / pause | `budget-service.ts`, `pause-service.ts`, `config/workforce.ts` | Internal-only subunits; `INTERNAL_WORKFORCE_ENABLED=false` by default |
+| Approvals / tools | `approval-service.ts`, `execution-gateway.ts`, `operator-auth.ts` | **AGENT-03A:** trusted human operator boundary; task AUTHORIZED only via service; tool grants with approval policy always verified |
+| Budget / pause | `budget-service.ts`, `pause-service.ts`, `config/workforce.ts` | **AGENT-03A:** integer subunit validation, release preserves settled cost, UTC month period key; pause/resume requires trusted operator |
+| History protection | Prisma `ON DELETE RESTRICT` on execution/tool-call/approval | Task rows cannot cascade-delete material workforce history (pending migration) |
 | Paperclip adapter | `lib/platform/providers/paperclip-workforce.ts` | Pin **v2026.325.0** reference; returns **NOT_CONFIGURED** until live pilot; **Paperclip not running** |
 | Production | — | **Not activated**; no LLM keys; no GitHub writes; UI unchanged (v0.app) |
 

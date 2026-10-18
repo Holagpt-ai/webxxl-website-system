@@ -1,10 +1,15 @@
 import { isInternalWorkforceEnabled, isPaperclipExecutionEnabled } from '@/config/workforce'
+import { verifyWorkforceApprovalForExecution } from '@/lib/platform/workforce/approval-service'
 import { recordWorkforceAudit } from '@/lib/platform/workforce/audit'
-import { reserveWorkforceBudget, releaseWorkforceBudget } from '@/lib/platform/workforce/budget-service'
+import { releaseWorkforceBudget, reserveWorkforceBudget } from '@/lib/platform/workforce/budget-service'
 import { stableInputHash } from '@/lib/platform/workforce/hash'
 import { getInternalAgentDefinition } from '@/lib/platform/workforce/internal-agents'
 import { nextWorkforceId, type WorkforceStore } from '@/lib/platform/workforce/in-memory-store'
 import { isWorkforcePaused } from '@/lib/platform/workforce/pause-service'
+import {
+  stripSecuritySensitiveTaskPatch,
+  WORKFORCE_AUTHORIZED_TRANSITION_REASON,
+} from '@/lib/platform/workforce/task-security'
 import { assertTaskTransition } from '@/lib/platform/workforce/transitions'
 import type {
   CreateWorkforceTaskInput,
@@ -120,7 +125,10 @@ export function transitionWorkforceTask(
     return { ok: false, code: 'PAUSED', message: 'Task or agent paused' }
   }
   task.status = to
-  Object.assign(task, patch ?? {})
+  const safePatch = stripSecuritySensitiveTaskPatch(patch)
+  if (safePatch && Object.keys(safePatch).length > 0) {
+    Object.assign(task, safePatch)
+  }
   touch(task)
   if (to === 'COMPLETED' || to === 'FAILED' || to === 'CANCELLED') {
     task.completedAt = new Date()
@@ -141,26 +149,62 @@ export function queueWorkforceTask(store: WorkforceStore, taskId: string): Workf
 export function authorizeWorkforceTask(
   store: WorkforceStore,
   taskId: string,
-  budgetIdempotencyKey: string,
-  estimatedSubunits: number,
+  input: {
+    budgetIdempotencyKey: string
+    estimatedSubunits: number
+    approvalId?: string
+  },
 ): WorkforceResult<WorkforceTaskRecord> {
   const task = store.tasks.get(taskId)
   if (!task) return { ok: false, code: 'NOT_FOUND', message: 'Task not found' }
+  if (task.status !== 'AWAITING_APPROVAL' && task.status !== 'PAUSED') {
+    return {
+      ok: false,
+      code: 'INVALID_STATE',
+      message: 'Task must await approval before authorization',
+    }
+  }
+  if (
+    isWorkforcePaused(store, {
+      taskId: task.id,
+      agentKey: task.internalAgentKey,
+      providerKey: task.providerKey,
+    })
+  ) {
+    return { ok: false, code: 'PAUSED', message: 'Cannot authorize while paused' }
+  }
+
+  if (task.approvalRequired) {
+    if (!input.approvalId) {
+      return { ok: false, code: 'APPROVAL_REQUIRED', message: 'Verified approval required' }
+    }
+    const verified = verifyWorkforceApprovalForExecution(store, {
+      approvalId: input.approvalId,
+      taskId: task.id,
+      capability: task.capability,
+      artifactHash: task.inputHash,
+      actorId: task.internalAgentKey,
+      actorType: 'AGENT',
+      consumeUse: false,
+    })
+    if (!verified.ok) return verified
+  }
+
   const agent = store.agents.get(task.internalAgentKey) ?? getInternalAgentDefinition(task.internalAgentKey)
   if (!agent) return { ok: false, code: 'UNKNOWN_AGENT', message: 'Agent missing' }
   const reserve = reserveWorkforceBudget(store, {
     internalAgentKey: agent.id,
     taskId,
-    idempotencyKey: budgetIdempotencyKey,
-    amountSubunits: estimatedSubunits,
+    idempotencyKey: input.budgetIdempotencyKey,
+    amountSubunits: input.estimatedSubunits,
     agentLimitSubunits: agent.budgetLimitSubunits,
   })
   if (!reserve.ok) return reserve
-  const moved = transitionWorkforceTask(store, taskId, 'AUTHORIZED', 'human_approval', {
+  const moved = transitionWorkforceTask(store, taskId, 'AUTHORIZED', WORKFORCE_AUTHORIZED_TRANSITION_REASON, {
     executionPhase: 'TASK_AUTHORIZED',
   })
   if (!moved.ok) {
-    releaseWorkforceBudget(store, budgetIdempotencyKey)
+    releaseWorkforceBudget(store, input.budgetIdempotencyKey)
   }
   return moved
 }
