@@ -32,6 +32,17 @@
 | SalesLead | `SalesLead`, `LeadActivity`, `saleslead-bridge.ts` | **Unchanged**; bridge candidates only — no bulk migration |
 | OPEN-001 | `core.crm` entitlement | **POLICY_UNRESOLVED** |
 
+## SEO-07 (2026-10-18) — Local SEO intelligence backend; live Google/crawl OFF
+
+| Area | Evidence | Honest status |
+|---|---|---|
+| Domain services | `lib/platform/seo/*`, `config/seo-backend.ts` | Bounded crawl (SSRF guards), page inventory model, GSC adapter (mock transport), competitor market ranking, opportunity engine, dashboard DTO, sync-run prep — **Vitest (synthetic/mocked)** |
+| Providers | `google-gsc-seo.ts`, `google-ga4-seo.ts`, `google-gbp-seo.ts`, `google-places-seo.ts` | GSC typed Search Analytics path; GA4/GBP **NOT_CONNECTED/NOT_SUPPORTED**; Places discovery stores **place_id only** contract |
+| Persistence | Prisma migration `20261018230000_seo07_foundation` | **Pending apply** (not production/staging) |
+| API routes | `app/api/v1/seo/*` | Auth.js membership + `SEO_BACKEND_ENABLED=false` default; scan prepare **does not live-crawl** when `SEO_CRAWLER_ENABLED=false` |
+| OPEN-001 | `core.local-seo` entitlement | **POLICY_UNRESOLVED** |
+| Production | — | **No Google OAuth**, **no live GSC/Places**, **no production crawl**, **no AI SEO execution** |
+
 ## COMMS-06 (2026-10-18) — unified communications backend; live Chatwoot/SMS/email OFF
 
 | Area | Evidence | Honest status |

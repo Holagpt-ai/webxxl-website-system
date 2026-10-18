@@ -512,6 +512,13 @@ model CustomerAccount {
   communicationQuotes          CommunicationQuote[]
   communicationIntents         CommunicationIntent[]
   communicationAuditEvents       CommunicationAuditEvent[]
+  siteAnalyticsConnections     SiteAnalyticsConnection[]
+  seoSiteProfiles              SeoSiteProfile[]
+  seoCrawlRuns                 SeoCrawlRun[]
+  seoPageInventories           SitePageInventory[]
+  seoOpportunities             SeoOpportunity[]
+  competitorMarkets            CompetitorMarket[]
+  seoProviderSyncRuns          SeoProviderSyncRun[]
 }
 
 model CustomerMembership {
@@ -860,6 +867,21 @@ model ManagedSite {
   crmCompanies              CrmCompany[]
   chatwootTenantMappings    ChatwootTenantMapping[]
   messagingTenants          MessagingTenant[]
+  siteAnalyticsConnections  SiteAnalyticsConnection[]
+  seoSiteProfiles           SeoSiteProfile[]
+  seoCrawlRuns              SeoCrawlRun[]
+  seoPageInventories        SitePageInventory[]
+  seoPageFindings           SeoPageFinding[]
+  seoSnapshots              SeoSnapshot[]
+  seoMetricObservations     SeoMetricObservation[]
+  seoKeywordObservations    SeoKeywordObservation[]
+  competitorMarkets         CompetitorMarket[]
+  competitorProfiles        CompetitorProfile[]
+  competitorObservations    CompetitorObservation[]
+  localRankObservations     LocalRankObservation[]
+  seoOpportunities          SeoOpportunity[]
+  seoWorkEvidence           SeoWorkEvidence[]
+  seoProviderSyncRuns       SeoProviderSyncRun[]
 
   @@index([customerAccountId])
   @@index([projectId])
@@ -3053,4 +3075,371 @@ model CommunicationAuditEvent {
   customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
 
   @@index([customerAccountId, operation, createdAt])
+}
+
+enum SeoDataState {
+  NOT_CONNECTED
+  FETCHING
+  READY
+  PARTIAL
+  STALE
+  ERROR
+  NOT_SUPPORTED
+}
+
+enum SeoAnalyticsProvider {
+  GSC
+  GA4
+  GBP
+  PLACES
+  RANK_VENDOR
+  WEBXXL_CRAWL
+}
+
+enum SeoPageInventoryStatus {
+  DISCOVERED
+  CRAWLED
+  DRAFT
+  PREVIEW
+  PUBLISHED
+  REMOVED
+  UNVERIFIED
+}
+
+enum SeoCrawlRunStatus {
+  PREPARED
+  RUNNING
+  COMPLETED
+  BLOCKED
+  FAILED
+}
+
+enum SeoOpportunityState {
+  OBSERVED_FINDING
+  RECOMMENDED_ACTION
+  DRAFT_PREPARED
+  AWAITING_APPROVAL
+  APPROVED
+  PUBLISHED
+  VERIFIED_OUTCOME
+}
+
+enum SeoConnectionVerificationState {
+  PENDING
+  VERIFIED
+  REVOKED
+}
+
+model SiteAnalyticsConnection {
+  id                String                         @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String
+  provider          SeoAnalyticsProvider
+  propertyRef       String
+  propertyKind      String
+  secretRef         String?
+  verificationState SeoConnectionVerificationState @default(PENDING)
+  readScopes        Json?
+  lastVerifiedAt    DateTime?
+  revokedAt         DateTime?
+  dataState         SeoDataState                   @default(NOT_CONNECTED)
+  createdAt         DateTime                       @default(now())
+  updatedAt         DateTime                       @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite     @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
+
+  @@unique([managedSiteId, provider, propertyRef])
+  @@index([customerAccountId, provider, dataState])
+}
+
+model SeoSiteProfile {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String   @unique
+  canonicalHost     String
+  marketCategory    String?
+  services          Json?
+  geoCenter         Json?
+  serviceAreaKm     Float?
+  targetLanguage    String   @default("en")
+  keywordThemes     Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite     @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
+}
+
+model SeoCrawlRun {
+  id                String            @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String
+  status            SeoCrawlRunStatus @default(PREPARED)
+  idempotencyKey    String            @unique
+  maxPages          Int
+  maxDepth          Int
+  pagesCrawled      Int               @default(0)
+  bytesDownloaded   Int               @default(0)
+  startedAt         DateTime?
+  finishedAt        DateTime?
+  errorCode         String?
+  createdAt         DateTime          @default(now())
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite     @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
+  findings        SeoPageFinding[]
+
+  @@index([managedSiteId, createdAt])
+}
+
+model SitePageInventory {
+  id                    String                 @id @default(cuid())
+  customerAccountId     String
+  managedSiteId         String
+  url                   String
+  normalizedPath        String
+  status                SeoPageInventoryStatus @default(DISCOVERED)
+  httpStatus            Int?
+  title                 String?
+  metaDescription       String?
+  h1                    String?
+  canonicalUrl          String?
+  provenanceRef         String?
+  lastCrawledAt         DateTime?
+  lastPublishedAt       DateTime?
+  websitePreviewVersionId String?
+  managedSiteChangeId   String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite     @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
+  findings        SeoPageFinding[]
+
+  @@unique([managedSiteId, normalizedPath])
+  @@index([customerAccountId, status])
+}
+
+model SeoPageFinding {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String
+  crawlRunId        String?
+  pageInventoryId   String?
+  ruleId            String
+  ruleVersion       String
+  severity          String
+  url               String
+  detail            Json?
+  observedAt        DateTime @default(now())
+
+  crawlRun      SeoCrawlRun?       @relation(fields: [crawlRunId], references: [id], onDelete: SetNull)
+  pageInventory SitePageInventory? @relation(fields: [pageInventoryId], references: [id], onDelete: SetNull)
+  managedSite   ManagedSite        @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
+
+  @@index([managedSiteId, ruleId])
+}
+
+model SeoSnapshot {
+  id                 String               @id @default(cuid())
+  customerAccountId  String
+  managedSiteId      String
+  provider           SeoAnalyticsProvider
+  propertyRef        String
+  dateRangeStart     DateTime
+  dateRangeEnd       DateTime
+  dataState          SeoDataState
+  sourceCompleteness Json?
+  ingestedAt         DateTime             @default(now())
+  observedAt         DateTime
+  methodologyVersion String
+
+  managedSite ManagedSite @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
+
+  @@unique([managedSiteId, provider, propertyRef, dateRangeStart, dateRangeEnd, methodologyVersion])
+}
+
+model SeoMetricObservation {
+  id                String               @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String
+  provider          SeoAnalyticsProvider
+  metricDefinition  String
+  dimension         String?
+  dimensionValue    String?
+  value             Float?
+  dataState         SeoDataState
+  date              DateTime?
+  observedAt        DateTime
+  ingestedAt        DateTime             @default(now())
+  sourceRef         String
+  idempotencyKey    String               @unique
+
+  managedSite ManagedSite @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
+
+  @@index([managedSiteId, metricDefinition, date])
+}
+
+model SeoKeywordObservation {
+  id                String               @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String
+  provider          SeoAnalyticsProvider
+  query             String
+  page              String?
+  clicks            Int?
+  impressions       Int?
+  ctr               Float?
+  averagePosition   Float?
+  dataState         SeoDataState
+  date              DateTime
+  observedAt        DateTime
+  ingestedAt        DateTime             @default(now())
+  idempotencyKey    String               @unique
+
+  managedSite ManagedSite @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
+
+  @@index([managedSiteId, date])
+}
+
+model CompetitorMarket {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String
+  name              String
+  category          String
+  services          Json?
+  geoCenter         Json?
+  radiusKm          Float?
+  language          String   @default("en")
+  keywordThemes     Json?
+  sourceMethod      String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  customerAccount CustomerAccount     @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite         @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
+  competitors     CompetitorProfile[]
+
+  @@index([managedSiteId])
+}
+
+model CompetitorProfile {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String
+  marketId          String
+  displayName       String
+  placeId           String?
+  categoryMatch     Float?
+  serviceOverlap    Float?
+  geoRelevance      Float?
+  rankScore         Float
+  source            String
+  evidenceRef       String?
+  excluded          Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  market      CompetitorMarket @relation(fields: [marketId], references: [id], onDelete: Restrict)
+  managedSite ManagedSite      @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
+
+  @@index([marketId, rankScore])
+}
+
+model CompetitorObservation {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String
+  competitorRef     String
+  observationKind   String
+  observedAt        DateTime
+  ingestedAt        DateTime @default(now())
+  detail            Json?
+  idempotencyKey    String   @unique
+
+  managedSite ManagedSite @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
+}
+
+model LocalRankObservation {
+  id                String       @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String
+  keyword           String
+  searchSurface     String
+  latitude          Float?
+  longitude         Float?
+  device            String?
+  language          String?
+  rankPosition      Int?
+  dataState         SeoDataState @default(NOT_CONNECTED)
+  providerKey       String?
+  method            String?
+  observedAt        DateTime?
+  ingestedAt        DateTime     @default(now())
+  limitations       Json?
+
+  managedSite ManagedSite @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
+
+  @@index([managedSiteId, keyword])
+}
+
+model SeoOpportunity {
+  id                String              @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String
+  ruleId            String
+  ruleVersion       String
+  state             SeoOpportunityState @default(OBSERVED_FINDING)
+  severity          String
+  confidence        String
+  impactRationale   String
+  effortCategory    String
+  recommendation    String
+  affectedUrl       String?
+  evidenceRef       String
+  source            String
+  observedAt        DateTime
+  priorityScore     Int
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite     @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
+
+  @@index([managedSiteId, priorityScore])
+}
+
+model SeoWorkEvidence {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String
+  workKind          String
+  resourceRef       String
+  state             String
+  observedAt        DateTime
+  detail            Json?
+
+  managedSite ManagedSite @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
+
+  @@index([managedSiteId, observedAt])
+}
+
+model SeoProviderSyncRun {
+  id                String               @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String
+  provider          SeoAnalyticsProvider
+  idempotencyKey    String               @unique
+  status            String               @default("PENDING")
+  dataState         SeoDataState         @default(FETCHING)
+  quotaBudget       Int?
+  errorClass        String?
+  scheduledAt       DateTime             @default(now())
+  processedAt       DateTime?
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite     @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
+
+  @@index([managedSiteId, provider, status])
 }

@@ -9,6 +9,10 @@ import { createWebxxlNativeCrmProvider } from '@/lib/platform/providers/webxxl-n
 import { createPaperclipWorkforceProvider } from '@/lib/platform/providers/paperclip-workforce'
 import { createChatwootConversationProvider } from '@/lib/platform/providers/chatwoot-conversation'
 import { createSyntheticWorkforceProvider } from '@/lib/platform/workforce/synthetic-provider'
+import { createGoogleGa4SeoProvider } from '@/lib/platform/providers/google-ga4-seo'
+import { createGoogleGbpSeoProvider } from '@/lib/platform/providers/google-gbp-seo'
+import { createGoogleGscSeoProvider } from '@/lib/platform/providers/google-gsc-seo'
+import { createGooglePlacesSeoProvider } from '@/lib/platform/providers/google-places-seo'
 import type {
   AnyPlatformProvider,
   ConversationProvider,
@@ -74,7 +78,7 @@ const liveKit: VoiceAgentProvider = candidate({
   },
 })
 
-const googleSeo: SeoSourceProvider = candidate({
+const googleSeoAggregate: SeoSourceProvider = candidate({
   kind: 'seo',
   key: 'google-seo-sources',
   displayName: 'Google SEO and analytics APIs',
@@ -83,6 +87,27 @@ const googleSeo: SeoSourceProvider = candidate({
   installed: false,
   async readOverview() {
     return { ok: true, value: { status: 'NOT_CONNECTED' } }
+  },
+})
+
+const googleGsc = createGoogleGscSeoProvider({
+  transport: {
+    async postJson() {
+      return { status: 503, json: {}, errorMessage: 'Live GSC transport disabled in SEO-07' }
+    },
+  },
+  resolveAccessTokenRef: async () => null,
+  resolvePropertyRef: async () => null,
+  resolveAuthorizedHosts: async () => [],
+})
+
+const googleGa4 = createGoogleGa4SeoProvider()
+const googleGbp = createGoogleGbpSeoProvider()
+const googlePlaces = createGooglePlacesSeoProvider({
+  transport: {
+    async postJson() {
+      return { status: 503, json: {} }
+    },
   },
 })
 
@@ -111,7 +136,11 @@ const DEFAULT_PROVIDERS: AnyPlatformProvider[] = [
   existingPaymentProvider,
   elevenLabs,
   liveKit,
-  googleSeo,
+  googleSeoAggregate,
+  googleGsc,
+  googleGa4,
+  googleGbp,
+  googlePlaces,
   domainRegistrar,
 ]
 
