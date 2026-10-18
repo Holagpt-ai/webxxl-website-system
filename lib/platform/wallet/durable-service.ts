@@ -15,7 +15,12 @@ import {
   buildProviderEventFingerprint,
   isBillableProviderNormalizedStatus,
 } from '@/lib/platform/wallet/provider-reconciliation'
-import { isWalletProviderReconciliationEnabled, isWalletSettlementEnabled } from '@/config/wallet-backend'
+import { walletDurableOperationDenial } from '@/lib/platform/wallet/execution-gates'
+import {
+  validateProviderReceiptLedgerScope,
+  validateRefundLedgerIdempotencyReplay,
+  validateSettleLedgerIdempotencyReplay,
+} from '@/lib/platform/wallet/ledger-idempotency'
 import type {
   DurableRefundCreditsInput,
   DurableReleaseCreditsInput,
@@ -345,6 +350,9 @@ export async function reserveCredits(
   prisma: PrismaClient,
   input: DurableReserveCreditsInput,
 ): Promise<WalletResult<CreditReservationRecord>> {
+  const reserveDenial = walletDurableOperationDenial('RESERVE')
+  if (reserveDenial) return { ok: false, error: reserveDenial }
+
   const at = input.at ?? new Date()
   const amountCheck = validateCreditAmount(input.amount)
   if (!amountCheck.ok) return { ok: false, error: 'INVALID_AMOUNT' }
@@ -477,13 +485,33 @@ export async function reserveCredits(
 
           return { ok: true, value: mapReservation(created) }
         } catch (error) {
-          if (!isPrismaUniqueViolation(error)) throw error
-          const raced = await tx.creditReservation.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
-          if (!raced) throw error
-          return validateReservationIdempotencyReplay(raced, input, requestFingerprint)
+          if (isPrismaUniqueViolation(error)) throw error
+          throw error
         }
       })
     } catch (error) {
+      if (isPrismaUniqueViolation(error)) {
+        const raced = await prisma.creditReservation.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
+        if (raced) {
+          const wallet = await prisma.creditWallet.findUnique({
+            where: { billingGroupId_creditType: { billingGroupId: input.billingGroupId, creditType: 'MESSAGING' } },
+          })
+          const requestFingerprint = buildReservationRequestFingerprint({
+            billingGroupId: input.billingGroupId,
+            walletId: wallet?.id ?? raced.walletId,
+            customerAccountId: input.customerAccountId,
+            managedSiteId: input.managedSiteId,
+            channel: input.channel,
+            usagePurpose: input.usagePurpose,
+            amount: input.amount,
+            rateVersion: input.rateVersion,
+            correlationId: input.correlationId,
+            campaignId: input.campaignId,
+            expiresAt: input.expiresAt,
+          })
+          return validateReservationIdempotencyReplay(raced, input, requestFingerprint)
+        }
+      }
       if (isSerializationError(error) && attempt + 1 < WALLET_RESERVATION_MAX_RETRIES) continue
       throw error
     }
@@ -497,11 +525,14 @@ async function settleReservationInTx(
   at: Date,
   actorUserId: string,
 ): Promise<WalletResult<WalletLedgerEntryRecord>> {
-  const existingLedger = await tx.walletLedgerEntry.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
-  if (existingLedger) return { ok: true, value: mapLedger(existingLedger) }
-
   const reservation = await tx.creditReservation.findUnique({ where: { id: input.reservationId } })
   if (!reservation) return { ok: false, error: 'RESERVATION_NOT_FOUND' }
+
+  const existingLedger = await tx.walletLedgerEntry.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
+  if (existingLedger) {
+    return validateSettleLedgerIdempotencyReplay(existingLedger, input, reservation, mapLedger)
+  }
+
   const wallet = await tx.creditWallet.findUnique({ where: { id: reservation.walletId } })
   if (!wallet) return { ok: false, error: 'WALLET_NOT_FOUND' }
   if (wallet.status !== 'ACTIVE') return { ok: false, error: 'WALLET_INACTIVE' }
@@ -535,21 +566,27 @@ async function settleReservationInTx(
     throw new Error('RESERVATION_CAS_CONFLICT')
   }
 
-  const entry = await tx.walletLedgerEntry.create({
-    data: {
-      walletId: reservation.walletId,
-      customerAccountId: reservation.originAccountId,
-      managedSiteId: input.managedSiteId ?? reservation.managedSiteId,
-      campaignId: input.campaignId ?? reservation.campaignId,
-      type: 'SETTLE',
-      deltaCredits: -input.amount,
-      priceVersion: reservation.rateVersion ?? 'wallet09-v1',
-      reservationId: reservation.id,
-      providerRef: input.providerRef,
-      idempotencyKey: input.idempotencyKey,
-      actorUserId,
-    },
-  })
+  let entry
+  try {
+    entry = await tx.walletLedgerEntry.create({
+      data: {
+        walletId: reservation.walletId,
+        customerAccountId: reservation.originAccountId,
+        managedSiteId: input.managedSiteId ?? reservation.managedSiteId,
+        campaignId: input.campaignId ?? reservation.campaignId,
+        type: 'SETTLE',
+        deltaCredits: -input.amount,
+        priceVersion: reservation.rateVersion ?? 'wallet09-v1',
+        reservationId: reservation.id,
+        providerRef: input.providerRef,
+        idempotencyKey: input.idempotencyKey,
+        actorUserId,
+      },
+    })
+  } catch (error) {
+    if (isPrismaUniqueViolation(error)) throw error
+    throw error
+  }
 
   await tx.creditWallet.update({
     where: { id: wallet.id },
@@ -568,27 +605,39 @@ export async function settleReservation(
   prisma: PrismaClient,
   input: DurableSettleCreditsInput,
 ): Promise<WalletResult<WalletLedgerEntryRecord>> {
+  const settleDenial = walletDurableOperationDenial('SETTLE')
+  if (settleDenial) return { ok: false, error: settleDenial }
+
   const at = new Date()
   const amountCheck = validateCreditAmount(input.amount)
   if (!amountCheck.ok) return { ok: false, error: 'INVALID_AMOUNT' }
-  if (!isWalletSettlementEnabled() && input.principal.kind === 'USER') {
-    return { ok: false, error: 'UNAUTHORIZED_SETTLE' }
-  }
 
-  return prisma.$transaction(async (tx) => {
-    const reservation = await tx.creditReservation.findUnique({ where: { id: input.reservationId } })
-    if (!reservation) return { ok: false, error: 'RESERVATION_NOT_FOUND' }
-    const wallet = await tx.creditWallet.findUnique({ where: { id: reservation.walletId } })
-    if (!wallet) return { ok: false, error: 'WALLET_NOT_FOUND' }
-    const auth = await assertWalletMutationAuthorized(tx, {
-      principal: input.principal,
-      operation: 'SETTLE',
-      billingGroupId: wallet.billingGroupId,
-      at,
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const reservation = await tx.creditReservation.findUnique({ where: { id: input.reservationId } })
+      if (!reservation) return { ok: false, error: 'RESERVATION_NOT_FOUND' }
+      const wallet = await tx.creditWallet.findUnique({ where: { id: reservation.walletId } })
+      if (!wallet) return { ok: false, error: 'WALLET_NOT_FOUND' }
+      const auth = await assertWalletMutationAuthorized(tx, {
+        principal: input.principal,
+        operation: 'SETTLE',
+        billingGroupId: wallet.billingGroupId,
+        at,
+      })
+      if (!auth.ok) return auth
+      return settleReservationInTx(tx, input, at, auth.actorUserId)
     })
-    if (!auth.ok) return auth
-    return settleReservationInTx(tx, input, at, auth.actorUserId)
-  })
+  } catch (error) {
+    if (isPrismaUniqueViolation(error)) {
+      const reservation = await prisma.creditReservation.findUnique({ where: { id: input.reservationId } })
+      if (!reservation) return { ok: false, error: 'RESERVATION_NOT_FOUND' }
+      const existing = await prisma.walletLedgerEntry.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
+      if (existing) {
+        return validateSettleLedgerIdempotencyReplay(existing, input, reservation, mapLedger)
+      }
+    }
+    throw error
+  }
 }
 
 export async function releaseReservation(
@@ -695,13 +744,14 @@ export async function refundCredits(
   prisma: PrismaClient,
   input: DurableRefundCreditsInput,
 ): Promise<WalletResult<WalletLedgerEntryRecord>> {
+  const refundDenial = walletDurableOperationDenial('REFUND')
+  if (refundDenial) return { ok: false, error: refundDenial }
+
   const amountCheck = validateCreditAmount(input.amount)
   if (!amountCheck.ok) return { ok: false, error: 'INVALID_AMOUNT' }
 
-  return prisma.$transaction(async (tx) => {
-    const existing = await tx.walletLedgerEntry.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
-    if (existing) return { ok: true, value: mapLedger(existing) }
-
+  try {
+    return await prisma.$transaction(async (tx) => {
     const wallet = await tx.creditWallet.findUnique({ where: { id: input.walletId } })
     if (!wallet || wallet.status !== 'ACTIVE') return { ok: false, error: 'WALLET_NOT_FOUND' }
 
@@ -718,6 +768,11 @@ export async function refundCredits(
       return { ok: false, error: 'INVALID_AMOUNT' }
     }
 
+    const existing = await tx.walletLedgerEntry.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
+    if (existing) {
+      return validateRefundLedgerIdempotencyReplay(existing, input, original, mapLedger)
+    }
+
     await lockWalletRow(tx, wallet.id)
 
     const priorRefunds = await tx.walletLedgerEntry.aggregate({
@@ -728,27 +783,44 @@ export async function refundCredits(
     const eligible = Math.abs(original.deltaCredits) - alreadyRefunded
     if (input.amount > eligible) return { ok: false, error: 'INVALID_AMOUNT' }
 
-    const entry = await tx.walletLedgerEntry.create({
-      data: {
-        walletId: wallet.id,
-        customerAccountId: original.customerAccountId,
-        managedSiteId: original.managedSiteId,
-        type: 'REFUND',
-        deltaCredits: input.amount,
-        priceVersion: input.priceVersion ?? original.priceVersion,
-        originalLedgerEntryId: input.originalLedgerId,
-        refundReason: input.refundReason ?? 'wallet09-compensating-entry',
-        reservationId: original.reservationId,
-        idempotencyKey: input.idempotencyKey,
-        actorUserId: auth.actorUserId,
-      },
-    })
+    let entry
+    try {
+      entry = await tx.walletLedgerEntry.create({
+        data: {
+          walletId: wallet.id,
+          customerAccountId: original.customerAccountId,
+          managedSiteId: original.managedSiteId,
+          type: 'REFUND',
+          deltaCredits: input.amount,
+          priceVersion: input.priceVersion ?? original.priceVersion,
+          originalLedgerEntryId: input.originalLedgerId,
+          refundReason: input.refundReason ?? 'wallet09-compensating-entry',
+          reservationId: original.reservationId,
+          idempotencyKey: input.idempotencyKey,
+          actorUserId: auth.actorUserId,
+        },
+      })
+    } catch (error) {
+      if (isPrismaUniqueViolation(error)) throw error
+      throw error
+    }
     await tx.creditWallet.update({
       where: { id: wallet.id },
       data: { ledgerSequence: { increment: 1 } },
     })
     return { ok: true, value: mapLedger(entry) }
   })
+  } catch (error) {
+    if (isPrismaUniqueViolation(error)) {
+      const original = await prisma.walletLedgerEntry.findUnique({ where: { id: input.originalLedgerId } })
+      if (!original || original.type !== 'SETTLE') return { ok: false, error: 'INVALID_AMOUNT' }
+      const existing = await prisma.walletLedgerEntry.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
+      if (existing) {
+        return validateRefundLedgerIdempotencyReplay(existing, input, original, mapLedger)
+      }
+    }
+    throw error
+  }
 }
 
 export async function reconcileProviderSettlementEvent(
@@ -767,9 +839,8 @@ export async function reconcileProviderSettlementEvent(
     managedSiteId?: string
   },
 ): Promise<WalletResult<WalletLedgerEntryRecord>> {
-  if (!isWalletProviderReconciliationEnabled()) {
-    return { ok: false, error: 'UNAUTHORIZED_SETTLE' }
-  }
+  const reconcileDenial = walletDurableOperationDenial('RECONCILE')
+  if (reconcileDenial) return { ok: false, error: reconcileDenial }
   if (!isBillableProviderNormalizedStatus(input.normalizedStatus)) {
     return { ok: false, error: 'UNAUTHORIZED_SETTLE' }
   }
@@ -785,48 +856,81 @@ export async function reconcileProviderSettlementEvent(
   }
 
   const at = new Date()
-  return prisma.$transaction(async (tx) => {
-    const receipt = await tx.walletProviderEventReceipt.findUnique({
+
+  const replayProviderReceipt = async (): Promise<WalletResult<WalletLedgerEntryRecord> | null> => {
+    const receipt = await prisma.walletProviderEventReceipt.findUnique({
       where: { providerKey_externalEventId: { providerKey: input.providerKey, externalEventId: input.externalEventId } },
     })
-    if (receipt?.ledgerEntryId) {
-      const ledger = await tx.walletLedgerEntry.findUnique({ where: { id: receipt.ledgerEntryId } })
-      if (ledger) return { ok: true, value: mapLedger(ledger) }
-    }
-
-    const reservation = await tx.creditReservation.findUnique({ where: { id: input.reservationId } })
+    if (!receipt?.ledgerEntryId) return null
+    const reservation = await prisma.creditReservation.findUnique({ where: { id: input.reservationId } })
     if (!reservation) return { ok: false, error: 'RESERVATION_NOT_FOUND' }
-    const wallet = await tx.creditWallet.findUnique({ where: { id: reservation.walletId } })
-    if (!wallet) return { ok: false, error: 'WALLET_NOT_FOUND' }
-
-    const auth = await assertWalletMutationAuthorized(tx, {
-      principal: input.principal,
-      operation: 'RECONCILE',
-      billingGroupId: wallet.billingGroupId,
-      at,
+    const ledger = await prisma.walletLedgerEntry.findUnique({ where: { id: receipt.ledgerEntryId as string } })
+    const scoped = validateProviderReceiptLedgerScope({
+      receiptWalletId: receipt.walletId as string | null,
+      receiptReservationId: receipt.reservationId as string | null,
+      reservationId: input.reservationId,
+      reservationWalletId: reservation.walletId,
+      ledger: ledger,
+      settleAmount: input.settleAmount,
     })
-    if (!auth.ok) return auth
+    if (!scoped) return { ok: false, error: 'IDEMPOTENCY_CONFLICT' }
+    if (ledger) return { ok: true, value: mapLedger(ledger) }
+    return null
+  }
 
-    if (input.settleAmount > reservation.amount - reservation.settledAmount) {
-      return { ok: false, error: 'INSUFFICIENT_CREDITS' }
-    }
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const receipt = await tx.walletProviderEventReceipt.findUnique({
+        where: { providerKey_externalEventId: { providerKey: input.providerKey, externalEventId: input.externalEventId } },
+      })
+      if (receipt?.ledgerEntryId) {
+        const reservation = await tx.creditReservation.findUnique({ where: { id: input.reservationId } })
+        if (!reservation) return { ok: false, error: 'RESERVATION_NOT_FOUND' }
+        const ledger = await tx.walletLedgerEntry.findUnique({ where: { id: receipt.ledgerEntryId as string } })
+        const scoped = validateProviderReceiptLedgerScope({
+          receiptWalletId: receipt.walletId as string | null,
+          receiptReservationId: receipt.reservationId as string | null,
+          reservationId: input.reservationId,
+          reservationWalletId: reservation.walletId,
+          ledger,
+          settleAmount: input.settleAmount,
+        })
+        if (!scoped) return { ok: false, error: 'IDEMPOTENCY_CONFLICT' }
+        if (ledger) return { ok: true, value: mapLedger(ledger) }
+      }
 
-    const settleResult = await settleReservationInTx(
-      tx,
-      {
+      const reservation = await tx.creditReservation.findUnique({ where: { id: input.reservationId } })
+      if (!reservation) return { ok: false, error: 'RESERVATION_NOT_FOUND' }
+      const wallet = await tx.creditWallet.findUnique({ where: { id: reservation.walletId } })
+      if (!wallet) return { ok: false, error: 'WALLET_NOT_FOUND' }
+
+      const auth = await assertWalletMutationAuthorized(tx, {
         principal: input.principal,
-        reservationId: input.reservationId,
-        amount: input.settleAmount,
-        providerRef: input.providerRef,
-        idempotencyKey: input.idempotencyKey,
-        managedSiteId: input.managedSiteId ?? reservation.managedSiteId ?? undefined,
-      },
-      at,
-      auth.actorUserId,
-    )
-    if (!settleResult.ok) return settleResult
+        operation: 'RECONCILE',
+        billingGroupId: wallet.billingGroupId,
+        at,
+      })
+      if (!auth.ok) return auth
 
-    try {
+      if (input.settleAmount > reservation.amount - reservation.settledAmount) {
+        return { ok: false, error: 'INSUFFICIENT_CREDITS' }
+      }
+
+      const settleResult = await settleReservationInTx(
+        tx,
+        {
+          principal: input.principal,
+          reservationId: input.reservationId,
+          amount: input.settleAmount,
+          providerRef: input.providerRef,
+          idempotencyKey: input.idempotencyKey,
+          managedSiteId: input.managedSiteId ?? reservation.managedSiteId ?? undefined,
+        },
+        at,
+        auth.actorUserId,
+      )
+      if (!settleResult.ok) return settleResult
+
       await tx.walletProviderEventReceipt.create({
         data: {
           providerKey: input.providerKey,
@@ -838,20 +942,13 @@ export async function reconcileProviderSettlementEvent(
           normalizedStatus: input.normalizedStatus,
         },
       })
-    } catch (error) {
-      if (isPrismaUniqueViolation(error)) {
-        const replay = await tx.walletProviderEventReceipt.findUnique({
-          where: {
-            providerKey_externalEventId: { providerKey: input.providerKey, externalEventId: input.externalEventId },
-          },
-        })
-        if (replay?.ledgerEntryId) {
-          const ledger = await tx.walletLedgerEntry.findUnique({ where: { id: replay.ledgerEntryId } })
-          if (ledger) return { ok: true, value: mapLedger(ledger) }
-        }
-      }
-      throw error
+      return settleResult
+    })
+  } catch (error) {
+    if (isPrismaUniqueViolation(error)) {
+      const replay = await replayProviderReceipt()
+      if (replay) return replay
     }
-    return settleResult
-  })
+    throw error
+  }
 }

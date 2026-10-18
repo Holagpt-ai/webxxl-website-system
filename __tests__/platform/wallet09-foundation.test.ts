@@ -33,6 +33,7 @@ import {
   isWalletReservationEnabled,
 } from '@/config/wallet-backend'
 import { createWalletContractService, seedWalletTopUp } from '@/lib/platform/wallet/service'
+import { enableWalletDurableTestExecution } from '@/lib/platform/wallet/test/wallet-test-execution'
 
 const now = new Date('2026-10-18T12:00:00.000Z')
 const RESERVE_PRINCIPAL = { kind: 'SERVICE' as const, serviceId: 'wallet-reservation' as const }
@@ -82,14 +83,32 @@ async function fundAbmed(prisma: ReturnType<typeof abmedMemoryDb>['prisma'], amo
 describe('WALLET-09 foundation', () => {
   beforeAll(() => {
     process.env.WALLET_SYNTHETIC_FUNDING_ENABLED = 'true'
-    process.env.WALLET_PROVIDER_RECONCILIATION_ENABLED = 'true'
+    enableWalletDurableTestExecution()
   })
 
   it('AF: wallet feature flags default OFF', () => {
+    const saved = {
+      bypass: process.env.WALLET_TEST_EXECUTION_BYPASS,
+      reservation: process.env.WALLET_RESERVATION_ENABLED,
+      settlement: process.env.WALLET_SETTLEMENT_ENABLED,
+      refund: process.env.WALLET_REFUND_ENABLED,
+      reconcile: process.env.WALLET_PROVIDER_RECONCILIATION_ENABLED,
+    }
+    delete process.env.WALLET_TEST_EXECUTION_BYPASS
+    delete process.env.WALLET_RESERVATION_ENABLED
+    delete process.env.WALLET_SETTLEMENT_ENABLED
+    delete process.env.WALLET_REFUND_ENABLED
+    delete process.env.WALLET_PROVIDER_RECONCILIATION_ENABLED
     expect(isWalletBackendEnabled()).toBe(false)
     expect(isWalletReservationEnabled()).toBe(false)
     expect(isTwilioAdapterEnabled()).toBe(false)
     expect(isResendTransportEnabled()).toBe(false)
+    if (saved.bypass !== undefined) process.env.WALLET_TEST_EXECUTION_BYPASS = saved.bypass
+    if (saved.reservation !== undefined) process.env.WALLET_RESERVATION_ENABLED = saved.reservation
+    if (saved.settlement !== undefined) process.env.WALLET_SETTLEMENT_ENABLED = saved.settlement
+    if (saved.refund !== undefined) process.env.WALLET_REFUND_ENABLED = saved.refund
+    if (saved.reconcile !== undefined) process.env.WALLET_PROVIDER_RECONCILIATION_ENABLED = saved.reconcile
+    else enableWalletDurableTestExecution()
   })
 
   it('E: policy engine requires all three operating account identities to match', () => {

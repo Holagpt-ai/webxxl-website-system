@@ -99,6 +99,8 @@
 
 **WALLET-09A (in PR #41):** Server-only `WalletMutationPrincipal` for durable mutations; synthetic TOP_UP restricted to Vitest + `WALLET_SYNTHETIC_FUNDING_ENABLED`; full reservation fingerprint replay; refund ledger integrity; timezone-aware spending caps; COMMS quote/intent binding; provider reconciliation fingerprints; usage API site ownership — **Vitest `wallet09a-integrity`**.
 
+**WALLET-09B (in PR #41):** IANA timezone midnight for policy windows; scoped settle/refund/provider receipt idempotency (no global key-only replay); COMMS cost from quoted units (not `contentHash` as SMS body); durable operation feature gates + `WALLET_TEST_EXECUTION_BYPASS` (test-only); P2002 replay outside aborted transactions; top-up quote material fingerprint — **Vitest `wallet09b-integrity`**. Live PostgreSQL concurrency still **not** verified in CI.
+
 ## INFRA-02 (2026-10-18) — repository infrastructure only; live staging BLOCKED
 
 | Area | Evidence | Honest status |

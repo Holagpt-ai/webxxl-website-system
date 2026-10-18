@@ -15,6 +15,7 @@ import { prepareWalletTopUpQuote } from '@/lib/platform/wallet/top-up-quote'
 import { evaluateSpendingPolicy, getPolicyPeriodStarts } from '@/lib/platform/wallet/spending-policy'
 import { isWalletProviderMockTransportAllowed } from '@/config/wallet-backend'
 import { createTwilioSmsProvider } from '@/lib/platform/providers/twilio-sms'
+import { enableWalletDurableTestExecution } from '@/lib/platform/wallet/test/wallet-test-execution'
 
 const now = new Date('2026-10-18T15:00:00.000Z')
 const RESERVE = { kind: 'SERVICE' as const, serviceId: 'wallet-reservation' as const }
@@ -51,7 +52,7 @@ function db() {
 describe('WALLET-09A financial integrity', () => {
   beforeAll(() => {
     process.env.WALLET_SYNTHETIC_FUNDING_ENABLED = 'true'
-    process.env.WALLET_PROVIDER_RECONCILIATION_ENABLED = 'true'
+    enableWalletDurableTestExecution()
   })
 
   it('synthetic mint denied outside isolated test configuration', async () => {

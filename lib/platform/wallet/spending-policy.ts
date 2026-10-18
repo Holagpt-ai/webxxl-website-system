@@ -37,36 +37,27 @@ function channelAllowed(policy: SpendingPolicyRow, channel?: string | null): boo
   return raw.map(String).includes(channel)
 }
 
-type ZonedParts = { year: number; month: number; day: number }
-
-function zonedDateParts(at: Date, timeZone: string): ZonedParts | null {
-  try {
-    const formatter = new Intl.DateTimeFormat('en-US', {
-      timeZone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    })
-    const parts = formatter.formatToParts(at)
-    const year = Number(parts.find((p) => p.type === 'year')?.value)
-    const month = Number(parts.find((p) => p.type === 'month')?.value)
-    const day = Number(parts.find((p) => p.type === 'day')?.value)
-    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null
-    return { year, month, day }
-  } catch {
-    return null
-  }
-}
+import {
+  isSupportedPolicyTimezone,
+  utcInstantForZonedMidnight,
+  zonedDateParts,
+} from '@/lib/platform/wallet/timezone-periods'
 
 /** Start of calendar day/month in policy timezone, expressed as UTC instant lower bound. */
 export function getPolicyPeriodStarts(
   at: Date,
   timeZone: string,
 ): { ok: true; dayStartUtc: Date; monthStartUtc: Date } | { ok: false; error: 'POLICY_TIMEZONE_UNSUPPORTED' } {
+  if (!isSupportedPolicyTimezone(timeZone)) {
+    return { ok: false, error: 'POLICY_TIMEZONE_UNSUPPORTED' }
+  }
   const parts = zonedDateParts(at, timeZone)
   if (!parts) return { ok: false, error: 'POLICY_TIMEZONE_UNSUPPORTED' }
-  const dayStartUtc = new Date(Date.UTC(parts.year, parts.month - 1, parts.day))
-  const monthStartUtc = new Date(Date.UTC(parts.year, parts.month - 1, 1))
+  const dayStartUtc = utcInstantForZonedMidnight(parts.year, parts.month, parts.day, timeZone)
+  const monthStartUtc = utcInstantForZonedMidnight(parts.year, parts.month, 1, timeZone)
+  if (!dayStartUtc || !monthStartUtc) {
+    return { ok: false, error: 'POLICY_TIMEZONE_UNSUPPORTED' }
+  }
   return { ok: true, dayStartUtc, monthStartUtc }
 }
 

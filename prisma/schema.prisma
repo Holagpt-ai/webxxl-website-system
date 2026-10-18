@@ -1602,9 +1602,10 @@ model WalletTopUpQuote {
   providerKey    String?
   status         WalletTopUpQuoteStatus @default(DRAFT)
   expiresAt      DateTime
-  idempotencyKey String                 @unique
-  payerUserId    String?
-  createdAt      DateTime               @default(now())
+  idempotencyKey     String                 @unique
+  payerUserId        String?
+  requestFingerprint String?
+  createdAt          DateTime               @default(now())
 
   billingGroup BillingGroup @relation(fields: [billingGroupId], references: [id], onDelete: Restrict)
 

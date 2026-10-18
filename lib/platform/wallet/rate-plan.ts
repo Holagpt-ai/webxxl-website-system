@@ -38,6 +38,75 @@ function estimateSmsSegments(body: string): number {
   return Math.ceil(body.length / concatLimit)
 }
 
+export type QuotedUnitsEstimateInput = {
+  channel: 'SMS' | 'EMAIL'
+  providerKey: string
+  purpose?: string
+  rateVersion?: string
+  quotedUnits: number
+  recipientCount?: number
+}
+
+/** Cost from server-quoted units (segments/messages) — does not inspect message body text. */
+export function estimateMessagingCostFromQuotedUnits(
+  input: QuotedUnitsEstimateInput,
+): { ok: true; value: MessagingCostEstimate } | { ok: false; error: Extract<WalletDenial, 'COST_UNAVAILABLE'> } {
+  if (!Number.isInteger(input.quotedUnits) || input.quotedUnits <= 0) {
+    return { ok: false, error: 'COST_UNAVAILABLE' }
+  }
+  const recipients = input.recipientCount ?? 1
+  if (!Number.isInteger(recipients) || recipients <= 0) {
+    return { ok: false, error: 'COST_UNAVAILABLE' }
+  }
+  const totalUnits = input.quotedUnits * recipients
+  const purpose = input.purpose ?? 'TRANSACTIONAL'
+  const destinationClass = 'US'
+
+  if (input.channel === 'SMS') {
+    const creditsPerUnit = SMS_FIXTURE_CREDITS_PER_SEGMENT
+    const total = totalUnits * creditsPerUnit
+    return {
+      ok: true,
+      value: {
+        channel: 'SMS',
+        providerKey: input.providerKey,
+        destinationClass,
+        purpose,
+        estimatedUnits: totalUnits,
+        rateVersion: input.rateVersion ?? FIXTURE_RATE_VERSION,
+        creditsPerUnit,
+        estimatedTotalCredits: total,
+        maxAllowedCost: total,
+        priceSource: 'wallet09-quote-units',
+        methodology: 'quoted-segment-units from approved communication quote',
+      },
+    }
+  }
+
+  if (input.channel === 'EMAIL') {
+    const creditsPerUnit = EMAIL_FIXTURE_CREDITS_PER_MESSAGE
+    const total = totalUnits * creditsPerUnit
+    return {
+      ok: true,
+      value: {
+        channel: 'EMAIL',
+        providerKey: input.providerKey,
+        destinationClass,
+        purpose,
+        estimatedUnits: totalUnits,
+        rateVersion: input.rateVersion ?? FIXTURE_RATE_VERSION,
+        creditsPerUnit,
+        estimatedTotalCredits: total,
+        maxAllowedCost: total,
+        priceSource: 'wallet09-quote-units',
+        methodology: 'quoted message units from approved communication quote',
+      },
+    }
+  }
+
+  return { ok: false, error: 'COST_UNAVAILABLE' }
+}
+
 export function estimateMessagingCost(
   input: RateEstimateInput,
 ): { ok: true; value: MessagingCostEstimate } | { ok: false; error: Extract<WalletDenial, 'COST_UNAVAILABLE'> } {

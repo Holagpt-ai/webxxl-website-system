@@ -3,7 +3,7 @@ import { isCommunicationsOutboundEnabled } from '@/config/comms-backend'
 import type { CommsResult } from '@/lib/platform/comms/types'
 import type { PrismaClient } from '@prisma/client'
 import { reserveCredits } from '@/lib/platform/wallet/durable-service'
-import { estimateMessagingCost } from '@/lib/platform/wallet/rate-plan'
+import { resolveVerifiedCommunicationQuoteCost } from '@/lib/platform/comms/quote-cost-snapshot'
 
 export type CommsWalletPrepareInput = {
   billingGroupId: string
@@ -86,22 +86,23 @@ export async function prepareCommsWalletReservation(
     }
   }
 
-  const maxCredits = quote.maxApprovedCredits ?? quote.estimatedUnits
-  if (maxCredits == null || maxCredits <= 0) {
-    return { ok: false, code: 'FORBIDDEN', message: 'Quote missing authorized credit ceiling' }
-  }
-
-  const rateVersion = quote.ratePlanVersion ?? quote.unitCostVersion ?? 'wallet09-fixture-v1'
-  const estimate = estimateMessagingCost({
-    channel: quote.channel === 'EMAIL' ? 'EMAIL' : 'SMS',
-    providerKey: quote.channel === 'EMAIL' ? 'resend' : 'twilio',
-    body: quote.contentHash ?? '',
+  const verifiedCost = resolveVerifiedCommunicationQuoteCost({
+    channel: quote.channel,
     purpose: quote.purpose,
-    rateVersion,
+    contentHash: quote.contentHash,
+    recipientCount: quote.recipientCount,
+    eligibleCount: quote.eligibleCount,
+    estimatedUnits: quote.estimatedUnits,
+    maxApprovedCredits: quote.maxApprovedCredits,
+    ratePlanVersion: quote.ratePlanVersion,
+    unitCostVersion: quote.unitCostVersion,
+    detail: quote.detail,
   })
-  if (!estimate.ok) return { ok: false, code: 'FORBIDDEN', message: 'Cost unavailable for reservation' }
-  if (estimate.value.estimatedTotalCredits > maxCredits) {
-    return { ok: false, code: 'FORBIDDEN', message: 'Quote max authorized credits exceeded by rate version' }
+  if (!verifiedCost.ok) {
+    return { ok: false, code: 'FORBIDDEN', message: 'COST_UNAVAILABLE' }
+  }
+  if (intent.contentHash !== verifiedCost.contentHash) {
+    return { ok: false, code: 'FORBIDDEN', message: 'Intent content hash does not match verified quote revision' }
   }
 
   const reserved = await reserveCredits(prisma, {
@@ -111,8 +112,8 @@ export async function prepareCommsWalletReservation(
     managedSiteId: input.managedSiteId,
     channel: quote.channel,
     usagePurpose: quote.purpose,
-    rateVersion,
-    amount: maxCredits,
+    rateVersion: verifiedCost.rateVersion,
+    amount: verifiedCost.authorizedCredits,
     correlationId: input.correlationId,
     campaignId: intent.id,
     idempotencyKey: input.idempotencyKey,

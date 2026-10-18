@@ -15,17 +15,51 @@ export type TopUpQuoteInput = {
   payerUserId?: string
 }
 
-function buildTopUpQuoteFingerprint(input: TopUpQuoteInput): string {
+function buildTopUpQuoteFingerprint(input: TopUpQuoteInput, pack: {
+  fiatMinorUnits: number
+  currency: string
+  providerKey?: string | null
+}): string {
   const payload = [
     input.billingGroupId,
     String(input.creditAmount),
-    String(input.fiatMinorUnits),
-    input.currency ?? 'USD',
+    String(pack.fiatMinorUnits),
+    pack.currency,
     input.priceVersion,
-    input.providerKey ?? '',
+    pack.providerKey ?? input.providerKey ?? '',
     input.expiresAt.toISOString(),
+    input.payerUserId ?? '',
   ].join('|')
   return createHash('sha256').update(payload).digest('hex')
+}
+
+function topUpQuoteMaterialMatch(
+  existing: {
+    billingGroupId: string
+    creditAmount: number
+    fiatMinorUnits: number
+    currency: string
+    priceVersion: string
+    providerKey: string | null
+    expiresAt: Date
+    payerUserId: string | null
+    requestFingerprint?: string | null
+  },
+  fingerprint: string,
+  pack: { fiatMinorUnits: number; currency: string; providerKey?: string | null },
+  input: TopUpQuoteInput,
+): boolean {
+  if (existing.requestFingerprint && existing.requestFingerprint !== fingerprint) return false
+  if (existing.billingGroupId !== input.billingGroupId) return false
+  if (existing.creditAmount !== input.creditAmount) return false
+  if (existing.fiatMinorUnits !== pack.fiatMinorUnits) return false
+  if (existing.currency !== pack.currency) return false
+  if (existing.priceVersion !== input.priceVersion) return false
+  const provider = pack.providerKey ?? input.providerKey ?? null
+  if ((existing.providerKey ?? null) !== provider) return false
+  if (existing.expiresAt.toISOString() !== input.expiresAt.toISOString()) return false
+  if ((existing.payerUserId ?? null) !== (input.payerUserId ?? null)) return false
+  return true
 }
 
 /** Prepares a checkout quote only. Does not mint wallet credits or start live checkout. */
@@ -48,11 +82,11 @@ export async function prepareWalletTopUpQuote(prisma: PrismaClient, input: TopUp
     return { ok: false as const, error: 'IDEMPOTENCY_CONFLICT' as const }
   }
 
-  const fingerprint = buildTopUpQuoteFingerprint(input)
+  const fingerprint = buildTopUpQuoteFingerprint(input, pack)
 
   const existing = await prisma.walletTopUpQuote.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
   if (existing) {
-    if (existing.billingGroupId !== input.billingGroupId || existing.creditAmount !== input.creditAmount) {
+    if (!topUpQuoteMaterialMatch(existing, fingerprint, pack, input)) {
       return { ok: false as const, error: 'IDEMPOTENCY_CONFLICT' as const }
     }
     return { ok: true as const, value: existing, fingerprint }
@@ -70,6 +104,7 @@ export async function prepareWalletTopUpQuote(prisma: PrismaClient, input: TopUp
       expiresAt: input.expiresAt,
       idempotencyKey: input.idempotencyKey,
       payerUserId: input.payerUserId,
+      requestFingerprint: fingerprint,
     },
   })
   return { ok: true as const, value: quote, fingerprint }
