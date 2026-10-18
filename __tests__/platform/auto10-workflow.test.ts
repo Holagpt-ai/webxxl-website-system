@@ -5,7 +5,7 @@ import {
   isWorkflowWorkerEnabled,
 } from '@/config/workflow-backend'
 import { buildEnqueueFingerprint } from '@/lib/platform/workflow/fingerprint'
-import { applyPerAccountClaimFairness } from '@/lib/platform/workflow/fairness'
+import { partitionFairClaims } from '@/lib/platform/workflow/fairness'
 import { canTransitionWorkflowStatus, isTerminalWorkflowStatus } from '@/lib/platform/workflow/state-machine'
 import { computeWorkflowBackoffMs, isRetryableWorkflowError } from '@/lib/platform/workflow/retry-policy'
 import { getWorkflowHandler, listRegisteredWorkflowKinds } from '@/lib/platform/workflow/handlers/registry'
@@ -85,8 +85,8 @@ describe('AUTO-10 workflow foundation', () => {
       })),
       { id: 'p1', customerAccountId: ABMED_PHYSICIANS_ACCOUNT_ID, jobKind: 'X' },
       { id: 'c1', customerAccountId: ABMED_CLINICAL_ACCOUNT_ID, jobKind: 'X' },
-    ] as Parameters<typeof applyPerAccountClaimFairness>[0]
-    const fair = applyPerAccountClaimFairness(jobs, 2)
+    ] as Parameters<typeof partitionFairClaims>[0]
+    const { selected: fair } = partitionFairClaims(jobs, { perAccountCap: 2 })
     const accounts = new Set(fair.map((j) => j.customerAccountId))
     expect(accounts.has(ABMED_PHYSICIANS_ACCOUNT_ID)).toBe(true)
     expect(accounts.has(ABMED_CLINICAL_ACCOUNT_ID)).toBe(true)

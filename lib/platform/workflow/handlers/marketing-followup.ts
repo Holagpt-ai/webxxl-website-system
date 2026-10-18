@@ -16,7 +16,14 @@ export async function executeMarketingFollowUpWorkflow(
   if (payload.customerAccountId && payload.customerAccountId !== customerAccountId) {
     return { outcome: 'FAILED_TERMINAL', errorClass: 'PERMANENT', errorCode: 'TENANT_MISMATCH' }
   }
-  const managedSiteId = typeof payload.managedSiteId === 'string' ? payload.managedSiteId : undefined
+  const managedSiteId = ctx.job.managedSiteId ?? undefined
+  if (
+    ctx.job.managedSiteId &&
+    typeof payload.managedSiteId === 'string' &&
+    payload.managedSiteId !== ctx.job.managedSiteId
+  ) {
+    return { outcome: 'FAILED_TERMINAL', errorClass: 'PERMANENT', errorCode: 'FOREIGN_MANAGED_SITE' }
+  }
   const result = await evaluateAccountLeadFollowUps({
     customerAccountId,
     managedSiteId,

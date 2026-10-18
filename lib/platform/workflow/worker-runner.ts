@@ -1,17 +1,17 @@
 import { prisma } from '@/lib/db'
 import {
   WORKFLOW_CLAIM_BATCH_DEFAULT,
+  WORKFLOW_LEASE_TTL_MS,
   isWorkflowDurableExecutionAllowed,
   isWorkflowWorkerEnabled,
 } from '@/config/workflow-backend'
-import { applyPerAccountClaimFairness } from '@/lib/platform/workflow/fairness'
 import { getWorkflowHandler } from '@/lib/platform/workflow/handlers/registry'
 import { prismaWorkflowProvider } from '@/lib/platform/workflow/prisma-provider'
 import { computeWorkflowBackoffMs, isRetryableWorkflowError } from '@/lib/platform/workflow/retry-policy'
 import { dispatchPendingOutbox } from '@/lib/platform/workflow/outbox'
 import { recoverAbandonedJobs } from '@/lib/platform/workflow/recovery'
-import { recordWorkflowEvent } from '@/lib/platform/workflow/workflow-events'
 import type { HandlerExecutionResult } from '@/lib/platform/workflow/types'
+import { classifyHandlerException } from '@/lib/platform/workflow/worker-errors'
 
 export type WorkflowWorkerRunResult = {
   outboxDispatched: number
@@ -34,36 +34,115 @@ async function persistPayloadForJob(jobId: string): Promise<Record<string, unkno
   return payloadRef && typeof payloadRef === 'object' ? (payloadRef as Record<string, unknown>) : {}
 }
 
+async function openWorkflowAttempt(input: {
+  workflowJobId: string
+  attemptNumber: number
+  leaseOwner: string
+  leaseToken: string
+  leaseFence: number
+}) {
+  await prisma.workflowAttempt.create({
+    data: {
+      workflowJobId: input.workflowJobId,
+      attemptNumber: input.attemptNumber,
+      leaseOwner: input.leaseOwner,
+      leaseToken: input.leaseToken,
+      leaseFence: input.leaseFence,
+      status: 'RUNNING',
+    },
+  })
+}
+
+async function finishWorkflowAttempt(input: {
+  workflowJobId: string
+  attemptNumber: number
+  status: HandlerExecutionResult['outcome'] extends infer O
+    ? O extends string
+      ? string
+      : string
+    : string
+  errorCode?: string
+  errorClass?: string
+  resultRef?: string
+}) {
+  await prisma.workflowAttempt.updateMany({
+    where: { workflowJobId: input.workflowJobId, attemptNumber: input.attemptNumber },
+    data: {
+      status:
+        input.status === 'COMPLETED'
+          ? 'COMPLETED'
+          : input.status === 'RETRY'
+            ? 'RETRY_WAIT'
+            : input.status === 'AWAITING_RECONCILIATION'
+              ? 'AWAITING_RECONCILIATION'
+              : input.status === 'BLOCKED'
+                ? 'BLOCKED'
+                : 'FAILED_TERMINAL',
+      finishedAt: new Date(),
+      errorCode: input.errorCode ?? null,
+      errorClass: input.errorClass as never,
+      resultRef: input.resultRef ?? null,
+    },
+  })
+}
+
 async function applyHandlerResult(
   jobId: string,
   leaseToken: string,
   leaseFence: number,
+  attemptNumber: number,
   attemptCount: number,
   maxAttempts: number,
   result: HandlerExecutionResult,
-): Promise<'completed' | 'retried' | 'failed' | 'blocked' | 'reconcile'> {
+): Promise<'completed' | 'retried' | 'failed' | 'blocked' | 'reconcile' | 'lease_conflict'> {
   switch (result.outcome) {
-    case 'COMPLETED':
-      await prismaWorkflowProvider.complete({ jobId, leaseToken, leaseFence, resultRef: result.resultRef })
+    case 'COMPLETED': {
+      const res = await prismaWorkflowProvider.complete({ jobId, leaseToken, leaseFence, resultRef: result.resultRef })
+      if (!res.ok) return 'lease_conflict'
+      await finishWorkflowAttempt({
+        workflowJobId: jobId,
+        attemptNumber,
+        status: 'COMPLETED',
+        resultRef: result.resultRef,
+      })
       return 'completed'
-    case 'BLOCKED':
-      await prisma.workflowJob.updateMany({
-        where: { id: jobId, leaseToken, leaseFence },
-        data: { status: 'BLOCKED', lastErrorCode: result.errorCode },
+    }
+    case 'BLOCKED': {
+      const res = await prismaWorkflowProvider.markBlocked({
+        jobId,
+        leaseToken,
+        leaseFence,
+        errorCode: result.errorCode,
+      })
+      if (!res.ok) return 'lease_conflict'
+      await finishWorkflowAttempt({
+        workflowJobId: jobId,
+        attemptNumber,
+        status: 'BLOCKED',
+        errorCode: result.errorCode,
       })
       return 'blocked'
-    case 'AWAITING_RECONCILIATION':
-      await prisma.workflowJob.updateMany({
-        where: { id: jobId, leaseToken, leaseFence },
-        data: {
-          status: 'AWAITING_RECONCILIATION',
-          lastErrorCode: result.errorCode,
-          resultRef: result.resultRef ?? null,
-        },
+    }
+    case 'AWAITING_RECONCILIATION': {
+      const res = await prismaWorkflowProvider.markAwaitingReconciliation({
+        jobId,
+        leaseToken,
+        leaseFence,
+        errorCode: result.errorCode,
+        resultRef: result.resultRef,
+      })
+      if (!res.ok) return 'lease_conflict'
+      await finishWorkflowAttempt({
+        workflowJobId: jobId,
+        attemptNumber,
+        status: 'AWAITING_RECONCILIATION',
+        errorCode: result.errorCode,
+        resultRef: result.resultRef,
       })
       return 'reconcile'
-    case 'FAILED_TERMINAL':
-      await prismaWorkflowProvider.fail({
+    }
+    case 'FAILED_TERMINAL': {
+      const res = await prismaWorkflowProvider.fail({
         jobId,
         leaseToken,
         leaseFence,
@@ -71,10 +150,19 @@ async function applyHandlerResult(
         errorClass: result.errorClass,
         terminal: true,
       })
+      if (!res.ok) return 'lease_conflict'
+      await finishWorkflowAttempt({
+        workflowJobId: jobId,
+        attemptNumber,
+        status: 'FAILED_TERMINAL',
+        errorCode: result.errorCode,
+        errorClass: result.errorClass,
+      })
       return 'failed'
+    }
     case 'RETRY':
       if (!isRetryableWorkflowError(result.errorClass) || attemptCount + 1 >= maxAttempts) {
-        await prismaWorkflowProvider.fail({
+        const res = await prismaWorkflowProvider.fail({
           jobId,
           leaseToken,
           leaseFence,
@@ -82,17 +170,35 @@ async function applyHandlerResult(
           errorClass: result.errorClass,
           terminal: false,
         })
+        if (!res.ok) return 'lease_conflict'
+        await finishWorkflowAttempt({
+          workflowJobId: jobId,
+          attemptNumber,
+          status: 'FAILED_TERMINAL',
+          errorCode: result.errorCode,
+          errorClass: result.errorClass,
+        })
         return 'failed'
       }
-      await prismaWorkflowProvider.retry({
-        jobId,
-        leaseToken,
-        leaseFence,
-        errorCode: result.errorCode,
-        errorClass: result.errorClass,
-        nextAttemptAt: new Date(Date.now() + computeWorkflowBackoffMs(attemptCount + 1, result.retryAfterMs)),
-      })
-      return 'retried'
+      {
+        const res = await prismaWorkflowProvider.retry({
+          jobId,
+          leaseToken,
+          leaseFence,
+          errorCode: result.errorCode,
+          errorClass: result.errorClass,
+          nextAttemptAt: new Date(Date.now() + computeWorkflowBackoffMs(attemptCount + 1, result.retryAfterMs)),
+        })
+        if (!res.ok) return 'lease_conflict'
+        await finishWorkflowAttempt({
+          workflowJobId: jobId,
+          attemptNumber,
+          status: 'RETRY',
+          errorCode: result.errorCode,
+          errorClass: result.errorClass,
+        })
+        return 'retried'
+      }
   }
 }
 
@@ -118,63 +224,89 @@ export async function runWorkflowWorkerBatch(input?: {
   result.outboxDispatched = await dispatchPendingOutbox(25)
   result.recovered = await recoverAbandonedJobs()
 
-  const claimed = applyPerAccountClaimFairness(
-    await prismaWorkflowProvider.claim({ workerId, limit: input?.limit ?? WORKFLOW_CLAIM_BATCH_DEFAULT }),
-  )
+  const claimed = await prismaWorkflowProvider.claim({
+    workerId,
+    limit: input?.limit ?? WORKFLOW_CLAIM_BATCH_DEFAULT,
+  })
   result.claimed = claimed.length
 
   for (const job of claimed) {
     if (!job.leaseToken) continue
-    await prisma.workflowJob.updateMany({
-      where: { id: job.id, leaseToken: job.leaseToken, leaseFence: job.leaseFence },
-      data: { status: 'RUNNING' },
-    })
-    await recordWorkflowEvent(prisma, {
-      workflowJobId: job.id,
-      eventType: 'STARTED',
-      toStatus: 'RUNNING',
-      actorService: workerId,
-    })
 
-    const handler = getWorkflowHandler(job.jobKind)
-    if (!handler) {
-      await prismaWorkflowProvider.fail({
-        jobId: job.id,
+    const start = await prismaWorkflowProvider.startRunning({
+      jobId: job.id,
+      leaseToken: job.leaseToken,
+      leaseFence: job.leaseFence,
+      workerId,
+    })
+    if (!start.ok) continue
+
+    const attemptNumber = job.attemptCount + 1
+    try {
+      await openWorkflowAttempt({
+        workflowJobId: job.id,
+        attemptNumber,
+        leaseOwner: workerId,
         leaseToken: job.leaseToken,
         leaseFence: job.leaseFence,
-        errorCode: 'UNKNOWN_JOB_KIND',
-        errorClass: 'PERMANENT',
-        terminal: true,
       })
-      result.failed += 1
+    } catch {
       continue
     }
 
-    const payload = await persistPayloadForJob(job.id)
-    const handlerResult = await handler(
-      {
-        job,
-        attemptNumber: job.attemptCount + 1,
+    const handler = getWorkflowHandler(job.jobKind)
+    if (!handler) {
+      const outcome = await applyHandlerResult(
+        job.id,
+        job.leaseToken,
+        job.leaseFence,
+        attemptNumber,
+        job.attemptCount,
+        job.maxAttempts,
+        { outcome: 'FAILED_TERMINAL', errorClass: 'PERMANENT', errorCode: 'UNKNOWN_JOB_KIND' },
+      )
+      if (outcome === 'failed') result.failed += 1
+      continue
+    }
+
+    let handlerResult: HandlerExecutionResult
+    try {
+      await prismaWorkflowProvider.heartbeat({
+        jobId: job.id,
         leaseToken: job.leaseToken,
         leaseFence: job.leaseFence,
-        workerId,
-      },
-      payload,
-    )
+        leaseTtlMs: WORKFLOW_LEASE_TTL_MS,
+      })
+      const payload = await persistPayloadForJob(job.id)
+      handlerResult = await handler(
+        {
+          job,
+          attemptNumber,
+          leaseToken: job.leaseToken,
+          leaseFence: job.leaseFence,
+          workerId,
+        },
+        payload,
+      )
+    } catch (error) {
+      const classified = classifyHandlerException(error)
+      handlerResult = classified
+    }
 
     const outcome = await applyHandlerResult(
       job.id,
       job.leaseToken,
       job.leaseFence,
+      attemptNumber,
       job.attemptCount,
       job.maxAttempts,
       handlerResult,
     )
     if (outcome === 'completed') result.completed += 1
-    if (outcome === 'retried') result.retried += 1
-    if (outcome === 'failed') result.failed += 1
-    if (outcome === 'blocked') result.blocked += 1
-    if (outcome === 'reconcile') result.awaitingReconciliation += 1
+    else if (outcome === 'retried') result.retried += 1
+    else if (outcome === 'failed') result.failed += 1
+    else if (outcome === 'blocked') result.blocked += 1
+    else if (outcome === 'reconcile') result.awaitingReconciliation += 1
   }
 
   return result

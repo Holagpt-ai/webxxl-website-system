@@ -37,7 +37,22 @@ export function isWorkflowDurableExecutionAllowed(): boolean {
   return isWorkflowBackendEnabled() || isWorkflowTestExecutionBypassEnabled()
 }
 
-export const WORKFLOW_CLAIM_BATCH_DEFAULT = Number(process.env.WORKFLOW_CLAIM_BATCH_DEFAULT ?? '10')
-export const WORKFLOW_GLOBAL_CONCURRENCY = Number(process.env.WORKFLOW_GLOBAL_CONCURRENCY ?? '25')
-export const WORKFLOW_PER_ACCOUNT_ACTIVE_CAP = Number(process.env.WORKFLOW_PER_ACCOUNT_ACTIVE_CAP ?? '5')
-export const WORKFLOW_LEASE_TTL_MS = Number(process.env.WORKFLOW_LEASE_TTL_MS ?? '120000')
+function envPositiveInt(name: string, defaultValue: number, max = 500): number {
+  const raw = process.env[name]
+  if (raw === undefined || raw === '') return defaultValue
+  const n = Number(raw)
+  if (!Number.isFinite(n) || n < 1) return defaultValue
+  return Math.min(Math.floor(n), max)
+}
+
+export const WORKFLOW_CLAIM_BATCH_DEFAULT = envPositiveInt('WORKFLOW_CLAIM_BATCH_DEFAULT', 10, 100)
+export const WORKFLOW_GLOBAL_CONCURRENCY = envPositiveInt('WORKFLOW_GLOBAL_CONCURRENCY', 25, 500)
+export const WORKFLOW_PER_ACCOUNT_ACTIVE_CAP = envPositiveInt('WORKFLOW_PER_ACCOUNT_ACTIVE_CAP', 5, 100)
+export const WORKFLOW_PER_KIND_ACTIVE_CAP = envPositiveInt('WORKFLOW_PER_KIND_ACTIVE_CAP', 10, 100)
+export const WORKFLOW_LEASE_TTL_MS = envPositiveInt('WORKFLOW_LEASE_TTL_MS', 120_000, 3_600_000)
+
+export function validatedWorkflowClaimBatchLimit(requested?: number): number {
+  const n = requested ?? WORKFLOW_CLAIM_BATCH_DEFAULT
+  if (!Number.isFinite(n) || n < 1) return WORKFLOW_CLAIM_BATCH_DEFAULT
+  return Math.min(Math.floor(n), WORKFLOW_CLAIM_BATCH_DEFAULT, WORKFLOW_GLOBAL_CONCURRENCY)
+}

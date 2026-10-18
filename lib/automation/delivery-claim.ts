@@ -1,7 +1,45 @@
 import { prisma } from '@/lib/db'
 import { randomUUID } from 'crypto'
 
+import { computeBackoffSeconds } from '@/lib/automation/errors'
+
 const DEFAULT_CLAIM_TTL_MS = 120_000
+
+/** Re-queue notification jobs stuck in PROCESSING after lease expiry (fenced). */
+export async function recoverExpiredAutomationDeliveryClaims(now = new Date(), limit = 50): Promise<number> {
+  const stuck = await prisma.automationDeliveryJob.findMany({
+    where: {
+      status: 'PROCESSING',
+      claimExpiresAt: { lt: now },
+    },
+    take: limit,
+  })
+  let recovered = 0
+  for (const job of stuck) {
+    const attempts = job.attempts
+    const backoffSec = computeBackoffSeconds(Math.max(attempts, 1))
+    const uncertain = job.lastErrorClass === 'unknown_external' || job.lastErrorClass === 'provider_uncertain'
+    const updated = await prisma.automationDeliveryJob.updateMany({
+      where: {
+        id: job.id,
+        status: 'PROCESSING',
+        claimFence: job.claimFence,
+        claimExpiresAt: { lt: now },
+      },
+      data: {
+        status: uncertain ? 'FAILED' : 'FAILED',
+        claimOwner: null,
+        claimToken: null,
+        claimExpiresAt: null,
+        claimFence: job.claimFence + 1,
+        lastErrorClass: uncertain ? job.lastErrorClass : job.lastErrorClass ?? 'lease_expired',
+        nextAttemptAt: uncertain ? new Date(Date.now() + 86_400_000) : new Date(Date.now() + backoffSec * 1000),
+      },
+    })
+    if (updated.count === 1) recovered += 1
+  }
+  return recovered
+}
 
 export async function tryClaimAutomationDeliveryJob(input: {
   jobId: string

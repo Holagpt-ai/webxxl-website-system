@@ -9,9 +9,12 @@ export async function executeSeoSyncPrepareWorkflow(
   payload: Record<string, unknown>,
 ): Promise<HandlerExecutionResult> {
   const customerAccountId = ctx.job.customerAccountId
-  const managedSiteId = ctx.job.managedSiteId ?? (typeof payload.managedSiteId === 'string' ? payload.managedSiteId : null)
+  const managedSiteId = ctx.job.managedSiteId
   if (!customerAccountId || !managedSiteId) {
     return { outcome: 'FAILED_TERMINAL', errorClass: 'CONFIGURATION_MISSING', errorCode: 'MISSING_SITE_SCOPE' }
+  }
+  if (typeof payload.managedSiteId === 'string' && payload.managedSiteId !== managedSiteId) {
+    return { outcome: 'FAILED_TERMINAL', errorClass: 'PERMANENT', errorCode: 'FOREIGN_MANAGED_SITE' }
   }
   const provider = (payload.provider as SeoAnalyticsProvider | undefined) ?? 'GSC'
   const connection = await prisma.siteAnalyticsConnection.findFirst({

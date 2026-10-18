@@ -1,22 +1,37 @@
-import type { Prisma } from '@prisma/client'
+import type { Prisma, WorkflowJobStatus } from '@prisma/client'
 import { prisma } from '@/lib/db'
-import { isWorkflowRepairEnabled } from '@/config/workflow-backend'
+import { isWorkflowDurableExecutionAllowed, isWorkflowRepairEnabled } from '@/config/workflow-backend'
+import { casTransitionWorkflowJobTx } from '@/lib/platform/workflow/job-transition'
 import { prismaWorkflowProvider } from '@/lib/platform/workflow/prisma-provider'
-import { recordWorkflowEvent } from '@/lib/platform/workflow/workflow-events'
+import { computeWorkflowBackoffMs } from '@/lib/platform/workflow/retry-policy'
 
 export async function detectExpiredLeases(now = new Date()): Promise<number> {
-  const expired = await prisma.workflowJob.findMany({
+  return prisma.workflowJob.count({
     where: {
       status: { in: ['CLAIMED', 'RUNNING'] },
       leaseExpiresAt: { lt: now },
     },
-    take: 100,
   })
-  return expired.length
 }
 
+function recoveryTargetStatus(job: {
+  lastErrorClass: string | null
+  attemptCount: number
+  maxAttempts: number
+}): WorkflowJobStatus {
+  if (job.lastErrorClass === 'UNKNOWN_EXTERNAL_OUTCOME') {
+    return 'AWAITING_RECONCILIATION'
+  }
+  if (job.attemptCount >= job.maxAttempts) {
+    return 'DEAD_LETTER'
+  }
+  return 'RETRY_WAIT'
+}
+
+/** Automatic worker recovery for expired leases — does not require WORKFLOW_REPAIR_ENABLED. */
 export async function recoverAbandonedJobs(now = new Date()): Promise<number> {
-  if (!isWorkflowRepairEnabled()) return 0
+  if (!isWorkflowDurableExecutionAllowed()) return 0
+
   const rows = await prisma.workflowJob.findMany({
     where: {
       status: { in: ['CLAIMED', 'RUNNING'] },
@@ -24,30 +39,44 @@ export async function recoverAbandonedJobs(now = new Date()): Promise<number> {
     },
     take: 50,
   })
+
   let recovered = 0
   for (const job of rows) {
-    const updated = await prisma.workflowJob.updateMany({
-      where: {
-        id: job.id,
-        leaseFence: job.leaseFence,
-        status: { in: ['CLAIMED', 'RUNNING'] },
-      },
+    const toStatus = recoveryTargetStatus(job)
+    const nextAttemptAt =
+      toStatus === 'RETRY_WAIT'
+        ? new Date(now.getTime() + computeWorkflowBackoffMs(job.attemptCount + 1))
+        : job.nextAttemptAt
+
+    const row = await casTransitionWorkflowJobTx({
+      jobId: job.id,
+      fromStatuses: ['CLAIMED', 'RUNNING'],
+      toStatus,
+      expectedLease: job.leaseToken ? { token: job.leaseToken, fence: job.leaseFence } : null,
+      requireExpiredLease: true,
+      now,
       data: {
-        status: 'READY',
         leaseOwner: null,
         leaseToken: null,
         leaseExpiresAt: null,
-        nextAttemptAt: now,
+        leaseFence: { increment: 1 },
+        nextAttemptAt,
+        lastErrorCode: job.lastErrorCode ?? 'LEASE_EXPIRED',
       },
+      eventType: 'RECOVERED',
+      eventDetail: { reason: 'expired_lease', previousStatus: job.status },
     })
-    if (updated.count === 1) {
+    if (row) {
       recovered += 1
-      await recordWorkflowEvent(prisma, {
-        workflowJobId: job.id,
-        eventType: 'RECOVERED',
-        fromStatus: job.status,
-        toStatus: 'READY',
-      })
+      if (toStatus === 'DEAD_LETTER') {
+        await prisma.workflowDeadLetter.create({
+          data: {
+            workflowJobId: job.id,
+            reason: job.lastErrorCode ?? 'LEASE_EXPIRED_MAX_ATTEMPTS',
+            errorClass: job.lastErrorClass ?? undefined,
+          },
+        })
+      }
     }
   }
   return recovered
@@ -85,6 +114,9 @@ export async function recordRepairDecision(input: {
 }
 
 export async function prepareRepair(jobId: string) {
+  if (!isWorkflowRepairEnabled()) {
+    throw new Error('WORKFLOW_REPAIR_DISABLED')
+  }
   const job = await prismaWorkflowProvider.getStatus(jobId)
   if (!job) return null
   const attempts = await prisma.workflowAttempt.findMany({
@@ -100,6 +132,13 @@ export async function prepareRepair(jobId: string) {
   return { job, attempts, events }
 }
 
-export async function classifyDeadLetters(limit = 50) {
+export async function classifyDeadLetters(limit = 50, customerAccountId?: string) {
+  if (customerAccountId) {
+    return prisma.workflowDeadLetter.findMany({
+      where: { workflowJob: { customerAccountId } },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    })
+  }
   return prisma.workflowDeadLetter.findMany({ orderBy: { createdAt: 'desc' }, take: limit })
 }

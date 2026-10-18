@@ -103,7 +103,9 @@
 
 **WALLET-09C (merged on main):** `WalletLedgerEntry.actorServiceId`; COMMS aggregate unit semantics; guarded reservation expiry; fractional IANA timezone midnights.
 
-**AUTO-10 (feature branch):** PostgreSQL-backed `WorkflowJob` FSM, `PrismaWorkflowProvider` (`FOR UPDATE SKIP LOCKED` claim SQL), transactional outbox, retry/backoff, lease fencing, recovery/dead-letter repair hooks, safe handlers (COMMS receipt by id, marketing follow-up evaluate, SEO sync prepare), legacy notification delivery conditional claim, read APIs + gated `POST /api/automation/workflow-worker`. **Prisma-first** (see `docs/platform/docs/AUTO10-PROVIDER-DECISION.md`). All `WORKFLOW_*` flags default **OFF**. PostgreSQL claim concurrency **not verified** in CI without test DB. Vitest: `auto10-workflow.test.ts`.
+**AUTO-10 (PR #42):** PostgreSQL-backed `WorkflowJob` FSM, `PrismaWorkflowProvider` (`FOR UPDATE SKIP LOCKED` claim SQL), transactional outbox, retry/backoff, lease fencing, recovery/dead-letter repair hooks, safe handlers (COMMS receipt by id, marketing follow-up evaluate, SEO sync prepare), legacy notification delivery conditional claim, read APIs + gated `POST /api/automation/workflow-worker`. **Prisma-first** (see `docs/platform/docs/AUTO10-PROVIDER-DECISION.md`). All `WORKFLOW_*` flags default **OFF**. PostgreSQL claim concurrency **not verified** in CI without test DB. Vitest: `auto10-workflow.test.ts`, `auto10a-integrity.test.ts`.
+
+**AUTO-10A (in PR #42):** CAS job transitions + fenced lease checks; fairness releases excess claims (no stranded `CLAIMED`); typed outbox envelope + `SKIP LOCKED` dispatch dedupe; worker attempt records + handler exception isolation; automatic expired-lease recovery without `WORKFLOW_REPAIR_ENABLED`; staff-gated platform workflow reads; handler tenant binding for COMMS/MKT/SEO; legacy notification expired-PROCESSING recovery.
 
 ## INFRA-02 (2026-10-18) — repository infrastructure only; live staging BLOCKED
 

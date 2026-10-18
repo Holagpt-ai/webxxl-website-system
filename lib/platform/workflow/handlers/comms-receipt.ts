@@ -1,3 +1,4 @@
+import { prisma } from '@/lib/db'
 import { isCommsReceiptWorkerEnabled } from '@/config/comms-backend'
 import { isWorkflowDurableExecutionAllowed } from '@/config/workflow-backend'
 import { processCommsWebhookReceiptById } from '@/lib/platform/comms/receipt-processor'
@@ -16,6 +17,13 @@ export async function executeCommsReceiptWorkflow(
   }
   if (ctx.job.sourceId !== receiptId) {
     return { outcome: 'FAILED_TERMINAL', errorClass: 'PERMANENT', errorCode: 'TENANT_RESOURCE_MISMATCH' }
+  }
+  const receipt = await prisma.commsWebhookReceipt.findUnique({ where: { id: receiptId } })
+  if (!receipt) {
+    return { outcome: 'FAILED_TERMINAL', errorClass: 'PERMANENT', errorCode: 'RECEIPT_NOT_FOUND' }
+  }
+  if (ctx.job.customerAccountId && receipt.customerAccountId !== ctx.job.customerAccountId) {
+    return { outcome: 'FAILED_TERMINAL', errorClass: 'PERMANENT', errorCode: 'FOREIGN_RECEIPT' }
   }
   const result = await processCommsWebhookReceiptById({
     receiptId,

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { requireWorkflowReadAccess } from '@/lib/platform/workflow/route-auth'
+import { clampWorkflowPagination, resolveWorkflowReadScope } from '@/lib/platform/workflow/route-auth'
 import { toWorkflowRunListItem } from '@/lib/platform/workflow/read-dto'
 
 export const dynamic = 'force-dynamic'
@@ -9,10 +9,22 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url)
     const customerAccountId = url.searchParams.get('customerAccountId')
-    await requireWorkflowReadAccess(customerAccountId)
-    const take = Math.min(Number(url.searchParams.get('take') ?? '50'), 100)
-    const skip = Number(url.searchParams.get('skip') ?? '0')
-    const where = customerAccountId ? { customerAccountId } : {}
+    const scope = await resolveWorkflowReadScope(customerAccountId)
+    if (scope.kind === 'platform' && !customerAccountId) {
+      /* staff-only platform listing */
+    } else if (!customerAccountId) {
+      return NextResponse.json({ code: 'FORBIDDEN' }, { status: 403 })
+    }
+    const { take, skip } = clampWorkflowPagination(
+      url.searchParams.get('take'),
+      url.searchParams.get('skip'),
+    )
+    const where =
+      scope.kind === 'account'
+        ? { customerAccountId: scope.customerAccountId }
+        : customerAccountId
+          ? { customerAccountId }
+          : {}
     const rows = await prisma.workflowJob.findMany({
       where,
       orderBy: { createdAt: 'desc' },

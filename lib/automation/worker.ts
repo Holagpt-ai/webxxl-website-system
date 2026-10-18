@@ -11,6 +11,7 @@ import { isEnabled } from '@/config/features'
 import { preferredLocaleForUser } from '@/lib/i18n/preference-db'
 import {
   commitAutomationDeliveryJobClaim,
+  recoverExpiredAutomationDeliveryClaims,
   tryClaimAutomationDeliveryJob,
 } from '@/lib/automation/delivery-claim'
 
@@ -33,6 +34,7 @@ export type WorkerRunResult = {
 export async function processAutomationDeliveryBatch(limit = 25): Promise<WorkerRunResult> {
   const now = new Date()
   const workerId = `automation-worker:${process.env.HOSTNAME ?? 'local'}`
+  await recoverExpiredAutomationDeliveryClaims(now)
   const jobs = await prisma.automationDeliveryJob.findMany({
     where: {
       status: { in: ['PENDING', 'FAILED'] },

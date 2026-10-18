@@ -1,4 +1,4 @@
-import type { WorkflowJob } from '@prisma/client'
+import type { WorkflowEvent, WorkflowJob } from '@prisma/client'
 
 export type WorkflowRunListItemDto = {
   id: string
@@ -12,6 +12,14 @@ export type WorkflowRunListItemDto = {
   createdAt: string
   updatedAt: string
   completedAt: string | null
+}
+
+export type WorkflowEventDto = {
+  id: string
+  eventType: string
+  fromStatus: string | null
+  toStatus: string | null
+  createdAt: string
 }
 
 export type WorkflowSummaryDto = {
@@ -34,5 +42,16 @@ export function toWorkflowRunListItem(row: WorkflowJob): WorkflowRunListItemDto 
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     completedAt: row.completedAt?.toISOString() ?? null,
+  }
+}
+
+/** Omit lease tokens, raw payloads, and other sensitive detail from API responses. */
+export function toSafeWorkflowEvent(row: WorkflowEvent): WorkflowEventDto {
+  return {
+    id: row.id,
+    eventType: row.eventType,
+    fromStatus: row.fromStatus,
+    toStatus: row.toStatus,
+    createdAt: row.createdAt.toISOString(),
   }
 }

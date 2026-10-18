@@ -1,7 +1,12 @@
-import type { WorkflowJob } from '@prisma/client'
+import type { WorkflowJob, WorkflowJobStatus } from '@prisma/client'
 import { prisma } from '@/lib/db'
-import { WORKFLOW_LEASE_TTL_MS } from '@/config/workflow-backend'
+import {
+  WORKFLOW_LEASE_TTL_MS,
+  validatedWorkflowClaimBatchLimit,
+} from '@/config/workflow-backend'
+import { computeClaimHeadroom, partitionFairClaims } from '@/lib/platform/workflow/fairness'
 import { buildEnqueueFingerprint } from '@/lib/platform/workflow/fingerprint'
+import { casTransitionWorkflowJobTx } from '@/lib/platform/workflow/job-transition'
 import { mapWorkflowJob } from '@/lib/platform/workflow/job-mapper'
 import type {
   ClaimBatchInput,
@@ -18,28 +23,23 @@ function isP2002(error: unknown): boolean {
   return typeof error === 'object' && error !== null && 'code' in error && (error as { code: string }).code === 'P2002'
 }
 
-async function transitionJob(
-  jobId: string,
-  expected: { leaseToken?: string | null; leaseFence?: number },
-  toStatus: WorkflowJob['status'],
-  data: Partial<WorkflowJob>,
-): Promise<WorkflowJob | null> {
-  const current = await prisma.workflowJob.findUnique({ where: { id: jobId } })
-  if (!current) return null
-  if (expected.leaseToken != null && current.leaseToken !== expected.leaseToken) return null
-  if (expected.leaseFence != null && current.leaseFence !== expected.leaseFence) return null
-  assertWorkflowTransition(current.status, toStatus)
-  const updated = await prisma.workflowJob.update({
-    where: { id: jobId },
-    data: { ...data, status: toStatus, updatedAt: new Date() },
-  })
-  await recordWorkflowEvent(prisma, {
-    workflowJobId: jobId,
-    eventType: 'STATUS_CHANGED',
-    fromStatus: current.status,
+async function releaseClaimedJob(job: WorkflowJobSnapshot, now: Date): Promise<void> {
+  if (!job.leaseToken) return
+  const toStatus: WorkflowJobStatus = job.nextAttemptAt > now ? 'RETRY_WAIT' : 'READY'
+  await casTransitionWorkflowJobTx({
+    jobId: job.id,
+    fromStatuses: ['CLAIMED'],
     toStatus,
+    expectedLease: { token: job.leaseToken, fence: job.leaseFence },
+    now,
+    data: {
+      leaseOwner: null,
+      leaseToken: null,
+      leaseExpiresAt: null,
+    },
+    eventType: 'CLAIM_RELEASED',
+    eventDetail: { reason: 'fairness_or_admission' },
   })
-  return updated
 }
 
 export class PrismaWorkflowProvider implements WorkflowProvider {
@@ -99,6 +99,13 @@ export class PrismaWorkflowProvider implements WorkflowProvider {
     const leaseExpires = new Date(now.getTime() + leaseTtlMs)
     const workerId = input.workerId
 
+    const globalActive = await prisma.workflowJob.count({
+      where: { status: { in: ['CLAIMED', 'RUNNING'] } },
+    })
+    const headroom = computeClaimHeadroom(globalActive)
+    const batchLimit = Math.min(validatedWorkflowClaimBatchLimit(input.limit), headroom)
+    if (batchLimit < 1) return []
+
     const rows = await prisma.$queryRaw<WorkflowJob[]>`
       WITH candidates AS (
         SELECT j.id
@@ -108,7 +115,7 @@ export class PrismaWorkflowProvider implements WorkflowProvider {
           AND (j."leaseExpiresAt" IS NULL OR j."leaseExpiresAt" < ${now})
         ORDER BY j.priority DESC, j."scheduledAt" ASC
         FOR UPDATE SKIP LOCKED
-        LIMIT ${input.limit}
+        LIMIT ${batchLimit}
       )
       UPDATE "WorkflowJob" j
       SET
@@ -123,17 +130,44 @@ export class PrismaWorkflowProvider implements WorkflowProvider {
       RETURNING j.*
     `
 
-    for (const row of rows) {
+    const snapshots = rows.map(mapWorkflowJob)
+    const { selected, rejected } = partitionFairClaims(snapshots, { maxBatch: batchLimit })
+
+    for (const job of rejected) {
+      await releaseClaimedJob(job, now)
+    }
+
+    for (const row of rows.filter((r) => selected.some((s) => s.id === r.id))) {
       await recordWorkflowEvent(prisma, {
         workflowJobId: row.id,
         eventType: 'CLAIMED',
         fromStatus: 'READY',
         toStatus: 'CLAIMED',
         actorService: workerId,
-        detail: { leaseToken: row.leaseToken, leaseFence: row.leaseFence },
       })
     }
-    return rows.map(mapWorkflowJob)
+
+    return selected
+  }
+
+  async startRunning(input: {
+    jobId: string
+    leaseToken: string
+    leaseFence: number
+    workerId: string
+  }): Promise<WorkflowResult<WorkflowJobSnapshot>> {
+    const row = await casTransitionWorkflowJobTx({
+      jobId: input.jobId,
+      fromStatuses: ['CLAIMED'],
+      toStatus: 'RUNNING',
+      expectedLease: { token: input.leaseToken, fence: input.leaseFence },
+      requireUnexpiredLease: true,
+      data: {},
+      eventType: 'STARTED',
+      actorService: input.workerId,
+    })
+    if (!row) return { ok: false, error: 'LEASE_CONFLICT' }
+    return { ok: true, value: mapWorkflowJob(row) }
   }
 
   async heartbeat(input: {
@@ -150,6 +184,7 @@ export class PrismaWorkflowProvider implements WorkflowProvider {
         leaseToken: input.leaseToken,
         leaseFence: input.leaseFence,
         status: { in: ['CLAIMED', 'RUNNING'] },
+        leaseExpiresAt: { gt: now },
       },
       data: { heartbeatAt: now, leaseExpiresAt: leaseExpires, updatedAt: now },
     })
@@ -162,30 +197,32 @@ export class PrismaWorkflowProvider implements WorkflowProvider {
   }
 
   async complete(input: CompleteJobInput): Promise<WorkflowResult<WorkflowJobSnapshot>> {
-    const row = await transitionJob(
-      input.jobId,
-      { leaseToken: input.leaseToken, leaseFence: input.leaseFence },
-      'COMPLETED',
-      {
+    const row = await casTransitionWorkflowJobTx({
+      jobId: input.jobId,
+      fromStatuses: ['RUNNING', 'CLAIMED'],
+      toStatus: 'COMPLETED',
+      expectedLease: { token: input.leaseToken, fence: input.leaseFence },
+      data: {
         resultRef: input.resultRef ?? null,
         completedAt: new Date(),
         leaseOwner: null,
         leaseToken: null,
         leaseExpiresAt: null,
       },
-    )
+      eventType: 'COMPLETED',
+    })
     if (!row) return { ok: false, error: 'LEASE_CONFLICT' }
-    await recordWorkflowEvent(prisma, { workflowJobId: input.jobId, eventType: 'COMPLETED', toStatus: 'COMPLETED' })
     return { ok: true, value: mapWorkflowJob(row) }
   }
 
   async fail(input: FailJobInput): Promise<WorkflowResult<WorkflowJobSnapshot>> {
     const toStatus = input.terminal ? 'FAILED_TERMINAL' : 'DEAD_LETTER'
-    const row = await transitionJob(
-      input.jobId,
-      { leaseToken: input.leaseToken, leaseFence: input.leaseFence },
+    const row = await casTransitionWorkflowJobTx({
+      jobId: input.jobId,
+      fromStatuses: ['RUNNING', 'CLAIMED', 'RETRY_WAIT', 'AWAITING_RECONCILIATION'],
       toStatus,
-      {
+      expectedLease: { token: input.leaseToken, fence: input.leaseFence },
+      data: {
         lastErrorCode: input.errorCode,
         lastErrorClass: input.errorClass,
         leaseOwner: null,
@@ -193,7 +230,8 @@ export class PrismaWorkflowProvider implements WorkflowProvider {
         leaseExpiresAt: null,
         completedAt: new Date(),
       },
-    )
+      eventType: toStatus === 'DEAD_LETTER' ? 'DEAD_LETTERED' : 'FAILED',
+    })
     if (!row) return { ok: false, error: 'LEASE_CONFLICT' }
     if (toStatus === 'DEAD_LETTER') {
       await prisma.workflowDeadLetter.create({
@@ -208,17 +246,13 @@ export class PrismaWorkflowProvider implements WorkflowProvider {
   }
 
   async retry(input: RetryJobInput): Promise<WorkflowResult<WorkflowJobSnapshot>> {
-    const current = await prisma.workflowJob.findUnique({ where: { id: input.jobId } })
-    if (!current) return { ok: false, error: 'JOB_NOT_FOUND' }
-    if (current.leaseToken !== input.leaseToken || current.leaseFence !== input.leaseFence) {
-      return { ok: false, error: 'LEASE_CONFLICT' }
-    }
-    assertWorkflowTransition(current.status, 'RETRY_WAIT')
-    const updated = await prisma.workflowJob.update({
-      where: { id: input.jobId },
+    const row = await casTransitionWorkflowJobTx({
+      jobId: input.jobId,
+      fromStatuses: ['RUNNING', 'CLAIMED'],
+      toStatus: 'RETRY_WAIT',
+      expectedLease: { token: input.leaseToken, fence: input.leaseFence },
       data: {
-        status: 'READY',
-        attemptCount: current.attemptCount + 1,
+        attemptCount: { increment: 1 },
         nextAttemptAt: input.nextAttemptAt,
         lastErrorCode: input.errorCode,
         lastErrorClass: input.errorClass,
@@ -226,36 +260,109 @@ export class PrismaWorkflowProvider implements WorkflowProvider {
         leaseToken: null,
         leaseExpiresAt: null,
       },
-    })
-    await recordWorkflowEvent(prisma, {
-      workflowJobId: input.jobId,
       eventType: 'RETRIED',
-      fromStatus: current.status,
-      toStatus: 'READY',
-      detail: { nextAttemptAt: input.nextAttemptAt.toISOString() },
+      eventDetail: { nextAttemptAt: input.nextAttemptAt.toISOString() },
     })
-    return { ok: true, value: mapWorkflowJob(updated) }
+    if (!row) return { ok: false, error: 'LEASE_CONFLICT' }
+    return { ok: true, value: mapWorkflowJob(row) }
+  }
+
+  async markBlocked(input: {
+    jobId: string
+    leaseToken: string
+    leaseFence: number
+    errorCode: string
+  }): Promise<WorkflowResult<WorkflowJobSnapshot>> {
+    const row = await casTransitionWorkflowJobTx({
+      jobId: input.jobId,
+      fromStatuses: ['RUNNING', 'CLAIMED'],
+      toStatus: 'BLOCKED',
+      expectedLease: { token: input.leaseToken, fence: input.leaseFence },
+      data: {
+        lastErrorCode: input.errorCode,
+        leaseOwner: null,
+        leaseToken: null,
+        leaseExpiresAt: null,
+      },
+      eventType: 'BLOCKED',
+    })
+    if (!row) return { ok: false, error: 'LEASE_CONFLICT' }
+    return { ok: true, value: mapWorkflowJob(row) }
+  }
+
+  async markAwaitingReconciliation(input: {
+    jobId: string
+    leaseToken: string
+    leaseFence: number
+    errorCode: string
+    resultRef?: string
+  }): Promise<WorkflowResult<WorkflowJobSnapshot>> {
+    const row = await casTransitionWorkflowJobTx({
+      jobId: input.jobId,
+      fromStatuses: ['RUNNING', 'CLAIMED'],
+      toStatus: 'AWAITING_RECONCILIATION',
+      expectedLease: { token: input.leaseToken, fence: input.leaseFence },
+      data: {
+        lastErrorCode: input.errorCode,
+        resultRef: input.resultRef ?? null,
+        leaseOwner: null,
+        leaseToken: null,
+        leaseExpiresAt: null,
+      },
+      eventType: 'AWAITING_RECONCILIATION',
+    })
+    if (!row) return { ok: false, error: 'LEASE_CONFLICT' }
+    return { ok: true, value: mapWorkflowJob(row) }
   }
 
   async cancel(input: { jobId: string; reason: string }): Promise<WorkflowResult<WorkflowJobSnapshot>> {
     const current = await prisma.workflowJob.findUnique({ where: { id: input.jobId } })
     if (!current) return { ok: false, error: 'JOB_NOT_FOUND' }
-    const row = await transitionJob(input.jobId, {}, 'CANCELLED', {
-      lastErrorCode: input.reason,
-      completedAt: new Date(),
+    if (current.status === 'CANCELLED') return { ok: true, value: mapWorkflowJob(current) }
+    assertWorkflowTransition(current.status, 'CANCELLED')
+    const row = await casTransitionWorkflowJobTx({
+      jobId: input.jobId,
+      fromStatuses: [current.status],
+      toStatus: 'CANCELLED',
+      data: {
+        lastErrorCode: input.reason,
+        completedAt: new Date(),
+        leaseOwner: null,
+        leaseToken: null,
+        leaseExpiresAt: null,
+      },
+      eventType: 'CANCELLED',
     })
     if (!row) return { ok: false, error: 'FORBIDDEN_TRANSITION' }
     return { ok: true, value: mapWorkflowJob(row) }
   }
 
   async pause(input: { jobId: string; reason: string }): Promise<WorkflowResult<WorkflowJobSnapshot>> {
-    const row = await transitionJob(input.jobId, {}, 'PAUSED', { lastErrorCode: input.reason })
+    const current = await prisma.workflowJob.findUnique({ where: { id: input.jobId } })
+    if (!current) return { ok: false, error: 'JOB_NOT_FOUND' }
+    assertWorkflowTransition(current.status, 'PAUSED')
+    const row = await casTransitionWorkflowJobTx({
+      jobId: input.jobId,
+      fromStatuses: [current.status],
+      toStatus: 'PAUSED',
+      data: { lastErrorCode: input.reason },
+      eventType: 'PAUSED',
+    })
     if (!row) return { ok: false, error: 'FORBIDDEN_TRANSITION' }
     return { ok: true, value: mapWorkflowJob(row) }
   }
 
   async resume(input: { jobId: string }): Promise<WorkflowResult<WorkflowJobSnapshot>> {
-    const row = await transitionJob(input.jobId, {}, 'READY', { nextAttemptAt: new Date() })
+    const current = await prisma.workflowJob.findUnique({ where: { id: input.jobId } })
+    if (!current) return { ok: false, error: 'JOB_NOT_FOUND' }
+    assertWorkflowTransition(current.status, 'READY')
+    const row = await casTransitionWorkflowJobTx({
+      jobId: input.jobId,
+      fromStatuses: [current.status],
+      toStatus: 'READY',
+      data: { nextAttemptAt: new Date() },
+      eventType: 'RESUMED',
+    })
     if (!row) return { ok: false, error: 'FORBIDDEN_TRANSITION' }
     return { ok: true, value: mapWorkflowJob(row) }
   }
@@ -265,10 +372,19 @@ export class PrismaWorkflowProvider implements WorkflowProvider {
     decision: 'COMPLETE' | 'DEAD_LETTER'
     resultRef?: string
   }): Promise<WorkflowResult<WorkflowJobSnapshot>> {
+    const current = await prisma.workflowJob.findUnique({ where: { id: input.jobId } })
+    if (!current) return { ok: false, error: 'JOB_NOT_FOUND' }
     const toStatus = input.decision === 'COMPLETE' ? 'COMPLETED' : 'DEAD_LETTER'
-    const row = await transitionJob(input.jobId, {}, toStatus, {
-      resultRef: input.resultRef ?? null,
-      completedAt: new Date(),
+    assertWorkflowTransition(current.status, toStatus)
+    const row = await casTransitionWorkflowJobTx({
+      jobId: input.jobId,
+      fromStatuses: [current.status],
+      toStatus,
+      data: {
+        resultRef: input.resultRef ?? null,
+        completedAt: new Date(),
+      },
+      eventType: 'RECONCILED',
     })
     if (!row) return { ok: false, error: 'FORBIDDEN_TRANSITION' }
     return { ok: true, value: mapWorkflowJob(row) }
