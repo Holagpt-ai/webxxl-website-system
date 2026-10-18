@@ -2,7 +2,7 @@
 
 **COMMS-06 (2026-10-18):** Unified communications backend in `lib/platform/comms/*` with Prisma tenant/conversation/gateway models, typed Chatwoot Application API adapter, verified private webhook relay (`x-webxxl-chatwoot-signature`), policy engine, quote/intent preparation, and gated `/api/v1/communications/*`. **Chatwoot is not installed or running**; **no live SMS/email/WhatsApp**. Billable outbound must use WebXXL gateway (see `infra/services/chatwoot/MESSAGING-GATEWAY.md`).
 
-**CRM-05 (2026-10-18):** WebXXL-native Prisma CRM foundation landed in `lib/platform/crm/*` with gated `/api/v1/crm/*` routes, consent/suppression, segmentation engine, import/export preparation, SalesLead bridge, and Chatwoot contact mapping. **Twenty remains a candidate** (`CRM_EXTERNAL_SYNC_ENABLED=false`). See `07-CRM-VENDOR-MATRIX-CRM05.md`.
+**CRM-05 (2026-10-18):** WebXXL-native Prisma CRM foundation landed in `lib/platform/crm/*` with gated `/api/v1/crm/*` routes, consent/suppression, segmentation engine, import/export preparation, SalesLead bridge, and Chatwoot contact mapping. **Twenty remains a candidate** (`CRM_EXTERNAL_SYNC_ENABLED=false`). See `07-CRM-VENDOR-MATRIX-CRM05.md`. **MKT-08 (2026-10-18)** extends lead recovery via `MarketingLeadFollowUpPolicy` / `Evaluation`, reuses `CrmTask` + `CrmFollowUpCoverage`, and prepares outreach through COMMS intent drafts only (`MKT_LEAD_MONITOR_ENABLED=false` default).
 
 **Customer charge:** robust CRM software, list segmentation and marketing automation drafts are **FREE/included**. **Provider SMS usage** and separately priced transport are chargeable according to published terms. All accounts must remain independent, even inside one payer group.
 

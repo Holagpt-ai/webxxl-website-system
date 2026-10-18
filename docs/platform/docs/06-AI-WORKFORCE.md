@@ -1,6 +1,6 @@
 # 06 — Unified AI Workforce: Internal Co-workers + Customer AI
 
-**Business contract:** AI agents are operational capabilities throughout WebXXL, not disconnected chatbots. Common marketing agents (SEO, landing page, campaigns, ad creative, lead suggestions) are included/FREE under appropriate use limits. Future customer-purchased specialist AI employees remain a disabled catalog capability. **Paperclip** is proposed for the internal worker manager; the customer AI runtime interface is provider-neutral. This is not an assertion that Paperclip is deployed.
+**Business contract:** AI agents are operational capabilities throughout WebXXL, not disconnected chatbots. **MKT-08 (2026-10-18)** registers marketing/CRM follow-up tool names in `lib/platform/ai-tools/registry.ts` with **`enabled: false`** by default; durable marketing drafts use `DETERMINISTIC_DRAFT` unless a real configured model run is recorded as `AI_GENERATED`. Common marketing agents (SEO, landing page, campaigns, ad creative, lead suggestions) are included/FREE under appropriate use limits. Future customer-purchased specialist AI employees remain a disabled catalog capability. **Paperclip** is proposed for the internal worker manager; the customer AI runtime interface is provider-neutral. This is not an assertion that Paperclip is deployed.
 
 ## 1. Roles and scope
 

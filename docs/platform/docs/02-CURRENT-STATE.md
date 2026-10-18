@@ -67,6 +67,19 @@
 | OPEN-001 eligibility | `lib/platform/entitlements.ts` | **POLICY_UNRESOLVED** — no silent enrollment change |
 | Production | — | **No live posts**; `POSTIZ_LIVE_PUBLISHING_ENABLED=false` default; app.webbxxl.com untouched |
 
+## MKT-08 (2026-10-18) — unified marketing preparation, CRM lead recovery; all execution OFF
+
+| Area | Evidence | Honest status |
+|---|---|---|
+| Domain services | `lib/platform/marketing/*`, `config/mkt-backend.ts` | Durable **MarketingRequest** lifecycle, brand context versions, artifact revisions/reviews, SEO→landing handoff prep, lead follow-up evaluation, CRM task + COMMS draft handoff boundaries — **Vitest covered (mocked Prisma + pure logic)** |
+| Persistence | Prisma migration `20261018240000_mkt08_foundation` | **Pending apply** (not production/staging). Extends SOCIAL-04 `MarketingRequest` / `MarketingArtifact`; does not replace CRM/social authorities |
+| API routes | `app/api/v1/marketing/*` | Auth.js membership + `marketing.*` permissions + `core.marketing-studio` entitlement (OPEN-001 **POLICY_UNRESOLVED** unchanged). Returns **503 MKT_DISABLED** until `MKT_BACKEND_ENABLED` |
+| Creative generation | `creative-generator.ts` | **DETERMINISTIC_DRAFT** only; `MKT_AI_GENERATION_ENABLED=false`; no live LLM attribution |
+| Approvals | `MarketingArtifactReview` | Human-only decide path; revision hash binding; no publish/send/wallet |
+| Lead monitor | `follow-up-evaluation-service.ts` | Coverage uses `CrmFollowUpCoverage` (+ summary `NOT_ELIGIBLE` for suppressions); **no outbound** SMS/email |
+| Feature flags | `MKT_*` in `config/mkt-backend.ts` | All default **false**; does not enable SOCIAL/CRM/COMMS/SEO/workforce production flags |
+| Production | — | **Not deployed**; no Postiz schedule, no ad spend, no site file writes |
+
 ## INFRA-02 (2026-10-18) — repository infrastructure only; live staging BLOCKED
 
 | Area | Evidence | Honest status |
