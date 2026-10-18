@@ -9,6 +9,8 @@
 | `CrmProvider` | Twenty POC; EspoCRM/Corteza/native fallback | create/update/search contacts, company, pipeline, task, segments, import/export | account-scoped canonical contact refs, consent, permission |
 | `ConversationProvider` | Chatwoot | account/workspace mapping, contacts, inboxes, conversations, events, human handoff | account mapping, interaction references, audit |
 | `SocialPublisherProvider` | Postiz | connect/list channels, create/schedule/post, outcome, analytics | approved campaign and artifact version |
+
+**SOCIAL-04 implemented backend routes (gated):** `GET /api/v1/social/connections`, `GET|POST /api/v1/social/campaigns`, `POST /api/v1/social/campaigns/{id}/revisions`, `POST /api/v1/social/campaigns/{id}/approve` (501 until pilot), `POST /api/v1/social/campaigns/{id}/schedule` (503 when live publishing disabled), `GET /api/v1/social/publications`, `GET /api/v1/social/calendar`. Postiz Public API reference: `GET/POST /public/v1/integrations`, `GET/POST /public/v1/posts` ([docs.postiz.com/public-api](https://docs.postiz.com/public-api)).
 | `WorkforceProvider` | Paperclip for internal | register agents, assign tasks, poll run, cost/status/approval | agent instance grants, task, execution, approval |
 | `WorkflowProvider` | existing worker + Hatchet POC | enqueue, cancel, resume, signal, observe | WebXXL domain job/outbox state |
 | `SmsProvider` | Twilio first / Telnyx or Bandwidth optional | subaccounts, sender registration, send, status, inbound | consent/suppression, wallet and message policy |

@@ -1,9 +1,9 @@
 import {
   existingPaymentProvider,
-  existingPostizSocialProvider,
   existingResendEmailProvider,
   existingWorkerWorkflowProvider,
 } from '@/lib/platform/providers/existing-adapters'
+import { createPostizSocialProvider } from '@/lib/platform/providers/postiz-social'
 import { createPaperclipWorkforceProvider } from '@/lib/platform/providers/paperclip-workforce'
 import { createSyntheticWorkforceProvider } from '@/lib/platform/workforce/synthetic-provider'
 import type {
@@ -48,6 +48,7 @@ const chatwoot: ConversationProvider = candidate({
 
 const syntheticWorkforce = createSyntheticWorkforceProvider()
 const paperclip = createPaperclipWorkforceProvider()
+const postizSocial = createPostizSocialProvider()
 
 const twilio: SmsProvider = candidate({
   kind: 'sms',
@@ -112,7 +113,7 @@ const domainRegistrar: DomainRegistrarProvider = candidate({
 const DEFAULT_PROVIDERS: AnyPlatformProvider[] = [
   twentyCrm,
   chatwoot,
-  existingPostizSocialProvider,
+  postizSocial,
   syntheticWorkforce,
   paperclip,
   existingWorkerWorkflowProvider,
