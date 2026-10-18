@@ -10,6 +10,8 @@
 
 `BillingGroup`, `BillingGroupMembership`, `BillingProfile`, `CreditWallet`, `WalletLedgerEntry`, `CreditReservation`, `SiteSpendingPolicy` form the shared funding layer; extend existing `ServiceOrder`, `CustomerService`, marketplace catalog and billing adapter for commerce. Existing orders retain historical quoted values and legal agreements. Website subscriptions keep renewable lifecycle even if messaging wallet empty.
 
+**WALLET-09 (2026-10-18, pending merge):** Durable Prisma wallet engine (`lib/platform/wallet/durable-service.ts`) implements posted/held/available balance from ledger + open reservations, `FOR UPDATE` wallet serialization, reservation CAS settle/release, compensating refund entries, fixture rate plans, top-up **quote only** (`WalletTopUpQuote`), and provider event receipts for future reconciliation. Migration `20261018250000_wallet09_foundation` **not applied**. All `WALLET_*` / adapter flags default **false**; live top-up mint requires `WalletFundingEvidence` (COMMERCE-11).
+
 ## 2. Illustrative ABMED balance example
 
 | Event | Origin account | Credits delta | Available (assuming no holds) |

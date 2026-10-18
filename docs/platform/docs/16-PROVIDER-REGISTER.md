@@ -19,9 +19,9 @@
 | Durable jobs | [Hatchet GitHub](https://github.com/hatchet-dev/hatchet) / [docs](https://docs.hatchet.run/) | Durable orchestration/jobs/lease/retries | Preferred candidate only; avoid duplicating WebXXL existing worker/Postiz scheduler |
 | Workflow alternative | [Trigger.dev GitHub](https://github.com/triggerdotdev/trigger.dev) | TypeScript durable background jobs | Evaluation fallback |
 | Optional no-code automation | [Activepieces GitHub](https://github.com/activepieces/activepieces) | Internal workflow design for teams | Not core execution dependency; free/enterprise embedding/AI agent limits verified before use |
-| SMS provider | [Twilio](https://www.twilio.com/) | ISV parent/subaccounts, SMS and sender registrations | First implementation option, registration and compliant campaign setup needed |
+| SMS provider | [Twilio](https://www.twilio.com/) | ISV parent/subaccounts, SMS and sender registrations | **WALLET-09:** `twilio-sms.ts` prepare/normalize + mock transport; `TWILIO_ADAPTER_ENABLED=false`; no live API |
 | SMS alternatives | [Telnyx](https://telnyx.com/) / [Bandwidth](https://www.bandwidth.com/) | Backup/competitive SMS routing | Provider-neutral adapters future |
-| Eligible email provider | [Resend](https://resend.com/) | Multi-domain non-PHI email | Existing registration work; sender verification and live activation deferred; PHI restrictions |
+| Eligible email provider | [Resend](https://resend.com/) | Multi-domain non-PHI email | **WALLET-09:** `resend-email.ts` domain-bound prepare + mock transport; `RESEND_TRANSPORT_ENABLED=false`; PHI restrictions unchanged |
 | AI voice managed | [ElevenLabs](https://elevenlabs.io/) | Conversational AI voice via authorized telephony | Future candidate; regulated outbound disabled |
 | AI voice open source | [LiveKit Agents](https://github.com/livekit/agents) | Real-time voice/SIP agent framework | Future alternative; telephony/consent/hosting gate |
 | Search performance | [Search Console API](https://developers.google.com/webmaster-tools/v1/searchanalytics/query) | Property organic metrics and URLs | **SEO-07:** `google-gsc-seo.ts` typed Search Analytics + mock transport; `SEO_GSC_API_ENABLED=false`; owner OAuth verified site; Google quotas/delays |

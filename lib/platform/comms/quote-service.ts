@@ -48,9 +48,15 @@ export async function prepareCommunicationQuote(input: {
         estimatedUnits: synthetic.eligibleCount,
         unitCostSource,
         unitCostVersion: unitCostSource ? 'synthetic-v0' : null,
+        ratePlanVersion: unitCostSource ? 'wallet09-fixture-v1' : null,
         policyDecision,
         expiresAt: new Date(Date.now() + 15 * 60_000),
-        detail: { synthetic200: true, invalidContactCount: synthetic.invalidContactCount },
+        detail: {
+          synthetic200: true,
+          invalidContactCount: synthetic.invalidContactCount,
+          unitsPerRecipient: 1,
+          totalEstimatedUnits: synthetic.eligibleCount,
+        },
       },
     })
     return {
@@ -127,9 +133,14 @@ export async function prepareCommunicationQuote(input: {
       estimatedUnits: eligibleCount,
       unitCostSource,
       unitCostVersion: unitCostSource ? 'synthetic-v0' : null,
+      ratePlanVersion: unitCostSource ? 'wallet09-fixture-v1' : null,
       policyDecision,
       expiresAt,
-      detail: { invalidContactCount },
+      detail: {
+        invalidContactCount,
+        unitsPerRecipient: 1,
+        totalEstimatedUnits: eligibleCount,
+      },
     },
   })
 

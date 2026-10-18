@@ -22,7 +22,12 @@ export type PolicyEvaluationInput = {
 }
 
 export function evaluateCommunicationPolicy(input: PolicyEvaluationInput): CommsPolicyDecision {
-  if (input.senderAccountId !== input.recipientAccountId && input.senderAccountId !== input.customerAccountId) {
+  const operating = input.customerAccountId
+  if (
+    input.senderAccountId !== operating ||
+    input.recipientAccountId !== operating ||
+    input.senderAccountId !== input.recipientAccountId
+  ) {
     return 'DENIED'
   }
   const regulated = evaluateRegulatedWorkflowGate({

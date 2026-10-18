@@ -47,10 +47,14 @@ export type SiteSpendingPolicyRecord = {
   id: string
   billingGroupId: string
   customerAccountId: string
+  managedSiteId?: string | null
   dailyLimit: number | null
   monthlyLimit: number | null
+  managedSiteDailyLimit?: number | null
   maxCampaignCredits: number | null
+  groupHardCap?: number | null
   allowedChannels: string[]
+  policyTimezone?: string
 }
 
 export type CreditWalletRecord = {
@@ -73,15 +77,23 @@ export type WalletLedgerEntryRecord = {
   priceVersion: string
   reservationId: string | null
   providerRef: string | null
+  originalLedgerEntryId?: string | null
+  refundReason?: string | null
   idempotencyKey: string
   effectiveAt: Date
   actorUserId: string | null
+  actorServiceId: string | null
 }
 
 export type CreditReservationRecord = {
   id: string
   walletId: string
   originAccountId: string
+  managedSiteId?: string | null
+  channel?: string | null
+  usagePurpose?: string | null
+  rateVersion?: string | null
+  requestFingerprint?: string | null
   amount: number
   settledAmount: number
   status: CreditReservationStatus
@@ -128,5 +140,10 @@ export type WalletDenial =
   | 'FORGED_SERVICE_ACTOR'
   | 'IDEMPOTENCY_CONFLICT'
   | 'POLICY_CAP_EXCEEDED'
+  | 'CHANNEL_NOT_ALLOWED'
+  | 'WALLET_FROZEN'
+  | 'COST_UNAVAILABLE'
+  | 'POLICY_TIMEZONE_UNSUPPORTED'
+  | 'QUOTE_UNAVAILABLE'
 
 export type WalletResult<T> = { ok: true; value: T } | { ok: false; error: WalletDenial }
