@@ -68,7 +68,11 @@ Handle manual human phone calls (staff log/disposition) so AI does not repeatedl
 
 `VoiceAgentProvider` can wrap ElevenLabs managed or LiveKit (telephony/SIP via authorized provider); select after staging demo, legal/consent and cost/per-minute test. Inbound AI website/phone receptionist and outbound lead callback need separate opt-ins and provider configuration. Explicit humans approve campaigns; caller ID, AI disclosure, DNC checks, local calling windows, recording policies, voice consent and opt-out required. Voice may use purchased carrier/API credits, but software feature entitlement does not imply free airtime.
 
-## 9. CRM acceptance criteria
+## 9. AUTO-10 durable COMMS/CRM workflow hooks
+
+`COMMS_RECEIPT_PROCESS` runs only against **already verified** `CommsWebhookReceipt` rows via `processCommsWebhookReceiptById` (no new public webhook). `CRM_FOLLOWUP_EVALUATE` / marketing follow-up evaluation uses account-scoped services with **no outbound send**; missing provider evidence stays `UNKNOWN_COVERAGE`. Workflow idempotency is separate from CRM timeline dedupe keys. All COMMS/workflow execution flags default **OFF**.
+
+## 10. CRM acceptance criteria
 
 - Three synthetic ABMED accounts with independently provisioned CRM and Chatwoot objects; contacts never leak across sibling accounts.
 - 200-contact segment, opt-out filter and import/export produce accurate eligibility and evidence; no consent laundering.

@@ -340,6 +340,40 @@ enum AutomationDeliveryStatus {
   DEAD
 }
 
+enum WorkflowJobStatus {
+  PENDING
+  READY
+  CLAIMED
+  RUNNING
+  RETRY_WAIT
+  BLOCKED
+  AWAITING_RECONCILIATION
+  COMPLETED
+  FAILED_TERMINAL
+  DEAD_LETTER
+  PAUSED
+  CANCELLED
+}
+
+enum WorkflowOutboxStatus {
+  PENDING
+  DISPATCHED
+  FAILED
+  RECONCILIATION_REQUIRED
+}
+
+enum WorkflowErrorClass {
+  TRANSIENT
+  RATE_LIMITED
+  TIMEOUT
+  PROVIDER_UNAVAILABLE
+  PERMANENT
+  AUTHORIZATION_FAILED
+  POLICY_DENIED
+  CONFIGURATION_MISSING
+  UNKNOWN_EXTERNAL_OUTCOME
+}
+
 enum LeadSource {
   CONTACT
   PROJECT_INTAKE
@@ -527,6 +561,7 @@ model CustomerAccount {
   seoOpportunities             SeoOpportunity[]
   competitorMarkets            CompetitorMarket[]
   seoProviderSyncRuns          SeoProviderSyncRun[]
+  workflowJobs                 WorkflowJob[]
 }
 
 model CustomerMembership {
@@ -1208,6 +1243,10 @@ model AutomationDeliveryJob {
   lastErrorClass  String?
   providerRef     String?
   deliveredAt     DateTime?
+  claimOwner      String?
+  claimToken      String?
+  claimExpiresAt  DateTime?
+  claimFence      Int                       @default(0)
   createdAt       DateTime                  @default(now())
   updatedAt       DateTime                  @updatedAt
 
@@ -3838,4 +3877,127 @@ model SeoProviderSyncRun {
   managedSite     ManagedSite     @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
 
   @@index([managedSiteId, provider, status])
+}
+
+model WorkflowJob {
+  id                  String              @id @default(cuid())
+  jobKind             String
+  customerAccountId   String?
+  managedSiteId       String?
+  billingGroupId      String?
+  correlationId       String
+  sourceType          String
+  sourceId            String
+  sourceRevisionHash  String?
+  idempotencyKey      String              @unique
+  requestFingerprint  String
+  status              WorkflowJobStatus   @default(PENDING)
+  priority            Int                 @default(0)
+  scheduledAt         DateTime            @default(now())
+  nextAttemptAt       DateTime            @default(now())
+  attemptCount        Int                 @default(0)
+  maxAttempts         Int                 @default(8)
+  leaseOwner          String?
+  leaseToken          String?
+  leaseExpiresAt      DateTime?
+  leaseFence          Int                 @default(0)
+  heartbeatAt         DateTime?
+  lastErrorCode       String?
+  lastErrorClass      WorkflowErrorClass?
+  resultRef           String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  completedAt         DateTime?
+
+  customerAccount CustomerAccount? @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)
+  attempts          WorkflowAttempt[]
+  events            WorkflowEvent[]
+  deadLetters       WorkflowDeadLetter[]
+
+  @@index([status, nextAttemptAt, priority])
+  @@index([customerAccountId, status, createdAt])
+  @@index([jobKind, status])
+  @@index([leaseExpiresAt])
+}
+
+model WorkflowAttempt {
+  id            String            @id @default(cuid())
+  workflowJobId String
+  attemptNumber Int
+  leaseOwner    String?
+  leaseToken    String?
+  leaseFence    Int               @default(0)
+  status        WorkflowJobStatus
+  startedAt     DateTime          @default(now())
+  finishedAt    DateTime?
+  errorCode     String?
+  errorClass    WorkflowErrorClass?
+  resultRef     String?
+
+  workflowJob WorkflowJob @relation(fields: [workflowJobId], references: [id], onDelete: Cascade)
+
+  @@unique([workflowJobId, attemptNumber])
+  @@index([workflowJobId, startedAt])
+}
+
+model WorkflowEvent {
+  id            String   @id @default(cuid())
+  workflowJobId String
+  eventType     String
+  fromStatus    WorkflowJobStatus?
+  toStatus      WorkflowJobStatus?
+  actorUserId   String?
+  actorService  String?
+  detail        Json?
+  createdAt     DateTime @default(now())
+
+  workflowJob WorkflowJob @relation(fields: [workflowJobId], references: [id], onDelete: Cascade)
+
+  @@index([workflowJobId, createdAt])
+}
+
+model WorkflowOutbox {
+  id                     String               @id @default(cuid())
+  eventKey               String               @unique
+  customerAccountId      String?
+  jobKind                String
+  payloadRef             Json
+  requestFingerprint     String
+  status                 WorkflowOutboxStatus   @default(PENDING)
+  workflowJobId          String?
+  lastError              String?
+  dispatchLeaseToken     String?
+  dispatchLeaseOwner     String?
+  dispatchLeaseExpiresAt DateTime?
+  dispatchAttemptCount   Int                  @default(0)
+  createdAt              DateTime             @default(now())
+  dispatchedAt           DateTime?
+
+  @@index([status, createdAt])
+  @@index([status, dispatchLeaseExpiresAt])
+}
+
+model WorkflowDeadLetter {
+  id            String            @id @default(cuid())
+  workflowJobId String
+  reason        String
+  errorClass    WorkflowErrorClass?
+  quarantined   Boolean           @default(false)
+  createdAt     DateTime          @default(now())
+
+  workflowJob WorkflowJob @relation(fields: [workflowJobId], references: [id], onDelete: Cascade)
+
+  @@index([workflowJobId, createdAt])
+}
+
+model WorkflowRepairAudit {
+  id            String   @id @default(cuid())
+  workflowJobId String
+  decision      String
+  actorUserId   String
+  correlationId String
+  detail        Json?
+  createdAt     DateTime @default(now())
+
+  @@index([workflowJobId, createdAt])
 }

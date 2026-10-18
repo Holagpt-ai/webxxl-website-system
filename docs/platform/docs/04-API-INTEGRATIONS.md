@@ -16,8 +16,10 @@
 
 **CRM-05 implemented backend routes (gated, `CRM_BACKEND_ENABLED=false` default):** `GET|POST /api/v1/crm/contacts`, `GET|PATCH /api/v1/crm/contacts/{id}`, `GET /api/v1/crm/contacts/{id}/timeline`, `GET|POST /api/v1/crm/companies`, `GET /api/v1/crm/pipelines`, `GET|POST /api/v1/crm/deals`, `GET|POST /api/v1/crm/tasks`, `GET|POST /api/v1/crm/segments`, `POST /api/v1/crm/imports/preview`, `POST /api/v1/crm/imports/commit`, `POST /api/v1/crm/exports`. Import/export additionally require `CRM_IMPORT_ENABLED` / `CRM_EXPORT_ENABLED`.
 | `WorkforceProvider` | Paperclip for internal | register agents, assign tasks, poll run, cost/status/approval | agent instance grants, task, execution, approval |
-| `WorkflowProvider` | existing worker + Hatchet POC | enqueue, cancel, resume, signal, observe | WebXXL domain job/outbox state |
+| `WorkflowProvider` | **PrismaWorkflowProvider** (AUTO-10); Hatchet adapter seam only | enqueue, claim, heartbeat, complete, fail, retry, cancel, pause, resume, reconcile, getStatus | `WorkflowJob` / outbox / events (flags default OFF) |
 | `SmsProvider` | Twilio first / Telnyx or Bandwidth optional | subaccounts, sender registration, send, status, inbound | consent/suppression, wallet and message policy |
+
+**AUTO-10 workflow routes (gated):** `GET /api/v1/workflows/runs`, `GET /api/v1/workflows/runs/{id}`, `GET /api/v1/workflows/summary` (`WORKFLOW_READ_ENABLED=false`). Internal batch worker: `POST /api/automation/workflow-worker` (`WORKFLOW_WORKER_ENABLED=false`, shared secret). See `docs/platform/docs/AUTO10-PROVIDER-DECISION.md`.
 | `EmailProvider` | Resend for non-PHI; regulated alternative later | verify sender, send, bounce, unsubscribe | consent, allowed content, message ledger |
 | `VoiceAgentProvider` | ElevenLabs or LiveKit POC | launch compliant call, record disposition, safe handoff | explicit consent, voice policy and audit |
 | `SeoSourceProvider` | GSC, GA4, GBP, Places, approved rank provider | OAuth/connect, page/search/traffic/local performance | snapshots, source/market definitions |

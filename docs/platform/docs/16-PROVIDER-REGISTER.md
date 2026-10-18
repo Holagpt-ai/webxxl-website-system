@@ -16,7 +16,8 @@
 | CRM alternative | [EspoCRM GitHub](https://github.com/espocrm/espocrm) | Traditional full CRM | Alternative if Twenty fails gate; PHP stack |
 | CRM alternative | [Corteza GitHub](https://github.com/cortezaproject/corteza) | Low-code/open CRM building blocks | Alternative, Apache-2.0 repo/license version check |
 | Internal workforce | [Paperclip GitHub](https://github.com/paperclipai/paperclip) / [docs](https://docs.paperclip.ing/) | Internal AI employee manager, tasks, budget and agent adapters | Staging override **v2026.325.0** reference; build-from-source; **not activated**; license verify on tag |
-| Durable jobs | [Hatchet GitHub](https://github.com/hatchet-dev/hatchet) / [docs](https://docs.hatchet.run/) | Durable orchestration/jobs/lease/retries | Preferred candidate only; avoid duplicating WebXXL existing worker/Postiz scheduler |
+| Durable jobs | [Hatchet GitHub](https://github.com/hatchet-dev/hatchet) / [docs](https://docs.hatchet.run/) | Durable orchestration/jobs/lease/retries | **AUTO-10 decision:** Prisma-first on PostgreSQL; Hatchet adapter seam only — **not provisioned** |
+| Workflow engine (active) | `lib/platform/workflow/prisma-provider.ts` | `WorkflowJob` FSM, outbox, SKIP LOCKED claim, recovery | **AUTO-10 in PR**; migration `20261018280000_auto10_workflow_foundation` not applied |
 | Workflow alternative | [Trigger.dev GitHub](https://github.com/triggerdotdev/trigger.dev) | TypeScript durable background jobs | Evaluation fallback |
 | Optional no-code automation | [Activepieces GitHub](https://github.com/activepieces/activepieces) | Internal workflow design for teams | Not core execution dependency; free/enterprise embedding/AI agent limits verified before use |
 | SMS provider | [Twilio](https://www.twilio.com/) | ISV parent/subaccounts, SMS and sender registrations | **WALLET-09:** `twilio-sms.ts` prepare/normalize + mock transport; `TWILIO_ADAPTER_ENABLED=false`; no live API |

@@ -76,7 +76,11 @@ Trigger periodically for eligible CRM account: find leads created >= policy thre
 
 Per account and per agent: model choice, token cost, number of tasks, crawl cadence, draft asset size, image/media cost, voice minute rate, third-party quota and concurrency; enforce soft/hard limits, prioritized scheduling and cache. Never silently create a paid subscription when free task limit reached; show queue/degraded state or request operator approval. Dashboard should distinguish **customer charge $0** from **WebXXL internal AI expense**.
 
-## 9. Acceptance
+## 9. AUTO-10 execution boundary (AGENT-03 vs workflow)
+
+**AGENT-03** owns task authorization, human approvals, budget enforcement, and tool grants. **AUTO-10** (`WORKFORCE_TASK_PREPARE` handler stub + durable `WorkflowJob` rows) owns **when** a registered handler may run, not **whether** an agent may act. Queued jobs revalidate agent state, tenant, tool grant, approval, artifact hash, budget, pause, and feature flags at execution time. No live Paperclip/LLM calls while workforce flags remain OFF. Workflow retries never bypass AGENT-03 gates.
+
+## 10. Acceptance
 
 - 10 agents across 10 sites have isolated knowledge, provider credentials, CRM and message rights; one billed wallet may be shared only via separate authorization.
 - AI generated work shown as Draft until actual deliverable saved; PUBLISHED only after verified external provider/PR/deployment event.

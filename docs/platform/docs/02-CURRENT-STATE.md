@@ -101,7 +101,17 @@
 
 **WALLET-09B (in PR #41):** IANA timezone midnight for policy windows; scoped settle/refund/provider receipt idempotency (no global key-only replay); COMMS cost from quoted units (not `contentHash` as SMS body); durable operation feature gates + `WALLET_TEST_EXECUTION_BYPASS` (test-only); P2002 replay outside aborted transactions; top-up quote material fingerprint — **Vitest `wallet09b-integrity`**. Live PostgreSQL concurrency still **not** verified in CI.
 
-**WALLET-09C (in PR #41):** `WalletLedgerEntry.actorServiceId` (SERVICE never writes synthetic ids to `actorUserId` User FK); COMMS aggregate unit semantics (no double multiply by `recipientCount`); guarded `expireReservation` after wallet lock + CAS; fractional IANA timezone midnights — **Vitest `wallet09c-integrity`**. Real PostgreSQL FK enforcement **not** verified in CI (memory simulator only).
+**WALLET-09C (merged on main):** `WalletLedgerEntry.actorServiceId`; COMMS aggregate unit semantics; guarded reservation expiry; fractional IANA timezone midnights.
+
+**AUTO-10 (PR #42):** PostgreSQL-backed `WorkflowJob` FSM, `PrismaWorkflowProvider` (`FOR UPDATE SKIP LOCKED` claim SQL), transactional outbox, retry/backoff, lease fencing, recovery/dead-letter repair hooks, safe handlers (COMMS receipt by id, marketing follow-up evaluate, SEO sync prepare), legacy notification delivery conditional claim, read APIs + gated `POST /api/automation/workflow-worker`. **Prisma-first** (see `docs/platform/docs/AUTO10-PROVIDER-DECISION.md`). All `WORKFLOW_*` flags default **OFF**. PostgreSQL claim concurrency **not verified** in CI without test DB. Vitest: `auto10-workflow.test.ts`, `auto10a-integrity.test.ts`.
+
+**AUTO-10A (in PR #42):** CAS job transitions + fenced lease checks; fairness releases excess claims (no stranded `CLAIMED`); typed outbox envelope + `SKIP LOCKED` dispatch dedupe; worker attempt records + handler exception isolation; automatic expired-lease recovery without `WORKFLOW_REPAIR_ENABLED`; staff-gated platform workflow reads; handler tenant binding for COMMS/MKT/SEO; legacy notification expired-PROCESSING recovery.
+
+**AUTO-10B (in PR #42):** Monotonic `WorkflowAttempt` lifecycle with abandoned-attempt finalization; crashed attempts count toward `maxAttempts`; external notification unknown outcomes quarantined (no auto-resend); outbox replay tenant/fingerprint validation + dispatch lease; unexpired lease required on worker completions; COMMS jobs require account-bound receipts; global concurrency admission documented as best-effort.
+
+**AUTO-10C (in PR #42):** Transaction-scoped attempt abandonment (protects active lease); recovery abandons attempts + FSM in one transaction; durable outbox dispatch lease columns + expiry reclaim; NULL-safe notification claim filter; staff retry blocked for quarantined deliveries.
+
+**AUTO-10D (in PR #42):** CAS-before-abandon ordering for attempt start and expired-lease recovery; outbox acknowledgment uses live clock (not batch `now`) with lease-valid finalize/fail CAS.
 
 ## INFRA-02 (2026-10-18) — repository infrastructure only; live staging BLOCKED
 
