@@ -1,5 +1,7 @@
 # 07 — Free Robust CRM, Chatwoot, Unified Communications & Lead Recovery
 
+**CRM-05 (2026-10-18):** WebXXL-native Prisma CRM foundation landed in `lib/platform/crm/*` with gated `/api/v1/crm/*` routes, consent/suppression, segmentation engine, import/export preparation, SalesLead bridge, and Chatwoot mapping contracts. **Twenty remains a candidate** (`CRM_EXTERNAL_SYNC_ENABLED=false`). See `07-CRM-VENDOR-MATRIX-CRM05.md`.
+
 **Customer charge:** robust CRM software, list segmentation and marketing automation drafts are **FREE/included**. **Provider SMS usage** and separately priced transport are chargeable according to published terms. All accounts must remain independent, even inside one payer group.
 
 ## 1. CRM capabilities — full target scope (do not downgrade to a basic address book)

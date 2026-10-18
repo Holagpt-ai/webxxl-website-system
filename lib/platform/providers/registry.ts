@@ -4,6 +4,8 @@ import {
   existingWorkerWorkflowProvider,
 } from '@/lib/platform/providers/existing-adapters'
 import { createPostizSocialProvider } from '@/lib/platform/providers/postiz-social'
+import { createTwentyCrmProvider } from '@/lib/platform/providers/twenty-crm'
+import { createWebxxlNativeCrmProvider } from '@/lib/platform/providers/webxxl-native-crm'
 import { createPaperclipWorkforceProvider } from '@/lib/platform/providers/paperclip-workforce'
 import { createSyntheticWorkforceProvider } from '@/lib/platform/workforce/synthetic-provider'
 import type {
@@ -22,17 +24,8 @@ function candidate<T extends AnyPlatformProvider>(provider: T): T {
   return provider
 }
 
-const twentyCrm: CrmProvider = candidate({
-  kind: 'crm',
-  key: 'twenty',
-  displayName: 'Twenty CRM',
-  availability: 'CANDIDATE',
-  replaceable: true,
-  installed: false,
-  async searchContacts() {
-    return { ok: false, code: 'NOT_CONFIGURED', message: 'CRM provider remains a candidate. No system is installed.' }
-  },
-})
+const webxxlNativeCrm = createWebxxlNativeCrmProvider()
+const twentyCrm = createTwentyCrmProvider()
 
 const chatwoot: ConversationProvider = candidate({
   kind: 'conversation',
@@ -111,6 +104,7 @@ const domainRegistrar: DomainRegistrarProvider = candidate({
 })
 
 const DEFAULT_PROVIDERS: AnyPlatformProvider[] = [
+  webxxlNativeCrm,
   twentyCrm,
   chatwoot,
   postizSocial,

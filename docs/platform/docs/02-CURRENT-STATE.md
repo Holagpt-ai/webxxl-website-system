@@ -21,6 +21,17 @@
 | Paperclip adapter | `lib/platform/providers/paperclip-workforce.ts` | Pin **v2026.325.0** reference; returns **NOT_CONFIGURED** until live pilot; **Paperclip not running** |
 | Production | — | **Not activated**; no LLM keys; no GitHub writes; UI unchanged (v0.app) |
 
+## CRM-05 (2026-10-18) — account-owned CRM backend; external sync OFF
+
+| Area | Evidence | Honest status |
+|---|---|---|
+| Native CRM | `lib/platform/crm/*`, `config/crm-backend.ts` | Contacts, companies, pipelines/deals, tasks, consent/suppression, timeline, segments, import/export prep — **Vitest covered (synthetic)** |
+| Providers | `webxxl-native-crm.ts`, `twenty-crm.ts` (candidate) | Native **EXISTING_ADAPTER**; Twenty returns **NOT_CONFIGURED** until `CRM_EXTERNAL_SYNC_ENABLED` + workspace mapping |
+| Persistence | Prisma migration `20261018190000_crm05_foundation` | **Pending apply** (not production/staging) |
+| API routes | `app/api/v1/crm/*` | Auth.js membership + `CRM_BACKEND_ENABLED=false` default |
+| SalesLead | `SalesLead`, `LeadActivity`, `saleslead-bridge.ts` | **Unchanged**; bridge candidates only — no bulk migration |
+| OPEN-001 | `core.crm` entitlement | **POLICY_UNRESOLVED** |
+
 ## SOCIAL-04 (2026-10-18) — Marketing Studio backend; live Postiz publishing OFF
 
 | Area | Evidence | Honest status |
