@@ -40,9 +40,72 @@ export type PlatformProvider = {
   installed: boolean
 }
 
+export type CrmContactSummary = {
+  id: string
+  displayName: string
+  primaryEmail?: string
+  primaryPhone?: string
+}
+
+export type CrmCompanySummary = {
+  id: string
+  name: string
+  websiteDomain?: string
+}
+
+export type CrmPipelineSummary = {
+  id: string
+  name: string
+  stages: { id: string; name: string; sortOrder: number }[]
+}
+
+export type CrmDealSummary = {
+  id: string
+  title: string
+  stageId: string
+  status: string
+  amountMinorUnits?: number
+}
+
+export type CrmProviderCapabilities = {
+  contacts: boolean
+  companies: boolean
+  pipelines: boolean
+  deals: boolean
+  tasks: boolean
+  customFields: boolean
+  activities: boolean
+  sync: boolean
+  export: boolean
+}
+
 export type CrmProvider = PlatformProvider & {
   kind: 'crm'
-  searchContacts(context: ProviderAuthContext, query: string): Promise<ProviderResult<never[]>>
+  describeCapabilities(): CrmProviderCapabilities
+  searchContacts(context: ProviderAuthContext, query: string): Promise<ProviderResult<CrmContactSummary[]>>
+  getContact?(context: ProviderAuthContext, contactId: string): Promise<ProviderResult<CrmContactSummary>>
+  createContact?(
+    context: ProviderAuthContext,
+    input: { displayName: string; email?: string; phone?: string },
+  ): Promise<ProviderResult<{ id: string }>>
+  updateContact?(
+    context: ProviderAuthContext,
+    contactId: string,
+    patch: { displayName?: string },
+  ): Promise<ProviderResult<{ id: string }>>
+  searchCompanies?(context: ProviderAuthContext, query: string): Promise<ProviderResult<CrmCompanySummary[]>>
+  listPipelines?(context: ProviderAuthContext): Promise<ProviderResult<CrmPipelineSummary[]>>
+  createDeal?(
+    context: ProviderAuthContext,
+    input: { pipelineId: string; stageId: string; title: string; contactId?: string },
+  ): Promise<ProviderResult<{ id: string }>>
+  updateDealStatus?(
+    context: ProviderAuthContext,
+    dealId: string,
+    input: { stageId?: string; status?: string },
+  ): Promise<ProviderResult<{ id: string }>>
+  listTasks?(context: ProviderAuthContext): Promise<ProviderResult<{ id: string; title: string; status: string }[]>>
+  syncWorkspace?(context: ProviderAuthContext): Promise<ProviderResult<{ accepted: boolean }>>
 }
 
 export type ConversationProvider = PlatformProvider & {

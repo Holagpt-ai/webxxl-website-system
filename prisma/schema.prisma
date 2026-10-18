@@ -487,6 +487,21 @@ model CustomerAccount {
   marketingRequests            MarketingRequest[]
   marketingArtifacts           MarketingArtifact[]
   marketingStudioUsage         MarketingStudioUsage[]
+  crmContacts                  CrmContact[]
+  crmCompanies                 CrmCompany[]
+  crmPipelines                 CrmPipeline[]
+  crmDeals                     CrmDeal[]
+  crmTasks                     CrmTask[]
+  crmTags                      CrmTag[]
+  crmSegments                  CrmSegment[]
+  crmTimelineEvents            CrmTimelineEvent[]
+  contactConsents              ContactConsent[]
+  contactSuppressions          ContactSuppression[]
+  crmImportJobs                CrmImportJob[]
+  crmExternalMappings          CrmExternalObjectMapping[]
+  crmSalesLeadBridges          CrmSalesLeadBridge[]
+  chatwootContactMappings      ChatwootContactMapping[]
+  crmDataAccessAudits          CrmDataAccessAudit[]
 }
 
 model CustomerMembership {
@@ -831,6 +846,8 @@ model ManagedSite {
   marketingRequests         MarketingRequest[]
   marketingArtifacts        MarketingArtifact[]
   marketingStudioUsage      MarketingStudioUsage[]
+  crmContacts               CrmContact[]
+  crmCompanies              CrmCompany[]
 
   @@index([customerAccountId])
   @@index([projectId])
@@ -2072,4 +2089,598 @@ model MarketingStudioUsage {
   managedSite     ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
 
   @@index([customerAccountId, periodKey, operation])
+}
+
+// --- CRM-05: account-owned CRM foundation (native persistence; external sync disabled by default) ---
+
+enum CrmContactStatus {
+  ACTIVE
+  ARCHIVED
+  MERGED
+}
+
+enum CrmChannelIdentityType {
+  EMAIL
+  PHONE
+  WHATSAPP
+  SOCIAL
+  OTHER
+}
+
+enum CrmIdentityVerificationState {
+  UNVERIFIED
+  VERIFIED
+  DISPUTED
+}
+
+enum CrmDealStatus {
+  OPEN
+  WON
+  LOST
+  CANCELLED
+}
+
+enum CrmTaskStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum CrmTaskPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum CrmTimelineEventKind {
+  FORM_SUBMISSION
+  WEB_CHAT_STARTED
+  INBOUND_SMS
+  OUTBOUND_SMS_REQUESTED
+  SMS_ACCEPTED
+  SMS_DELIVERED
+  SMS_FAILED
+  EMAIL_SENT
+  EMAIL_BOUNCED
+  SOCIAL_DM_RECEIVED
+  CALL_ATTEMPT
+  CALL_DISPOSITION
+  HUMAN_REPLY
+  AI_REPLY
+  NOTE
+  TASK_CREATED
+  TASK_COMPLETED
+  CAMPAIGN_INCLUDED
+  CONSENT_GRANTED
+  CONSENT_REVOKED
+  OPT_OUT
+  CONTACT_MERGED
+}
+
+enum CrmConsentChannel {
+  EMAIL
+  SMS
+  WHATSAPP
+  VOICE
+}
+
+enum CrmConsentPurpose {
+  MARKETING
+  TRANSACTIONAL
+}
+
+enum CrmConsentStatus {
+  GRANTED
+  REVOKED
+  UNKNOWN
+}
+
+enum CrmSegmentKind {
+  STATIC
+  DYNAMIC
+}
+
+enum CrmImportJobStatus {
+  PREVIEW
+  COMMITTED
+  FAILED
+}
+
+enum CrmFollowUpCoverage {
+  CONFIRMED_NO_OUTREACH
+  UNKNOWN_COVERAGE
+  CONTACTED
+  AWAITING_REPLY
+  OVERDUE
+  COMPLETED
+}
+
+model CrmContact {
+  id                  String           @id @default(cuid())
+  customerAccountId   String
+  managedSiteId       String?
+  status              CrmContactStatus @default(ACTIVE)
+  givenName           String?
+  familyName          String?
+  preferredName       String?
+  organizationName    String?
+  jobTitle            String?
+  locale              String           @default("en")
+  timezone            String?
+  addressLine1        String?
+  addressLine2        String?
+  city                String?
+  region              String?
+  postalCode          String?
+  countryCode         String?
+  ownerUserId         String?
+  leadSource          String?
+  sourceReference     String?
+  customFields        Json?
+  firstActivityAt     DateTime?
+  lastActivityAt      DateTime?
+  mergedIntoContactId String?
+  createIdempotencyKey String?         @unique
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  channelIdentities CrmContactChannelIdentity[]
+  companyLinks    CrmContactCompanyRelationship[]
+  contactTags     CrmContactTag[]
+  notes           CrmContactNote[]
+  sources         CrmContactSource[]
+  deals           CrmDeal[]
+  tasks           CrmTask[]
+  timelineEvents  CrmTimelineEvent[]
+  consents        ContactConsent[]
+  suppressions    ContactSuppression[]
+  segmentMembers  CrmSegmentMember[]
+  chatwootMappings ChatwootContactMapping[]
+
+  @@unique([customerAccountId, id])
+  @@index([customerAccountId, status])
+  @@index([customerAccountId, lastActivityAt])
+  @@index([managedSiteId])
+}
+
+model CrmContactChannelIdentity {
+  id                 String                       @id @default(cuid())
+  customerAccountId  String
+  contactId          String
+  identityType       CrmChannelIdentityType
+  normalizedValue    String
+  displayValue       String
+  verificationState  CrmIdentityVerificationState @default(UNVERIFIED)
+  sourceSystem       String?
+  isPrimary          Boolean                      @default(false)
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+
+  contact CrmContact @relation(fields: [contactId], references: [id], onDelete: Restrict)
+
+  @@unique([customerAccountId, identityType, normalizedValue])
+  @@index([contactId])
+}
+
+model CrmCompany {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String?
+  name              String
+  websiteDomain     String?
+  industry          String?
+  phone             String?
+  email             String?
+  ownerUserId       String?
+  customFields      Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  contactLinks    CrmContactCompanyRelationship[]
+  deals           CrmDeal[]
+
+  @@index([customerAccountId, name])
+}
+
+model CrmContactCompanyRelationship {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  contactId         String
+  companyId         String
+  roleTitle         String?
+  isPrimary         Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  contact CrmContact @relation(fields: [contactId], references: [id], onDelete: Restrict)
+  company CrmCompany @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@unique([customerAccountId, contactId, companyId])
+}
+
+model CrmTag {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  label             String
+  createdAt         DateTime @default(now())
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  contactTags     CrmContactTag[]
+
+  @@unique([customerAccountId, label])
+}
+
+model CrmContactTag {
+  id                String @id @default(cuid())
+  customerAccountId String
+  contactId         String
+  tagId             String
+
+  contact CrmContact @relation(fields: [contactId], references: [id], onDelete: Restrict)
+  tag     CrmTag     @relation(fields: [tagId], references: [id], onDelete: Restrict)
+
+  @@unique([customerAccountId, contactId, tagId])
+}
+
+model CrmContactNote {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  contactId         String
+  authorUserId      String?
+  body              String   @db.Text
+  createdAt         DateTime @default(now())
+
+  contact CrmContact @relation(fields: [contactId], references: [id], onDelete: Restrict)
+
+  @@index([contactId, createdAt])
+}
+
+model CrmContactSource {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  contactId         String
+  sourceSystem      String
+  sourceRecordRef   String
+  provenance        String
+  capturedAt        DateTime @default(now())
+
+  contact CrmContact @relation(fields: [contactId], references: [id], onDelete: Restrict)
+
+  @@unique([customerAccountId, sourceSystem, sourceRecordRef])
+}
+
+model CrmExternalObjectMapping {
+  id                  String   @id @default(cuid())
+  customerAccountId   String
+  providerKey         String
+  objectKind          String
+  webxxlRecordId      String
+  externalObjectId    String
+  externalWorkspaceId String?
+  lastSyncedAt        DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+
+  @@unique([customerAccountId, providerKey, objectKind, webxxlRecordId])
+  @@unique([customerAccountId, providerKey, externalObjectId])
+}
+
+model CrmPipeline {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  name              String
+  isDefault         Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  stages          CrmPipelineStage[]
+  deals           CrmDeal[]
+
+  @@unique([customerAccountId, name])
+}
+
+model CrmPipelineStage {
+  id                String @id @default(cuid())
+  customerAccountId String
+  pipelineId        String
+  name              String
+  sortOrder         Int
+  probabilityBps    Int?
+
+  pipeline CrmPipeline @relation(fields: [pipelineId], references: [id], onDelete: Restrict)
+  deals    CrmDeal[]
+
+  @@unique([pipelineId, sortOrder])
+  @@index([customerAccountId, pipelineId])
+}
+
+model CrmDeal {
+  id                String        @id @default(cuid())
+  customerAccountId String
+  pipelineId        String
+  stageId           String
+  contactId         String?
+  companyId         String?
+  title             String
+  status            CrmDealStatus @default(OPEN)
+  amountMinorUnits  Int?
+  currencyCode      String        @default("USD")
+  probabilityBps    Int?
+  source            String?
+  expectedCloseAt   DateTime?
+  lossReason        String?
+  ownerUserId       String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  pipeline        CrmPipeline     @relation(fields: [pipelineId], references: [id], onDelete: Restrict)
+  stage           CrmPipelineStage @relation(fields: [stageId], references: [id], onDelete: Restrict)
+  contact         CrmContact?     @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  company         CrmCompany?     @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  stageHistory    CrmDealStageHistory[]
+  tasks           CrmTask[]
+
+  @@index([customerAccountId, status])
+  @@index([pipelineId, stageId])
+}
+
+model CrmDealStageHistory {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  dealId            String
+  fromStageId       String?
+  toStageId         String
+  changedByUserId   String?
+  changedAt         DateTime @default(now())
+
+  deal CrmDeal @relation(fields: [dealId], references: [id], onDelete: Restrict)
+
+  @@index([dealId, changedAt])
+}
+
+model CrmTask {
+  id                String          @id @default(cuid())
+  customerAccountId String
+  contactId         String?
+  dealId            String?
+  title             String
+  status            CrmTaskStatus   @default(OPEN)
+  priority          CrmTaskPriority @default(NORMAL)
+  assignedUserId    String?
+  dueAt             DateTime?
+  completedAt       DateTime?
+  disposition       String?
+  reminderAt        DateTime?
+  followUpPolicyKey String?
+  createIdempotencyKey String?      @unique
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  contact         CrmContact?     @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  deal            CrmDeal?        @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  @@index([customerAccountId, status, dueAt])
+}
+
+model ContactConsent {
+  id                   String            @id @default(cuid())
+  customerAccountId    String
+  contactId            String
+  channel              CrmConsentChannel
+  purpose              CrmConsentPurpose
+  status               CrmConsentStatus
+  senderIdentityRef    String?
+  source               String
+  termsVersion         String?
+  jurisdiction         String?
+  capturedAt           DateTime
+  revokedAt            DateTime?
+  expiresAt            DateTime?
+  idempotencyKey       String?           @unique
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  contact         CrmContact      @relation(fields: [contactId], references: [id], onDelete: Restrict)
+  evidence        ContactConsentEvidence[]
+
+  @@index([customerAccountId, contactId, channel, purpose])
+}
+
+model ContactConsentEvidence {
+  id          String   @id @default(cuid())
+  consentId   String
+  evidenceRef String
+  detail      Json?
+  capturedAt  DateTime @default(now())
+
+  consent ContactConsent @relation(fields: [consentId], references: [id], onDelete: Restrict)
+}
+
+model ContactSuppression {
+  id                String            @id @default(cuid())
+  customerAccountId String
+  contactId         String
+  channel           CrmConsentChannel
+  purpose           CrmConsentPurpose
+  reason            String
+  source            String
+  active            Boolean           @default(true)
+  idempotencyKey    String?           @unique
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  contact         CrmContact      @relation(fields: [contactId], references: [id], onDelete: Restrict)
+
+  @@index([customerAccountId, contactId, channel, active])
+}
+
+model CrmTimelineEvent {
+  id                String               @id @default(cuid())
+  customerAccountId String
+  contactId         String
+  eventKind         CrmTimelineEventKind
+  sourceSystem      String
+  externalEventId   String?
+  idempotencyKey    String               @unique
+  eventAt           DateTime
+  ingestedAt        DateTime             @default(now())
+  actorUserId       String?
+  channel           String?
+  direction         String?
+  disposition       String?
+  coverageState     CrmFollowUpCoverage?
+  provenanceRef     String?
+  detail            Json?
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  contact         CrmContact      @relation(fields: [contactId], references: [id], onDelete: Restrict)
+
+  @@index([customerAccountId, contactId, eventAt])
+  @@index([customerAccountId, eventKind])
+}
+
+model CrmSegment {
+  id                String         @id @default(cuid())
+  customerAccountId String
+  name              String
+  kind              CrmSegmentKind
+  filterDefinition  Json?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  members         CrmSegmentMember[]
+
+  @@unique([customerAccountId, name])
+}
+
+model CrmSegmentMember {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  segmentId         String
+  contactId         String
+  addedAt           DateTime @default(now())
+
+  segment CrmSegment @relation(fields: [segmentId], references: [id], onDelete: Restrict)
+  contact CrmContact @relation(fields: [contactId], references: [id], onDelete: Restrict)
+
+  @@unique([customerAccountId, segmentId, contactId])
+}
+
+model CrmImportJob {
+  id                String             @id @default(cuid())
+  customerAccountId String
+  status            CrmImportJobStatus @default(PREVIEW)
+  fileName          String?
+  rowLimit          Int
+  mapping           Json?
+  previewReport     Json?
+  errorReport       Json?
+  commitIdempotencyKey String?         @unique
+  committedContactCount Int?
+  createdByUserId   String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  rows            CrmImportRow[]
+
+  @@index([customerAccountId, status])
+}
+
+model CrmDataAccessAudit {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  actorUserId       String
+  operation         String
+  resourceRef       String
+  detail            Json?
+  createdAt         DateTime @default(now())
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+
+  @@index([customerAccountId, operation, createdAt])
+}
+
+model CrmImportRow {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  importJobId       String
+  rowNumber         Int
+  rawData           Json
+  normalizedData    Json?
+  duplicateCandidateId String?
+  validationErrors  Json?
+  committedContactId String?
+  createdAt         DateTime @default(now())
+
+  importJob CrmImportJob @relation(fields: [importJobId], references: [id], onDelete: Restrict)
+
+  @@unique([importJobId, rowNumber])
+}
+
+model CrmMergeProposal {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  primaryContactId  String
+  duplicateContactId String
+  confidenceBps     Int
+  status            String   @default("PENDING")
+  createdAt         DateTime @default(now())
+}
+
+model CrmContactMergeAudit {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  survivorContactId String
+  mergedContactId   String
+  actorUserId       String?
+  detail            Json?
+  mergedAt          DateTime @default(now())
+}
+
+model CrmSalesLeadBridge {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  salesLeadId       String
+  crmContactId      String?
+  status            String   @default("CANDIDATE")
+  idempotencyKey    String   @unique
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+
+  @@unique([customerAccountId, salesLeadId])
+}
+
+model ChatwootContactMapping {
+  id                   String   @id @default(cuid())
+  customerAccountId    String
+  crmContactId         String
+  chatwootAccountId    String
+  chatwootContactId    String
+  chatwootInboxId      String?
+  lastSyncedEventId    String?
+  coverageStatus       String   @default("NOT_CONNECTED")
+  updatedAt            DateTime @updatedAt
+  createdAt            DateTime @default(now())
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  contact         CrmContact      @relation(fields: [crmContactId], references: [id], onDelete: Restrict)
+
+  @@unique([customerAccountId, crmContactId])
+  @@unique([customerAccountId, chatwootContactId])
 }

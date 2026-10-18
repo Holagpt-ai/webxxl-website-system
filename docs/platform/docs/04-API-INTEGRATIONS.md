@@ -11,6 +11,8 @@
 | `SocialPublisherProvider` | Postiz | connect/list channels, create/schedule/post, outcome, analytics | approved campaign and artifact version |
 
 **SOCIAL-04 implemented backend routes (gated):** `GET /api/v1/social/connections`, `GET|POST /api/v1/social/campaigns`, `POST /api/v1/social/campaigns/{id}/revisions`, `POST /api/v1/social/campaigns/{id}/approve` (501 until pilot), `POST /api/v1/social/campaigns/{id}/schedule` (503 when live publishing disabled), `GET /api/v1/social/publications`, `GET /api/v1/social/calendar`. Postiz Public API reference: `GET/POST /public/v1/integrations`, `GET/POST /public/v1/posts` ([docs.postiz.com/public-api](https://docs.postiz.com/public-api)).
+
+**CRM-05 implemented backend routes (gated, `CRM_BACKEND_ENABLED=false` default):** `GET|POST /api/v1/crm/contacts`, `GET|PATCH /api/v1/crm/contacts/{id}`, `GET /api/v1/crm/contacts/{id}/timeline`, `GET|POST /api/v1/crm/companies`, `GET /api/v1/crm/pipelines`, `GET|POST /api/v1/crm/deals`, `GET|POST /api/v1/crm/tasks`, `GET|POST /api/v1/crm/segments`, `POST /api/v1/crm/imports/preview`, `POST /api/v1/crm/imports/commit`, `POST /api/v1/crm/exports`. Import/export additionally require `CRM_IMPORT_ENABLED` / `CRM_EXPORT_ENABLED`.
 | `WorkforceProvider` | Paperclip for internal | register agents, assign tasks, poll run, cost/status/approval | agent instance grants, task, execution, approval |
 | `WorkflowProvider` | existing worker + Hatchet POC | enqueue, cancel, resume, signal, observe | WebXXL domain job/outbox state |
 | `SmsProvider` | Twilio first / Telnyx or Bandwidth optional | subaccounts, sender registration, send, status, inbound | consent/suppression, wallet and message policy |
