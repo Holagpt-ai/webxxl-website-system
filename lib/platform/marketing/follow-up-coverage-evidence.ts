@@ -7,7 +7,15 @@ const QUALIFYING_OUTREACH_KINDS: Set<CrmTimelineEventKind> = new Set([
   'CALL_DISPOSITION',
 ])
 
-const NON_OUTREACH_TASK_KINDS: Set<CrmTimelineEventKind> = new Set(['TASK_CREATED', 'TASK_COMPLETED'])
+const NON_OUTREACH_KINDS: Set<CrmTimelineEventKind> = new Set([
+  'FORM_SUBMISSION',
+  'TASK_CREATED',
+  'TASK_COMPLETED',
+  'OUTBOUND_SMS_REQUESTED',
+  'SMS_ACCEPTED',
+  'WEB_CHAT_STARTED',
+  'NOTE',
+])
 
 export type TimelineEvidenceRow = {
   eventKind: CrmTimelineEventKind
@@ -15,6 +23,7 @@ export type TimelineEvidenceRow = {
   direction?: string | null
   disposition?: string | null
   sourceSystem: string
+  provenanceRef?: string | null
   id: string
 }
 
@@ -28,10 +37,18 @@ export type FollowUpEvidenceSnapshot = {
   marketingConsentGranted: boolean
 }
 
+/** Verified provider sync for an interval — not tenant/mapping existence alone. */
+export function hasVerifiedProviderSyncCoverage(timeline: TimelineEvidenceRow[]): boolean {
+  return timeline.some(
+    (e) =>
+      e.sourceSystem === 'comms.provider.sync_verified' ||
+      (e.provenanceRef?.startsWith('verified_sync:') ?? false),
+  )
+}
+
 export function deriveFollowUpEvidenceFromTimeline(input: {
   timeline: TimelineEvidenceRow[]
-  hasMessagingTenant: boolean
-  hasChatwootMapping: boolean
+  hasVerifiedProviderSyncCoverage: boolean
   activeSuppression: boolean
   marketingConsentStatus: 'GRANTED' | 'REVOKED' | 'UNKNOWN' | 'NONE'
   completedCallbackTask: boolean
@@ -44,8 +61,7 @@ export function deriveFollowUpEvidenceFromTimeline(input: {
 
   for (const event of input.timeline) {
     evidenceRefs.push(`crm:timeline:${event.id}:${event.eventKind}`)
-    if (NON_OUTREACH_TASK_KINDS.has(event.eventKind)) continue
-    if (event.eventKind === 'OUTBOUND_SMS_REQUESTED' || event.eventKind === 'SMS_ACCEPTED') continue
+    if (NON_OUTREACH_KINDS.has(event.eventKind)) continue
 
     if (event.eventKind === 'CALL_DISPOSITION') {
       if (/completed|success|reached|spoke/i.test(event.disposition ?? '')) {
@@ -70,15 +86,13 @@ export function deriveFollowUpEvidenceFromTimeline(input: {
 
   const awaitingReply = hasQualifyingOutreach && !completedCallback && !inboundAfterOutbound && Boolean(lastOutboundAt)
 
-  const nativeTimelineEvidence = input.timeline.some((e) => e.sourceSystem.startsWith('native.') || e.sourceSystem.startsWith('crm.'))
-  const providerCoverageMissing =
-    !nativeTimelineEvidence &&
-    !input.hasMessagingTenant &&
-    !input.hasChatwootMapping &&
-    !hasQualifyingOutreach
+  const providerCoverageMissing = !input.hasVerifiedProviderSyncCoverage && !hasQualifyingOutreach
 
   if (input.pendingCallbackTask && !hasQualifyingOutreach) {
     evidenceRefs.push('crm:task:pending_callback_not_outreach')
+  }
+  if (providerCoverageMissing) {
+    evidenceRefs.push('coverage:provider_sync_not_verified')
   }
 
   return {

@@ -185,6 +185,26 @@ ALTER TABLE "MarketingLeadFollowUpEvaluation" ADD CONSTRAINT "MarketingLeadFollo
 ALTER TABLE "MarketingLeadFollowUpEvaluation" ADD CONSTRAINT "MarketingLeadFollowUpEvaluation_crmContactId_fkey" FOREIGN KEY ("crmContactId") REFERENCES "CrmContact"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 CREATE INDEX "MarketingLeadFollowUpEvaluation_customerAccountId_crmContactId_idx" ON "MarketingLeadFollowUpEvaluation"("customerAccountId", "crmContactId");
 
+CREATE TABLE "MarketingFollowUpTaskIntent" (
+    "id" TEXT NOT NULL,
+    "customerAccountId" TEXT NOT NULL,
+    "crmContactId" TEXT NOT NULL,
+    "evaluationId" TEXT NOT NULL,
+    "policyKey" TEXT NOT NULL DEFAULT 'mkt-08-callback',
+    "intentFingerprint" TEXT NOT NULL,
+    "idempotencyKey" TEXT NOT NULL,
+    "crmTaskId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "MarketingFollowUpTaskIntent_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX "MarketingFollowUpTaskIntent_idempotencyKey_key" ON "MarketingFollowUpTaskIntent"("idempotencyKey");
+CREATE UNIQUE INDEX "MarketingFollowUpTaskIntent_crmTaskId_key" ON "MarketingFollowUpTaskIntent"("crmTaskId");
+CREATE UNIQUE INDEX "MarketingFollowUpTaskIntent_customerAccountId_crmContactId_policyKey_evaluationId_key" ON "MarketingFollowUpTaskIntent"("customerAccountId", "crmContactId", "policyKey", "evaluationId");
+CREATE INDEX "MarketingFollowUpTaskIntent_customerAccountId_crmContactId_idx" ON "MarketingFollowUpTaskIntent"("customerAccountId", "crmContactId");
+ALTER TABLE "MarketingFollowUpTaskIntent" ADD CONSTRAINT "MarketingFollowUpTaskIntent_customerAccountId_fkey" FOREIGN KEY ("customerAccountId") REFERENCES "CustomerAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "MarketingFollowUpTaskIntent" ADD CONSTRAINT "MarketingFollowUpTaskIntent_crmContactId_fkey" FOREIGN KEY ("crmContactId") REFERENCES "CrmContact"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "MarketingFollowUpTaskIntent" ADD CONSTRAINT "MarketingFollowUpTaskIntent_evaluationId_fkey" FOREIGN KEY ("evaluationId") REFERENCES "MarketingLeadFollowUpEvaluation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
 CREATE TABLE "MarketingWorkflowRun" (
     "id" TEXT NOT NULL,
     "customerAccountId" TEXT NOT NULL,

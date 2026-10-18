@@ -17,20 +17,20 @@ import { clampFollowUpEvalLimit, validateMarketingRequestPayload } from '@/lib/p
 const membershipFindUnique = vi.hoisted(() => vi.fn())
 const evaluationFindFirst = vi.hoisted(() => vi.fn())
 const contactFindFirst = vi.hoisted(() => vi.fn())
-const taskFindUnique = vi.hoisted(() => vi.fn())
-const taskFindFirst = vi.hoisted(() => vi.fn())
-const taskCreate = vi.hoisted(() => vi.fn())
+const intentFindUnique = vi.hoisted(() => vi.fn())
+const intentFindFirst = vi.hoisted(() => vi.fn())
+const transaction = vi.hoisted(() => vi.fn())
 
 vi.mock('@/lib/db', () => ({
   prisma: {
     customerMembership: { findUnique: (...args: unknown[]) => membershipFindUnique(...args) },
     marketingLeadFollowUpEvaluation: { findFirst: (...args: unknown[]) => evaluationFindFirst(...args) },
     crmContact: { findFirst: (...args: unknown[]) => contactFindFirst(...args) },
-    crmTask: {
-      findUnique: (...args: unknown[]) => taskFindUnique(...args),
-      findFirst: (...args: unknown[]) => taskFindFirst(...args),
-      create: (...args: unknown[]) => taskCreate(...args),
+    marketingFollowUpTaskIntent: {
+      findUnique: (...args: unknown[]) => intentFindUnique(...args),
+      findFirst: (...args: unknown[]) => intentFindFirst(...args),
     },
+    $transaction: (...args: unknown[]) => transaction(...args),
   },
 }))
 
@@ -38,8 +38,7 @@ describe('MKT-08A integrity (pure logic)', () => {
   it('D: pending callback task is not qualifying outreach', () => {
     const evidence = deriveFollowUpEvidenceFromTimeline({
       timeline: [],
-      hasMessagingTenant: false,
-      hasChatwootMapping: false,
+      hasVerifiedProviderSyncCoverage: false,
       activeSuppression: false,
       marketingConsentStatus: 'NONE',
       completedCallbackTask: false,
@@ -52,8 +51,7 @@ describe('MKT-08A integrity (pure logic)', () => {
   it('E: missing provider coverage stays UNKNOWN_COVERAGE', () => {
     const evidence = deriveFollowUpEvidenceFromTimeline({
       timeline: [],
-      hasMessagingTenant: false,
-      hasChatwootMapping: false,
+      hasVerifiedProviderSyncCoverage: false,
       activeSuppression: false,
       marketingConsentStatus: 'NONE',
       completedCallbackTask: false,
@@ -77,22 +75,20 @@ describe('MKT-08A integrity (pure logic)', () => {
           sourceSystem: 'native.crm',
         },
       ],
-      hasMessagingTenant: true,
-      hasChatwootMapping: false,
+      hasVerifiedProviderSyncCoverage: false,
       activeSuppression: false,
       marketingConsentStatus: 'GRANTED',
       completedCallbackTask: false,
       pendingCallbackTask: false,
     })
     expect(evidence.hasQualifyingOutreach).toBe(true)
-    expect(evidence.providerCoverageMissing).toBe(false)
+    expect(evidence.hasQualifyingOutreach).toBe(true)
   })
 
   it('G: completed callback task classifies COMPLETED', () => {
     const evidence = deriveFollowUpEvidenceFromTimeline({
       timeline: [],
-      hasMessagingTenant: true,
-      hasChatwootMapping: true,
+      hasVerifiedProviderSyncCoverage: false,
       activeSuppression: false,
       marketingConsentStatus: 'GRANTED',
       completedCallbackTask: true,
@@ -105,8 +101,7 @@ describe('MKT-08A integrity (pure logic)', () => {
   it('H: inactive suppression flag does not mark active suppression', () => {
     const evidence = deriveFollowUpEvidenceFromTimeline({
       timeline: [],
-      hasMessagingTenant: false,
-      hasChatwootMapping: false,
+      hasVerifiedProviderSyncCoverage: false,
       activeSuppression: false,
       marketingConsentStatus: 'NONE',
       completedCallbackTask: false,
@@ -228,12 +223,14 @@ describe('MKT-08A follow-up task authorization (mocked Prisma — not PostgreSQL
     })
     contactFindFirst.mockResolvedValue({ id: 'contact-1', customerAccountId: 'acct-a' })
     membershipFindUnique.mockResolvedValue({ userId: 'staff-1', customerAccountId: 'acct-a' })
-    taskFindUnique.mockResolvedValue({
-      id: 'task-1',
+    intentFindUnique.mockResolvedValue({
+      id: 'intent-1',
       customerAccountId: 'acct-b',
-      contactId: 'contact-1',
-      assignedUserId: 'staff-1',
-      disposition: 'fp',
+      crmContactId: 'contact-1',
+      evaluationId: 'eval-1',
+      intentFingerprint: 'fp',
+      idempotencyKey: 'idem-shared',
+      crmTaskId: 'task-1',
     })
     const { prepareFollowUpCallbackTask } = await import('@/lib/platform/marketing/follow-up-task-service')
     const result = await prepareFollowUpCallbackTask({

@@ -5,6 +5,7 @@ import {
   buildEvaluationEvidenceFingerprint,
   coverageFromEvidence,
   deriveFollowUpEvidenceFromTimeline,
+  hasVerifiedProviderSyncCoverage,
 } from '@/lib/platform/marketing/follow-up-coverage-evidence'
 import { clampFollowUpEvalLimit } from '@/lib/platform/marketing/request-validation'
 import type { CrmFollowUpCoverage } from '@prisma/client'
@@ -39,10 +40,6 @@ export async function evaluateAccountLeadFollowUps(input: {
   })
   const thresholdDays = policy?.ageThresholdDays ?? 4
   const policyVersion = policy?.policyVersion ?? 'mkt-08-v1'
-
-  const messagingTenant = await prisma.messagingTenant.findUnique({
-    where: { customerAccountId: input.customerAccountId },
-  })
 
   const contacts = await prisma.crmContact.findMany({
     where: {
@@ -94,21 +91,19 @@ export async function evaluateAccountLeadFollowUps(input: {
       },
     })
 
-    const chatwootMapping = await prisma.chatwootConversationMapping.findFirst({
-      where: { customerAccountId: input.customerAccountId, crmContactId: contact.id },
-    })
+    const timelineRows = timeline.map((e) => ({
+      id: e.id,
+      eventKind: e.eventKind,
+      eventAt: e.eventAt,
+      direction: e.direction,
+      disposition: e.disposition,
+      sourceSystem: e.sourceSystem,
+      provenanceRef: e.provenanceRef,
+    }))
 
     const evidence = deriveFollowUpEvidenceFromTimeline({
-      timeline: timeline.map((e) => ({
-        id: e.id,
-        eventKind: e.eventKind,
-        eventAt: e.eventAt,
-        direction: e.direction,
-        disposition: e.disposition,
-        sourceSystem: e.sourceSystem,
-      })),
-      hasMessagingTenant: Boolean(messagingTenant),
-      hasChatwootMapping: Boolean(chatwootMapping),
+      timeline: timelineRows,
+      hasVerifiedProviderSyncCoverage: hasVerifiedProviderSyncCoverage(timelineRows),
       activeSuppression: Boolean(suppression),
       marketingConsentStatus: consent ? 'GRANTED' : 'NONE',
       completedCallbackTask,

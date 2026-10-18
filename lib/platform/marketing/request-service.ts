@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client'
+import type { MarketingRequestStatus } from '@prisma/client'
 import { isMktDraftPreparationEnabled } from '@/config/mkt-backend'
 import { prisma } from '@/lib/db'
 import { assertManagedSiteInAccount } from '@/lib/platform/marketing/account-isolation'
@@ -129,41 +130,69 @@ export async function createMarketingRequestRecord(input: {
   }
 }
 
+export async function transitionMarketingRequestInTransaction(
+  tx: Prisma.TransactionClient,
+  input: {
+    customerAccountId: string
+    requestId: string
+    toStatus: MarketingRequestStatus
+    actorUserId: string
+    actorType: 'USER' | 'SERVICE' | 'AGENT'
+    reason?: string
+  },
+): Promise<MktResult<true>> {
+  const req = await tx.marketingRequest.findFirst({
+    where: { id: input.requestId, customerAccountId: input.customerAccountId },
+  })
+  if (!req) return { ok: false, code: 'NOT_FOUND', message: 'Marketing request not found' }
+  const transition = assertMarketingStatusTransition(req.status, input.toStatus)
+  if (!transition.ok) return transition
+
+  const updated = await tx.marketingRequest.updateMany({
+    where: { id: req.id, customerAccountId: input.customerAccountId, status: req.status },
+    data: { status: input.toStatus },
+  })
+  if (updated.count !== 1) {
+    return { ok: false, code: 'CONFLICT', message: 'Request status changed concurrently' }
+  }
+
+  await tx.marketingRequestStatusEvent.create({
+    data: {
+      customerAccountId: input.customerAccountId,
+      marketingRequestId: req.id,
+      fromStatus: req.status,
+      toStatus: input.toStatus,
+      actorUserId: input.actorUserId,
+      actorType: input.actorType,
+      reason: input.reason,
+    },
+  })
+  return { ok: true, value: true }
+}
+
+/** Throw from inside a Prisma transaction to roll back prepare workflow after partial writes. */
+export class MarketingPrepareWorkflowRollbackError extends Error {
+  constructor(
+    public readonly code: 'VALIDATION' | 'CONFLICT',
+    message: string,
+  ) {
+    super(message)
+    this.name = 'MarketingPrepareWorkflowRollbackError'
+  }
+}
+
+export function mapTransitionFailureToPrepareRollback(result: MktResult<true>): MarketingPrepareWorkflowRollbackError {
+  const code = result.ok ? 'VALIDATION' : result.code === 'CONFLICT' ? 'CONFLICT' : 'VALIDATION'
+  return new MarketingPrepareWorkflowRollbackError(code, result.ok ? 'Invalid transition' : result.message)
+}
+
 export async function transitionMarketingRequest(input: {
   customerAccountId: string
   requestId: string
-  toStatus: import('@prisma/client').MarketingRequestStatus
+  toStatus: MarketingRequestStatus
   actorUserId: string
   actorType: 'USER' | 'SERVICE' | 'AGENT'
   reason?: string
 }): Promise<MktResult<true>> {
-  return prisma.$transaction(async (tx) => {
-    const req = await tx.marketingRequest.findFirst({
-      where: { id: input.requestId, customerAccountId: input.customerAccountId },
-    })
-    if (!req) return { ok: false, code: 'NOT_FOUND', message: 'Marketing request not found' }
-    const transition = assertMarketingStatusTransition(req.status, input.toStatus)
-    if (!transition.ok) return transition
-
-    const updated = await tx.marketingRequest.updateMany({
-      where: { id: req.id, customerAccountId: input.customerAccountId, status: req.status },
-      data: { status: input.toStatus },
-    })
-    if (updated.count !== 1) {
-      return { ok: false, code: 'CONFLICT', message: 'Request status changed concurrently' }
-    }
-
-    await tx.marketingRequestStatusEvent.create({
-      data: {
-        customerAccountId: input.customerAccountId,
-        marketingRequestId: req.id,
-        fromStatus: req.status,
-        toStatus: input.toStatus,
-        actorUserId: input.actorUserId,
-        actorType: input.actorType,
-        reason: input.reason,
-      },
-    })
-    return { ok: true, value: true }
-  })
+  return prisma.$transaction(async (tx) => transitionMarketingRequestInTransaction(tx, input))
 }

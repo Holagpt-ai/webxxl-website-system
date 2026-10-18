@@ -82,6 +82,8 @@
 
 **MKT-08A (in PR #40):** Follow-up task staff membership checks, timeline-based coverage (no `tasks.length` outreach proxy), atomic approval `updateMany`, SHA-256 request fingerprints, non-swallowed FSM transitions, brand `complianceReviewState` trust, tenant FK hardening in pending migration — **Vitest `mkt08a-integrity`**.
 
+**MKT-08B (in PR #40):** Approval CAS rollback via transaction throw; `MarketingFollowUpTaskIntent` dedupe for callback concurrency; verified-sync-only coverage semantics; prepare workflow single-transaction (revision + revoke + `DRAFT_READY`) — **Vitest `mkt08b-merge-integrity`**.
+
 ## INFRA-02 (2026-10-18) — repository infrastructure only; live staging BLOCKED
 
 | Area | Evidence | Honest status |

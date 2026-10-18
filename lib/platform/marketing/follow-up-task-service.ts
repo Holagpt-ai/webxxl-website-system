@@ -4,7 +4,9 @@ import { prisma } from '@/lib/db'
 import { assertActiveAccountMembership } from '@/lib/platform/marketing/membership-auth'
 import type { MktResult } from '@/lib/platform/marketing/types'
 
-function buildCallbackTaskFingerprint(input: {
+const CALLBACK_POLICY_KEY = 'mkt-08-callback'
+
+export function buildCallbackTaskIntentFingerprint(input: {
   customerAccountId: string
   contactId: string
   assignedUserId: string
@@ -42,7 +44,7 @@ export async function prepareFollowUpCallbackTask(input: {
   })
   if (!membership.ok) return membership
 
-  const fingerprint = buildCallbackTaskFingerprint({
+  const intentFingerprint = buildCallbackTaskIntentFingerprint({
     customerAccountId: input.customerAccountId,
     contactId: input.contactId,
     assignedUserId: input.assignedUserId,
@@ -50,55 +52,98 @@ export async function prepareFollowUpCallbackTask(input: {
     operation: 'CALLBACK',
   })
 
-  const existing = await prisma.crmTask.findUnique({ where: { createIdempotencyKey: input.idempotencyKey } })
-  if (existing) {
-    if (existing.customerAccountId !== input.customerAccountId) {
+  const existingByIdempotency = await prisma.marketingFollowUpTaskIntent.findUnique({
+    where: { idempotencyKey: input.idempotencyKey },
+  })
+  if (existingByIdempotency) {
+    if (existingByIdempotency.customerAccountId !== input.customerAccountId) {
       return { ok: false, code: 'CONFLICT', message: 'Idempotency key already used for another account' }
     }
-    if (existing.contactId !== input.contactId || existing.assignedUserId !== input.assignedUserId) {
+    if (
+      existingByIdempotency.intentFingerprint !== intentFingerprint ||
+      existingByIdempotency.crmContactId !== input.contactId ||
+      existingByIdempotency.evaluationId !== input.evaluationId
+    ) {
       return { ok: false, code: 'CONFLICT', message: 'Idempotency key reused with different task payload' }
     }
-    if (existing.disposition !== fingerprint) {
-      return { ok: false, code: 'CONFLICT', message: 'Idempotency key reused with different operation fingerprint' }
+    if (!existingByIdempotency.crmTaskId) {
+      return { ok: false, code: 'CONFLICT', message: 'Task intent incomplete' }
     }
-    return { ok: true, value: { taskId: existing.id, created: false } }
+    return { ok: true, value: { taskId: existingByIdempotency.crmTaskId, created: false } }
   }
 
-  const duplicateOpen = await prisma.crmTask.findFirst({
+  const existingByEvaluation = await prisma.marketingFollowUpTaskIntent.findFirst({
     where: {
       customerAccountId: input.customerAccountId,
-      contactId: input.contactId,
-      status: { in: ['OPEN', 'IN_PROGRESS'] },
-      title: { contains: 'CALLBACK', mode: 'insensitive' },
-      followUpPolicyKey: 'mkt-08-callback',
+      crmContactId: input.contactId,
+      policyKey: CALLBACK_POLICY_KEY,
+      evaluationId: input.evaluationId,
     },
   })
-  if (duplicateOpen) {
-    return { ok: false, code: 'CONFLICT', message: 'Duplicate open callback task already exists for contact' }
+  if (existingByEvaluation?.crmTaskId) {
+    if (existingByEvaluation.idempotencyKey === input.idempotencyKey) {
+      return { ok: true, value: { taskId: existingByEvaluation.crmTaskId, created: false } }
+    }
+    return { ok: false, code: 'CONFLICT', message: 'Callback task already prepared for this evaluation' }
   }
 
   try {
-    const task = await prisma.crmTask.create({
-      data: {
-        customerAccountId: input.customerAccountId,
-        contactId: contact.id,
-        title: 'CALLBACK — marketing follow-up',
-        status: 'OPEN',
-        assignedUserId: input.assignedUserId,
-        dueAt: input.dueAt ?? new Date(Date.now() + 86400000),
-        followUpPolicyKey: 'mkt-08-callback',
-        createIdempotencyKey: input.idempotencyKey,
-        disposition: fingerprint,
-      },
+    return await prisma.$transaction(async (tx) => {
+      const intent = await tx.marketingFollowUpTaskIntent.create({
+        data: {
+          customerAccountId: input.customerAccountId,
+          crmContactId: contact.id,
+          evaluationId: input.evaluationId,
+          policyKey: CALLBACK_POLICY_KEY,
+          intentFingerprint,
+          idempotencyKey: input.idempotencyKey,
+        },
+      })
+
+      const task = await tx.crmTask.create({
+        data: {
+          customerAccountId: input.customerAccountId,
+          contactId: contact.id,
+          title: 'CALLBACK — marketing follow-up',
+          status: 'OPEN',
+          assignedUserId: input.assignedUserId,
+          dueAt: input.dueAt ?? new Date(Date.now() + 86400000),
+          followUpPolicyKey: CALLBACK_POLICY_KEY,
+          createIdempotencyKey: input.idempotencyKey,
+        },
+      })
+
+      await tx.marketingFollowUpTaskIntent.update({
+        where: { id: intent.id },
+        data: { crmTaskId: task.id },
+      })
+
+      return { ok: true as const, value: { taskId: task.id, created: true } }
     })
-    return { ok: true, value: { taskId: task.id, created: true } }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      const raced = await prisma.crmTask.findUnique({ where: { createIdempotencyKey: input.idempotencyKey } })
-      if (raced && raced.customerAccountId === input.customerAccountId && raced.disposition === fingerprint) {
-        return { ok: true, value: { taskId: raced.id, created: false } }
+      const racedIntent =
+        (await prisma.marketingFollowUpTaskIntent.findUnique({ where: { idempotencyKey: input.idempotencyKey } })) ??
+        (await prisma.marketingFollowUpTaskIntent.findFirst({
+          where: {
+            customerAccountId: input.customerAccountId,
+            crmContactId: input.contactId,
+            policyKey: CALLBACK_POLICY_KEY,
+            evaluationId: input.evaluationId,
+          },
+        }))
+      if (racedIntent) {
+        if (racedIntent.customerAccountId !== input.customerAccountId) {
+          return { ok: false, code: 'CONFLICT', message: 'Idempotency key already used for another account' }
+        }
+        if (racedIntent.intentFingerprint !== intentFingerprint) {
+          return { ok: false, code: 'CONFLICT', message: 'Concurrent callback creation conflict' }
+        }
+        if (racedIntent.crmTaskId) {
+          return { ok: true, value: { taskId: racedIntent.crmTaskId, created: false } }
+        }
       }
-      return { ok: false, code: 'CONFLICT', message: 'Concurrent task creation conflict' }
+      return { ok: false, code: 'CONFLICT', message: 'Concurrent callback creation conflict' }
     }
     throw error
   }

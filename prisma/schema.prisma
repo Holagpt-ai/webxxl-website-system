@@ -490,6 +490,7 @@ model CustomerAccount {
   marketingBrandContexts       MarketingBrandContextVersion[]
   marketingLeadFollowUpPolicies MarketingLeadFollowUpPolicy[]
   marketingLeadFollowUpEvaluations MarketingLeadFollowUpEvaluation[]
+  marketingFollowUpTaskIntents MarketingFollowUpTaskIntent[]
   marketingWorkflowRuns        MarketingWorkflowRun[]
   marketingRequestStatusEvents MarketingRequestStatusEvent[]
   marketingArtifactRevisions   MarketingArtifactRevision[]
@@ -2327,9 +2328,29 @@ model MarketingLeadFollowUpEvaluation {
   customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
   managedSite     ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
   crmContact      CrmContact      @relation(fields: [crmContactId], references: [id], onDelete: Restrict)
+  taskIntents     MarketingFollowUpTaskIntent[]
 
   @@unique([customerAccountId, dedupeKey])
   @@index([customerAccountId, coverageState])
+  @@index([customerAccountId, crmContactId])
+}
+
+model MarketingFollowUpTaskIntent {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  crmContactId      String
+  evaluationId      String
+  policyKey         String   @default("mkt-08-callback")
+  intentFingerprint String
+  idempotencyKey    String   @unique
+  crmTaskId         String?  @unique
+  createdAt         DateTime @default(now())
+
+  customerAccount CustomerAccount                 @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  crmContact      CrmContact                      @relation(fields: [crmContactId], references: [id], onDelete: Restrict)
+  evaluation      MarketingLeadFollowUpEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Restrict)
+
+  @@unique([customerAccountId, crmContactId, policyKey, evaluationId])
   @@index([customerAccountId, crmContactId])
 }
 
@@ -2518,6 +2539,7 @@ model CrmContact {
   chatwootMappings             ChatwootContactMapping[]
   chatwootConversationMappings ChatwootConversationMapping[]
   marketingLeadFollowUpEvaluations MarketingLeadFollowUpEvaluation[]
+  marketingFollowUpTaskIntents     MarketingFollowUpTaskIntent[]
 
   @@unique([customerAccountId, id])
   @@index([customerAccountId, status])

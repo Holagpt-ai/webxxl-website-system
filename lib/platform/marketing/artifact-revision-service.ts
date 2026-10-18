@@ -2,12 +2,18 @@ import { Prisma } from '@prisma/client'
 import { MKT_MAX_REVISIONS_PER_ARTIFACT, isMktDraftPreparationEnabled } from '@/config/mkt-backend'
 import { prisma } from '@/lib/db'
 import type { MarketingRequestStatus } from '@prisma/client'
-import { revokePendingArtifactReviews } from '@/lib/platform/marketing/approval-service'
+import {
+  revokePendingArtifactReviewsInTransaction,
+} from '@/lib/platform/marketing/approval-service'
 import { computeMarketingArtifactRevisionHash } from '@/lib/platform/marketing/artifact-hash'
 import { resolveBrandDraftTrust } from '@/lib/platform/marketing/brand-trust'
 import { assertMarketingContentAllowed } from '@/lib/platform/marketing/content-safety'
 import { generateDeterministicAdCreative, generateDeterministicLandingPage } from '@/lib/platform/marketing/creative-generator'
-import { transitionMarketingRequest } from '@/lib/platform/marketing/request-service'
+import {
+  mapTransitionFailureToPrepareRollback,
+  MarketingPrepareWorkflowRollbackError,
+  transitionMarketingRequestInTransaction,
+} from '@/lib/platform/marketing/request-service'
 import type { MktResult } from '@/lib/platform/marketing/types'
 
 const POLICY_VERSION = 'mkt-08-v1'
@@ -20,14 +26,18 @@ const PREPARE_ALLOWED_STATUSES: MarketingRequestStatus[] = [
   'REVISION_REQUESTED',
 ]
 
-async function advanceRequestToPreparing(input: {
-  customerAccountId: string
-  requestId: string
-  userId: string
-  currentStatus: MarketingRequestStatus
-}): Promise<MktResult<true>> {
-  if (input.currentStatus === 'SUBMITTED') {
-    const v = await transitionMarketingRequest({
+async function advanceRequestToPreparingInTransaction(
+  tx: Prisma.TransactionClient,
+  input: {
+    customerAccountId: string
+    requestId: string
+    userId: string
+    currentStatus: MarketingRequestStatus
+  },
+): Promise<MarketingRequestStatus> {
+  let status = input.currentStatus
+  if (status === 'SUBMITTED') {
+    const v = await transitionMarketingRequestInTransaction(tx, {
       customerAccountId: input.customerAccountId,
       requestId: input.requestId,
       toStatus: 'VALIDATING',
@@ -35,11 +45,11 @@ async function advanceRequestToPreparing(input: {
       actorType: 'SERVICE',
       reason: 'Request validation started',
     })
-    if (!v.ok) return v
-    input.currentStatus = 'VALIDATING'
+    if (!v.ok) throw mapTransitionFailureToPrepareRollback(v)
+    status = 'VALIDATING'
   }
-  if (input.currentStatus === 'VALIDATING' || input.currentStatus === 'REVISION_REQUESTED') {
-    const p = await transitionMarketingRequest({
+  if (status === 'VALIDATING' || status === 'REVISION_REQUESTED') {
+    const p = await transitionMarketingRequestInTransaction(tx, {
       customerAccountId: input.customerAccountId,
       requestId: input.requestId,
       toStatus: 'PREPARING',
@@ -47,9 +57,10 @@ async function advanceRequestToPreparing(input: {
       actorType: 'SERVICE',
       reason: 'Draft preparation started',
     })
-    if (!p.ok) return p
+    if (!p.ok) throw mapTransitionFailureToPrepareRollback(p)
+    status = 'PREPARING'
   }
-  return { ok: true, value: true }
+  return status
 }
 
 export async function prepareMarketingArtifactForRequest(input: {
@@ -153,31 +164,45 @@ export async function prepareMarketingArtifactForRequest(input: {
     }
   }
 
-  const advanced = await advanceRequestToPreparing({
-    customerAccountId: input.customerAccountId,
-    requestId: request.id,
-    userId: input.userId,
-    currentStatus: request.status,
-  })
-  if (!advanced.ok) return advanced
+  if (request.status === 'DRAFT_READY') {
+    return {
+      ok: false,
+      code: 'VALIDATION',
+      message: 'Request already draft-ready; create a new revision or move to REVISION_REQUESTED',
+    }
+  }
 
   try {
     const result = await prisma.$transaction(async (tx) => {
+      const live = await tx.marketingRequest.findFirst({
+        where: { id: input.requestId, customerAccountId: input.customerAccountId },
+      })
+      if (!live || !PREPARE_ALLOWED_STATUSES.includes(live.status)) {
+        throw new MarketingPrepareWorkflowRollbackError('VALIDATION', 'Request not eligible for preparation')
+      }
+
+      await advanceRequestToPreparingInTransaction(tx, {
+        customerAccountId: input.customerAccountId,
+        requestId: live.id,
+        userId: input.userId,
+        currentStatus: live.status,
+      })
+
       const artifact =
         (await tx.marketingArtifact.findFirst({
-          where: { customerAccountId: input.customerAccountId, marketingRequestId: request.id },
+          where: { customerAccountId: input.customerAccountId, marketingRequestId: live.id },
         })) ??
         (await tx.marketingArtifact.create({
           data: {
             customerAccountId: input.customerAccountId,
-            managedSiteId: request.managedSiteId,
-            marketingRequestId: request.id,
+            managedSiteId: live.managedSiteId,
+            marketingRequestId: live.id,
             artifactType,
             revisionHash,
             payload: structured as Prisma.InputJsonValue,
             provenance: 'deterministic_generator:mkt-08',
             generationMode: 'DETERMINISTIC_DRAFT',
-            locale: request.locale,
+            locale: live.locale,
             brandContextVersionId: brand.brandContextVersionId,
             safetyClass,
           },
@@ -187,7 +212,7 @@ export async function prepareMarketingArtifactForRequest(input: {
         where: { marketingArtifactId: artifact.id },
       })
       if (revisionCount >= MKT_MAX_REVISIONS_PER_ARTIFACT) {
-        return { ok: false as const, code: 'VALIDATION' as const, message: 'Revision limit reached' }
+        throw new MarketingPrepareWorkflowRollbackError('VALIDATION', 'Revision limit reached')
       }
 
       const previous = await tx.marketingArtifactRevision.findFirst({
@@ -199,13 +224,13 @@ export async function prepareMarketingArtifactForRequest(input: {
       await tx.marketingArtifactRevision.create({
         data: {
           customerAccountId: input.customerAccountId,
-          managedSiteId: request.managedSiteId,
-          marketingRequestId: request.id,
+          managedSiteId: live.managedSiteId,
+          marketingRequestId: live.id,
           marketingArtifactId: artifact.id,
           revisionNumber,
           revisionHash,
           artifactType,
-          locale: request.locale,
+          locale: live.locale,
           structuredContent: structured as Prisma.InputJsonValue,
           brandContextVersionId: brand.brandContextVersionId,
           generationMode: 'DETERMINISTIC_DRAFT',
@@ -221,31 +246,29 @@ export async function prepareMarketingArtifactForRequest(input: {
         data: { revisionHash, payload: structured as Prisma.InputJsonValue, reviewStatus: 'DRAFT' },
       })
 
-      return {
-        ok: true as const,
-        value: { artifactId: artifact.id, revisionNumber, revisionHash },
-      }
+      await revokePendingArtifactReviewsInTransaction(tx, {
+        customerAccountId: input.customerAccountId,
+        marketingArtifactId: artifact.id,
+      })
+
+      const ready = await transitionMarketingRequestInTransaction(tx, {
+        customerAccountId: input.customerAccountId,
+        requestId: live.id,
+        toStatus: 'DRAFT_READY',
+        actorUserId: input.userId,
+        actorType: 'SERVICE',
+        reason: 'Draft artifact prepared',
+      })
+      if (!ready.ok) throw mapTransitionFailureToPrepareRollback(ready)
+
+      return { artifactId: artifact.id, revisionNumber, revisionHash }
     })
 
-    if (!result.ok) return result
-
-    await revokePendingArtifactReviews({
-      customerAccountId: input.customerAccountId,
-      marketingArtifactId: result.value.artifactId,
-    })
-
-    const ready = await transitionMarketingRequest({
-      customerAccountId: input.customerAccountId,
-      requestId: request.id,
-      toStatus: 'DRAFT_READY',
-      actorUserId: input.userId,
-      actorType: 'SERVICE',
-      reason: 'Draft artifact prepared',
-    })
-    if (!ready.ok) return ready
-
-    return result
+    return { ok: true, value: result }
   } catch (error) {
+    if (error instanceof MarketingPrepareWorkflowRollbackError) {
+      return { ok: false, code: error.code, message: error.message }
+    }
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       const raced = await prisma.marketingArtifactRevision.findFirst({
         where: { customerAccountId: input.customerAccountId, revisionHash },
@@ -306,7 +329,7 @@ export async function createMarketingArtifactRevision(input: {
     const created = await prisma.$transaction(async (tx) => {
       const revisionCount = await tx.marketingArtifactRevision.count({ where: { marketingArtifactId: artifact.id } })
       if (revisionCount >= MKT_MAX_REVISIONS_PER_ARTIFACT) {
-        return { ok: false as const, code: 'VALIDATION' as const, message: 'Revision limit reached' }
+        throw new MarketingPrepareWorkflowRollbackError('VALIDATION', 'Revision limit reached')
       }
       const previous = await tx.marketingArtifactRevision.findFirst({
         where: { marketingArtifactId: artifact.id },
@@ -341,18 +364,18 @@ export async function createMarketingArtifactRevision(input: {
           reviewStatus: 'DRAFT',
         },
       })
-      return { ok: true as const, value: { revisionNumber, revisionHash } }
+      await revokePendingArtifactReviewsInTransaction(tx, {
+        customerAccountId: input.customerAccountId,
+        marketingArtifactId: artifact.id,
+      })
+      return { revisionNumber, revisionHash }
     })
 
-    if (!created.ok) return created
-
-    await revokePendingArtifactReviews({
-      customerAccountId: input.customerAccountId,
-      marketingArtifactId: artifact.id,
-    })
-
-    return created
+    return { ok: true, value: created }
   } catch (error) {
+    if (error instanceof MarketingPrepareWorkflowRollbackError) {
+      return { ok: false, code: error.code, message: error.message }
+    }
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       const raced = await prisma.marketingArtifactRevision.findFirst({
         where: { customerAccountId: input.customerAccountId, revisionHash },

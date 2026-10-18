@@ -1,5 +1,10 @@
 import { isMktApprovalWorkflowEnabled } from '@/config/mkt-backend'
 import { prisma } from '@/lib/db'
+import type { Prisma } from '@prisma/client'
+import {
+  ApprovalArtifactCasRollbackError,
+  ApprovalReviewConcurrentDecisionError,
+} from '@/lib/platform/marketing/approval-errors'
 import type { MktResult } from '@/lib/platform/marketing/types'
 
 export const MKT_APPROVAL_POLICY_VERSION = 'mkt-08-v1'
@@ -65,57 +70,84 @@ export async function decideMarketingArtifactReview(input: {
     return { ok: false, code: 'FORBIDDEN', message: 'Agent cannot approve its own deliverable' }
   }
 
-  return prisma.$transaction(async (tx) => {
-    const review = await tx.marketingArtifactReview.findFirst({
-      where: { id: input.reviewId, customerAccountId: input.customerAccountId },
-    })
-    if (!review) return { ok: false, code: 'NOT_FOUND', message: 'Review not found' }
-    if (review.status !== 'SUBMITTED') return { ok: false, code: 'CONFLICT', message: 'Review not pending' }
-    if (review.revokedAt) return { ok: false, code: 'FORBIDDEN', message: 'Review revoked' }
-    if (review.expiresAt && review.expiresAt.getTime() < Date.now()) {
-      return { ok: false, code: 'FORBIDDEN', message: 'Review expired' }
-    }
-    if (review.policyVersion !== MKT_APPROVAL_POLICY_VERSION) {
-      return { ok: false, code: 'FORBIDDEN', message: 'Review policy version mismatch' }
-    }
-
-    const artifact = await tx.marketingArtifact.findFirst({
-      where: { id: review.marketingArtifactId, customerAccountId: input.customerAccountId },
-    })
-    if (!artifact || artifact.revisionHash !== review.revisionHash) {
-      return { ok: false, code: 'FORBIDDEN', message: 'Approval does not match current artifact revision' }
-    }
-
-    const reviewUpdated = await tx.marketingArtifactReview.updateMany({
-      where: {
-        id: review.id,
-        customerAccountId: input.customerAccountId,
-        status: 'SUBMITTED',
-      },
-      data: {
-        status: input.decision,
-        approverUserId: input.reviewerUserId,
-        decidedAt: new Date(),
-      },
-    })
-    if (reviewUpdated.count !== 1) {
-      return { ok: false, code: 'CONFLICT', message: 'Review already decided concurrently' }
-    }
-
-    const artifactUpdated = await tx.marketingArtifact.updateMany({
-      where: {
-        id: artifact.id,
-        customerAccountId: input.customerAccountId,
-        revisionHash: review.revisionHash,
-      },
-      data: { reviewStatus: input.decision },
-    })
-    if (artifactUpdated.count !== 1) {
-      return { ok: false, code: 'CONFLICT', message: 'Artifact revision changed during approval' }
-    }
-
-    return { ok: true, value: true }
+  const reviewHead = await prisma.marketingArtifactReview.findFirst({
+    where: { id: input.reviewId, customerAccountId: input.customerAccountId },
   })
+  if (!reviewHead) return { ok: false, code: 'NOT_FOUND', message: 'Review not found' }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const review = await tx.marketingArtifactReview.findFirst({
+        where: { id: input.reviewId, customerAccountId: input.customerAccountId },
+      })
+      if (!review) throw new ApprovalReviewConcurrentDecisionError('Review not found')
+      if (review.status !== 'SUBMITTED') throw new ApprovalReviewConcurrentDecisionError('Review not pending')
+      if (review.revokedAt) throw new ApprovalReviewConcurrentDecisionError('Review revoked')
+      if (review.expiresAt && review.expiresAt.getTime() < Date.now()) {
+        throw new ApprovalReviewConcurrentDecisionError('Review expired')
+      }
+      if (review.policyVersion !== MKT_APPROVAL_POLICY_VERSION) {
+        throw new ApprovalReviewConcurrentDecisionError('Review policy version mismatch')
+      }
+
+      const artifact = await tx.marketingArtifact.findFirst({
+        where: { id: review.marketingArtifactId, customerAccountId: input.customerAccountId },
+      })
+      if (!artifact || artifact.revisionHash !== review.revisionHash) {
+        throw new ApprovalReviewConcurrentDecisionError('Approval does not match current artifact revision')
+      }
+
+      const reviewUpdated = await tx.marketingArtifactReview.updateMany({
+        where: {
+          id: review.id,
+          customerAccountId: input.customerAccountId,
+          status: 'SUBMITTED',
+        },
+        data: {
+          status: input.decision,
+          approverUserId: input.reviewerUserId,
+          decidedAt: new Date(),
+        },
+      })
+      if (reviewUpdated.count !== 1) {
+        throw new ApprovalReviewConcurrentDecisionError()
+      }
+
+      const artifactUpdated = await tx.marketingArtifact.updateMany({
+        where: {
+          id: artifact.id,
+          customerAccountId: input.customerAccountId,
+          revisionHash: review.revisionHash,
+        },
+        data: { reviewStatus: input.decision },
+      })
+      if (artifactUpdated.count !== 1) {
+        throw new ApprovalArtifactCasRollbackError()
+      }
+    })
+  } catch (error) {
+    if (error instanceof ApprovalArtifactCasRollbackError) {
+      return { ok: false, code: 'CONFLICT', message: error.message }
+    }
+    if (error instanceof ApprovalReviewConcurrentDecisionError) {
+      const msg = error.message
+      if (msg.includes('expired') || msg.includes('revoked') || msg.includes('match')) {
+        return { ok: false, code: 'FORBIDDEN', message: msg }
+      }
+      return { ok: false, code: 'CONFLICT', message: msg }
+    }
+    throw error
+  }
+
+  const finalized = await prisma.marketingArtifactReview.findFirst({
+    where: { id: input.reviewId, customerAccountId: input.customerAccountId },
+  })
+  if (!finalized) return { ok: false, code: 'NOT_FOUND', message: 'Review not found' }
+  if (finalized.status !== input.decision) {
+    return { ok: false, code: 'NOT_FOUND', message: 'Review not found' }
+  }
+
+  return { ok: true, value: true }
 }
 
 export function validateReviewForRevision(input: {
@@ -132,7 +164,14 @@ export async function revokePendingArtifactReviews(input: {
   customerAccountId: string
   marketingArtifactId: string
 }): Promise<void> {
-  await prisma.marketingArtifactReview.updateMany({
+  await revokePendingArtifactReviewsInTransaction(prisma, input)
+}
+
+export async function revokePendingArtifactReviewsInTransaction(
+  tx: Prisma.TransactionClient,
+  input: { customerAccountId: string; marketingArtifactId: string },
+): Promise<void> {
+  await tx.marketingArtifactReview.updateMany({
     where: {
       customerAccountId: input.customerAccountId,
       marketingArtifactId: input.marketingArtifactId,
