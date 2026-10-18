@@ -17,6 +17,13 @@ function dispatchWorkerId(): string {
   return `outbox-dispatcher:${process.env.HOSTNAME ?? 'local'}`
 }
 
+export function isOutboxDispatchLeaseValid(
+  dispatchLeaseExpiresAt: Date | null | undefined,
+  at = new Date(),
+): boolean {
+  return dispatchLeaseExpiresAt != null && dispatchLeaseExpiresAt > at
+}
+
 export async function appendWorkflowOutbox(
   db: Db,
   input: {
@@ -102,20 +109,20 @@ async function finalizeOutboxDispatch(
   workflowJobId: string,
   expectedFingerprint: string,
   leaseToken: string,
-  now = new Date(),
 ): Promise<boolean> {
+  const ackNow = new Date()
   const updated = await prisma.workflowOutbox.updateMany({
     where: {
       id: outboxId,
       status: 'PENDING',
       requestFingerprint: expectedFingerprint,
       dispatchLeaseToken: leaseToken,
-      dispatchLeaseExpiresAt: { gt: now },
+      dispatchLeaseExpiresAt: { gt: ackNow },
     },
     data: {
       status: 'DISPATCHED',
       workflowJobId,
-      dispatchedAt: now,
+      dispatchedAt: ackNow,
       lastError: null,
       dispatchLeaseToken: null,
       dispatchLeaseOwner: null,
@@ -126,9 +133,15 @@ async function finalizeOutboxDispatch(
 }
 
 async function failOutboxRow(outboxId: string, reason: string, leaseToken?: string): Promise<void> {
+  const ackNow = new Date()
   await prisma.workflowOutbox.updateMany({
     where: leaseToken
-      ? { id: outboxId, status: 'PENDING', dispatchLeaseToken: leaseToken }
+      ? {
+          id: outboxId,
+          status: 'PENDING',
+          dispatchLeaseToken: leaseToken,
+          dispatchLeaseExpiresAt: { gt: ackNow },
+        }
       : { id: outboxId, status: 'PENDING' },
     data: {
       status: 'FAILED',
@@ -144,7 +157,6 @@ async function tryAcknowledgeExistingJob(
   row: WorkflowOutbox,
   envelope: NonNullable<ReturnType<typeof parseWorkflowOutboxEnvelope>>,
   leaseToken: string,
-  now: Date,
 ): Promise<'dispatched' | 'failed' | 'continue'> {
   const jobId = row.workflowJobId
   const existingJob = jobId
@@ -156,14 +168,14 @@ async function tryAcknowledgeExistingJob(
     await failOutboxRow(row.id, 'OUTBOX_REPLAY_CONFLICT', leaseToken)
     return 'failed'
   }
-  const ok = await finalizeOutboxDispatch(row.id, existingJob.id, row.requestFingerprint, leaseToken, now)
+  const ok = await finalizeOutboxDispatch(row.id, existingJob.id, row.requestFingerprint, leaseToken)
   return ok ? 'dispatched' : 'failed'
 }
 
-async function dispatchOutboxRow(row: WorkflowOutbox, now = new Date()): Promise<'dispatched' | 'failed' | 'skipped'> {
+async function dispatchOutboxRow(row: WorkflowOutbox): Promise<'dispatched' | 'failed' | 'skipped'> {
   if (row.status === 'DISPATCHED' && row.workflowJobId) return 'skipped'
 
-  const leaseToken = await claimOutboxDispatchLease(row.id, now)
+  const leaseToken = await claimOutboxDispatchLease(row.id, new Date())
   if (!leaseToken) return 'skipped'
 
   try {
@@ -179,7 +191,7 @@ async function dispatchOutboxRow(row: WorkflowOutbox, now = new Date()): Promise
       return 'failed'
     }
 
-    const ack = await tryAcknowledgeExistingJob(row, envelope, leaseToken, now)
+    const ack = await tryAcknowledgeExistingJob(row, envelope, leaseToken)
     if (ack === 'dispatched' || ack === 'failed') return ack
 
     const result = await prismaWorkflowProvider.enqueue(envelope.enqueue)
@@ -189,7 +201,7 @@ async function dispatchOutboxRow(row: WorkflowOutbox, now = new Date()): Promise
           where: { idempotencyKey: envelope.enqueue.idempotencyKey },
         })
         if (replay && workflowJobMatchesOutboxEnvelope(replay, envelope)) {
-          const ok = await finalizeOutboxDispatch(row.id, replay.id, row.requestFingerprint, leaseToken, now)
+          const ok = await finalizeOutboxDispatch(row.id, replay.id, row.requestFingerprint, leaseToken)
           return ok ? 'dispatched' : 'failed'
         }
         await failOutboxRow(row.id, 'OUTBOX_REPLAY_CONFLICT', leaseToken)
@@ -216,7 +228,7 @@ async function dispatchOutboxRow(row: WorkflowOutbox, now = new Date()): Promise
       return 'failed'
     }
 
-    const ok = await finalizeOutboxDispatch(row.id, result.value.id, row.requestFingerprint, leaseToken, now)
+    const ok = await finalizeOutboxDispatch(row.id, result.value.id, row.requestFingerprint, leaseToken)
     return ok ? 'dispatched' : 'skipped'
   } catch {
     await releaseOutboxDispatchLease(row.id, leaseToken)
@@ -244,7 +256,7 @@ export async function dispatchPendingOutbox(limit = 25): Promise<number> {
 
   let dispatched = 0
   for (const row of rows) {
-    const outcome = await dispatchOutboxRow(row, now)
+    const outcome = await dispatchOutboxRow(row)
     if (outcome === 'dispatched') dispatched += 1
   }
   return dispatched

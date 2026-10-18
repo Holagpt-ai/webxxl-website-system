@@ -44,15 +44,6 @@ export async function recoverAbandonedJobs(now = new Date()): Promise<number> {
   let recovered = 0
   for (const job of rows) {
     const row = await prisma.$transaction(async (tx) => {
-      if (job.leaseToken != null && job.leaseFence != null) {
-        await abandonOpenWorkflowAttempts(tx, {
-          workflowJobId: job.id,
-          leaseToken: job.leaseToken,
-          leaseFence: job.leaseFence,
-          reason: 'LEASE_EXPIRED_ABANDONED',
-        })
-      }
-
       const current = await tx.workflowJob.findUnique({ where: { id: job.id } })
       if (!current) return null
 
@@ -62,7 +53,7 @@ export async function recoverAbandonedJobs(now = new Date()): Promise<number> {
           ? new Date(now.getTime() + computeWorkflowBackoffMs(current.attemptCount))
           : current.nextAttemptAt
 
-      return casTransitionWorkflowJob(tx, {
+      const recoveredRow = await casTransitionWorkflowJob(tx, {
         jobId: job.id,
         fromStatuses: ['CLAIMED', 'RUNNING'],
         toStatus,
@@ -82,6 +73,18 @@ export async function recoverAbandonedJobs(now = new Date()): Promise<number> {
         eventType: 'RECOVERED',
         eventDetail: { reason: 'expired_lease', previousStatus: job.status, attemptCount: current.attemptCount },
       })
+      if (!recoveredRow) return null
+
+      if (job.leaseToken != null && job.leaseFence != null) {
+        await abandonOpenWorkflowAttempts(tx, {
+          workflowJobId: job.id,
+          leaseToken: job.leaseToken,
+          leaseFence: job.leaseFence,
+          reason: 'LEASE_EXPIRED_ABANDONED',
+        })
+      }
+
+      return recoveredRow
     })
 
     if (row) {

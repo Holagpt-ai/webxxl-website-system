@@ -56,12 +56,6 @@ export async function beginWorkflowExecutionAttempt(input: {
 }): Promise<WorkflowResult<{ job: WorkflowJobSnapshot; attemptNumber: number }>> {
   try {
     const result = await prisma.$transaction(async (tx) => {
-      await abandonOpenWorkflowAttempts(tx, {
-        workflowJobId: input.jobId,
-        reason: 'ATTEMPT_SUPERSEDED',
-        protectLease: { token: input.leaseToken, fence: input.leaseFence },
-      })
-
       const running = await casTransitionWorkflowJob(tx, {
         jobId: input.jobId,
         fromStatuses: ['CLAIMED'],
@@ -75,6 +69,12 @@ export async function beginWorkflowExecutionAttempt(input: {
         actorService: input.workerId,
       })
       if (!running) return null
+
+      await abandonOpenWorkflowAttempts(tx, {
+        workflowJobId: input.jobId,
+        reason: 'ATTEMPT_SUPERSEDED',
+        protectLease: { token: input.leaseToken, fence: input.leaseFence },
+      })
 
       const attemptNumber = running.attemptCount
       await tx.workflowAttempt.create({

@@ -111,6 +111,8 @@
 
 **AUTO-10C (in PR #42):** Transaction-scoped attempt abandonment (protects active lease); recovery abandons attempts + FSM in one transaction; durable outbox dispatch lease columns + expiry reclaim; NULL-safe notification claim filter; staff retry blocked for quarantined deliveries.
 
+**AUTO-10D (in PR #42):** CAS-before-abandon ordering for attempt start and expired-lease recovery; outbox acknowledgment uses live clock (not batch `now`) with lease-valid finalize/fail CAS.
+
 ## INFRA-02 (2026-10-18) — repository infrastructure only; live staging BLOCKED
 
 | Area | Evidence | Honest status |
