@@ -9,6 +9,10 @@ import type { NotificationChannel } from '@/lib/automation/channels/types'
 import { evaluateInfrastructureRenewalReminders } from '@/lib/automation/renewals'
 import { isEnabled } from '@/config/features'
 import { preferredLocaleForUser } from '@/lib/i18n/preference-db'
+import {
+  commitAutomationDeliveryJobClaim,
+  tryClaimAutomationDeliveryJob,
+} from '@/lib/automation/delivery-claim'
 
 const CHANNELS: Record<AutomationDeliveryChannel, NotificationChannel> = {
   IN_APP: inAppChannel,
@@ -28,6 +32,7 @@ export type WorkerRunResult = {
 
 export async function processAutomationDeliveryBatch(limit = 25): Promise<WorkerRunResult> {
   const now = new Date()
+  const workerId = `automation-worker:${process.env.HOSTNAME ?? 'local'}`
   const jobs = await prisma.automationDeliveryJob.findMany({
     where: {
       status: { in: ['PENDING', 'FAILED'] },
@@ -43,10 +48,8 @@ export async function processAutomationDeliveryBatch(limit = 25): Promise<Worker
   let dead = 0
 
   for (const job of jobs) {
-    await prisma.automationDeliveryJob.update({
-      where: { id: job.id },
-      data: { status: 'PROCESSING' },
-    })
+    const claim = await tryClaimAutomationDeliveryJob({ jobId: job.id, workerId, now })
+    if (!claim.claimed || !claim.claimToken) continue
 
     const locale = await preferredLocaleForUser(job.recipientUserId)
     const content = resolveEventContent(job.event, locale)
@@ -62,8 +65,10 @@ export async function processAutomationDeliveryBatch(limit = 25): Promise<Worker
       })
 
       if (result.ok) {
-        await prisma.automationDeliveryJob.update({
-          where: { id: job.id },
+        const committed = await commitAutomationDeliveryJobClaim({
+          jobId: job.id,
+          claimToken: claim.claimToken,
+          claimFence: claim.fence,
           data: {
             status: 'DELIVERED',
             deliveredAt: new Date(),
@@ -71,26 +76,26 @@ export async function processAutomationDeliveryBatch(limit = 25): Promise<Worker
             lastErrorClass: null,
           },
         })
-        delivered += 1
+        if (committed) delivered += 1
         continue
       }
 
       const attempts = job.attempts + 1
       const errorClass = result.error
       if (attempts >= job.maxAttempts || errorClass === 'disabled' || errorClass === 'invalid_recipient') {
-        await prisma.automationDeliveryJob.update({
-          where: { id: job.id },
-          data: {
-            status: 'DEAD',
-            attempts,
-            lastErrorClass: errorClass,
-          },
+        const committed = await commitAutomationDeliveryJobClaim({
+          jobId: job.id,
+          claimToken: claim.claimToken,
+          claimFence: claim.fence,
+          data: { status: 'DEAD', attempts, lastErrorClass: errorClass },
         })
-        dead += 1
+        if (committed) dead += 1
       } else {
         const backoffSec = computeBackoffSeconds(attempts)
-        await prisma.automationDeliveryJob.update({
-          where: { id: job.id },
+        const committed = await commitAutomationDeliveryJobClaim({
+          jobId: job.id,
+          claimToken: claim.claimToken,
+          claimFence: claim.fence,
           data: {
             status: 'FAILED',
             attempts,
@@ -98,21 +103,25 @@ export async function processAutomationDeliveryBatch(limit = 25): Promise<Worker
             nextAttemptAt: new Date(Date.now() + backoffSec * 1000),
           },
         })
-        failed += 1
+        if (committed) failed += 1
       }
     } catch (error) {
       const attempts = job.attempts + 1
       const errorClass = classifyDeliveryError(error)
       if (attempts >= job.maxAttempts) {
-        await prisma.automationDeliveryJob.update({
-          where: { id: job.id },
+        const committed = await commitAutomationDeliveryJobClaim({
+          jobId: job.id,
+          claimToken: claim.claimToken,
+          claimFence: claim.fence,
           data: { status: 'DEAD', attempts, lastErrorClass: errorClass },
         })
-        dead += 1
+        if (committed) dead += 1
       } else {
         const backoffSec = computeBackoffSeconds(attempts)
-        await prisma.automationDeliveryJob.update({
-          where: { id: job.id },
+        const committed = await commitAutomationDeliveryJobClaim({
+          jobId: job.id,
+          claimToken: claim.claimToken,
+          claimFence: claim.fence,
           data: {
             status: 'FAILED',
             attempts,
@@ -120,7 +129,7 @@ export async function processAutomationDeliveryBatch(limit = 25): Promise<Worker
             nextAttemptAt: new Date(Date.now() + backoffSec * 1000),
           },
         })
-        failed += 1
+        if (committed) failed += 1
       }
     }
   }

@@ -101,7 +101,9 @@
 
 **WALLET-09B (in PR #41):** IANA timezone midnight for policy windows; scoped settle/refund/provider receipt idempotency (no global key-only replay); COMMS cost from quoted units (not `contentHash` as SMS body); durable operation feature gates + `WALLET_TEST_EXECUTION_BYPASS` (test-only); P2002 replay outside aborted transactions; top-up quote material fingerprint — **Vitest `wallet09b-integrity`**. Live PostgreSQL concurrency still **not** verified in CI.
 
-**WALLET-09C (in PR #41):** `WalletLedgerEntry.actorServiceId` (SERVICE never writes synthetic ids to `actorUserId` User FK); COMMS aggregate unit semantics (no double multiply by `recipientCount`); guarded `expireReservation` after wallet lock + CAS; fractional IANA timezone midnights — **Vitest `wallet09c-integrity`**. Real PostgreSQL FK enforcement **not** verified in CI (memory simulator only).
+**WALLET-09C (merged on main):** `WalletLedgerEntry.actorServiceId`; COMMS aggregate unit semantics; guarded reservation expiry; fractional IANA timezone midnights.
+
+**AUTO-10 (feature branch):** PostgreSQL-backed `WorkflowJob` FSM, `PrismaWorkflowProvider` (`FOR UPDATE SKIP LOCKED` claim SQL), transactional outbox, retry/backoff, lease fencing, recovery/dead-letter repair hooks, safe handlers (COMMS receipt by id, marketing follow-up evaluate, SEO sync prepare), legacy notification delivery conditional claim, read APIs + gated `POST /api/automation/workflow-worker`. **Prisma-first** (see `docs/platform/docs/AUTO10-PROVIDER-DECISION.md`). All `WORKFLOW_*` flags default **OFF**. PostgreSQL claim concurrency **not verified** in CI without test DB. Vitest: `auto10-workflow.test.ts`.
 
 ## INFRA-02 (2026-10-18) — repository infrastructure only; live staging BLOCKED
 

@@ -12,7 +12,7 @@ flowchart LR
  EDGE --> PUB[Postiz isolated Docker application\napp.webbxxl.com proposed existing]
  EDGE --> CW[Chatwoot isolated service + own data/queue]
  EDGE --> PW[Paperclip isolated internal workforce]
- EDGE --> WF[Existing automation worker + Hatchet candidate]
+ EDGE --> WF[Notification worker + Prisma workflow worker (AUTO-10)]
  EDGE --> EXT[Twilio / Resend / Google / Payment / domain APIs]
  WF --> GIT[Cursor Cloud / GitHub PR / Vercel review workflows]
 ```
@@ -69,7 +69,7 @@ Actual environment-variable names must follow upstream versions and current repo
 
 ## 6. Existing and future worker relationship
 
-`lib/automation/worker.ts` currently processes notification deliveries with retries and event IDs; SMS/WhatsApp delivery channels are disabled in inspected config. **Do not replace or disable that existing worker solely to adopt Hatchet.** First design `WorkflowProvider` and choose ownership by job type: portal notifications remain existing worker unless migrated in dedicated batch; Hatchet candidate handles heavy marketing campaigns, asynchronous webhooks/reconciliation, distributed agent tasks and SEO schedules where durable semantics justify it. Postiz remains actual social post scheduler.
+`lib/automation/worker.ts` processes notification deliveries with retries and event IDs; SMS/WhatsApp remain disabled. **AUTO-10** adds PostgreSQL-backed `WorkflowJob` execution (`lib/platform/workflow/*`, `PrismaWorkflowProvider` with `FOR UPDATE SKIP LOCKED` claiming) plus conditional claim/fencing on `AutomationDeliveryJob`. **Do not replace or disable** the legacy notification worker. All `WORKFLOW_*` flags default **OFF**; no live cron in this batch. Hatchet remains an optional future adapter (`hatchet-provider-seam.ts`); Prisma-first per `AUTO10-PROVIDER-DECISION.md`. Postiz remains the sole social post scheduler.
 
 ## 7. Reliability and SLO targets (proposed, not measured)
 

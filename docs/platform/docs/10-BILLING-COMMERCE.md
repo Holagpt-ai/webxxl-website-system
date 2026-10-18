@@ -99,7 +99,11 @@ Define credit expiry/refund/transfer policy, chargebacks, stored-value legal tre
 - FREE service cards labelled included; paid provider charges clearly separated. Historic quoted orders remain accessible.
 - Insufficient wallet balance => actionable top-up quote, no silent paid SMS send.
 
-## 10. Acceptance
+## 10. AUTO-10 wallet safety
+
+Workflow jobs **must not** append `WalletLedgerEntry` debits/TOP_UPs directly. Financial effects stay in **WALLET-09** domain services with existing idempotency. `WALLET_RECONCILIATION_REVIEW` is a typed handler stub only. Retries are not permission to resend billable messages or double-settle reservations.
+
+## 11. Acceptance
 
 - Parent group one wallet across 3 or 10 business sites; 1,000→800→700→650 example holds true for exact illustrative charge units.
 - Two concurrent sending jobs cannot overspend or duplicate settlement.

@@ -58,7 +58,7 @@ Marketing Studio main dashboard includes FREE badge, New Request, Landing Pages,
 - Per site/account quotas and fair scheduling for image generation, tokens, draft volume, social API calls and uploads; no hidden customer charges.
 - Queue high-cost tasks with cost ceilings; keep owner-visible limits for product profitability.
 - Honor external social platform rate limits and content policies; approved posts only, with token refresh and failure diagnostics.
-- WebXXL may use Hatchet for preparation/sync and repair jobs, while Postiz independently schedules/releases social posts.
+- **AUTO-10** may queue `SOCIAL_STATUS_RECONCILE` / `MARKETING_DRAFT_PREPARE` preparation jobs (Prisma-backed, flags OFF); Postiz remains sole scheduler/publisher. Unknown Postiz outcomes → `AWAITING_RECONCILIATION`; no automatic resubmit.
 - Clear statuses: `NOT_CONNECTED`, `DRAFT`, `AWAITING_APPROVAL`, `APPROVED`, `SCHEDULED`, `PUBLISHING`, `PUBLISHED`, `FAILED`; never display false timestamps or fake reach.
 
 ## 9. Acceptance

@@ -54,3 +54,8 @@ export const COMMS_WEBHOOK_REPLAY_TOLERANCE_SECONDS = Number(process.env.COMMS_W
 export function isCommsSyntheticQuoteAllowed(): boolean {
   return envFlag('COMMS_SYNTHETIC_QUOTE_ENABLED', false)
 }
+
+/** Trusted receipt processor worker path (AUTO-10 COMMS handler). */
+export function isCommsReceiptWorkerEnabled(): boolean {
+  return envFlag('COMMS_RECEIPT_WORKER_ENABLED', false)
+}
