@@ -19,6 +19,9 @@ export type ReserveCreditsInput = {
   billingGroupId: string
   customerAccountId: string
   managedSiteId?: string
+  channel?: string
+  usagePurpose?: string
+  rateVersion?: string
   amount: number
   campaignId?: string
   correlationId: string

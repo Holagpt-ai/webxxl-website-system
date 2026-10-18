@@ -51,7 +51,7 @@
 | Chatwoot adapter | `lib/platform/providers/chatwoot-conversation.ts`, `chatwoot-http.ts` | Application API paths per **developers.chatwoot.com**; pin **v4.18.0-ce** (INFRA-02 compose only); **no live instance verified** |
 | Persistence | Prisma migration `20261018210000_comms06_foundation` | **Pending apply** (not production/staging) |
 | API routes | `app/api/v1/communications/*` | Auth.js membership + feature flags default **false**; webhook route **503** until relay auth configured |
-| Wallet / transport | `gateway-service.ts`, `quote-service.ts` | **No credit debit/reservation**; outbound dispatch **NOT_CONFIGURED** |
+| Wallet / transport | `gateway-service.ts`, `wallet-boundary.ts` (WALLET-09) | Durable reservation path **implemented but flag-disabled**; outbound dispatch **NOT_CONFIGURED** |
 | OPEN-001 | `core.communications` entitlement | **POLICY_UNRESOLVED** (inbox software ≠ free SMS) |
 
 **COMMS-06A (in PR #38):** Webhook relay auth binds `x-webxxl-chatwoot-timestamp` into HMAC; scoped `eventDedupeKey`; trusted receipt processor (`processCommsWebhookReceiptById`) — HTTP ingest leaves **PENDING** until worker activated; channel-aware timeline mapping; intent fingerprint conflicts; synthetic quotes gated by `COMMS_SYNTHETIC_QUOTE_ENABLED`.
@@ -83,6 +83,19 @@
 **MKT-08A (in PR #40):** Follow-up task staff membership checks, timeline-based coverage (no `tasks.length` outreach proxy), atomic approval `updateMany`, SHA-256 request fingerprints, non-swallowed FSM transitions, brand `complianceReviewState` trust, tenant FK hardening in pending migration — **Vitest `mkt08a-integrity`**.
 
 **MKT-08B (in PR #40):** Approval CAS rollback via transaction throw; `MarketingFollowUpTaskIntent` dedupe for callback concurrency; verified-sync-only coverage semantics; prepare workflow single-transaction (revision + revoke + `DRAFT_READY`) — **Vitest `mkt08b-merge-integrity`**.
+
+## WALLET-09 (2026-10-18) — shared prepaid wallet + provider-neutral SMS/email foundation; live money/send OFF
+
+| Area | Evidence | Honest status |
+|---|---|---|
+| Durable wallet engine | `lib/platform/wallet/durable-service.ts`, `balance.ts`, `spending-policy.ts` | **Prisma/PostgreSQL-oriented** reserve/settle/release/refund/reconcile with `FOR UPDATE` wallet lock + reservation CAS; FOUND-01 in-memory contract **preserved** for synthetic regression |
+| Persistence | Prisma migration `20261018250000_wallet09_foundation` | **Pending apply** (not production/staging). Extends `CreditReservation`, `WalletLedgerEntry`, `SiteSpendingPolicy`, `CommunicationQuote`; adds rate plan, top-up quote, provider event receipt models |
+| Rate / quotes | `rate-plan.ts`, `top-up-quote.ts` | Fixture SMS segment + email unit estimates; **COST_UNAVAILABLE** when missing; top-up quote **does not mint credits** without `WalletFundingEvidence` |
+| Providers | `twilio-sms.ts`, `resend-email.ts`, `messaging-transport.ts` | Typed prepare/normalize contracts; **mock transport only**; `TWILIO_ADAPTER_ENABLED` / `RESEND_TRANSPORT_ENABLED` default **false** |
+| COMMS linkage | `comms/wallet-boundary.ts`, `policy-engine.ts` tenant fix | Quote→reservation prep boundary; **no outbound dispatch**; wallet/comms integration flag default **false** |
+| API routes | `app/api/v1/billing-groups/*`, `app/api/v1/wallet/*`, `wallet-topups/quote` | Auth.js + billing group roles; **`WALLET_BACKEND_ENABLED` / `WALLET_GROUP_READ_ENABLED` default false** |
+| Tests | `__tests__/platform/wallet09-foundation.test.ts` | ABMED 1000→650 durable path via **in-memory Prisma simulator**; concurrent hold race; partial settle/release; provider replay idempotency. **Live PostgreSQL concurrency not verified** in CI |
+| Production | — | **No Twilio/Resend live calls**, **no card checkout**, **no webhook settlement**, **no credit mint from quotes**, **no migration apply** |
 
 ## INFRA-02 (2026-10-18) — repository infrastructure only; live staging BLOCKED
 

@@ -893,6 +893,8 @@ model ManagedSite {
   seoOpportunities          SeoOpportunity[]
   seoWorkEvidence           SeoWorkEvidence[]
   seoProviderSyncRuns       SeoProviderSyncRun[]
+  creditReservations        CreditReservation[]
+  siteSpendingPolicies      SiteSpendingPolicy[]
 
   @@index([customerAccountId])
   @@index([projectId])
@@ -1316,6 +1318,13 @@ enum CreditReservationStatus {
   EXPIRED
 }
 
+enum WalletTopUpQuoteStatus {
+  DRAFT
+  EXPIRED
+  CHECKOUT_PREPARED
+  ABANDONED
+}
+
 enum MessageUsageStatus {
   QUOTED
   RESERVED
@@ -1355,6 +1364,8 @@ model BillingGroup {
   spendingPolicies SiteSpendingPolicy[]
   serviceOrders    ServiceOrder[]
   messageUsage     MessageUsage[]
+  topUpQuotes      WalletTopUpQuote[]
+  fundingEvidence  WalletFundingEvidence[]
 }
 
 model BillingGroupMembership {
@@ -1416,21 +1427,27 @@ model BillingProfile {
 }
 
 model SiteSpendingPolicy {
-  id                 String   @id @default(cuid())
-  billingGroupId     String
-  customerAccountId  String
-  dailyLimit         Int?
-  monthlyLimit       Int?
-  maxCampaignCredits Int?
-  allowedChannels    Json?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  billingGroupId        String
+  customerAccountId     String
+  managedSiteId         String?
+  dailyLimit            Int?
+  monthlyLimit          Int?
+  managedSiteDailyLimit Int?
+  maxCampaignCredits    Int?
+  groupHardCap          Int?
+  allowedChannels       Json?
+  policyTimezone        String   @default("UTC")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   billingGroup    BillingGroup              @relation(fields: [billingGroupId], references: [id], onDelete: Cascade)
   customerAccount CustomerAccount           @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  managedSite     ManagedSite?              @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
   memberships     BillingGroupMembership[]
 
   @@unique([billingGroupId, customerAccountId])
+  @@index([managedSiteId])
 }
 
 /// One wallet per credit type per billing group. Balance is derived from ledger minus holds.
@@ -1445,9 +1462,11 @@ model CreditWallet {
   updatedAt      DateTime           @updatedAt
 
   billingGroup  BillingGroup         @relation(fields: [billingGroupId], references: [id], onDelete: Restrict)
-  ledgerEntries WalletLedgerEntry[]
-  reservations  CreditReservation[]
-  messageUsage  MessageUsage[]
+  ledgerEntries       WalletLedgerEntry[]
+  reservations        CreditReservation[]
+  messageUsage        MessageUsage[]
+  providerEvents      WalletProviderEventReceipt[]
+  fundingEvidence     WalletFundingEvidence[]
 
   @@unique([billingGroupId, creditType])
 }
@@ -1463,43 +1482,56 @@ model WalletLedgerEntry {
   deltaCredits      Int
   priceVersion      String
   reservationId     String?
-  providerRef       String?
-  idempotencyKey    String                @unique
-  effectiveAt       DateTime              @default(now())
-  createdAt         DateTime              @default(now())
-  actorUserId       String?
+  providerRef           String?
+  originalLedgerEntryId String?
+  refundReason          String?
+  idempotencyKey        String                @unique
+  effectiveAt           DateTime              @default(now())
+  createdAt             DateTime              @default(now())
+  actorUserId           String?
 
-  wallet          CreditWallet     @relation(fields: [walletId], references: [id], onDelete: Restrict)
-  customerAccount CustomerAccount? @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)
-  managedSite     ManagedSite?     @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
-  actor           User?            @relation("WalletLedgerActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  wallet          CreditWallet        @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  customerAccount CustomerAccount?    @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)
+  managedSite     ManagedSite?        @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  actor           User?               @relation("WalletLedgerActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  originalLedger  WalletLedgerEntry?  @relation("LedgerRefundChain", fields: [originalLedgerEntryId], references: [id], onDelete: SetNull)
+  refundEntries   WalletLedgerEntry[] @relation("LedgerRefundChain")
 
   @@index([walletId, createdAt])
   @@index([customerAccountId, createdAt])
   @@index([reservationId])
+  @@index([originalLedgerEntryId])
 }
 
 model CreditReservation {
-  id              String                  @id @default(cuid())
-  walletId        String
-  originAccountId String
-  amount          Int
-  settledAmount   Int                     @default(0)
-  status          CreditReservationStatus @default(HELD)
-  expiresAt       DateTime
-  correlationId   String
-  campaignId      String?
-  idempotencyKey  String                  @unique
-  createdAt       DateTime                @default(now())
-  updatedAt       DateTime                @updatedAt
+  id                 String                  @id @default(cuid())
+  walletId           String
+  originAccountId    String
+  managedSiteId      String?
+  channel            String?
+  usagePurpose       String?
+  rateVersion        String?
+  requestFingerprint String?
+  amount             Int
+  settledAmount      Int                     @default(0)
+  status             CreditReservationStatus @default(HELD)
+  expiresAt          DateTime
+  correlationId      String
+  campaignId         String?
+  idempotencyKey     String                  @unique
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
 
   wallet        CreditWallet    @relation(fields: [walletId], references: [id], onDelete: Restrict)
   originAccount CustomerAccount @relation(fields: [originAccountId], references: [id], onDelete: Restrict)
+  managedSite   ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
   messageUsage  MessageUsage[]
+  providerEvents WalletProviderEventReceipt[]
 
   @@index([walletId, status])
   @@index([originAccountId])
   @@index([correlationId])
+  @@unique([walletId, requestFingerprint])
 }
 
 model MessageUsage {
@@ -1525,6 +1557,95 @@ model MessageUsage {
   @@index([billingGroupId, createdAt])
   @@index([customerAccountId, createdAt])
   @@index([walletId, createdAt])
+}
+
+model MessagingRatePlan {
+  id          String   @id @default(cuid())
+  planKey     String   @unique
+  channel     String
+  providerKey String
+  purpose     String?
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  versions MessagingRateVersion[]
+}
+
+model MessagingRateVersion {
+  id               String    @id @default(cuid())
+  ratePlanId       String
+  versionKey       String
+  creditsPerUnit   Int
+  unitLabel        String
+  maxSegmentUnits  Int?
+  calculationNotes String?
+  validFrom        DateTime
+  validTo          DateTime?
+  priceSource      String
+  methodology      String
+  createdAt        DateTime  @default(now())
+
+  ratePlan MessagingRatePlan @relation(fields: [ratePlanId], references: [id], onDelete: Cascade)
+
+  @@unique([ratePlanId, versionKey])
+  @@index([ratePlanId, validFrom])
+}
+
+model WalletTopUpQuote {
+  id             String                 @id @default(cuid())
+  billingGroupId String
+  creditAmount   Int
+  fiatMinorUnits Int
+  currency       String                 @default("USD")
+  priceVersion   String
+  providerKey    String?
+  status         WalletTopUpQuoteStatus @default(DRAFT)
+  expiresAt      DateTime
+  idempotencyKey String                 @unique
+  payerUserId    String?
+  createdAt      DateTime               @default(now())
+
+  billingGroup BillingGroup @relation(fields: [billingGroupId], references: [id], onDelete: Restrict)
+
+  @@index([billingGroupId, createdAt])
+}
+
+model WalletProviderEventReceipt {
+  id                String   @id @default(cuid())
+  providerKey       String
+  externalEventId   String
+  walletId          String?
+  reservationId     String?
+  ledgerEntryId     String?
+  payloadHash       String
+  normalizedStatus  String
+  processedAt       DateTime @default(now())
+
+  wallet      CreditWallet?      @relation(fields: [walletId], references: [id], onDelete: SetNull)
+  reservation CreditReservation? @relation(fields: [reservationId], references: [id], onDelete: SetNull)
+
+  @@unique([providerKey, externalEventId])
+  @@index([reservationId])
+  @@index([walletId, processedAt])
+}
+
+model WalletFundingEvidence {
+  id                 String    @id @default(cuid())
+  billingGroupId     String
+  walletId           String
+  topUpQuoteId       String?
+  providerKey        String
+  externalPaymentRef String    @unique
+  creditAmount       Int
+  ledgerEntryId      String?
+  verifiedAt         DateTime?
+  createdAt          DateTime  @default(now())
+
+  billingGroup BillingGroup @relation(fields: [billingGroupId], references: [id], onDelete: Restrict)
+  wallet       CreditWallet @relation(fields: [walletId], references: [id], onDelete: Restrict)
+
+  @@index([billingGroupId, createdAt])
 }
 
 model ProviderConnection {
@@ -3218,6 +3339,7 @@ model SenderIdentity {
 model CommunicationQuote {
   id                  String   @id @default(cuid())
   customerAccountId   String
+  billingGroupId      String?
   actorUserId         String
   channel             CrmConsentChannel
   purpose             CrmConsentPurpose
@@ -3227,8 +3349,12 @@ model CommunicationQuote {
   suppressedCount     Int
   unknownConsentCount Int
   estimatedUnits      Int
+  maxApprovedCredits  Int?
   unitCostSource      String?
   unitCostVersion     String?
+  ratePlanVersion     String?
+  contentHash         String?
+  policyVersion       String?
   policyDecision      String
   expiresAt           DateTime
   detail              Json?
@@ -3237,6 +3363,7 @@ model CommunicationQuote {
   customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
 
   @@index([customerAccountId, createdAt])
+  @@index([billingGroupId, createdAt])
 }
 
 model CommunicationIntent {

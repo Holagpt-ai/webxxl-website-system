@@ -1,8 +1,4 @@
-import {
-  existingPaymentProvider,
-  existingResendEmailProvider,
-  existingWorkerWorkflowProvider,
-} from '@/lib/platform/providers/existing-adapters'
+import { existingPaymentProvider, existingWorkerWorkflowProvider } from '@/lib/platform/providers/existing-adapters'
 import { createPostizSocialProvider } from '@/lib/platform/providers/postiz-social'
 import { createTwentyCrmProvider } from '@/lib/platform/providers/twenty-crm'
 import { createWebxxlNativeCrmProvider } from '@/lib/platform/providers/webxxl-native-crm'
@@ -13,6 +9,8 @@ import { createGoogleGa4SeoProvider } from '@/lib/platform/providers/google-ga4-
 import { createGoogleGbpSeoProvider } from '@/lib/platform/providers/google-gbp-seo'
 import { createGoogleGscSeoProvider } from '@/lib/platform/providers/google-gsc-seo'
 import { createGooglePlacesSeoProvider } from '@/lib/platform/providers/google-places-seo'
+import { createTwilioSmsProvider } from '@/lib/platform/providers/twilio-sms'
+import { createResendEmailProvider } from '@/lib/platform/providers/resend-email'
 import type {
   AnyPlatformProvider,
   ConversationProvider,
@@ -42,17 +40,8 @@ const syntheticWorkforce = createSyntheticWorkforceProvider()
 const paperclip = createPaperclipWorkforceProvider()
 const postizSocial = createPostizSocialProvider()
 
-const twilio: SmsProvider = candidate({
-  kind: 'sms',
-  key: 'twilio',
-  displayName: 'Twilio',
-  availability: 'CANDIDATE',
-  replaceable: true,
-  installed: false,
-  async send() {
-    return { ok: false, code: 'NOT_CONFIGURED', message: 'Live SMS sending belongs to WALLET-09. No Twilio send is enabled.' }
-  },
-})
+const twilio: SmsProvider = createTwilioSmsProvider()
+const resendEmail = createResendEmailProvider()
 
 const elevenLabs: VoiceAgentProvider = candidate({
   kind: 'voice',
@@ -133,7 +122,7 @@ const DEFAULT_PROVIDERS: AnyPlatformProvider[] = [
   paperclip,
   existingWorkerWorkflowProvider,
   twilio,
-  existingResendEmailProvider,
+  resendEmail,
   existingPaymentProvider,
   elevenLabs,
   liveKit,
