@@ -502,6 +502,16 @@ model CustomerAccount {
   crmSalesLeadBridges          CrmSalesLeadBridge[]
   chatwootContactMappings      ChatwootContactMapping[]
   crmDataAccessAudits          CrmDataAccessAudit[]
+  chatwootTenantMappings       ChatwootTenantMapping[]
+  chatwootInboxMappings        ChatwootInboxMapping[]
+  chatwootConversationMappings ChatwootConversationMapping[]
+  commsWebhookReceipts         CommsWebhookReceipt[]
+  contactReconciliationCandidates ContactReconciliationCandidate[]
+  messagingTenants             MessagingTenant[]
+  senderIdentities             SenderIdentity[]
+  communicationQuotes          CommunicationQuote[]
+  communicationIntents         CommunicationIntent[]
+  communicationAuditEvents       CommunicationAuditEvent[]
 }
 
 model CustomerMembership {
@@ -848,6 +858,8 @@ model ManagedSite {
   marketingStudioUsage      MarketingStudioUsage[]
   crmContacts               CrmContact[]
   crmCompanies              CrmCompany[]
+  chatwootTenantMappings    ChatwootTenantMapping[]
+  messagingTenants          MessagingTenant[]
 
   @@index([customerAccountId])
   @@index([projectId])
@@ -2239,7 +2251,8 @@ model CrmContact {
   consents        ContactConsent[]
   suppressions    ContactSuppression[]
   segmentMembers  CrmSegmentMember[]
-  chatwootMappings ChatwootContactMapping[]
+  chatwootMappings             ChatwootContactMapping[]
+  chatwootConversationMappings ChatwootConversationMapping[]
 
   @@unique([customerAccountId, id])
   @@index([customerAccountId, status])
@@ -2683,4 +2696,354 @@ model ChatwootContactMapping {
 
   @@unique([customerAccountId, crmContactId])
   @@unique([customerAccountId, chatwootContactId])
+}
+
+enum ChatwootMappingVerificationState {
+  PENDING
+  VERIFIED
+  REVOKED
+}
+
+enum CommsConversationStatus {
+  OPEN
+  PENDING
+  RESOLVED
+  SNOOZED
+}
+
+enum CommsWebhookReceiptStatus {
+  RECEIVED
+  QUARANTINED
+  REJECTED
+}
+
+enum CommsWebhookProcessingStatus {
+  PENDING
+  PROCESSED
+  FAILED
+  DUPLICATE
+}
+
+enum CommunicationIntentStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  BLOCKED
+  AWAITING_WALLET
+  READY
+  DISPATCHING
+  ACCEPTED_BY_PROVIDER
+  DELIVERED
+  FAILED
+  RECONCILIATION_REQUIRED
+  CANCELLED
+}
+
+enum CommunicationDispatchStatus {
+  PREPARED
+  BLOCKED
+  AWAITING_WALLET
+  DISPATCHING
+  ACCEPTED_BY_PROVIDER
+  DELIVERED
+  FAILED
+  RECONCILIATION_REQUIRED
+  CANCELLED
+}
+
+enum CommsDataClassification {
+  GENERAL_BUSINESS
+  REGULATED_HEALTHCARE
+  CREDENTIAL
+  BILLING
+  SECURITY_AUDIT
+}
+
+model ChatwootTenantMapping {
+  id                  String                           @id @default(cuid())
+  customerAccountId   String
+  managedSiteId       String?
+  providerInstanceId  String
+  externalAccountId   String
+  authorizedInboxIds  Json
+  credentialSecretRef String?
+  verificationState   ChatwootMappingVerificationState @default(PENDING)
+  provisioningSource  String?
+  lastVerifiedAt      DateTime?
+  revokedAt           DateTime?
+  revokeReason        String?
+  auditMetadata       Json?
+  webhookSecretRef    String?
+  createdAt           DateTime                         @default(now())
+  updatedAt           DateTime                         @updatedAt
+
+  customerAccount      CustomerAccount               @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite          ManagedSite?                  @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  inboxMappings        ChatwootInboxMapping[]
+  conversationMappings ChatwootConversationMapping[]
+  syncCursors          ChatwootSyncCursor[]
+
+  @@unique([providerInstanceId, externalAccountId])
+  @@unique([customerAccountId, providerInstanceId])
+  @@index([customerAccountId, verificationState])
+}
+
+model ChatwootInboxMapping {
+  id                String                           @id @default(cuid())
+  customerAccountId String
+  tenantMappingId   String
+  externalInboxId   String
+  channelType       String?
+  verificationState ChatwootMappingVerificationState @default(PENDING)
+  createdAt         DateTime                         @default(now())
+  updatedAt         DateTime                         @updatedAt
+
+  customerAccount CustomerAccount       @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  tenantMapping   ChatwootTenantMapping @relation(fields: [tenantMappingId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantMappingId, externalInboxId])
+  @@unique([customerAccountId, externalInboxId])
+}
+
+model ChatwootConversationMapping {
+  id                     String                  @id @default(cuid())
+  customerAccountId      String
+  tenantMappingId        String
+  externalConversationId String
+  externalInboxId        String
+  crmContactId           String?
+  channel                String
+  webxxlStatus           CommsConversationStatus @default(OPEN)
+  assignedUserRef        String?
+  priority               String                  @default("NORMAL")
+  lastActivityAt         DateTime?
+  lastSyncAt             DateTime?
+  coverageState          String                  @default("UNKNOWN")
+  syncError              String?
+  handoffAudit           Json?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+
+  customerAccount CustomerAccount       @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  tenantMapping   ChatwootTenantMapping @relation(fields: [tenantMappingId], references: [id], onDelete: Restrict)
+  crmContact      CrmContact?           @relation(fields: [crmContactId], references: [id], onDelete: SetNull)
+
+  @@unique([customerAccountId, externalConversationId])
+  @@index([customerAccountId, webxxlStatus, lastActivityAt])
+}
+
+model ChatwootSyncCursor {
+  id              String   @id @default(cuid())
+  tenantMappingId String
+  cursorKey       String
+  cursorValue     String?
+  updatedAt       DateTime @updatedAt
+
+  tenantMapping ChatwootTenantMapping @relation(fields: [tenantMappingId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantMappingId, cursorKey])
+}
+
+model CommsWebhookReceipt {
+  id                 String                       @id @default(cuid())
+  providerKey        String
+  providerInstanceId String?
+  customerAccountId  String?
+  externalEventId    String
+  eventType          String
+  payloadHash        String
+  idempotencyKey     String                       @unique
+  receiptStatus      CommsWebhookReceiptStatus    @default(RECEIVED)
+  processingStatus   CommsWebhookProcessingStatus @default(PENDING)
+  quarantineReason   String?
+  receivedAt         DateTime                     @default(now())
+  processedAt        DateTime?
+  sanitizedDetail    Json?
+
+  customerAccount CustomerAccount? @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)
+
+  @@unique([providerKey, externalEventId])
+  @@index([customerAccountId, receivedAt])
+}
+
+model ContactReconciliationCandidate {
+  id                 String   @id @default(cuid())
+  customerAccountId  String
+  sourceSystem       String
+  externalContactRef String
+  identityType       String
+  normalizedValue    String
+  confidence         String
+  evidence           Json?
+  status             String   @default("PENDING_REVIEW")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+
+  @@unique([customerAccountId, sourceSystem, externalContactRef])
+  @@index([customerAccountId, status])
+}
+
+model MessagingTenant {
+  id                String   @id @default(cuid())
+  customerAccountId String   @unique
+  managedSiteId     String?
+  legalBusinessName String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  customerAccount CustomerAccount  @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite?     @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  senderIdentities  SenderIdentity[]
+}
+
+model SenderIdentity {
+  id                    String              @id @default(cuid())
+  messagingTenantId     String
+  customerAccountId     String
+  channel               CrmConsentChannel
+  purpose               CrmConsentPurpose
+  providerKey           String
+  providerSubaccountRef String?
+  senderRef             String
+  registrationStatus    String              @default("NOT_REGISTERED")
+  verificationState     String              @default("PENDING")
+  complianceProfileKey  String?
+  dataClassification    CommsDataClassification @default(GENERAL_BUSINESS)
+  revokedAt             DateTime?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  messagingTenant MessagingTenant @relation(fields: [messagingTenantId], references: [id], onDelete: Restrict)
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+
+  @@unique([customerAccountId, channel, senderRef])
+}
+
+model CommunicationQuote {
+  id                  String   @id @default(cuid())
+  customerAccountId   String
+  actorUserId         String
+  channel             CrmConsentChannel
+  purpose             CrmConsentPurpose
+  senderIdentityId    String?
+  recipientCount      Int
+  eligibleCount       Int
+  suppressedCount     Int
+  unknownConsentCount Int
+  estimatedUnits      Int
+  unitCostSource      String?
+  unitCostVersion     String?
+  policyDecision      String
+  expiresAt           DateTime
+  detail              Json?
+  createdAt           DateTime @default(now())
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+
+  @@index([customerAccountId, createdAt])
+}
+
+model CommunicationIntent {
+  id                String                    @id @default(cuid())
+  customerAccountId String
+  actorUserId       String
+  quoteId           String?
+  channel           CrmConsentChannel
+  purpose           CrmConsentPurpose
+  senderIdentityId  String?
+  status            CommunicationIntentStatus @default(DRAFT)
+  contentHash       String
+  policyDecision    String
+  dataClassification CommsDataClassification  @default(GENERAL_BUSINESS)
+  approvalRequired  Boolean                   @default(true)
+  idempotencyKey    String                    @unique
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+
+  customerAccount CustomerAccount              @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  recipients      CommunicationRecipient[]
+  approvals       CommunicationApproval[]
+  dispatchAttempts CommunicationDispatchAttempt[]
+  providerEvents  CommunicationProviderEvent[]
+
+  @@index([customerAccountId, status])
+}
+
+model CommunicationRecipient {
+  id                String @id @default(cuid())
+  intentId          String
+  customerAccountId String
+  crmContactId      String?
+  normalizedAddress String
+  eligibility       String
+  createdAt         DateTime @default(now())
+
+  intent CommunicationIntent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+
+  @@index([intentId])
+  @@index([customerAccountId, normalizedAddress])
+}
+
+model CommunicationApproval {
+  id                String   @id @default(cuid())
+  intentId          String
+  customerAccountId String
+  approverUserId    String?
+  decision          String
+  reason            String?
+  decidedAt         DateTime @default(now())
+
+  intent CommunicationIntent @relation(fields: [intentId], references: [id], onDelete: Restrict)
+
+  @@index([intentId])
+}
+
+model CommunicationDispatchAttempt {
+  id                String                      @id @default(cuid())
+  intentId          String
+  customerAccountId String
+  status            CommunicationDispatchStatus @default(PREPARED)
+  providerKey       String?
+  providerMessageRef String?
+  idempotencyKey    String                      @unique
+  detail            Json?
+  createdAt         DateTime                    @default(now())
+  updatedAt         DateTime                    @updatedAt
+
+  intent CommunicationIntent @relation(fields: [intentId], references: [id], onDelete: Restrict)
+
+  @@index([customerAccountId, status])
+}
+
+model CommunicationProviderEvent {
+  id                String   @id @default(cuid())
+  intentId          String?
+  customerAccountId String
+  providerKey       String
+  externalEventId   String
+  eventKind         String
+  lifecycleState    String
+  idempotencyKey    String   @unique
+  detail            Json?
+  createdAt         DateTime @default(now())
+
+  intent CommunicationIntent? @relation(fields: [intentId], references: [id], onDelete: SetNull)
+
+  @@unique([providerKey, externalEventId])
+}
+
+model CommunicationAuditEvent {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  actorUserId       String?
+  operation         String
+  resourceRef       String
+  detail            Json?
+  createdAt         DateTime @default(now())
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+
+  @@index([customerAccountId, operation, createdAt])
 }

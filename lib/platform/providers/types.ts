@@ -108,9 +108,54 @@ export type CrmProvider = PlatformProvider & {
   syncWorkspace?(context: ProviderAuthContext): Promise<ProviderResult<{ accepted: boolean }>>
 }
 
+export type ConversationProviderCapabilities = {
+  accountDiscovery: boolean
+  inboxListing: boolean
+  contactLookup: boolean
+  conversationListing: boolean
+  conversationRetrieval: boolean
+  messageMetadata: boolean
+  assignment: boolean
+  statusHandoff: boolean
+  eventSync: boolean
+  healthCheck: boolean
+  outboundMutations: boolean
+}
+
+export type ConversationInboxSummary = { id: string; name: string; channelType: string }
+export type ConversationThreadSummary = {
+  id: string
+  inboxId: string
+  status: string
+  assigneeId?: string
+}
+export type ConversationMessageMeta = { id: string; messageType?: number | string; createdAt?: number | string }
+
 export type ConversationProvider = PlatformProvider & {
   kind: 'conversation'
-  listConversations(context: ProviderAuthContext): Promise<ProviderResult<never[]>>
+  pinnedEdition?: string
+  describeCapabilities(): ConversationProviderCapabilities
+  healthCheck(
+    context: ProviderAuthContext,
+  ): Promise<ProviderResult<{ connected: boolean; inboxCount?: number }>>
+  listInboxes(context: ProviderAuthContext): Promise<ProviderResult<ConversationInboxSummary[]>>
+  listConversations(
+    context: ProviderAuthContext,
+    query?: { status?: string },
+  ): Promise<ProviderResult<ConversationThreadSummary[]>>
+  getConversation(
+    context: ProviderAuthContext,
+    conversationId: string,
+  ): Promise<ProviderResult<ConversationThreadSummary>>
+  listConversationMessages(
+    context: ProviderAuthContext,
+    conversationId: string,
+  ): Promise<ProviderResult<ConversationMessageMeta[]>>
+  lookupContactRef(
+    context: ProviderAuthContext,
+    externalContactId: string,
+  ): Promise<ProviderResult<{ crmContactId?: string }>>
+  syncProviderEvents(context: ProviderAuthContext): Promise<ProviderResult<{ accepted: boolean }>>
 }
 
 export type SocialChannelSummary = {
