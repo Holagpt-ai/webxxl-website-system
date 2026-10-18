@@ -3957,19 +3957,24 @@ model WorkflowEvent {
 }
 
 model WorkflowOutbox {
-  id                 String               @id @default(cuid())
-  eventKey           String               @unique
-  customerAccountId  String?
-  jobKind            String
-  payloadRef         Json
-  requestFingerprint String
-  status             WorkflowOutboxStatus   @default(PENDING)
-  workflowJobId      String?
-  lastError          String?
-  createdAt          DateTime             @default(now())
-  dispatchedAt       DateTime?
+  id                     String               @id @default(cuid())
+  eventKey               String               @unique
+  customerAccountId      String?
+  jobKind                String
+  payloadRef             Json
+  requestFingerprint     String
+  status                 WorkflowOutboxStatus   @default(PENDING)
+  workflowJobId          String?
+  lastError              String?
+  dispatchLeaseToken     String?
+  dispatchLeaseOwner     String?
+  dispatchLeaseExpiresAt DateTime?
+  dispatchAttemptCount   Int                  @default(0)
+  createdAt              DateTime             @default(now())
+  dispatchedAt           DateTime?
 
   @@index([status, createdAt])
+  @@index([status, dispatchLeaseExpiresAt])
 }
 
 model WorkflowDeadLetter {

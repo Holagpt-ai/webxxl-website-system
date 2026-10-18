@@ -2,7 +2,7 @@ import type { Prisma, WorkflowJobStatus } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { isWorkflowDurableExecutionAllowed, isWorkflowRepairEnabled } from '@/config/workflow-backend'
 import { abandonOpenWorkflowAttempts, attemptsExhausted } from '@/lib/platform/workflow/attempt-lifecycle'
-import { casTransitionWorkflowJobTx } from '@/lib/platform/workflow/job-transition'
+import { casTransitionWorkflowJob } from '@/lib/platform/workflow/job-transition'
 import { prismaWorkflowProvider } from '@/lib/platform/workflow/prisma-provider'
 import { computeWorkflowBackoffMs } from '@/lib/platform/workflow/retry-policy'
 
@@ -43,50 +43,55 @@ export async function recoverAbandonedJobs(now = new Date()): Promise<number> {
 
   let recovered = 0
   for (const job of rows) {
-    await abandonOpenWorkflowAttempts({
-      workflowJobId: job.id,
-      leaseToken: job.leaseToken,
-      leaseFence: job.leaseFence,
-      reason: 'LEASE_EXPIRED_ABANDONED',
+    const row = await prisma.$transaction(async (tx) => {
+      if (job.leaseToken != null && job.leaseFence != null) {
+        await abandonOpenWorkflowAttempts(tx, {
+          workflowJobId: job.id,
+          leaseToken: job.leaseToken,
+          leaseFence: job.leaseFence,
+          reason: 'LEASE_EXPIRED_ABANDONED',
+        })
+      }
+
+      const current = await tx.workflowJob.findUnique({ where: { id: job.id } })
+      if (!current) return null
+
+      const toStatus = recoveryTargetStatus(current)
+      const nextAttemptAt =
+        toStatus === 'RETRY_WAIT'
+          ? new Date(now.getTime() + computeWorkflowBackoffMs(current.attemptCount))
+          : current.nextAttemptAt
+
+      return casTransitionWorkflowJob(tx, {
+        jobId: job.id,
+        fromStatuses: ['CLAIMED', 'RUNNING'],
+        toStatus,
+        expectedLease: job.leaseToken ? { token: job.leaseToken, fence: job.leaseFence } : null,
+        requireExpiredLease: true,
+        now,
+        data: {
+          leaseOwner: null,
+          leaseToken: null,
+          leaseExpiresAt: null,
+          leaseFence: { increment: 1 },
+          nextAttemptAt,
+          lastErrorCode: current.lastErrorCode ?? 'LEASE_EXPIRED',
+          lastErrorClass:
+            toStatus === 'AWAITING_RECONCILIATION' ? ('UNKNOWN_EXTERNAL_OUTCOME' as const) : current.lastErrorClass,
+        },
+        eventType: 'RECOVERED',
+        eventDetail: { reason: 'expired_lease', previousStatus: job.status, attemptCount: current.attemptCount },
+      })
     })
 
-    const jobAfterAbandon = await prisma.workflowJob.findUnique({ where: { id: job.id } })
-    if (!jobAfterAbandon) continue
-
-    const toStatus = recoveryTargetStatus(jobAfterAbandon)
-    const nextAttemptAt =
-      toStatus === 'RETRY_WAIT'
-        ? new Date(now.getTime() + computeWorkflowBackoffMs(jobAfterAbandon.attemptCount))
-        : jobAfterAbandon.nextAttemptAt
-
-    const row = await casTransitionWorkflowJobTx({
-      jobId: job.id,
-      fromStatuses: ['CLAIMED', 'RUNNING'],
-      toStatus,
-      expectedLease: job.leaseToken ? { token: job.leaseToken, fence: job.leaseFence } : null,
-      requireExpiredLease: true,
-      now,
-      data: {
-        leaseOwner: null,
-        leaseToken: null,
-        leaseExpiresAt: null,
-        leaseFence: { increment: 1 },
-        nextAttemptAt,
-        lastErrorCode: jobAfterAbandon.lastErrorCode ?? 'LEASE_EXPIRED',
-        lastErrorClass:
-          toStatus === 'AWAITING_RECONCILIATION' ? ('UNKNOWN_EXTERNAL_OUTCOME' as const) : jobAfterAbandon.lastErrorClass,
-      },
-      eventType: 'RECOVERED',
-      eventDetail: { reason: 'expired_lease', previousStatus: job.status, attemptCount: jobAfterAbandon.attemptCount },
-    })
     if (row) {
       recovered += 1
-      if (toStatus === 'DEAD_LETTER') {
+      if (row.status === 'DEAD_LETTER') {
         await prisma.workflowDeadLetter.create({
           data: {
             workflowJobId: job.id,
-            reason: jobAfterAbandon.lastErrorCode ?? 'LEASE_EXPIRED_MAX_ATTEMPTS',
-            errorClass: jobAfterAbandon.lastErrorClass ?? undefined,
+            reason: row.lastErrorCode ?? 'LEASE_EXPIRED_MAX_ATTEMPTS',
+            errorClass: row.lastErrorClass ?? undefined,
           },
         })
       }

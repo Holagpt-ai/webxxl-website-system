@@ -50,6 +50,7 @@ export const WORKFLOW_GLOBAL_CONCURRENCY = envPositiveInt('WORKFLOW_GLOBAL_CONCU
 export const WORKFLOW_PER_ACCOUNT_ACTIVE_CAP = envPositiveInt('WORKFLOW_PER_ACCOUNT_ACTIVE_CAP', 5, 100)
 export const WORKFLOW_PER_KIND_ACTIVE_CAP = envPositiveInt('WORKFLOW_PER_KIND_ACTIVE_CAP', 10, 100)
 export const WORKFLOW_LEASE_TTL_MS = envPositiveInt('WORKFLOW_LEASE_TTL_MS', 120_000, 3_600_000)
+export const WORKFLOW_OUTBOX_DISPATCH_LEASE_MS = envPositiveInt('WORKFLOW_OUTBOX_DISPATCH_LEASE_MS', 120_000, 3_600_000)
 
 export function validatedWorkflowClaimBatchLimit(requested?: number): number {
   const n = requested ?? WORKFLOW_CLAIM_BATCH_DEFAULT

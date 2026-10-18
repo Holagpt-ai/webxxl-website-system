@@ -109,6 +109,8 @@
 
 **AUTO-10B (in PR #42):** Monotonic `WorkflowAttempt` lifecycle with abandoned-attempt finalization; crashed attempts count toward `maxAttempts`; external notification unknown outcomes quarantined (no auto-resend); outbox replay tenant/fingerprint validation + dispatch lease; unexpired lease required on worker completions; COMMS jobs require account-bound receipts; global concurrency admission documented as best-effort.
 
+**AUTO-10C (in PR #42):** Transaction-scoped attempt abandonment (protects active lease); recovery abandons attempts + FSM in one transaction; durable outbox dispatch lease columns + expiry reclaim; NULL-safe notification claim filter; staff retry blocked for quarantined deliveries.
+
 ## INFRA-02 (2026-10-18) — repository infrastructure only; live staging BLOCKED
 
 | Area | Evidence | Honest status |

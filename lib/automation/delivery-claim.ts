@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { randomUUID } from 'crypto'
 
@@ -13,6 +14,20 @@ import {
 const DEFAULT_CLAIM_TTL_MS = 120_000
 
 const QUARANTINE_NEXT_ATTEMPT = new Date('2099-01-01T00:00:00.000Z')
+
+/** SQL NULL-safe: eligible jobs include NULL lastErrorClass; quarantined classes excluded. */
+export function claimableNotificationLastErrorFilter(): Prisma.AutomationDeliveryJobWhereInput {
+  return {
+    OR: [
+      { lastErrorClass: null },
+      {
+        lastErrorClass: {
+          notIn: [DELIVERY_OUTCOME_UNKNOWN_EXTERNAL, DELIVERY_OUTCOME_PROVIDER_UNCERTAIN],
+        },
+      },
+    ],
+  }
+}
 
 /** Re-queue notification jobs stuck in PROCESSING after lease expiry (fenced). */
 export async function recoverExpiredAutomationDeliveryClaims(now = new Date(), limit = 50): Promise<number> {
@@ -76,10 +91,10 @@ export async function tryClaimAutomationDeliveryJob(input: {
       id: input.jobId,
       status: { in: statuses },
       nextAttemptAt: { lte: now },
-      lastErrorClass: {
-        notIn: [DELIVERY_OUTCOME_UNKNOWN_EXTERNAL, DELIVERY_OUTCOME_PROVIDER_UNCERTAIN],
-      },
-      OR: [{ claimExpiresAt: null }, { claimExpiresAt: { lt: now } }],
+      AND: [
+        claimableNotificationLastErrorFilter(),
+        { OR: [{ claimExpiresAt: null }, { claimExpiresAt: { lt: now } }] },
+      ],
     },
     data: {
       status: 'PROCESSING',

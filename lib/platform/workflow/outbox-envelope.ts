@@ -75,7 +75,20 @@ export function validateOutboxEnvelopeForRow(
     payloadRef: envelope.payloadRef,
   })
   if (rebuilt !== envelope.requestFingerprint) return { ok: false, reason: 'canonical_fingerprint_drift' }
+  if (!envelopePayloadRefsConsistent(envelope)) return { ok: false, reason: 'payload_ref_mismatch' }
   return { ok: true }
+}
+
+function stableJson(value: Record<string, unknown>): string {
+  const keys = Object.keys(value).sort()
+  const ordered: Record<string, unknown> = {}
+  for (const key of keys) ordered[key] = value[key]
+  return JSON.stringify(ordered)
+}
+
+/** Top-level envelope payload must match enqueue payload (immutable operation identity). */
+export function envelopePayloadRefsConsistent(envelope: WorkflowOutboxEnvelope): boolean {
+  return stableJson(envelope.payloadRef) === stableJson(envelope.enqueue.payloadRef)
 }
 
 export function workflowJobMatchesOutboxEnvelope(

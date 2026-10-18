@@ -17,6 +17,7 @@ import {
 import {
   DELIVERY_OUTCOME_UNKNOWN_EXTERNAL,
   isExternalDeliveryChannel,
+  isQuarantinedDeliveryOutcome,
 } from '@/lib/automation/delivery-outcome'
 
 const CHANNELS: Record<AutomationDeliveryChannel, NotificationChannel> = {
@@ -184,6 +185,9 @@ export async function retryAutomationDeliveryJob(jobId: string) {
   const job = await prisma.automationDeliveryJob.findUnique({ where: { id: jobId } })
   if (!job) return { ok: false as const, error: 'not_found' }
   if (job.status !== 'FAILED' && job.status !== 'DEAD') return { ok: false as const, error: 'not_retryable' }
+  if (isQuarantinedDeliveryOutcome(job.lastErrorClass)) {
+    return { ok: false as const, error: 'requires_reconciliation' }
+  }
   await prisma.automationDeliveryJob.update({
     where: { id: jobId },
     data: { status: 'PENDING', nextAttemptAt: new Date(), lastErrorClass: null },

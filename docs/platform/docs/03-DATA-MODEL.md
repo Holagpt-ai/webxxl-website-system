@@ -4,7 +4,7 @@
 
 ## AUTO-10 workflow persistence (implemented in schema; migration pending apply)
 
-`WorkflowJob`, `WorkflowAttempt`, `WorkflowEvent`, `WorkflowOutbox`, `WorkflowDeadLetter`, `WorkflowRepairAudit` — durable execution FSM, lease/fencing, idempotency (`customerAccountId` + `idempotencyKey` uniqueness), transactional outbox, and repair audit. **Does not** duplicate wallet ledger, marketing artifact authority, or social publication rows. Legacy `AutomationDeliveryJob` extended with `claimOwner`, `claimToken`, `claimExpiresAt`, `claimFence` for conditional PROCESSING claims only. Migration `20261018280000_auto10_workflow_foundation`.
+`WorkflowJob`, `WorkflowAttempt`, `WorkflowEvent`, `WorkflowOutbox`, `WorkflowDeadLetter`, `WorkflowRepairAudit` — durable execution FSM, lease/fencing, idempotency (`customerAccountId` + `idempotencyKey` uniqueness), transactional outbox, and repair audit. **Does not** duplicate wallet ledger, marketing artifact authority, or social publication rows. Legacy `AutomationDeliveryJob` extended with `claimOwner`, `claimToken`, `claimExpiresAt`, `claimFence` for conditional PROCESSING claims only. Migrations: `20261018280000_auto10_workflow_foundation`, `20261018290000_auto10c_outbox_dispatch_lease` (`dispatchLeaseToken`, `dispatchLeaseOwner`, `dispatchLeaseExpiresAt`, `dispatchAttemptCount` on `WorkflowOutbox`).
 
 ## COMMS-06 persistence (implemented in schema; migration pending apply)
 
