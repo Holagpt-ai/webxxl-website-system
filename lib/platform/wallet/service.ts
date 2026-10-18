@@ -248,6 +248,7 @@ export function createWalletContractService(store: InMemoryPlatformStore): Walle
         idempotencyKey: input.idempotencyKey,
         effectiveAt: new Date(),
         actorUserId: input.actorUserId,
+        actorServiceId: null,
       }
       store.ledger.push(entry)
       const usage = store.usage.find((item) => item.reservationId === reservation.id)
@@ -289,6 +290,7 @@ export function createWalletContractService(store: InMemoryPlatformStore): Walle
             idempotencyKey: input.idempotencyKey,
             effectiveAt: new Date(),
             actorUserId: input.actorUserId,
+            actorServiceId: null,
           })
         }
       }
@@ -325,6 +327,7 @@ export function createWalletContractService(store: InMemoryPlatformStore): Walle
         idempotencyKey: input.idempotencyKey,
         effectiveAt: new Date(),
         actorUserId: input.actorUserId,
+        actorServiceId: null,
       }
       store.ledger.push(entry)
       return { ok: true, value: entry }
@@ -366,6 +369,7 @@ export function seedWalletTopUp(
     idempotencyKey,
     effectiveAt: new Date(),
     actorUserId,
+    actorServiceId: null,
   }
   store.ledger.push(entry)
   return { ok: true, value: entry }

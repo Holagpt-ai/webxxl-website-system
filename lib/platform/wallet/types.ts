@@ -82,6 +82,7 @@ export type WalletLedgerEntryRecord = {
   idempotencyKey: string
   effectiveAt: Date
   actorUserId: string | null
+  actorServiceId: string | null
 }
 
 export type CreditReservationRecord = {

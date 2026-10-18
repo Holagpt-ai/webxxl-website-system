@@ -2,7 +2,6 @@ import type { PrismaClient } from '@prisma/client'
 import type { WalletLedgerEntryRecord, WalletResult } from '@/lib/platform/wallet/types'
 import { validateCreditAmount } from '@/lib/platform/wallet/validation'
 import type { WalletMutationPrincipal } from '@/lib/platform/wallet/mutation-principal'
-import { walletPrincipalActorId } from '@/lib/platform/wallet/mutation-principal'
 import { assertWalletMutationAuthorized } from '@/lib/platform/wallet/durable-authz'
 
 import { isWalletSyntheticFundingAllowed } from '@/config/wallet-backend'
@@ -30,8 +29,6 @@ export async function seedSyntheticWalletTopUpForTests(
   }
   const amountCheck = validateCreditAmount(input.amount)
   if (!amountCheck.ok) return { ok: false, error: 'INVALID_AMOUNT' }
-
-  const actorUserId = walletPrincipalActorId(input.principal)
 
   return prisma.$transaction(async (tx) => {
     const auth = await assertWalletMutationAuthorized(tx, {
@@ -66,6 +63,7 @@ export async function seedSyntheticWalletTopUpForTests(
           idempotencyKey: existing.idempotencyKey,
           effectiveAt: existing.effectiveAt,
           actorUserId: existing.actorUserId,
+          actorServiceId: (existing as { actorServiceId?: string | null }).actorServiceId ?? null,
         },
       }
     }
@@ -78,7 +76,8 @@ export async function seedSyntheticWalletTopUpForTests(
         priceVersion: 'wallet09-synthetic-test-only',
         providerRef: 'synthetic-test:vitest-fixture',
         idempotencyKey: input.idempotencyKey,
-        actorUserId,
+        actorUserId: auth.actorUserId,
+        actorServiceId: auth.actorServiceId,
       },
     })
     await tx.creditWallet.update({ where: { id: wallet.id }, data: { ledgerSequence: { increment: 1 } } })
@@ -100,6 +99,7 @@ export async function seedSyntheticWalletTopUpForTests(
         idempotencyKey: entry.idempotencyKey,
         effectiveAt: entry.effectiveAt,
         actorUserId: entry.actorUserId,
+        actorServiceId: (entry as { actorServiceId?: string | null }).actorServiceId ?? null,
       },
     }
   })

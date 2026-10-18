@@ -7,7 +7,7 @@ import {
 } from '@/config/wallet-backend'
 import type { WalletDenial } from '@/lib/platform/wallet/types'
 
-export type WalletDurableOperation = 'RESERVE' | 'SETTLE' | 'REFUND' | 'RECONCILE'
+export type WalletDurableOperation = 'RESERVE' | 'SETTLE' | 'REFUND' | 'RECONCILE' | 'RELEASE' | 'EXPIRE'
 
 /** Test-only bypass; impossible when NODE_ENV is production. */
 export function isWalletTestExecutionBypassEnabled(): boolean {
@@ -27,6 +27,9 @@ function denialForOperation(operation: WalletDurableOperation): WalletDenial {
       return 'UNAUTHORIZED_SETTLE'
     case 'REFUND':
       return 'UNAUTHORIZED_SETTLE'
+    case 'RELEASE':
+    case 'EXPIRE':
+      return 'UNAUTHORIZED_SPEND'
   }
 }
 
@@ -44,5 +47,8 @@ export function walletDurableOperationDenial(operation: WalletDurableOperation):
       return isWalletRefundEnabled() ? null : 'UNAUTHORIZED_SETTLE'
     case 'RECONCILE':
       return isWalletProviderReconciliationEnabled() ? null : 'UNAUTHORIZED_SETTLE'
+    case 'RELEASE':
+    case 'EXPIRE':
+      return isWalletReservationEnabled() ? null : 'UNAUTHORIZED_SPEND'
   }
 }

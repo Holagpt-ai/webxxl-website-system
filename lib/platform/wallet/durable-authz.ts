@@ -1,6 +1,8 @@
 import type { BillingGroupRoleKind } from '@/lib/platform/wallet/types'
 import type { WalletMutationOperation, WalletMutationPrincipal } from '@/lib/platform/wallet/mutation-principal'
-import { assertServicePrincipalForOperation, walletPrincipalActorId } from '@/lib/platform/wallet/mutation-principal'
+import { assertServicePrincipalForOperation } from '@/lib/platform/wallet/mutation-principal'
+import { ledgerActorAttributionFromPrincipal } from '@/lib/platform/wallet/ledger-actor-attribution'
+import type { LedgerActorAttribution } from '@/lib/platform/wallet/ledger-actor-attribution'
 import { isEffectiveFundingMembership, type FundingMembership } from '@/lib/platform/billing-authz'
 import type { PrismaClient } from '@prisma/client'
 
@@ -67,14 +69,17 @@ export async function assertWalletMutationAuthorized(
     customerAccountId?: string
     at: Date
   },
-): Promise<{ ok: true; actorUserId: string } | { ok: false; error: import('@/lib/platform/wallet/types').WalletDenial }> {
+): Promise<
+  | ({ ok: true } & LedgerActorAttribution)
+  | { ok: false; error: import('@/lib/platform/wallet/types').WalletDenial }
+> {
   const groupActive = await assertBillingGroupActive(tx, input.billingGroupId)
   if (!groupActive) return { ok: false, error: 'ACCOUNT_NOT_FUNDED' }
 
   if (input.principal.kind === 'SERVICE') {
     const serviceCheck = assertServicePrincipalForOperation(input.principal, input.operation)
     if (!serviceCheck.ok) return serviceCheck
-    return { ok: true, actorUserId: walletPrincipalActorId(input.principal) }
+    return { ok: true, ...ledgerActorAttributionFromPrincipal(input.principal) }
   }
 
   const userId = input.principal.userId
@@ -85,7 +90,7 @@ export async function assertWalletMutationAuthorized(
       if (!funded) return { ok: false, error: 'ACCOUNT_NOT_FUNDED' }
       const operating = await userHasOperatingMembership(tx, userId, input.customerAccountId)
       if (!operating) return { ok: false, error: 'UNAUTHORIZED_SPEND' }
-      return { ok: true, actorUserId: userId }
+      return { ok: true, actorUserId: userId, actorServiceId: null }
     }
     case 'SETTLE':
     case 'RELEASE':
@@ -94,7 +99,7 @@ export async function assertWalletMutationAuthorized(
     case 'FUND': {
       const privileged = await userHasBillingRole(tx, userId, input.billingGroupId, PRIVILEGED_ROLES)
       if (!privileged) return { ok: false, error: 'UNAUTHORIZED_SETTLE' }
-      return { ok: true, actorUserId: userId }
+      return { ok: true, actorUserId: userId, actorServiceId: null }
     }
     case 'EXPIRE': {
       const viewer = await userHasBillingRole(tx, userId, input.billingGroupId, [
@@ -102,7 +107,7 @@ export async function assertWalletMutationAuthorized(
         'BILLING_VIEWER',
       ])
       if (!viewer) return { ok: false, error: 'UNAUTHORIZED_SETTLE' }
-      return { ok: true, actorUserId: userId }
+      return { ok: true, actorUserId: userId, actorServiceId: null }
     }
     default:
       return { ok: false, error: 'UNAUTHORIZED_SETTLE' }

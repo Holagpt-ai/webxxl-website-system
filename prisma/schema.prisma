@@ -1489,6 +1489,7 @@ model WalletLedgerEntry {
   effectiveAt           DateTime              @default(now())
   createdAt             DateTime              @default(now())
   actorUserId           String?
+  actorServiceId        String?
 
   wallet          CreditWallet        @relation(fields: [walletId], references: [id], onDelete: Restrict)
   customerAccount CustomerAccount?    @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)

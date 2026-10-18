@@ -196,6 +196,7 @@ describe('WALLET-09B accounting integrity', () => {
         idempotencyKey: row.idempotencyKey,
         effectiveAt: now,
         actorUserId: null,
+        actorServiceId: null,
       }),
     )
     expect(denied.ok).toBe(false)
@@ -264,14 +265,13 @@ describe('WALLET-09B accounting integrity', () => {
     const fromQuote = estimateMessagingCostFromQuotedUnits({
       channel: 'SMS',
       providerKey: 'twilio',
-      quotedUnits: 8,
-      recipientCount: 100,
+      totalQuotedUnits: 200,
       rateVersion: 'wallet09-fixture-v1',
     })
     expect(fromBody.ok && fromQuote.ok).toBe(true)
     if (!fromBody.ok || !fromQuote.ok) return
     expect(fromBody.value.estimatedTotalCredits).toBe(2)
-    expect(fromQuote.value.estimatedTotalCredits).toBe(1600)
+    expect(fromQuote.value.estimatedTotalCredits).toBe(400)
     expect(fromBody.value.estimatedTotalCredits).not.toBe(fromQuote.value.estimatedTotalCredits)
   })
 

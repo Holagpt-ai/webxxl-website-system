@@ -1,5 +1,8 @@
 type ZonedParts = { year: number; month: number; day: number; hour: number; minute: number; second: number }
 
+const MIDNIGHT_SEARCH_STEP_MS = 15 * 60 * 1000
+const MIDNIGHT_SEARCH_WINDOW_MS = 48 * 3_600_000
+
 export function isSupportedPolicyTimezone(timeZone: string): boolean {
   if (timeZone === 'UTC') return true
   try {
@@ -41,6 +44,17 @@ function zonedDateTimeParts(at: Date, timeZone: string): ZonedParts | null {
   }
 }
 
+function isLocalMidnight(parts: ZonedParts, year: number, month: number, day: number): boolean {
+  return (
+    parts.year === year &&
+    parts.month === month &&
+    parts.day === day &&
+    parts.hour === 0 &&
+    parts.minute === 0 &&
+    parts.second === 0
+  )
+}
+
 /** UTC instant for local calendar date at 00:00:00 in the given IANA timezone. */
 export function utcInstantForZonedMidnight(
   year: number,
@@ -54,24 +68,24 @@ export function utcInstantForZonedMidnight(
   if (!isSupportedPolicyTimezone(timeZone)) return null
 
   const anchor = Date.UTC(year, month - 1, day, 12, 0, 0, 0)
-  let candidate: number | null = null
-  for (let t = anchor - 36 * 3_600_000; t <= anchor + 36 * 3_600_000; t += 3_600_000) {
+  let best: number | null = null
+  for (
+    let t = anchor - MIDNIGHT_SEARCH_WINDOW_MS;
+    t <= anchor + MIDNIGHT_SEARCH_WINDOW_MS;
+    t += MIDNIGHT_SEARCH_STEP_MS
+  ) {
     const p = zonedDateTimeParts(new Date(t), timeZone)
     if (!p) return null
-    if (p.year === year && p.month === month && p.day === day && p.hour === 0 && p.minute === 0) {
-      candidate = t
-      break
+    if (isLocalMidnight(p, year, month, day)) {
+      if (best === null || t < best) best = t
     }
   }
-  if (candidate === null) return null
+  if (best === null) return null
 
-  let best = candidate
-  for (let t = candidate - 3_600_000; t <= candidate + 3_600_000; t += 60_000) {
+  for (let t = best - MIDNIGHT_SEARCH_STEP_MS; t <= best + MIDNIGHT_SEARCH_STEP_MS; t += 60_000) {
     const p = zonedDateTimeParts(new Date(t), timeZone)
     if (!p) continue
-    if (p.year === year && p.month === month && p.day === day && p.hour === 0 && p.minute === 0 && p.second === 0) {
-      if (t < best) best = t
-    }
+    if (isLocalMidnight(p, year, month, day) && t < best) best = t
   }
   return new Date(best)
 }

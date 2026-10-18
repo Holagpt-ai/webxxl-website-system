@@ -16,6 +16,7 @@ import {
   isBillableProviderNormalizedStatus,
 } from '@/lib/platform/wallet/provider-reconciliation'
 import { walletDurableOperationDenial } from '@/lib/platform/wallet/execution-gates'
+import type { LedgerActorAttribution } from '@/lib/platform/wallet/ledger-actor-attribution'
 import {
   validateProviderReceiptLedgerScope,
   validateRefundLedgerIdempotencyReplay,
@@ -94,6 +95,7 @@ function mapLedger(row: {
   idempotencyKey: string
   effectiveAt: Date
   actorUserId: string | null
+  actorServiceId?: string | null
 }): WalletLedgerEntryRecord {
   return {
     id: row.id,
@@ -111,6 +113,7 @@ function mapLedger(row: {
     idempotencyKey: row.idempotencyKey,
     effectiveAt: row.effectiveAt,
     actorUserId: row.actorUserId,
+    actorServiceId: row.actorServiceId ?? null,
   }
 }
 
@@ -523,7 +526,7 @@ async function settleReservationInTx(
   tx: Tx,
   input: DurableSettleCreditsInput,
   at: Date,
-  actorUserId: string,
+  actor: LedgerActorAttribution,
 ): Promise<WalletResult<WalletLedgerEntryRecord>> {
   const reservation = await tx.creditReservation.findUnique({ where: { id: input.reservationId } })
   if (!reservation) return { ok: false, error: 'RESERVATION_NOT_FOUND' }
@@ -580,7 +583,8 @@ async function settleReservationInTx(
         reservationId: reservation.id,
         providerRef: input.providerRef,
         idempotencyKey: input.idempotencyKey,
-        actorUserId,
+        actorUserId: actor.actorUserId,
+        actorServiceId: actor.actorServiceId,
       },
     })
   } catch (error) {
@@ -625,7 +629,7 @@ export async function settleReservation(
         at,
       })
       if (!auth.ok) return auth
-      return settleReservationInTx(tx, input, at, auth.actorUserId)
+      return settleReservationInTx(tx, input, at, auth)
     })
   } catch (error) {
     if (isPrismaUniqueViolation(error)) {
@@ -644,6 +648,9 @@ export async function releaseReservation(
   prisma: PrismaClient,
   input: DurableReleaseCreditsInput,
 ): Promise<WalletResult<CreditReservationRecord>> {
+  const releaseDenial = walletDurableOperationDenial('RELEASE')
+  if (releaseDenial) return { ok: false, error: releaseDenial }
+
   const at = new Date()
   return prisma.$transaction(async (tx) => {
     const reservation = await tx.creditReservation.findUnique({ where: { id: input.reservationId } })
@@ -687,6 +694,7 @@ export async function releaseReservation(
             reservationId: reservation.id,
             idempotencyKey: input.idempotencyKey,
             actorUserId: auth.actorUserId,
+            actorServiceId: auth.actorServiceId,
           },
         })
       }
@@ -710,6 +718,9 @@ export async function expireReservation(
   principal: import('@/lib/platform/wallet/mutation-principal').WalletMutationPrincipal,
   at = new Date(),
 ): Promise<WalletResult<CreditReservationRecord>> {
+  const expireDenial = walletDurableOperationDenial('EXPIRE')
+  if (expireDenial) return { ok: false, error: expireDenial }
+
   return prisma.$transaction(async (tx) => {
     const reservation = await tx.creditReservation.findUnique({ where: { id: reservationId } })
     if (!reservation) return { ok: false, error: 'RESERVATION_NOT_FOUND' }
@@ -722,17 +733,33 @@ export async function expireReservation(
       at,
     })
     if (!auth.ok) return auth
-    if (!OPEN_HOLD_STATUSES.includes(reservation.status)) {
-      return { ok: true, value: mapReservation(reservation) }
-    }
-    if (reservation.expiresAt > at) return { ok: true, value: mapReservation(reservation) }
+
     await lockWalletRow(tx, reservation.walletId)
-    await tx.creditReservation.update({
-      where: { id: reservation.id },
+
+    const current = await tx.creditReservation.findUnique({ where: { id: reservationId } })
+    if (!current) return { ok: false, error: 'RESERVATION_NOT_FOUND' }
+    if (!OPEN_HOLD_STATUSES.includes(current.status)) {
+      return { ok: true, value: mapReservation(current) }
+    }
+    if (current.expiresAt > at) return { ok: true, value: mapReservation(current) }
+
+    const updated = await tx.creditReservation.updateMany({
+      where: {
+        id: current.id,
+        status: { in: OPEN_HOLD_STATUSES },
+        settledAmount: current.settledAmount,
+        expiresAt: { lte: at },
+      },
       data: { status: 'EXPIRED' },
     })
+    if (updated.count !== 1) {
+      const fresh = await tx.creditReservation.findUnique({ where: { id: reservationId } })
+      if (fresh) return { ok: true, value: mapReservation(fresh) }
+      return { ok: false, error: 'RESERVATION_NOT_FOUND' }
+    }
+
     await tx.messageUsage.updateMany({
-      where: { reservationId: reservation.id },
+      where: { reservationId: current.id },
       data: { status: 'RELEASED' },
     })
     const fresh = await tx.creditReservation.findUniqueOrThrow({ where: { id: reservation.id } })
@@ -798,6 +825,7 @@ export async function refundCredits(
           reservationId: original.reservationId,
           idempotencyKey: input.idempotencyKey,
           actorUserId: auth.actorUserId,
+          actorServiceId: auth.actorServiceId,
         },
       })
     } catch (error) {
@@ -927,7 +955,7 @@ export async function reconcileProviderSettlementEvent(
           managedSiteId: input.managedSiteId ?? reservation.managedSiteId ?? undefined,
         },
         at,
-        auth.actorUserId,
+        auth,
       )
       if (!settleResult.ok) return settleResult
 

@@ -43,22 +43,28 @@ export type QuotedUnitsEstimateInput = {
   providerKey: string
   purpose?: string
   rateVersion?: string
-  quotedUnits: number
-  recipientCount?: number
+  /** Aggregate estimated units across all eligible recipients (COMMS-06: typically equals eligibleCount). */
+  totalQuotedUnits: number
 }
 
-/** Cost from server-quoted units (segments/messages) — does not inspect message body text. */
+const VERIFIED_WALLET_RATE_PLAN_VERSIONS = new Set([FIXTURE_RATE_VERSION, 'wallet09-fixture-v1'])
+
+export function isVerifiedWalletRatePlanVersion(rateVersion: string): boolean {
+  return VERIFIED_WALLET_RATE_PLAN_VERSIONS.has(rateVersion)
+}
+
+/** Cost from server-quoted aggregate units — does not inspect message body or multiply recipients twice. */
 export function estimateMessagingCostFromQuotedUnits(
   input: QuotedUnitsEstimateInput,
 ): { ok: true; value: MessagingCostEstimate } | { ok: false; error: Extract<WalletDenial, 'COST_UNAVAILABLE'> } {
-  if (!Number.isInteger(input.quotedUnits) || input.quotedUnits <= 0) {
+  if (!Number.isInteger(input.totalQuotedUnits) || input.totalQuotedUnits <= 0) {
     return { ok: false, error: 'COST_UNAVAILABLE' }
   }
-  const recipients = input.recipientCount ?? 1
-  if (!Number.isInteger(recipients) || recipients <= 0) {
+  const rateVersion = input.rateVersion ?? FIXTURE_RATE_VERSION
+  if (!isVerifiedWalletRatePlanVersion(rateVersion)) {
     return { ok: false, error: 'COST_UNAVAILABLE' }
   }
-  const totalUnits = input.quotedUnits * recipients
+  const totalUnits = input.totalQuotedUnits
   const purpose = input.purpose ?? 'TRANSACTIONAL'
   const destinationClass = 'US'
 
@@ -73,12 +79,12 @@ export function estimateMessagingCostFromQuotedUnits(
         destinationClass,
         purpose,
         estimatedUnits: totalUnits,
-        rateVersion: input.rateVersion ?? FIXTURE_RATE_VERSION,
+        rateVersion,
         creditsPerUnit,
         estimatedTotalCredits: total,
         maxAllowedCost: total,
         priceSource: 'wallet09-quote-units',
-        methodology: 'quoted-segment-units from approved communication quote',
+        methodology: 'aggregate quoted segment units from approved communication quote',
       },
     }
   }
@@ -94,12 +100,12 @@ export function estimateMessagingCostFromQuotedUnits(
         destinationClass,
         purpose,
         estimatedUnits: totalUnits,
-        rateVersion: input.rateVersion ?? FIXTURE_RATE_VERSION,
+        rateVersion,
         creditsPerUnit,
         estimatedTotalCredits: total,
         maxAllowedCost: total,
         priceSource: 'wallet09-quote-units',
-        methodology: 'quoted message units from approved communication quote',
+        methodology: 'aggregate quoted message units from approved communication quote',
       },
     }
   }

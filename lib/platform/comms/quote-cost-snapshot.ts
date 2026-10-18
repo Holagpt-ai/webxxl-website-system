@@ -1,4 +1,7 @@
-import { estimateMessagingCostFromQuotedUnits } from '@/lib/platform/wallet/rate-plan'
+import {
+  estimateMessagingCostFromQuotedUnits,
+  isVerifiedWalletRatePlanVersion,
+} from '@/lib/platform/wallet/rate-plan'
 
 export type CommunicationQuoteCostRow = {
   channel: string
@@ -18,9 +21,11 @@ export type VerifiedQuoteCost =
       ok: true
       authorizedCredits: number
       rateVersion: string
-      quotedUnits: number
-      contentHash: string
+      totalEstimatedUnits: number
+      unitsPerRecipient: number
       recipientCount: number
+      eligibleCount: number
+      contentHash: string
     }
   | { ok: false; error: 'COST_UNAVAILABLE' }
 
@@ -30,19 +35,37 @@ function readDetailNumber(detail: unknown, key: string): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
 
+function verifyQuoteUnitDimensions(quote: CommunicationQuoteCostRow): boolean {
+  if (quote.recipientCount <= 0 || quote.eligibleCount <= 0) return false
+  if (quote.eligibleCount > quote.recipientCount) return false
+  if (quote.estimatedUnits <= 0) return false
+
+  const unitsPerRecipient = readDetailNumber(quote.detail, 'unitsPerRecipient') ?? 1
+  if (!Number.isInteger(unitsPerRecipient) || unitsPerRecipient <= 0) return false
+
+  const expectedTotal = quote.eligibleCount * unitsPerRecipient
+  if (quote.estimatedUnits !== expectedTotal) return false
+
+  const detailTotal = readDetailNumber(quote.detail, 'totalEstimatedUnits')
+  if (detailTotal != null && detailTotal !== quote.estimatedUnits) return false
+
+  return true
+}
+
 /**
  * Server-side cost bound from the approved quote revision — never treats contentHash as message body.
+ * `estimatedUnits` is aggregate total units (COMMS-06: eligibleCount × unitsPerRecipient).
  */
 export function resolveVerifiedCommunicationQuoteCost(quote: CommunicationQuoteCostRow): VerifiedQuoteCost {
   if (!quote.contentHash) return { ok: false, error: 'COST_UNAVAILABLE' }
-  if (quote.estimatedUnits <= 0) return { ok: false, error: 'COST_UNAVAILABLE' }
-  if (quote.recipientCount <= 0 || quote.eligibleCount <= 0) {
+  if (!verifyQuoteUnitDimensions(quote)) return { ok: false, error: 'COST_UNAVAILABLE' }
+
+  const rateVersion = quote.ratePlanVersion ?? quote.unitCostVersion
+  if (!rateVersion || !isVerifiedWalletRatePlanVersion(rateVersion)) {
     return { ok: false, error: 'COST_UNAVAILABLE' }
   }
 
-  const rateVersion = quote.ratePlanVersion ?? quote.unitCostVersion
-  if (!rateVersion) return { ok: false, error: 'COST_UNAVAILABLE' }
-
+  const unitsPerRecipient = readDetailNumber(quote.detail, 'unitsPerRecipient') ?? 1
   const detailMax = readDetailNumber(quote.detail, 'maxAuthorizedCredits')
   const authorizedCredits = quote.maxApprovedCredits ?? detailMax ?? quote.estimatedUnits
   if (authorizedCredits <= 0) return { ok: false, error: 'COST_UNAVAILABLE' }
@@ -53,8 +76,7 @@ export function resolveVerifiedCommunicationQuoteCost(quote: CommunicationQuoteC
     providerKey: channel === 'EMAIL' ? 'resend' : 'twilio',
     purpose: quote.purpose,
     rateVersion,
-    quotedUnits: quote.estimatedUnits,
-    recipientCount: quote.recipientCount,
+    totalQuotedUnits: quote.estimatedUnits,
   })
   if (!estimate.ok) return { ok: false, error: 'COST_UNAVAILABLE' }
   if (estimate.value.estimatedTotalCredits > authorizedCredits) {
@@ -65,8 +87,10 @@ export function resolveVerifiedCommunicationQuoteCost(quote: CommunicationQuoteC
     ok: true,
     authorizedCredits,
     rateVersion,
-    quotedUnits: quote.estimatedUnits,
-    contentHash: quote.contentHash,
+    totalEstimatedUnits: quote.estimatedUnits,
+    unitsPerRecipient,
     recipientCount: quote.recipientCount,
+    eligibleCount: quote.eligibleCount,
+    contentHash: quote.contentHash,
   }
 }

@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client'
+import { isSyntheticServiceActorUserId } from '@/lib/platform/wallet/ledger-actor-attribution'
 
 type WalletRow = {
   id: string
@@ -26,6 +27,7 @@ type LedgerRow = {
   effectiveAt: Date
   createdAt: Date
   actorUserId: string | null
+  actorServiceId: string | null
 }
 
 type ReservationRow = {
@@ -94,6 +96,8 @@ export function createMemoryWalletPrisma(seed: {
     monthlyLimit: number | null
     allowedChannels: string[] | null
   }>
+  /** When set, ledger actorUserId must reference one of these ids (simulates User FK). */
+  knownUserIds?: string[]
 }) {
   const wallets: WalletRow[] = [
     {
@@ -172,7 +176,17 @@ export function createMemoryWalletPrisma(seed: {
         })
         return { _sum: { deltaCredits: rows.reduce((s, r) => s + r.deltaCredits, 0) } }
       },
-      create: async ({ data }: { data: Partial<LedgerRow> & { walletId: string; type: string; deltaCredits: number; priceVersion: string; idempotencyKey: string } }) => {
+      create: async ({ data }: { data: Partial<LedgerRow> & { walletId: string; type: string; deltaCredits: number; priceVersion: string; idempotencyKey: string; actorServiceId?: string | null } }) => {
+        if (isSyntheticServiceActorUserId(data.actorUserId ?? null)) {
+          const err = new Error('Foreign key violation: actorUserId') as Error & { code: string }
+          err.code = 'P2003'
+          throw err
+        }
+        if (data.actorUserId && seed.knownUserIds && !seed.knownUserIds.includes(data.actorUserId)) {
+          const err = new Error('Foreign key violation: actorUserId') as Error & { code: string }
+          err.code = 'P2003'
+          throw err
+        }
         const row: LedgerRow = {
           id: cid('led'),
           walletId: data.walletId,
@@ -190,6 +204,7 @@ export function createMemoryWalletPrisma(seed: {
           effectiveAt: data.effectiveAt ?? new Date(),
           createdAt: new Date(),
           actorUserId: data.actorUserId ?? null,
+          actorServiceId: data.actorServiceId ?? null,
         }
         ledger.push(row)
         return row
@@ -239,15 +254,24 @@ export function createMemoryWalletPrisma(seed: {
         where,
         data,
       }: {
-        where: { id: string; settledAmount?: number; status?: string }
+        where: {
+          id: string
+          settledAmount?: number
+          status?: string | { in: string[] }
+          expiresAt?: { lte: Date }
+        }
         data: { settledAmount?: number; status?: string }
       }) => {
-        const row = reservations.find(
-          (r) =>
-            r.id === where.id &&
-            (where.settledAmount == null || r.settledAmount === where.settledAmount) &&
-            (where.status == null || r.status === where.status),
-        )
+        const row = reservations.find((r) => {
+          if (r.id !== where.id) return false
+          if (where.settledAmount != null && r.settledAmount !== where.settledAmount) return false
+          if (typeof where.status === 'string' && r.status !== where.status) return false
+          if (where.status && typeof where.status === 'object' && !where.status.in.includes(r.status)) {
+            return false
+          }
+          if (where.expiresAt?.lte && r.expiresAt > where.expiresAt.lte) return false
+          return true
+        })
         if (!row) return { count: 0 }
         if (data.settledAmount != null) row.settledAmount = data.settledAmount
         if (data.status != null) row.status = data.status
