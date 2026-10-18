@@ -9,7 +9,6 @@ __v0_jsx-dev-runtime.ts
 # Environment variables
 .env*.local
 infra/services/**/.env
-infra/services/**/.env.compose-validate
 infra/services/**/postiz.env
 
 # Common ignores

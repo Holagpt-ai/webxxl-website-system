@@ -4,12 +4,50 @@ $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..\..")
 $servicesRoot = Join-Path $repoRoot "infra\services"
 
 function Test-ComposeJson {
-  param([string]$Label, [string[]]$ComposeArgs, [hashtable]$EnvExtra)
+  param(
+    [string]$Label,
+    [string[]]$ComposeArgs,
+    [hashtable]$EnvExtra,
+    [string]$ProjectDirectory = $repoRoot
+  )
   foreach ($k in $EnvExtra.Keys) { Set-Item -Path "env:$k" -Value $EnvExtra[$k] }
-  $json = & docker compose @ComposeArgs config --format json 2>&1
-  if ($LASTEXITCODE -ne 0) { throw "${Label}: docker compose config failed: $json" }
-  $cfg = $json | ConvertFrom-Json
-  return $cfg
+  Push-Location $ProjectDirectory
+  try {
+    $json = & docker compose @ComposeArgs config --format json 2>&1
+    if ($LASTEXITCODE -ne 0) { throw "${Label}: docker compose config failed: $json" }
+    return ($json | ConvertFrom-Json)
+  } finally {
+    Pop-Location
+  }
+}
+
+function Get-OperationalEnvSnapshot {
+  param([string]$EnvPath)
+  if (-not (Test-Path -LiteralPath $EnvPath)) {
+    return @{ Existed = $false; Content = $null; MtimeMs = $null; Path = $EnvPath }
+  }
+  $item = Get-Item -LiteralPath $EnvPath
+  return @{
+    Existed = $true
+    Content = Get-Content -Raw -LiteralPath $EnvPath
+    MtimeMs = $item.LastWriteTimeUtc.Ticks
+    Path = $EnvPath
+  }
+}
+
+function Assert-OperationalEnvUntouched {
+  param($Before)
+  $after = Get-OperationalEnvSnapshot -EnvPath $Before.Path
+  if ($Before.Existed -ne $after.Existed) {
+    throw "Operational env $($Before.Path) existence changed"
+  }
+  if (-not $Before.Existed) { return }
+  if ($Before.Content -ne $after.Content) {
+    throw "Operational env $($Before.Path) content was modified"
+  }
+  if ($Before.MtimeMs -ne $after.MtimeMs) {
+    throw "Operational env $($Before.Path) timestamp changed"
+  }
 }
 
 function Assert-NoPublicPorts {
@@ -45,6 +83,18 @@ function Assert-NoContainerNames {
   }
 }
 
+function New-ChatwootValidateSandbox {
+  $sourceCompose = Join-Path $servicesRoot "chatwoot\docker-compose.staging.yml"
+  $workDir = Join-Path ([System.IO.Path]::GetTempPath()) ("webxxl-chatwoot-compose-validate-" + [guid]::NewGuid().ToString("n"))
+  New-Item -ItemType Directory -Path $workDir -Force | Out-Null
+  Copy-Item -LiteralPath $sourceCompose -Destination (Join-Path $workDir "docker-compose.staging.yml")
+  @"
+SECRET_KEY_BASE=local-config-test-only-secret-key-base-minimum-sixty-four-characters-long!!
+FRONTEND_URL=http://127.0.0.1:13000
+"@ | Set-Content -LiteralPath (Join-Path $workDir ".env") -Encoding utf8
+  return $workDir
+}
+
 $docker = Get-Command docker -ErrorAction SilentlyContinue
 if (-not $docker) {
   Write-Host "PENDING: Docker not available; effective compose validation skipped."
@@ -54,27 +104,22 @@ if (-not $docker) {
 $ver = (docker compose version --short 2>$null)
 Write-Host "Docker Compose version: $ver"
 
-# Chatwoot standalone (ephemeral .env for config validation only)
-$chatwootDir = Join-Path $servicesRoot "chatwoot"
-$chatwootEnvFile = Join-Path $chatwootDir ".env.compose-validate"
-@"
-SECRET_KEY_BASE=local-config-test-only-secret-key-base-minimum-sixty-four-characters-long!!
-FRONTEND_URL=http://127.0.0.1:13000
-"@ | Set-Content -LiteralPath $chatwootEnvFile -Encoding utf8
-$chatwootDotEnv = Join-Path $chatwootDir ".env"
-Copy-Item -LiteralPath $chatwootEnvFile -Destination $chatwootDotEnv -Force
-$chatwootEnv = @{
-  POSTGRES_PASSWORD = "local-config-test-only"
-  REDIS_PASSWORD = "local-config-test-only"
-}
+# Chatwoot — isolated temp sandbox only (never infra/services/chatwoot/.env)
+$operationalEnv = Join-Path $servicesRoot "chatwoot\.env"
+$envBefore = Get-OperationalEnvSnapshot -EnvPath $operationalEnv
+$chatwootSandbox = New-ChatwootValidateSandbox
 try {
+  $chatwootEnv = @{
+    POSTGRES_PASSWORD = "local-config-test-only"
+    REDIS_PASSWORD = "local-config-test-only"
+  }
   $chatwoot = Test-ComposeJson -Label "chatwoot" -ComposeArgs @(
-    "-f", (Join-Path $chatwootDir "docker-compose.staging.yml")
-  ) -EnvExtra $chatwootEnv
+    "-f", (Join-Path $chatwootSandbox "docker-compose.staging.yml")
+  ) -EnvExtra $chatwootEnv -ProjectDirectory $chatwootSandbox
 } finally {
-  Remove-Item -LiteralPath $chatwootEnvFile -Force -ErrorAction SilentlyContinue
-  Remove-Item -LiteralPath $chatwootDotEnv -Force -ErrorAction SilentlyContinue
+  Remove-Item -LiteralPath $chatwootSandbox -Recurse -Force -ErrorAction SilentlyContinue
 }
+Assert-OperationalEnvUntouched $envBefore
 if ($chatwoot.name -ne "webxxl-stg-chatwoot") { throw "chatwoot project name mismatch" }
 if ($chatwoot.services.base) { throw "chatwoot must not define a runnable base service" }
 Assert-NoPublicPorts $chatwoot "chatwoot"

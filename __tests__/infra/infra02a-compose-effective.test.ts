@@ -3,6 +3,12 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
+  assertOperationalEnvUntouched,
+  createIsolatedChatwootComposeSandbox,
+  operationalChatwootEnvPath,
+  snapshotOperationalEnvFile,
+} from '@/lib/platform/integrations/chatwoot-compose-validate-sandbox'
+import {
   assertLocalhostOrNoPublish,
   assertNoFixedContainerNames,
   assertNoRunnableBaseService,
@@ -21,9 +27,14 @@ function dockerAvailable(): boolean {
   }
 }
 
-function composeConfigJson(args: string[], env: Record<string, string>): ComposeConfigJson {
-  const result = execSync(`docker compose ${args.join(' ')} config --format json`, {
-    cwd: repoRoot,
+function composeConfigJson(
+  args: string[],
+  env: Record<string, string>,
+  cwd: string,
+): ComposeConfigJson {
+  const quotedArgs = args.map((a) => (a.includes(' ') ? `"${a.replace(/"/g, '\\"')}"` : a))
+  const result = execSync(`docker compose ${quotedArgs.join(' ')} config --format json`, {
+    cwd,
     env: { ...process.env, ...env },
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -67,6 +78,16 @@ describe('INFRA-02A effective compose isolation', () => {
     expect(assertLocalhostOrNoPublish(good, 'app')).toBeNull()
   })
 
+  it('chatwoot validation sandbox does not modify operational .env', () => {
+    const operational = operationalChatwootEnvPath(repoRoot)
+    const before = snapshotOperationalEnvFile(operational)
+    const sandbox = createIsolatedChatwootComposeSandbox(repoRoot)
+    expect(fs.existsSync(path.join(sandbox.workDir, '.env'))).toBe(true)
+    expect(fs.existsSync(operational)).toBe(before.existed)
+    sandbox.cleanup()
+    expect(() => assertOperationalEnvUntouched(before)).not.toThrow()
+  })
+
   const canDocker = dockerAvailable()
 
   it.runIf(canDocker)('merged paperclip config has no db host ports', () => {
@@ -84,6 +105,7 @@ describe('INFRA-02A effective compose isolation', () => {
         PAPERCLIP_POSTGRES_USER: 'paperclip',
         PAPERCLIP_POSTGRES_PASSWORD: 'local-config-test-only',
       },
+      repoRoot,
     )
     expect(cfg.name).toBe('webxxl-stg-paperclip')
     expect(cfg.services?.db?.ports ?? []).toHaveLength(0)
@@ -106,6 +128,7 @@ describe('INFRA-02A effective compose isolation', () => {
         POSTIZ_POSTGRES_DB: 'postiz-db-local',
         TEMPORAL_POSTGRES_PASSWORD: 'local-config-test-only',
       },
+      repoRoot,
     )
     expect(cfg.name).toBe('webxxl-stg-postiz')
     expect(assertNoFixedContainerNames(cfg)).toBeNull()
@@ -114,25 +137,23 @@ describe('INFRA-02A effective compose isolation', () => {
     expect(cfg.services?.['temporal-ui']?.ports ?? []).toHaveLength(0)
   })
 
-  it.runIf(canDocker)('chatwoot effective config has no base service', () => {
-    const chatwootDir = path.join(servicesRoot, 'chatwoot')
-    const dotEnv = path.join(chatwootDir, '.env')
-    fs.writeFileSync(
-      dotEnv,
-      'SECRET_KEY_BASE=local-config-test-only-secret-key-base-minimum-sixty-four-characters-long!!\nFRONTEND_URL=http://127.0.0.1:13000\n',
-    )
+  it.runIf(canDocker)('chatwoot effective config uses temp sandbox and preserves operational .env', () => {
+    const operational = operationalChatwootEnvPath(repoRoot)
+    const before = snapshotOperationalEnvFile(operational)
+    const sandbox = createIsolatedChatwootComposeSandbox(repoRoot)
     try {
-      const cfg = composeConfigJson(['-f', path.join(chatwootDir, 'docker-compose.staging.yml')], {
+      const cfg = composeConfigJson(['-f', sandbox.composeFile], {
         POSTGRES_PASSWORD: 'local-config-test-only',
         REDIS_PASSWORD: 'local-config-test-only',
-      })
+      }, sandbox.workDir)
       expect(assertNoRunnableBaseService(cfg)).toBeNull()
       expect(assertLocalhostOrNoPublish(cfg, 'rails')).toBeNull()
       expect(cfg.services?.postgres?.ports ?? []).toHaveLength(0)
       expect(cfg.services?.redis?.ports ?? []).toHaveLength(0)
     } finally {
-      fs.rmSync(dotEnv, { force: true })
+      sandbox.cleanup()
     }
+    assertOperationalEnvUntouched(before)
   })
 
   it.runIf(!canDocker)('marks effective docker compose verification pending when docker unavailable', () => {

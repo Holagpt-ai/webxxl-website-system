@@ -22,3 +22,5 @@ docker compose -f docker/docker-compose.yml -f /path/to/webxxl/infra/services/pa
 ```
 
 Postiz uses `fixtures/upstream.docker-compose.yaml` in-repo only for automated `docker compose config` checks in CI/dev.
+
+Chatwoot effective validation copies `docker-compose.staging.yml` into a **system temp directory** with a synthetic `.env` there only. It never reads, writes, or deletes `infra/services/chatwoot/.env`.
