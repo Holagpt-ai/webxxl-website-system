@@ -16,3 +16,4 @@ infra/services/**/postiz.env
 node_modules
 .next/
 .DS_Store
+tsconfig.tsbuildinfo
