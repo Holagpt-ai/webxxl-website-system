@@ -61,6 +61,8 @@ CREATE TABLE "SeoCrawlRun" (
     "managedSiteId" TEXT NOT NULL,
     "status" "SeoCrawlRunStatus" NOT NULL DEFAULT 'PREPARED',
     "idempotencyKey" TEXT NOT NULL,
+    "operation" TEXT NOT NULL DEFAULT 'SCAN_PREVIEW',
+    "requestFingerprint" TEXT NOT NULL,
     "maxPages" INTEGER NOT NULL,
     "maxDepth" INTEGER NOT NULL,
     "pagesCrawled" INTEGER NOT NULL DEFAULT 0,

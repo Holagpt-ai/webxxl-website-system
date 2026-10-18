@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { aggregateGscAveragePosition, aggregateGscTraffic } from '@/lib/platform/seo/gsc-normalize'
+import { buildGscPerformanceFromObservations } from '@/lib/platform/seo/gsc-performance-read'
 import { requireSeoApiActor, SeoApiError } from '@/lib/platform/seo/route-auth'
 
 type Params = { params: Promise<{ siteId: string }> }
@@ -14,36 +14,59 @@ export async function GET(_request: Request, { params }: Params) {
     })
     if (!connection || connection.dataState === 'NOT_CONNECTED') {
       return NextResponse.json({
-        gsc: { dataState: 'NOT_CONNECTED', clicks: null, impressions: null, ctr: null, averagePosition: null },
+        gsc: buildGscPerformanceFromObservations({
+          connectionDataState: 'NOT_CONNECTED',
+          propertyRef: '',
+          rows: [],
+        }),
       })
     }
+
+    const snapshot = await prisma.seoSnapshot.findFirst({
+      where: { managedSiteId: siteId, provider: 'GSC', propertyRef: connection.propertyRef },
+      orderBy: { ingestedAt: 'desc' },
+    })
+
+    const keywordWhere = {
+      managedSiteId: siteId,
+      customerAccountId: actor.customerAccountId,
+      provider: 'GSC' as const,
+      ...(snapshot
+        ? {
+            date: { gte: snapshot.dateRangeStart, lte: snapshot.dateRangeEnd },
+          }
+        : {}),
+    }
+
     const keywords = await prisma.seoKeywordObservation.findMany({
-      where: { managedSiteId: siteId, customerAccountId: actor.customerAccountId, provider: 'GSC' },
-      take: 5000,
+      where: keywordWhere,
+      take: 25000,
     })
-    const rows = keywords.map((k) => ({
-      query: k.query,
-      page: k.page ?? undefined,
-      clicks: k.clicks,
-      impressions: k.impressions,
-      ctr: k.ctr,
-      averagePosition: k.averagePosition,
-      metricSemantics: {
-        positionIsAverage: true as const,
-        ctrIsRatio: true as const,
-        missingRowIsNotZero: true as const,
-      },
-    }))
-    const traffic = aggregateGscTraffic(rows)
-    return NextResponse.json({
-      gsc: {
-        dataState: connection.dataState,
-        propertyRef: connection.propertyRef,
-        ...traffic,
-        averagePosition: aggregateGscAveragePosition(rows),
-        averagePositionLabel: 'GSC average position (not fixed rank)',
-      },
+
+    const gsc = buildGscPerformanceFromObservations({
+      connectionDataState: connection.dataState,
+      propertyRef: connection.propertyRef,
+      rows: keywords.map((k) => ({
+        idempotencyKey: k.idempotencyKey,
+        query: k.query,
+        page: k.page,
+        clicks: k.clicks,
+        impressions: k.impressions,
+        ctr: k.ctr,
+        averagePosition: k.averagePosition,
+        date: k.date,
+        dataState: k.dataState,
+      })),
+      snapshot: snapshot
+        ? {
+            start: snapshot.dateRangeStart.toISOString().slice(0, 10),
+            end: snapshot.dateRangeEnd.toISOString().slice(0, 10),
+            observedAt: snapshot.observedAt.toISOString(),
+          }
+        : null,
     })
+
+    return NextResponse.json({ gsc })
   } catch (error) {
     if (error instanceof SeoApiError) {
       return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })

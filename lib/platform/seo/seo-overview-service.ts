@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db'
 import { buildSeoSiteOverviewDto } from '@/lib/platform/seo/dashboard-read-model'
+import type { CompetitorProvenanceSource } from '@/lib/platform/seo/competitor-ranking'
 import { sortOpportunitiesDeterministic } from '@/lib/platform/seo/opportunity-engine'
 import { localRankWhenProviderDisconnected } from '@/lib/platform/seo/local-rank-contract'
 import type { SeoResult } from '@/lib/platform/seo/types'
@@ -66,7 +67,7 @@ export async function loadSeoSiteOverview(input: {
       geoRelevance: c.geoRelevance ?? 0,
       observedEvidence: 0,
       rankScore: c.rankScore,
-      source: c.source,
+      source: c.source as CompetitorProvenanceSource,
       evidenceRef: c.evidenceRef ?? undefined,
     })),
     opportunities: sortOpportunitiesDeterministic(

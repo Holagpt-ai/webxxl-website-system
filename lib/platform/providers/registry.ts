@@ -96,6 +96,7 @@ const googleGsc = createGoogleGscSeoProvider({
       return { status: 503, json: {}, errorMessage: 'Live GSC transport disabled in SEO-07' }
     },
   },
+  resolveConnection: async () => null,
   resolveAccessTokenRef: async () => null,
   resolvePropertyRef: async () => null,
   resolveAuthorizedHosts: async () => [],

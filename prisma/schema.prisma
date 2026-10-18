@@ -3172,13 +3172,15 @@ model SeoSiteProfile {
 }
 
 model SeoCrawlRun {
-  id                String            @id @default(cuid())
-  customerAccountId String
-  managedSiteId     String
-  status            SeoCrawlRunStatus @default(PREPARED)
-  idempotencyKey    String            @unique
-  maxPages          Int
-  maxDepth          Int
+  id                 String            @id @default(cuid())
+  customerAccountId  String
+  managedSiteId      String
+  status             SeoCrawlRunStatus @default(PREPARED)
+  idempotencyKey     String            @unique
+  operation          String            @default("SCAN_PREVIEW")
+  requestFingerprint String
+  maxPages           Int
+  maxDepth           Int
   pagesCrawled      Int               @default(0)
   bytesDownloaded   Int               @default(0)
   startedAt         DateTime?

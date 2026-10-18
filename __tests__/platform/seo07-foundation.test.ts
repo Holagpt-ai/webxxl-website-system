@@ -110,6 +110,7 @@ describe('SEO-07 foundation', () => {
       transport,
       maxPages: 1,
       maxDepth: 1,
+      testBypassLiveNetworkGate: true,
     })
     expect(crawl.ok).toBe(true)
     if (crawl.ok) expect(crawl.value.pages.length).toBe(1)
@@ -134,6 +135,7 @@ describe('SEO-07 foundation', () => {
       transport,
       maxPages: 3,
       maxDepth: 2,
+      testBypassLiveNetworkGate: true,
     })
     expect(crawl.ok).toBe(true)
     if (crawl.ok) {
@@ -219,6 +221,7 @@ describe('SEO-07 foundation', () => {
         },
       ],
       bytesDownloaded: 100,
+      httpRequests: 1,
       duplicateTitles: [],
       brokenInternalLinks: [],
     }
@@ -265,6 +268,7 @@ describe('SEO-07 foundation', () => {
   it('29: GSC provider disabled returns NOT_CONFIGURED on query', async () => {
     const provider = createGoogleGscSeoProvider({
       transport: { async postJson() { return { status: 200, json: MOCK_GSC_RESPONSE } } },
+      resolveConnection: async () => null,
       resolveAccessTokenRef: async () => 'secret-ref',
       resolvePropertyRef: async () => 'sc-domain:example.test',
       resolveAuthorizedHosts: async () => ['example.test'],

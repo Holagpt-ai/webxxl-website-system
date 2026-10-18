@@ -1,8 +1,11 @@
 import { isSeoCrawlerEnabled } from '@/config/seo-backend'
 import { prisma } from '@/lib/db'
+import { buildScanRequestFingerprint, normalizeScanResourceLimits } from '@/lib/platform/seo/scan-limits'
 import type { SeoResult } from '@/lib/platform/seo/types'
 
-/** Prepare crawl intent only — no live production crawl in SEO-07 when crawler flag is off. */
+const SCAN_OPERATION = 'SCAN_PREVIEW'
+
+/** Prepare crawl intent only — no live production crawl when crawler flag is off. */
 export async function prepareSeoScanPreview(input: {
   customerAccountId: string
   managedSiteId: string
@@ -21,13 +24,41 @@ export async function prepareSeoScanPreview(input: {
   })
   if (!site) return { ok: false, code: 'NOT_FOUND', message: 'Managed site not found' }
 
-  const existing = await prisma.seoCrawlRun.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
-  if (existing) {
+  const limits = normalizeScanResourceLimits({ maxPages: input.maxPages, maxDepth: input.maxDepth })
+  if (!limits.ok) return limits
+
+  const requestFingerprint = buildScanRequestFingerprint({
+    operation: SCAN_OPERATION,
+    maxPages: limits.value.maxPages,
+    maxDepth: limits.value.maxDepth,
+  })
+
+  const globalKey = await prisma.seoCrawlRun.findFirst({
+    where: { idempotencyKey: input.idempotencyKey },
+  })
+  if (globalKey) {
+    const sameScope =
+      globalKey.customerAccountId === input.customerAccountId &&
+      globalKey.managedSiteId === input.managedSiteId
+    if (!sameScope) {
+      return {
+        ok: false,
+        code: 'CONFLICT',
+        message: 'Idempotency key already used for a different account or site',
+      }
+    }
+    if (globalKey.requestFingerprint !== requestFingerprint || globalKey.operation !== SCAN_OPERATION) {
+      return {
+        ok: false,
+        code: 'CONFLICT',
+        message: 'Idempotency key reused with different scan parameters',
+      }
+    }
     return {
       ok: true,
       value: {
-        crawlRunId: existing.id,
-        status: existing.status === 'BLOCKED' ? 'BLOCKED' : 'PREPARED',
+        crawlRunId: globalKey.id,
+        status: globalKey.status === 'BLOCKED' ? 'BLOCKED' : 'PREPARED',
         message: 'Idempotent crawl preparation returned existing run',
       },
     }
@@ -39,8 +70,10 @@ export async function prepareSeoScanPreview(input: {
       customerAccountId: input.customerAccountId,
       managedSiteId: input.managedSiteId,
       idempotencyKey: input.idempotencyKey,
-      maxPages: input.maxPages ?? 50,
-      maxDepth: input.maxDepth ?? 3,
+      operation: SCAN_OPERATION,
+      requestFingerprint,
+      maxPages: limits.value.maxPages,
+      maxDepth: limits.value.maxDepth,
       status: blocked ? 'BLOCKED' : 'PREPARED',
       errorCode: blocked ? 'SEO_CRAWLER_DISABLED' : undefined,
     },

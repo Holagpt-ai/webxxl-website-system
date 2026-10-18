@@ -18,6 +18,25 @@ function isPrivateIpv4(host: string): boolean {
   if (parts[0] === 192 && parts[1] === 168) return true
   if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true
   if (parts[0] === 169 && parts[1] === 254) return true
+  if (parts[0] === 0) return true
+  return false
+}
+
+/** Block unique-local, link-local, and documented private IPv6 ranges (URL hostname form). */
+export function isBlockedIpv6Host(host: string): boolean {
+  const h = host.toLowerCase()
+  if (h === '::1' || h === '::') return true
+  if (h.startsWith('fe80:')) return true
+  if (h.startsWith('fc') || h.startsWith('fd')) return true
+  if (h.startsWith('[::1]')) return true
+  return false
+}
+
+export function isBlockedDestinationHost(hostname: string): boolean {
+  const host = normalizeHostname(hostname)
+  if (BLOCKED_HOSTS.has(host) || host.endsWith('.local')) return true
+  if (isPrivateIpv4(host)) return true
+  if (host.includes(':') && isBlockedIpv6Host(host)) return true
   return false
 }
 
@@ -47,7 +66,7 @@ export function validateCrawlTargetUrl(input: {
     return { ok: false, code: 'CRAWL_BLOCKED', message: 'Non-standard port blocked' }
   }
   const hostname = normalizeHostname(parsed.hostname)
-  if (BLOCKED_HOSTS.has(hostname) || isPrivateIpv4(hostname) || hostname.endsWith('.local')) {
+  if (isBlockedDestinationHost(hostname)) {
     return { ok: false, code: 'CRAWL_BLOCKED', message: 'Private or local target blocked' }
   }
   const allowed = input.allowedHosts.map(normalizeHostname)

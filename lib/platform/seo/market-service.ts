@@ -1,5 +1,10 @@
 import { prisma } from '@/lib/db'
-import { rankCompetitorCandidates } from '@/lib/platform/seo/competitor-ranking'
+import {
+  rankCompetitorCandidates,
+  validateCompetitorCandidate,
+  type CompetitorCandidate,
+} from '@/lib/platform/seo/competitor-ranking'
+import { SEO_SCAN_MAX_CANDIDATE_COMPETITORS } from '@/lib/platform/seo/scan-limits'
 import type { SeoResult } from '@/lib/platform/seo/types'
 
 export async function createCompetitorMarket(input: {
@@ -10,19 +15,21 @@ export async function createCompetitorMarket(input: {
   services?: string[]
   radiusKm?: number
   keywordThemes?: string[]
-  candidateCompetitors?: {
-    displayName: string
-    placeId?: string
-    categoryMatch: number
-    serviceOverlap: number
-    geoRelevance: number
-    observedEvidence: number
-  }[]
+  candidateCompetitors?: CompetitorCandidate[]
 }): Promise<SeoResult<{ marketId: string; competitors: ReturnType<typeof rankCompetitorCandidates> }>> {
   const site = await prisma.managedSite.findFirst({
     where: { id: input.managedSiteId, customerAccountId: input.customerAccountId },
   })
   if (!site) return { ok: false, code: 'NOT_FOUND', message: 'Managed site not found' }
+
+  const candidates = input.candidateCompetitors ?? []
+  if (candidates.length > SEO_SCAN_MAX_CANDIDATE_COMPETITORS) {
+    return { ok: false, code: 'VALIDATION', message: 'Too many competitor candidates' }
+  }
+  for (const c of candidates) {
+    const valid = validateCompetitorCandidate({ ...c, provenance: c.provenance ?? 'OWNER_SUPPLIED' })
+    if (!valid.ok) return { ok: false, code: 'VALIDATION', message: valid.message }
+  }
 
   const market = await prisma.competitorMarket.create({
     data: {
@@ -38,13 +45,9 @@ export async function createCompetitorMarket(input: {
   })
 
   const ranked = rankCompetitorCandidates(
-    (input.candidateCompetitors ?? []).map((c) => ({
-      displayName: c.displayName,
-      placeId: c.placeId,
-      categoryMatch: c.categoryMatch,
-      serviceOverlap: c.serviceOverlap,
-      geoRelevance: c.geoRelevance,
-      observedEvidence: c.observedEvidence,
+    candidates.map((c) => ({
+      ...c,
+      provenance: c.provenance ?? 'OWNER_SUPPLIED',
     })),
   )
 
