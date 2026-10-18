@@ -1289,8 +1289,8 @@ model BillingGroupMembership {
   createdAt          DateTime                      @default(now())
   updatedAt          DateTime                      @updatedAt
 
-  billingGroup    BillingGroup       @relation(fields: [billingGroupId], references: [id], onDelete: Cascade)
-  customerAccount CustomerAccount    @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  billingGroup    BillingGroup       @relation(fields: [billingGroupId], references: [id], onDelete: Restrict)
+  customerAccount CustomerAccount    @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
   authorizedBy    User?              @relation("BillingMembershipAuthorizer", fields: [authorizedByUserId], references: [id], onDelete: SetNull)
   spendingPolicy  SiteSpendingPolicy? @relation(fields: [spendingPolicyId], references: [id], onDelete: SetNull)
 
@@ -1361,7 +1361,7 @@ model CreditWallet {
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 
-  billingGroup  BillingGroup         @relation(fields: [billingGroupId], references: [id], onDelete: Cascade)
+  billingGroup  BillingGroup         @relation(fields: [billingGroupId], references: [id], onDelete: Restrict)
   ledgerEntries WalletLedgerEntry[]
   reservations  CreditReservation[]
   messageUsage  MessageUsage[]
@@ -1386,7 +1386,7 @@ model WalletLedgerEntry {
   createdAt         DateTime              @default(now())
   actorUserId       String?
 
-  wallet          CreditWallet     @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  wallet          CreditWallet     @relation(fields: [walletId], references: [id], onDelete: Restrict)
   customerAccount CustomerAccount? @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)
   managedSite     ManagedSite?     @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
   actor           User?            @relation("WalletLedgerActor", fields: [actorUserId], references: [id], onDelete: SetNull)
@@ -1410,7 +1410,7 @@ model CreditReservation {
   createdAt       DateTime                @default(now())
   updatedAt       DateTime                @updatedAt
 
-  wallet        CreditWallet    @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  wallet        CreditWallet    @relation(fields: [walletId], references: [id], onDelete: Restrict)
   originAccount CustomerAccount @relation(fields: [originAccountId], references: [id], onDelete: Restrict)
   messageUsage  MessageUsage[]
 
@@ -1433,10 +1433,10 @@ model MessageUsage {
   idempotencyKey    String             @unique
   createdAt         DateTime           @default(now())
 
-  billingGroup    BillingGroup       @relation(fields: [billingGroupId], references: [id], onDelete: Cascade)
-  customerAccount CustomerAccount    @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  billingGroup    BillingGroup       @relation(fields: [billingGroupId], references: [id], onDelete: Restrict)
+  customerAccount CustomerAccount    @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
   managedSite     ManagedSite?       @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
-  wallet          CreditWallet       @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  wallet          CreditWallet       @relation(fields: [walletId], references: [id], onDelete: Restrict)
   reservation     CreditReservation? @relation(fields: [reservationId], references: [id], onDelete: SetNull)
 
   @@index([billingGroupId, createdAt])

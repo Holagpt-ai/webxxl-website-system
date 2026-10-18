@@ -1,3 +1,4 @@
+import type { WalletActorType } from '@/lib/platform/wallet/authorization'
 import type {
   BillingGroupMembershipRecord,
   BillingGroupRecord,
@@ -13,6 +14,7 @@ import type {
 
 export type ReserveCreditsInput = {
   actorUserId: string
+  actorType?: WalletActorType
   billingGroupId: string
   customerAccountId: string
   managedSiteId?: string
@@ -26,6 +28,7 @@ export type ReserveCreditsInput = {
 
 export type SettleCreditsInput = {
   actorUserId: string
+  actorType?: WalletActorType
   reservationId: string
   amount: number
   providerRef?: string
@@ -36,12 +39,14 @@ export type SettleCreditsInput = {
 
 export type ReleaseCreditsInput = {
   actorUserId: string
+  actorType?: WalletActorType
   reservationId: string
   idempotencyKey: string
 }
 
 export type RefundCreditsInput = {
   actorUserId: string
+  actorType?: WalletActorType
   walletId: string
   customerAccountId?: string
   amount: number

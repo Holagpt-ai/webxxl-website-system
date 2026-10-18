@@ -1,10 +1,15 @@
 import {
   canAccountSpendFromGroup,
-  canViewGroupWallet,
   isEffectiveFundingMembership,
   resolveAccountBillingGroup,
   type FundingMembership,
 } from '@/lib/platform/billing-authz'
+import {
+  canInitiateAccountWalletUsage,
+  canPerformPrivilegedWalletOperation,
+  canViewWalletBalance,
+  type WalletActor,
+} from '@/lib/platform/wallet/authorization'
 import type {
   ReleaseCreditsInput,
   RefundCreditsInput,
@@ -17,11 +22,15 @@ import { nextId } from '@/lib/platform/wallet/in-memory-store'
 import type {
   BillingGroupMembershipRecord,
   CreditReservationRecord,
+  CreditReservationStatus,
   CreditWalletRecord,
   WalletBalance,
   WalletLedgerEntryRecord,
   WalletResult,
 } from '@/lib/platform/wallet/types'
+import { validateCreditAmount } from '@/lib/platform/wallet/validation'
+
+const OPEN_HOLD_STATUSES: CreditReservationStatus[] = ['HELD', 'PARTIALLY_SETTLED']
 
 function asFunding(store: InMemoryPlatformStore): FundingMembership[] {
   return store.memberships.map((item) => ({
@@ -34,13 +43,28 @@ function asFunding(store: InMemoryPlatformStore): FundingMembership[] {
   }))
 }
 
-function computeBalance(store: InMemoryPlatformStore, wallet: CreditWalletRecord, at: Date): WalletBalance {
+function toActor(actorId: string, actorType: WalletActor['actorType'] = 'USER'): WalletActor {
+  return { actorId, actorType }
+}
+
+/** Unsettled hold for an open reservation; expired holds release availability without deleting history. */
+export function reservationOpenHoldAmount(reservation: CreditReservationRecord, at: Date): number {
+  if (!OPEN_HOLD_STATUSES.includes(reservation.status)) return 0
+  if (reservation.expiresAt <= at) return 0
+  return Math.max(0, reservation.amount - reservation.settledAmount)
+}
+
+export function computeWalletBalance(
+  store: InMemoryPlatformStore,
+  wallet: CreditWalletRecord,
+  at: Date,
+): WalletBalance {
   const postedBalance = store.ledger
     .filter((entry) => entry.walletId === wallet.id)
     .reduce((sum, entry) => sum + entry.deltaCredits, 0)
   const reservedBalance = store.reservations
-    .filter((item) => item.walletId === wallet.id && item.status === 'HELD' && item.expiresAt > at)
-    .reduce((sum, item) => sum + (item.amount - item.settledAmount), 0)
+    .filter((item) => item.walletId === wallet.id)
+    .reduce((sum, item) => sum + reservationOpenHoldAmount(item, at), 0)
   return {
     walletId: wallet.id,
     billingGroupId: wallet.billingGroupId,
@@ -60,6 +84,25 @@ function findWallet(
   )
 }
 
+function walletForReservation(store: InMemoryPlatformStore, reservation: CreditReservationRecord) {
+  const wallet = store.wallets.get(reservation.walletId)
+  if (!wallet) return null
+  return wallet
+}
+
+export function expireHeldReservations(store: InMemoryPlatformStore, at: Date): CreditReservationRecord[] {
+  const expired: CreditReservationRecord[] = []
+  for (const reservation of store.reservations) {
+    if (!OPEN_HOLD_STATUSES.includes(reservation.status)) continue
+    if (reservation.expiresAt > at) continue
+    reservation.status = 'EXPIRED'
+    const usage = store.usage.find((item) => item.reservationId === reservation.id)
+    if (usage) usage.status = 'RELEASED'
+    expired.push(reservation)
+  }
+  return expired
+}
+
 export function createWalletContractService(store: InMemoryPlatformStore): WalletContracts {
   return {
     lookupGroupWallet(billingGroupId, creditType = 'MESSAGING') {
@@ -71,17 +114,17 @@ export function createWalletContractService(store: InMemoryPlatformStore): Walle
     },
 
     canViewBalance(userId, billingGroupId) {
-      return canViewGroupWallet(store.roles, userId, billingGroupId)
+      return canViewWalletBalance(store.roles, toActor(userId), billingGroupId)
     },
 
     getBalance(userId, billingGroupId) {
-      if (!canViewGroupWallet(store.roles, userId, billingGroupId)) {
+      if (!canViewWalletBalance(store.roles, toActor(userId), billingGroupId)) {
         return { ok: false, error: 'UNAUTHORIZED_BALANCE' }
       }
       const wallet = findWallet(store, billingGroupId)
       if (!wallet) return { ok: false, error: 'WALLET_NOT_FOUND' }
       if (wallet.status !== 'ACTIVE') return { ok: false, error: 'WALLET_INACTIVE' }
-      return { ok: true, value: computeBalance(store, wallet, new Date()) }
+      return { ok: true, value: computeWalletBalance(store, wallet, new Date()) }
     },
 
     accountUsage(customerAccountId, billingGroupId) {
@@ -99,6 +142,12 @@ export function createWalletContractService(store: InMemoryPlatformStore): Walle
 
     reserve(input) {
       const at = input.at ?? new Date()
+      const amountCheck = validateCreditAmount(input.amount)
+      if (!amountCheck.ok) return { ok: false, error: 'INVALID_AMOUNT' }
+      const actor = toActor(input.actorUserId, input.actorType)
+      if (!canInitiateAccountWalletUsage(store, actor, input.customerAccountId)) {
+        return { ok: false, error: 'UNAUTHORIZED_SPEND' }
+      }
       const existing = store.reservations.find((item) => item.idempotencyKey === input.idempotencyKey)
       if (existing) {
         if (existing.originAccountId !== input.customerAccountId || existing.amount !== input.amount) {
@@ -117,7 +166,7 @@ export function createWalletContractService(store: InMemoryPlatformStore): Walle
       if (policy?.maxCampaignCredits != null && input.amount > policy.maxCampaignCredits) {
         return { ok: false, error: 'POLICY_CAP_EXCEEDED' }
       }
-      const balance = computeBalance(store, wallet, at)
+      const balance = computeWalletBalance(store, wallet, at)
       if (input.amount > balance.availableBalance) return { ok: false, error: 'INSUFFICIENT_CREDITS' }
       const reservation: CreditReservationRecord = {
         id: nextId('res'),
@@ -149,19 +198,25 @@ export function createWalletContractService(store: InMemoryPlatformStore): Walle
     },
 
     settle(input) {
+      const amountCheck = validateCreditAmount(input.amount)
+      if (!amountCheck.ok) return { ok: false, error: 'INVALID_AMOUNT' }
       const existingLedger = store.ledger.find((entry) => entry.idempotencyKey === input.idempotencyKey)
       if (existingLedger) return { ok: true, value: existingLedger }
       const reservation = store.reservations.find((item) => item.id === input.reservationId)
       if (!reservation) return { ok: false, error: 'RESERVATION_NOT_FOUND' }
-      if (reservation.status !== 'HELD' && reservation.status !== 'PARTIALLY_SETTLED') {
+      const wallet = walletForReservation(store, reservation)
+      if (!wallet) return { ok: false, error: 'WALLET_NOT_FOUND' }
+      const actor = toActor(input.actorUserId, input.actorType)
+      if (!canPerformPrivilegedWalletOperation(store.roles, actor, wallet.billingGroupId)) {
+        return { ok: false, error: 'UNAUTHORIZED_SETTLE' }
+      }
+      if (!OPEN_HOLD_STATUSES.includes(reservation.status)) {
         return { ok: false, error: 'RESERVATION_NOT_HELD' }
       }
       const remaining = reservation.amount - reservation.settledAmount
       if (input.amount > remaining) return { ok: false, error: 'INSUFFICIENT_CREDITS' }
       reservation.settledAmount += input.amount
       reservation.status = reservation.settledAmount >= reservation.amount ? 'SETTLED' : 'PARTIALLY_SETTLED'
-      const wallet = store.wallets.get(reservation.walletId)
-      if (!wallet) return { ok: false, error: 'WALLET_NOT_FOUND' }
       wallet.ledgerSequence += 1
       const entry: WalletLedgerEntryRecord = {
         id: nextId('led'),
@@ -187,10 +242,18 @@ export function createWalletContractService(store: InMemoryPlatformStore): Walle
     release(input) {
       const reservation = store.reservations.find((item) => item.id === input.reservationId)
       if (!reservation) return { ok: false, error: 'RESERVATION_NOT_FOUND' }
+      const wallet = walletForReservation(store, reservation)
+      if (!wallet) return { ok: false, error: 'WALLET_NOT_FOUND' }
+      const actor = toActor(input.actorUserId, input.actorType)
+      if (!canPerformPrivilegedWalletOperation(store.roles, actor, wallet.billingGroupId)) {
+        return { ok: false, error: 'UNAUTHORIZED_SETTLE' }
+      }
       if (reservation.status === 'RELEASED') return { ok: true, value: reservation }
-      if (reservation.status === 'SETTLED') return { ok: false, error: 'RESERVATION_NOT_HELD' }
-      reservation.status = reservation.settledAmount > 0 ? 'SETTLED' : 'RELEASED'
+      if (reservation.status === 'SETTLED' || reservation.status === 'EXPIRED') {
+        return { ok: false, error: 'RESERVATION_NOT_HELD' }
+      }
       const unused = reservation.amount - reservation.settledAmount
+      reservation.status = reservation.settledAmount > 0 && unused === 0 ? 'SETTLED' : 'RELEASED'
       if (unused > 0 && reservation.status === 'RELEASED') {
         const existing = store.ledger.find((entry) => entry.idempotencyKey === input.idempotencyKey)
         if (!existing) {
@@ -217,10 +280,16 @@ export function createWalletContractService(store: InMemoryPlatformStore): Walle
     },
 
     refund(input) {
+      const amountCheck = validateCreditAmount(input.amount)
+      if (!amountCheck.ok) return { ok: false, error: 'INVALID_AMOUNT' }
       const existing = store.ledger.find((entry) => entry.idempotencyKey === input.idempotencyKey)
       if (existing) return { ok: true, value: existing }
       const wallet = store.wallets.get(input.walletId)
       if (!wallet || wallet.status !== 'ACTIVE') return { ok: false, error: 'WALLET_NOT_FOUND' }
+      const actor = toActor(input.actorUserId, input.actorType)
+      if (!canPerformPrivilegedWalletOperation(store.roles, actor, wallet.billingGroupId)) {
+        return { ok: false, error: 'UNAUTHORIZED_SETTLE' }
+      }
       wallet.ledgerSequence += 1
       const entry: WalletLedgerEntryRecord = {
         id: nextId('led'),
@@ -248,9 +317,16 @@ export function seedWalletTopUp(
   billingGroupId: string,
   amount: number,
   idempotencyKey: string,
+  actorUserId: string,
+  actorType: WalletActor['actorType'] = 'USER',
 ): WalletResult<WalletLedgerEntryRecord> {
+  const amountCheck = validateCreditAmount(amount)
+  if (!amountCheck.ok) return { ok: false, error: 'INVALID_AMOUNT' }
   const wallet = findWallet(store, billingGroupId)
   if (!wallet) return { ok: false, error: 'WALLET_NOT_FOUND' }
+  if (!canPerformPrivilegedWalletOperation(store.roles, toActor(actorUserId, actorType), billingGroupId)) {
+    return { ok: false, error: 'UNAUTHORIZED_SETTLE' }
+  }
   const existing = store.ledger.find((entry) => entry.idempotencyKey === idempotencyKey)
   if (existing) return { ok: true, value: existing }
   wallet.ledgerSequence += 1
@@ -267,7 +343,7 @@ export function seedWalletTopUp(
     providerRef: 'synthetic-test',
     idempotencyKey,
     effectiveAt: new Date(),
-    actorUserId: null,
+    actorUserId,
   }
   store.ledger.push(entry)
   return { ok: true, value: entry }

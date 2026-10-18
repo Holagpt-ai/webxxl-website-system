@@ -241,6 +241,9 @@ CREATE UNIQUE INDEX "SiteSpendingPolicy_billingGroupId_customerAccountId_key" ON
 CREATE UNIQUE INDEX "BillingGroupMembership_activeFundingKey_key" ON "BillingGroupMembership"("activeFundingKey");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "BillingGroupMembership_one_active_funding_per_account" ON "BillingGroupMembership"("customerAccountId") WHERE "status" = 'ACTIVE' AND "walletUseAllowed" = true AND "validTo" IS NULL;
+
+-- CreateIndex
 CREATE INDEX "BillingGroupMembership_billingGroupId_status_idx" ON "BillingGroupMembership"("billingGroupId", "status");
 
 -- CreateIndex
@@ -328,10 +331,10 @@ ALTER TABLE "SiteSpendingPolicy" ADD CONSTRAINT "SiteSpendingPolicy_billingGroup
 ALTER TABLE "SiteSpendingPolicy" ADD CONSTRAINT "SiteSpendingPolicy_customerAccountId_fkey" FOREIGN KEY ("customerAccountId") REFERENCES "CustomerAccount"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "BillingGroupMembership" ADD CONSTRAINT "BillingGroupMembership_billingGroupId_fkey" FOREIGN KEY ("billingGroupId") REFERENCES "BillingGroup"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "BillingGroupMembership" ADD CONSTRAINT "BillingGroupMembership_billingGroupId_fkey" FOREIGN KEY ("billingGroupId") REFERENCES "BillingGroup"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "BillingGroupMembership" ADD CONSTRAINT "BillingGroupMembership_customerAccountId_fkey" FOREIGN KEY ("customerAccountId") REFERENCES "CustomerAccount"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "BillingGroupMembership" ADD CONSTRAINT "BillingGroupMembership_customerAccountId_fkey" FOREIGN KEY ("customerAccountId") REFERENCES "CustomerAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "BillingGroupMembership" ADD CONSTRAINT "BillingGroupMembership_authorizedByUserId_fkey" FOREIGN KEY ("authorizedByUserId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -346,10 +349,10 @@ ALTER TABLE "BillingGroupRole" ADD CONSTRAINT "BillingGroupRole_billingGroupId_f
 ALTER TABLE "BillingGroupRole" ADD CONSTRAINT "BillingGroupRole_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "CreditWallet" ADD CONSTRAINT "CreditWallet_billingGroupId_fkey" FOREIGN KEY ("billingGroupId") REFERENCES "BillingGroup"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "CreditWallet" ADD CONSTRAINT "CreditWallet_billingGroupId_fkey" FOREIGN KEY ("billingGroupId") REFERENCES "BillingGroup"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "WalletLedgerEntry" ADD CONSTRAINT "WalletLedgerEntry_walletId_fkey" FOREIGN KEY ("walletId") REFERENCES "CreditWallet"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "WalletLedgerEntry" ADD CONSTRAINT "WalletLedgerEntry_walletId_fkey" FOREIGN KEY ("walletId") REFERENCES "CreditWallet"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "WalletLedgerEntry" ADD CONSTRAINT "WalletLedgerEntry_customerAccountId_fkey" FOREIGN KEY ("customerAccountId") REFERENCES "CustomerAccount"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -361,22 +364,22 @@ ALTER TABLE "WalletLedgerEntry" ADD CONSTRAINT "WalletLedgerEntry_managedSiteId_
 ALTER TABLE "WalletLedgerEntry" ADD CONSTRAINT "WalletLedgerEntry_actorUserId_fkey" FOREIGN KEY ("actorUserId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "CreditReservation" ADD CONSTRAINT "CreditReservation_walletId_fkey" FOREIGN KEY ("walletId") REFERENCES "CreditWallet"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "CreditReservation" ADD CONSTRAINT "CreditReservation_walletId_fkey" FOREIGN KEY ("walletId") REFERENCES "CreditWallet"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "CreditReservation" ADD CONSTRAINT "CreditReservation_originAccountId_fkey" FOREIGN KEY ("originAccountId") REFERENCES "CustomerAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "MessageUsage" ADD CONSTRAINT "MessageUsage_billingGroupId_fkey" FOREIGN KEY ("billingGroupId") REFERENCES "BillingGroup"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "MessageUsage" ADD CONSTRAINT "MessageUsage_billingGroupId_fkey" FOREIGN KEY ("billingGroupId") REFERENCES "BillingGroup"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "MessageUsage" ADD CONSTRAINT "MessageUsage_customerAccountId_fkey" FOREIGN KEY ("customerAccountId") REFERENCES "CustomerAccount"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "MessageUsage" ADD CONSTRAINT "MessageUsage_customerAccountId_fkey" FOREIGN KEY ("customerAccountId") REFERENCES "CustomerAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "MessageUsage" ADD CONSTRAINT "MessageUsage_managedSiteId_fkey" FOREIGN KEY ("managedSiteId") REFERENCES "ManagedSite"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "MessageUsage" ADD CONSTRAINT "MessageUsage_walletId_fkey" FOREIGN KEY ("walletId") REFERENCES "CreditWallet"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "MessageUsage" ADD CONSTRAINT "MessageUsage_walletId_fkey" FOREIGN KEY ("walletId") REFERENCES "CreditWallet"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "MessageUsage" ADD CONSTRAINT "MessageUsage_reservationId_fkey" FOREIGN KEY ("reservationId") REFERENCES "CreditReservation"("id") ON DELETE SET NULL ON UPDATE CASCADE;

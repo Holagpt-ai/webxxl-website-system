@@ -9,6 +9,8 @@ export const EXISTING_ABMED_ACCOUNT_ID = 'abmed-account'
 export const EXISTING_ABMED_PROJECT_ID = 'abmed-clinical-research-redesign'
 export const BILLING_OWNER_USER_ID = 'user_abmed_billing_owner'
 export const CLINICAL_ONLY_USER_ID = 'user_abmed_clinical_member'
+/** Operating member authorized to initiate usage on all three ABMED sibling accounts (synthetic tests only). */
+export const ABMED_USAGE_OPERATOR_ID = 'user_abmed_usage_operator'
 
 const now = new Date('2026-10-17T00:00:00.000Z')
 
@@ -17,6 +19,7 @@ export function createSyntheticAbmedFoundation(): InMemoryPlatformStore {
 
   store.users.set(BILLING_OWNER_USER_ID, { id: BILLING_OWNER_USER_ID, email: 'billing@abmed.example' })
   store.users.set(CLINICAL_ONLY_USER_ID, { id: CLINICAL_ONLY_USER_ID, email: 'clinical@abmed.example' })
+  store.users.set(ABMED_USAGE_OPERATOR_ID, { id: ABMED_USAGE_OPERATOR_ID, email: 'operator@abmed.example' })
 
   for (const account of [
     { id: ABMED_AESTHETICS_ACCOUNT_ID, businessName: 'ABMED Aesthetics', slug: 'abmed-aesthetics' },
@@ -30,6 +33,9 @@ export function createSyntheticAbmedFoundation(): InMemoryPlatformStore {
   store.operatingMemberships.push(
     { userId: CLINICAL_ONLY_USER_ID, customerAccountId: ABMED_CLINICAL_ACCOUNT_ID },
     { userId: CLINICAL_ONLY_USER_ID, customerAccountId: EXISTING_ABMED_ACCOUNT_ID },
+    { userId: ABMED_USAGE_OPERATOR_ID, customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID },
+    { userId: ABMED_USAGE_OPERATOR_ID, customerAccountId: ABMED_PHYSICIANS_ACCOUNT_ID },
+    { userId: ABMED_USAGE_OPERATOR_ID, customerAccountId: ABMED_CLINICAL_ACCOUNT_ID },
   )
 
   store.sites.push(

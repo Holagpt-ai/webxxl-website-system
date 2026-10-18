@@ -7,7 +7,7 @@
 | Area | Evidence | Honest status |
 |---|---|---|
 | Billing group identity | `prisma/schema.prisma` models `BillingGroup`, `BillingGroupMembership`, `BillingGroupRole`, `BillingProfile`, `SiteSpendingPolicy` | **Implemented in source** on `feature/webxxl-found-01`. Additive migration `20261017220000_found01_platform_identity` is **not applied** to production |
-| Shared wallet contracts | `lib/platform/wallet/*` plus Prisma `CreditWallet`, `WalletLedgerEntry`, `CreditReservation`, `MessageUsage` | **Contract + synthetic engine implemented and unit-tested**. No live top-up, Twilio send, or payment execution |
+| Shared wallet contracts | `lib/platform/wallet/*` plus Prisma `CreditWallet`, `WalletLedgerEntry`, `CreditReservation`, `MessageUsage` | **Contract + synthetic engine implemented and unit-tested**. FOUND-01A corrected partial holds, amount validation, actor authorization, funding uniqueness, and restrictive financial FK deletes. No live top-up, Twilio send, or payment execution |
 | Authorization split | `lib/platform/billing-authz.ts`, `lib/platform/account-isolation.ts` | Group billing rights are independent of `CustomerMembership` / CRM access. Existing Auth.js and `lib/portal/authz.ts` unchanged |
 | Entitlements | `lib/platform/entitlements.ts`; catalog types in `lib/marketplace/catalog.ts` | FREE vs PAID classifications exist. Existing marketplace quote strings and historical order amounts are unchanged. OPEN-001 eligibility remains `UNRESOLVED` |
 | Provider registry | `lib/platform/providers/*` | Typed replaceable interfaces. Existing Postiz stub, Resend email, worker, and billing identifiers are wrapped. Twenty, Chatwoot, Paperclip, Twilio, and payment processors are **not installed** |

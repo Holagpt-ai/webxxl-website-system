@@ -28,6 +28,7 @@ import {
   ABMED_CLINICAL_ACCOUNT_ID,
   ABMED_GROUP_ID,
   ABMED_PHYSICIANS_ACCOUNT_ID,
+  ABMED_USAGE_OPERATOR_ID,
   BILLING_OWNER_USER_ID,
   CLINICAL_ONLY_USER_ID,
   EXISTING_ABMED_ACCOUNT_ID,
@@ -47,7 +48,7 @@ function spendCredits(
   key: string,
 ) {
   const reserved = wallet.reserve({
-    actorUserId: BILLING_OWNER_USER_ID,
+    actorUserId: ABMED_USAGE_OPERATOR_ID,
     billingGroupId: ABMED_GROUP_ID,
     customerAccountId: accountId,
     amount,
@@ -112,7 +113,7 @@ describe('FOUND-01 billing group and account isolation', () => {
   it('resolves account-to-group funding and preserves history after unlink', () => {
     const store = createSyntheticAbmedFoundation()
     const wallet = createWalletContractService(store)
-    seedWalletTopUp(store, ABMED_GROUP_ID, SYNTHETIC_ABMED_USAGE.startingCredits, 'topup-unlink')
+    seedWalletTopUp(store, ABMED_GROUP_ID, SYNTHETIC_ABMED_USAGE.startingCredits, 'topup-unlink', BILLING_OWNER_USER_ID)
     spendCredits(wallet, ABMED_AESTHETICS_ACCOUNT_ID, SYNTHETIC_ABMED_USAGE.aesthetics, 'aesthetics-unlink')
     expect(wallet.canAccountUseWallet(ABMED_AESTHETICS_ACCOUNT_ID, ABMED_GROUP_ID)).toBe(true)
     unlinkAccountFromGroup(store, ABMED_AESTHETICS_ACCOUNT_ID, ABMED_GROUP_ID, new Date('2026-10-18T00:00:00.000Z'))
@@ -134,7 +135,7 @@ describe('FOUND-01 shared wallet contracts', () => {
   it('applies the synthetic ABMED 1000 → 800 → 700 → 650 example', () => {
     const store = createSyntheticAbmedFoundation()
     const wallet = createWalletContractService(store)
-    seedWalletTopUp(store, ABMED_GROUP_ID, SYNTHETIC_ABMED_USAGE.startingCredits, 'topup-demo')
+    seedWalletTopUp(store, ABMED_GROUP_ID, SYNTHETIC_ABMED_USAGE.startingCredits, 'topup-demo', BILLING_OWNER_USER_ID)
     const opening = wallet.getBalance(BILLING_OWNER_USER_ID, ABMED_GROUP_ID)
     expect(opening.ok).toBe(true)
     if (opening.ok) expect(opening.value.availableBalance).toBe(1000)
@@ -159,9 +160,9 @@ describe('FOUND-01 shared wallet contracts', () => {
   it('reserves concurrently without negative availability and is idempotent', () => {
     const store = createSyntheticAbmedFoundation()
     const wallet = createWalletContractService(store)
-    seedWalletTopUp(store, ABMED_GROUP_ID, 1000, 'topup-concurrent')
+    seedWalletTopUp(store, ABMED_GROUP_ID, 1000, 'topup-concurrent', BILLING_OWNER_USER_ID)
     const first = wallet.reserve({
-      actorUserId: BILLING_OWNER_USER_ID,
+      actorUserId: ABMED_USAGE_OPERATOR_ID,
       billingGroupId: ABMED_GROUP_ID,
       customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
       amount: 200,
@@ -170,7 +171,7 @@ describe('FOUND-01 shared wallet contracts', () => {
       expiresAt: new Date('2026-12-31T00:00:00.000Z'),
     })
     const second = wallet.reserve({
-      actorUserId: BILLING_OWNER_USER_ID,
+      actorUserId: ABMED_USAGE_OPERATOR_ID,
       billingGroupId: ABMED_GROUP_ID,
       customerAccountId: ABMED_PHYSICIANS_ACCOUNT_ID,
       amount: 100,
@@ -179,7 +180,7 @@ describe('FOUND-01 shared wallet contracts', () => {
       expiresAt: new Date('2026-12-31T00:00:00.000Z'),
     })
     const third = wallet.reserve({
-      actorUserId: BILLING_OWNER_USER_ID,
+      actorUserId: ABMED_USAGE_OPERATOR_ID,
       billingGroupId: ABMED_GROUP_ID,
       customerAccountId: ABMED_CLINICAL_ACCOUNT_ID,
       amount: 50,
@@ -193,7 +194,7 @@ describe('FOUND-01 shared wallet contracts', () => {
       value: { availableBalance: 650, reservedBalance: 350, postedBalance: 1000 },
     })
     const replay = wallet.reserve({
-      actorUserId: BILLING_OWNER_USER_ID,
+      actorUserId: ABMED_USAGE_OPERATOR_ID,
       billingGroupId: ABMED_GROUP_ID,
       customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
       amount: 200,
@@ -205,7 +206,7 @@ describe('FOUND-01 shared wallet contracts', () => {
     expect(first.ok).toBe(true)
     if (replay.ok && first.ok) expect(replay.value.id).toBe(first.value.id)
     const overspend = wallet.reserve({
-      actorUserId: BILLING_OWNER_USER_ID,
+      actorUserId: ABMED_USAGE_OPERATOR_ID,
       billingGroupId: ABMED_GROUP_ID,
       customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
       amount: 700,
