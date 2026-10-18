@@ -487,6 +487,14 @@ model CustomerAccount {
   marketingRequests            MarketingRequest[]
   marketingArtifacts           MarketingArtifact[]
   marketingStudioUsage         MarketingStudioUsage[]
+  marketingBrandContexts       MarketingBrandContextVersion[]
+  marketingLeadFollowUpPolicies MarketingLeadFollowUpPolicy[]
+  marketingLeadFollowUpEvaluations MarketingLeadFollowUpEvaluation[]
+  marketingFollowUpTaskIntents MarketingFollowUpTaskIntent[]
+  marketingWorkflowRuns        MarketingWorkflowRun[]
+  marketingRequestStatusEvents MarketingRequestStatusEvent[]
+  marketingArtifactRevisions   MarketingArtifactRevision[]
+  marketingArtifactReviews     MarketingArtifactReview[]
   crmContacts                  CrmContact[]
   crmCompanies                 CrmCompany[]
   crmPipelines                 CrmPipeline[]
@@ -863,6 +871,9 @@ model ManagedSite {
   marketingRequests         MarketingRequest[]
   marketingArtifacts        MarketingArtifact[]
   marketingStudioUsage      MarketingStudioUsage[]
+  marketingBrandContexts    MarketingBrandContextVersion[]
+  marketingLeadFollowUpPolicies MarketingLeadFollowUpPolicy[]
+  marketingLeadFollowUpEvaluations MarketingLeadFollowUpEvaluation[]
   crmContacts               CrmContact[]
   crmCompanies              CrmCompany[]
   chatwootTenantMappings    ChatwootTenantMapping[]
@@ -1857,10 +1868,49 @@ enum MarketingRequestType {
 
 enum MarketingRequestStatus {
   DRAFT
+  SUBMITTED
+  VALIDATING
+  PREPARING
+  DRAFT_READY
+  AWAITING_REVIEW
   IN_REVIEW
+  REVISION_REQUESTED
   APPROVED
   REJECTED
+  HANDED_OFF
   COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum MarketingGenerationMode {
+  DETERMINISTIC_DRAFT
+  SYNTHETIC_TEST
+  AI_GENERATED
+}
+
+enum MarketingContentSafetyClass {
+  GENERAL_BUSINESS
+  REGULATED_HEALTHCARE
+  REQUIRES_HUMAN_REVIEW
+  PROHIBITED_CONTENT
+  SOURCE_UNVERIFIED
+}
+
+enum MarketingArtifactReviewStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  EXPIRED
+  REVOKED
+}
+
+enum MarketingFollowUpResolutionState {
+  OPEN
+  TASK_PREPARED
+  DISMISSED
+  RESOLVED
 }
 
 enum MarketingArtifactType {
@@ -2070,42 +2120,255 @@ model SocialPublicationEvent {
 }
 
 model MarketingRequest {
-  id                String                 @id @default(cuid())
-  customerAccountId String
-  managedSiteId     String?
-  requestType       MarketingRequestType
-  status            MarketingRequestStatus @default(DRAFT)
-  brief             String                 @db.Text
-  locale            String                 @default("en")
-  audience          String?
-  goal              String?
-  sourceRefs        Json
-  artifactIds       Json
-  createdByUserId   String
-  createdAt         DateTime               @default(now())
-  updatedAt         DateTime               @updatedAt
+  id                 String                 @id @default(cuid())
+  customerAccountId  String
+  managedSiteId      String?
+  requestType        MarketingRequestType
+  status             MarketingRequestStatus @default(DRAFT)
+  brief              String                 @db.Text
+  locale             String                 @default("en")
+  audience           String?
+  goal               String?
+  sourceRefs         Json
+  artifactIds        Json
+  idempotencyKey     String?                @unique
+  requestFingerprint String?
+  seoOpportunityId   String?
+  assignedWorkflow   String?
+  createdByUserId    String
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
 
   customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
   managedSite     ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
   createdBy       User            @relation("MarketingRequestCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  artifacts       MarketingArtifact[]
+  revisions       MarketingArtifactRevision[]
+  reviews         MarketingArtifactReview[]
+  workflowRuns    MarketingWorkflowRun[]
+  statusEvents    MarketingRequestStatusEvent[]
 
   @@index([customerAccountId, status])
+  @@index([customerAccountId, managedSiteId])
+}
+
+model MarketingRequestStatusEvent {
+  id                String                 @id @default(cuid())
+  customerAccountId String
+  marketingRequestId String
+  fromStatus        MarketingRequestStatus?
+  toStatus          MarketingRequestStatus
+  actorUserId       String?
+  actorType         String
+  reason            String?
+  createdAt         DateTime               @default(now())
+
+  customerAccount  CustomerAccount  @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  marketingRequest MarketingRequest @relation(fields: [marketingRequestId], references: [id], onDelete: Restrict)
+
+  @@index([marketingRequestId, createdAt])
+  @@index([customerAccountId, createdAt])
 }
 
 model MarketingArtifact {
-  id                String                @id @default(cuid())
-  customerAccountId String
-  managedSiteId     String?
-  artifactType      MarketingArtifactType
-  revisionHash      String
-  payload           Json
-  provenance        String
-  createdAt         DateTime              @default(now())
+  id                   String                @id @default(cuid())
+  customerAccountId    String
+  managedSiteId        String?
+  marketingRequestId   String?
+  artifactType         MarketingArtifactType
+  revisionHash         String
+  payload              Json
+  provenance           String
+  generationMode       MarketingGenerationMode @default(DETERMINISTIC_DRAFT)
+  reviewStatus         MarketingArtifactReviewStatus @default(DRAFT)
+  locale               String                @default("en")
+  brandContextVersionId String?
+  safetyClass          MarketingContentSafetyClass @default(GENERAL_BUSINESS)
+  createdAt            DateTime              @default(now())
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  marketingRequest MarketingRequest? @relation(fields: [marketingRequestId], references: [id], onDelete: SetNull)
+  revisions       MarketingArtifactRevision[]
+  reviews         MarketingArtifactReview[]
+
+  @@index([customerAccountId, artifactType])
+  @@index([marketingRequestId])
+}
+
+model MarketingArtifactRevision {
+  id                     String                  @id @default(cuid())
+  customerAccountId      String
+  managedSiteId          String?
+  marketingRequestId     String?
+  marketingArtifactId    String
+  revisionNumber         Int
+  revisionHash           String
+  artifactType           MarketingArtifactType
+  locale                 String                  @default("en")
+  structuredContent      Json
+  mediaRefs              Json?
+  ctaDestinations        Json?
+  channelPlacement       String?
+  brandContextVersionId  String?
+  complianceVersion      String                  @default("mkt-08-v1")
+  generationMode         MarketingGenerationMode @default(DETERMINISTIC_DRAFT)
+  generatorIdentity      String
+  modelVersion           String?
+  safetyClass            MarketingContentSafetyClass @default(GENERAL_BUSINESS)
+  previousRevisionId     String?
+  createdByUserId          String?
+  createdAt                DateTime                @default(now())
+
+  customerAccount   CustomerAccount    @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  marketingRequest  MarketingRequest?  @relation(fields: [marketingRequestId], references: [id], onDelete: SetNull)
+  marketingArtifact MarketingArtifact  @relation(fields: [marketingArtifactId], references: [id], onDelete: Restrict)
+
+  @@unique([marketingArtifactId, revisionNumber])
+  @@unique([customerAccountId, revisionHash])
+  @@index([marketingRequestId, createdAt])
+}
+
+model MarketingArtifactReview {
+  id                  String                        @id @default(cuid())
+  customerAccountId   String
+  managedSiteId       String?
+  marketingRequestId  String
+  marketingArtifactId String
+  revisionHash        String
+  intendedAction      String
+  allowedChannel      String?
+  allowedTarget       String?
+  status              MarketingArtifactReviewStatus @default(SUBMITTED)
+  approverUserId      String?
+  policyVersion       String                        @default("mkt-08-v1")
+  expiresAt           DateTime?
+  decidedAt           DateTime?
+  revokedAt           DateTime?
+  usageLimit          Int?
+  createdAt           DateTime                      @default(now())
+
+  customerAccount   CustomerAccount   @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  marketingRequest  MarketingRequest  @relation(fields: [marketingRequestId], references: [id], onDelete: Restrict)
+  marketingArtifact MarketingArtifact @relation(fields: [marketingArtifactId], references: [id], onDelete: Restrict)
+
+  @@index([customerAccountId, status])
+  @@index([revisionHash])
+}
+
+model MarketingBrandContextVersion {
+  id                  String   @id @default(cuid())
+  customerAccountId   String
+  managedSiteId       String?
+  versionNumber       Int
+  businessName        String
+  approvedServices    Json?
+  operatingGeography  Json?
+  businessCategory    String?
+  audience            String?
+  locale              String   @default("en")
+  brandTone           String?
+  approvedClaims      Json?
+  excludedTopics      Json?
+  brandAssetRefs      Json?
+  approvedCtaDestinations Json?
+  complianceReviewState String @default("PENDING")
+  sourceProvenance    String
+  createdByUserId     String?
+  createdAt           DateTime @default(now())
 
   customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
   managedSite     ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
 
-  @@index([customerAccountId, artifactType])
+  @@unique([customerAccountId, managedSiteId, versionNumber, locale])
+  @@index([customerAccountId, managedSiteId])
+}
+
+model MarketingLeadFollowUpPolicy {
+  id                    String   @id @default(cuid())
+  customerAccountId     String
+  managedSiteId         String?
+  enabled               Boolean  @default(false)
+  ageThresholdDays      Int      @default(4)
+  timezone              String   @default("UTC")
+  eligibleLeadStages    Json?
+  qualifyingEventTypes  Json?
+  coverageRequirements  Json?
+  assignmentPolicy      String?
+  exclusions            Json?
+  escalationThreshold   Int?
+  policyVersion         String   @default("mkt-08-v1")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+
+  @@index([customerAccountId, enabled])
+}
+
+model MarketingLeadFollowUpEvaluation {
+  id                  String                         @id @default(cuid())
+  customerAccountId   String
+  managedSiteId       String?
+  crmContactId        String
+  policyVersion       String
+  dueAt               DateTime?
+  coverageState       CrmFollowUpCoverage
+  evidenceRefs        Json?
+  lastEvaluatedAt     DateTime                       @default(now())
+  responsibleUserId   String?
+  recommendedAction   String?
+  resolutionState     MarketingFollowUpResolutionState @default(OPEN)
+  dedupeKey           String
+  idempotencyKey      String?                        @unique
+  createdAt           DateTime                       @default(now())
+  updatedAt           DateTime                       @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  crmContact      CrmContact      @relation(fields: [crmContactId], references: [id], onDelete: Restrict)
+  taskIntents     MarketingFollowUpTaskIntent[]
+
+  @@unique([customerAccountId, dedupeKey])
+  @@index([customerAccountId, coverageState])
+  @@index([customerAccountId, crmContactId])
+}
+
+model MarketingFollowUpTaskIntent {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  crmContactId      String
+  evaluationId      String
+  policyKey         String   @default("mkt-08-callback")
+  intentFingerprint String
+  idempotencyKey    String   @unique
+  crmTaskId         String?  @unique
+  createdAt         DateTime @default(now())
+
+  customerAccount CustomerAccount                 @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  crmContact      CrmContact                      @relation(fields: [crmContactId], references: [id], onDelete: Restrict)
+  evaluation      MarketingLeadFollowUpEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Restrict)
+
+  @@unique([customerAccountId, crmContactId, policyKey, evaluationId])
+  @@index([customerAccountId, crmContactId])
+}
+
+model MarketingWorkflowRun {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  marketingRequestId String
+  workflowKind      String
+  status            String   @default("PENDING")
+  idempotencyKey    String   @unique
+  errorCode         String?
+  createdAt         DateTime @default(now())
+  finishedAt        DateTime?
+
+  marketingRequest MarketingRequest @relation(fields: [marketingRequestId], references: [id], onDelete: Restrict)
+  customerAccount  CustomerAccount  @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+
+  @@index([marketingRequestId, status])
 }
 
 model MarketingStudioUsage {
@@ -2275,6 +2538,8 @@ model CrmContact {
   segmentMembers  CrmSegmentMember[]
   chatwootMappings             ChatwootContactMapping[]
   chatwootConversationMappings ChatwootConversationMapping[]
+  marketingLeadFollowUpEvaluations MarketingLeadFollowUpEvaluation[]
+  marketingFollowUpTaskIntents     MarketingFollowUpTaskIntent[]
 
   @@unique([customerAccountId, id])
   @@index([customerAccountId, status])
