@@ -1,0 +1,96 @@
+import type { FundingMembership } from '@/lib/platform/billing-authz'
+import type {
+  AuditRecord,
+  CheckoutRecord,
+  FulfillmentRecord,
+  FundingRecord,
+  InvoiceRecord,
+  OrderItemRecord,
+  OrderRecord,
+  PaymentAttemptRecord,
+  PaymentRecord,
+  PriceRecord,
+  ProductRecord,
+  ProjectServiceRecord,
+  ProviderPriceMapRecord,
+  ServiceOrderLink,
+  SubscriptionRecord,
+  WebhookRecord,
+} from '@/lib/platform/commerce/types'
+
+export interface CommerceStore {
+  findBillingGroup(id: string): Promise<{ id: string; status: string; defaultCurrency: string } | null>
+  findBillingRole(
+    billingGroupId: string,
+    userId: string,
+  ): Promise<{ role: 'GROUP_OWNER' | 'BILLING_ADMIN' | 'BILLING_VIEWER' } | null>
+  listFundingMemberships(billingGroupId: string, customerAccountId: string): Promise<FundingMembership[]>
+  hasOperatingMembership(userId: string, customerAccountId: string): Promise<boolean>
+  findSpendingPolicy(
+    billingGroupId: string,
+    customerAccountId: string,
+  ): Promise<{ groupHardCap: number | null } | null>
+  findWallet(billingGroupId: string): Promise<{ id: string; status: string } | null>
+  findProject(id: string): Promise<{ id: string; customerAccountId: string } | null>
+
+  listProducts(): Promise<ProductRecord[]>
+  findProductByKey(productKey: string): Promise<ProductRecord | null>
+  findProduct(id: string): Promise<ProductRecord | null>
+  saveProduct(product: ProductRecord): Promise<void>
+
+  listPrices(productId: string): Promise<PriceRecord[]>
+  findPrice(id: string): Promise<PriceRecord | null>
+  savePrice(price: PriceRecord): Promise<void>
+
+  listProviderMaps(productPriceId: string): Promise<ProviderPriceMapRecord[]>
+  saveProviderMap(map: ProviderPriceMapRecord): Promise<void>
+
+  findOrderByIdempotency(key: string): Promise<OrderRecord | null>
+  findOrder(id: string): Promise<OrderRecord | null>
+  saveOrder(order: OrderRecord): Promise<void>
+  listOrdersByAccount(customerAccountId: string): Promise<OrderRecord[]>
+  listOrdersByGroup(billingGroupId: string): Promise<OrderRecord[]>
+
+  listItems(orderId: string): Promise<OrderItemRecord[]>
+  replaceItems(orderId: string, items: OrderItemRecord[]): Promise<void>
+
+  findCheckoutByIdempotency(key: string): Promise<CheckoutRecord | null>
+  findCheckoutByExternal(providerKey: string, externalCheckoutRef: string): Promise<CheckoutRecord | null>
+  listCheckouts(orderId: string): Promise<CheckoutRecord[]>
+  saveCheckout(checkout: CheckoutRecord): Promise<void>
+
+  findPayment(id: string): Promise<PaymentRecord | null>
+  findPaymentByOrder(orderId: string): Promise<PaymentRecord | null>
+  savePayment(payment: PaymentRecord): Promise<void>
+
+  listAttempts(paymentId: string): Promise<PaymentAttemptRecord[]>
+  saveAttempt(attempt: PaymentAttemptRecord): Promise<void>
+
+  findWebhook(providerKey: string, externalEventId: string): Promise<WebhookRecord | null>
+  saveWebhook(event: WebhookRecord): Promise<void>
+
+  findFulfillmentByOrder(orderId: string): Promise<FulfillmentRecord | null>
+  findFulfillmentByPaymentRef(externalPaymentRef: string): Promise<FulfillmentRecord | null>
+  saveFulfillment(row: FulfillmentRecord): Promise<void>
+
+  findSubscription(id: string): Promise<SubscriptionRecord | null>
+  findSubscriptionByOrder(orderId: string): Promise<SubscriptionRecord | null>
+  saveSubscription(row: SubscriptionRecord): Promise<void>
+
+  findInvoiceByExternal(providerKey: string, externalInvoiceRef: string): Promise<InvoiceRecord | null>
+  listInvoicesByOrder(orderId: string): Promise<InvoiceRecord[]>
+  saveInvoice(row: InvoiceRecord): Promise<void>
+
+  listProjectServicesByAccount(customerAccountId: string): Promise<ProjectServiceRecord[]>
+  listProjectServicesByOrder(orderId: string): Promise<ProjectServiceRecord[]>
+  saveProjectService(row: ProjectServiceRecord): Promise<void>
+
+  findServiceOrderByCommerceOrder(commerceOrderId: string): Promise<ServiceOrderLink | null>
+  saveServiceOrder(row: ServiceOrderLink): Promise<void>
+
+  findFundingByExternal(externalPaymentRef: string): Promise<FundingRecord | null>
+  saveFunding(row: FundingRecord): Promise<void>
+
+  appendAudit(event: AuditRecord): Promise<void>
+  listAudit(entityType: string, entityId: string): Promise<AuditRecord[]>
+}

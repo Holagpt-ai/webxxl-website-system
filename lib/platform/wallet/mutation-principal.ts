@@ -7,6 +7,7 @@ export type TrustedWalletServiceId =
   | 'comms-gateway'
   | 'wallet-reconciliation'
   | 'wallet-expiry'
+  | 'commerce-fulfillment'
 
 const SERVICE_ACTOR_ID: Record<TrustedWalletServiceId, string> = {
   'wallet-settlement': 'service:webxxl-wallet-settlement',
@@ -14,6 +15,7 @@ const SERVICE_ACTOR_ID: Record<TrustedWalletServiceId, string> = {
   'comms-gateway': 'service:webxxl-comms-gateway',
   'wallet-reconciliation': 'service:webxxl-wallet-reconciliation',
   'wallet-expiry': 'service:webxxl-wallet-expiry',
+  'commerce-fulfillment': 'service:webxxl-commerce-fulfillment',
 }
 
 export type WalletMutationPrincipal =
@@ -35,6 +37,7 @@ const SERVICE_OPS: Record<TrustedWalletServiceId, WalletMutationOperation[]> = {
   'comms-gateway': ['RESERVE'],
   'wallet-reconciliation': ['RECONCILE', 'SETTLE'],
   'wallet-expiry': ['EXPIRE', 'RELEASE'],
+  'commerce-fulfillment': ['FUND'],
 }
 
 export function walletPrincipalActorId(principal: WalletMutationPrincipal): string {

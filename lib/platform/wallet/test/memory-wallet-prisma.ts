@@ -28,6 +28,7 @@ type LedgerRow = {
   createdAt: Date
   actorUserId: string | null
   actorServiceId: string | null
+  orderId: string | null
 }
 
 type ReservationRow = {
@@ -114,6 +115,7 @@ export function createMemoryWalletPrisma(seed: {
   const messageUsage: Array<Record<string, unknown>> = []
   const providerReceipts: Array<Record<string, unknown>> = []
   const topUpQuotes: Array<Record<string, unknown>> = []
+  const fundingEvidence: Array<Record<string, unknown>> = []
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const client: any = {
@@ -205,6 +207,7 @@ export function createMemoryWalletPrisma(seed: {
           createdAt: new Date(),
           actorUserId: data.actorUserId ?? null,
           actorServiceId: data.actorServiceId ?? null,
+          orderId: data.orderId ?? null,
         }
         ledger.push(row)
         return row
@@ -372,6 +375,39 @@ export function createMemoryWalletPrisma(seed: {
       create: async ({ data }: { data: Record<string, unknown> }) => {
         const row = { id: cid('tuq'), ...data }
         topUpQuotes.push(row)
+        return row
+      },
+    },
+    walletFundingEvidence: {
+      findUnique: async ({ where }: { where: { externalPaymentRef?: string; id?: string } }) => {
+        if (where.id) return fundingEvidence.find((row) => row.id === where.id) ?? null
+        if (where.externalPaymentRef) {
+          return fundingEvidence.find((row) => row.externalPaymentRef === where.externalPaymentRef) ?? null
+        }
+        return null
+      },
+      create: async ({ data }: { data: Record<string, unknown> }) => {
+        if (fundingEvidence.some((row) => row.externalPaymentRef === data.externalPaymentRef)) {
+          const err = new Error('Unique constraint') as Error & { code: string }
+          err.code = 'P2002'
+          throw err
+        }
+        const row = {
+          ledgerEntryId: null,
+          verifiedAt: null,
+          commerceOrderId: null,
+          commercePaymentId: null,
+          priceVersion: null,
+          ...data,
+          id: cid('fund'),
+        }
+        fundingEvidence.push(row)
+        return row
+      },
+      update: async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
+        const row = fundingEvidence.find((item) => item.id === where.id)
+        if (!row) throw new Error('funding evidence missing')
+        Object.assign(row, data)
         return row
       },
     },
