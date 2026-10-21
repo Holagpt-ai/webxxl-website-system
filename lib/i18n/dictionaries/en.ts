@@ -1,5 +1,6 @@
 import { adminEn, dashboardLocaleEn, systemNotificationsEn } from './portal-en'
 import { commerceEn } from './commerce-en'
+import { aiEmployeesEn } from './ai-employees-en'
 
 /** UI chrome, template labels and form copy. Page content lives in /content with Localized fields. */
 export const en = {
@@ -251,6 +252,7 @@ export const en = {
       ownerReview: 'Owner review',
       marketplace: 'Marketplace',
       billingCredits: 'Billing & credits',
+      aiEmployees: 'AI Employees',
     },
     overviewTitle: 'Overview',
     overviewDescription: 'Your project status, next steps, and recent updates.',
@@ -594,6 +596,7 @@ export const en = {
   admin: adminEn,
   systemNotifications: systemNotificationsEn,
   commerce: commerceEn,
+  aiEmployees: aiEmployeesEn,
   blog: {
     categories: 'Categories',
     all: 'All',
