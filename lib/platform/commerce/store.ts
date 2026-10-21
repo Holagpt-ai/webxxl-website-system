@@ -18,8 +18,24 @@ import type {
   WebhookRecord,
 } from '@/lib/platform/commerce/types'
 
+export type BillingGroupProfile = {
+  id: string
+  name: string
+  slug: string
+  status: string
+  defaultCurrency: string
+}
+
+export type BillingGroupMemberRow = {
+  customerAccountId: string
+  businessName: string
+  slug: string
+  status: FundingMembership['status']
+  walletUseAllowed: boolean
+}
+
 export interface CommerceStore {
-  findBillingGroup(id: string): Promise<{ id: string; status: string; defaultCurrency: string } | null>
+  findBillingGroup(id: string): Promise<BillingGroupProfile | null>
   findBillingRole(
     billingGroupId: string,
     userId: string,
@@ -50,6 +66,21 @@ export interface CommerceStore {
   saveOrder(order: OrderRecord): Promise<void>
   listOrdersByAccount(customerAccountId: string): Promise<OrderRecord[]>
   listOrdersByGroup(billingGroupId: string): Promise<OrderRecord[]>
+  countOrdersForAccount(customerAccountId: string, billingGroupId?: string | null): Promise<number>
+  countOrdersForGroup(billingGroupId: string, customerAccountId?: string | null): Promise<number>
+  listOrdersForAccountPage(
+    customerAccountId: string,
+    billingGroupId: string | null,
+    skip: number,
+    take: number,
+  ): Promise<OrderRecord[]>
+  listOrdersForGroupPage(
+    billingGroupId: string,
+    customerAccountId: string | null,
+    skip: number,
+    take: number,
+  ): Promise<OrderRecord[]>
+  listBillingGroupMembers(billingGroupId: string): Promise<BillingGroupMemberRow[]>
 
   listItems(orderId: string): Promise<OrderItemRecord[]>
   replaceItems(orderId: string, items: OrderItemRecord[]): Promise<void>

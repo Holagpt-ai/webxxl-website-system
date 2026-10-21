@@ -55,7 +55,9 @@ function mapProduct(row: CommerceProduct): ProductRecord {
 export const prismaCommerceStore: CommerceStore = {
   async findBillingGroup(id) {
     const row = await prisma.billingGroup.findUnique({ where: { id } })
-    return row ? { id: row.id, status: row.status, defaultCurrency: row.defaultCurrency } : null
+    return row
+      ? { id: row.id, name: row.name, slug: row.slug, status: row.status, defaultCurrency: row.defaultCurrency }
+      : null
   },
   async findBillingRole(billingGroupId, userId) {
     const row = await prisma.billingGroupRole.findUnique({ where: { billingGroupId_userId: { billingGroupId, userId } } })
@@ -145,6 +147,45 @@ export const prismaCommerceStore: CommerceStore = {
   },
   async listOrdersByGroup(billingGroupId) {
     return prisma.commerceOrder.findMany({ where: { billingGroupId } })
+  },
+  async countOrdersForAccount(customerAccountId, billingGroupId) {
+    return prisma.commerceOrder.count({
+      where: { customerAccountId, ...(billingGroupId ? { billingGroupId } : {}) },
+    })
+  },
+  async countOrdersForGroup(billingGroupId, customerAccountId) {
+    return prisma.commerceOrder.count({
+      where: { billingGroupId, ...(customerAccountId ? { customerAccountId } : {}) },
+    })
+  },
+  async listOrdersForAccountPage(customerAccountId, billingGroupId, skip, take) {
+    return prisma.commerceOrder.findMany({
+      where: { customerAccountId, ...(billingGroupId ? { billingGroupId } : {}) },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take,
+    })
+  },
+  async listOrdersForGroupPage(billingGroupId, customerAccountId, skip, take) {
+    return prisma.commerceOrder.findMany({
+      where: { billingGroupId, ...(customerAccountId ? { customerAccountId } : {}) },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take,
+    })
+  },
+  async listBillingGroupMembers(billingGroupId) {
+    const rows = await prisma.billingGroupMembership.findMany({
+      where: { billingGroupId },
+      include: { customerAccount: { select: { id: true, businessName: true, slug: true } } },
+    })
+    return rows.map((row) => ({
+      customerAccountId: row.customerAccountId,
+      businessName: row.customerAccount.businessName,
+      slug: row.customerAccount.slug,
+      status: row.status,
+      walletUseAllowed: row.walletUseAllowed,
+    }))
   },
   async listItems(orderId) {
     const rows = await prisma.commerceOrderItem.findMany({ where: { orderId } })

@@ -61,7 +61,9 @@ const from = new Date('2020-01-01T00:00:00.000Z')
 
 function store() {
   return createMemoryCommerceStore({
-    billingGroups: [{ id: ABMED_GROUP_ID, status: 'ACTIVE', defaultCurrency: 'USD' }],
+    billingGroups: [
+      { id: ABMED_GROUP_ID, name: 'ABMED Group', slug: 'abmed', status: 'ACTIVE', defaultCurrency: 'USD' },
+    ],
     roles: [{ billingGroupId: ABMED_GROUP_ID, userId: BILLING_OWNER_USER_ID, role: 'GROUP_OWNER' }],
     memberships: [
       ABMED_AESTHETICS_ACCOUNT_ID,
