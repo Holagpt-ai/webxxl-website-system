@@ -20,7 +20,8 @@ import type {
 } from '@/lib/platform/commerce/types'
 
 export type CommerceMemorySeed = {
-  billingGroups: Array<{ id: string; status: string; defaultCurrency: string }>
+  billingGroups: Array<{ id: string; name: string; slug: string; status: string; defaultCurrency: string }>
+  accounts?: Array<{ id: string; businessName: string; slug: string }>
   roles: Array<{ billingGroupId: string; userId: string; role: 'GROUP_OWNER' | 'BILLING_ADMIN' | 'BILLING_VIEWER' }>
   memberships: FundingMembership[]
   operating: Array<{ userId: string; customerAccountId: string }>
@@ -62,7 +63,15 @@ export function createMemoryCommerceStore(seed: CommerceMemorySeed): CommerceSto
 
   const store: CommerceStore = {
     async findBillingGroup(id) {
-      return seed.billingGroups.find((group) => group.id === id) ?? null
+      const group = seed.billingGroups.find((row) => row.id === id)
+      if (!group) return null
+      return {
+        id: group.id,
+        name: group.name,
+        slug: group.slug,
+        status: group.status,
+        defaultCurrency: group.defaultCurrency,
+      }
     },
     async findBillingRole(billingGroupId, userId) {
       return seed.roles.find((role) => role.billingGroupId === billingGroupId && role.userId === userId) ?? null
@@ -129,6 +138,55 @@ export function createMemoryCommerceStore(seed: CommerceMemorySeed): CommerceSto
     },
     async listOrdersByGroup(billingGroupId) {
       return orders.filter((order) => order.billingGroupId === billingGroupId)
+    },
+    async countOrdersForAccount(customerAccountId, billingGroupId) {
+      return orders.filter((order) => {
+        if (order.customerAccountId !== customerAccountId) return false
+        if (billingGroupId && order.billingGroupId !== billingGroupId) return false
+        return true
+      }).length
+    },
+    async countOrdersForGroup(billingGroupId, customerAccountId) {
+      return orders.filter((order) => {
+        if (order.billingGroupId !== billingGroupId) return false
+        if (customerAccountId && order.customerAccountId !== customerAccountId) return false
+        return true
+      }).length
+    },
+    async listOrdersForAccountPage(customerAccountId, billingGroupId, skip, take) {
+      return orders
+        .filter((order) => {
+          if (order.customerAccountId !== customerAccountId) return false
+          if (billingGroupId && order.billingGroupId !== billingGroupId) return false
+          return true
+        })
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .slice(skip, skip + take)
+    },
+    async listOrdersForGroupPage(billingGroupId, customerAccountId, skip, take) {
+      return orders
+        .filter((order) => {
+          if (order.billingGroupId !== billingGroupId) return false
+          if (customerAccountId && order.customerAccountId !== customerAccountId) return false
+          return true
+        })
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .slice(skip, skip + take)
+    },
+    async listBillingGroupMembers(billingGroupId) {
+      const accountById = new Map((seed.accounts ?? []).map((a) => [a.id, a]))
+      return seed.memberships
+        .filter((m) => m.billingGroupId === billingGroupId)
+        .map((m) => {
+          const account = accountById.get(m.customerAccountId)
+          return {
+            customerAccountId: m.customerAccountId,
+            businessName: account?.businessName ?? m.customerAccountId,
+            slug: account?.slug ?? m.customerAccountId,
+            status: m.status,
+            walletUseAllowed: m.walletUseAllowed,
+          }
+        })
     },
     async listItems(orderId) {
       return items.filter((item) => item.orderId === orderId)
