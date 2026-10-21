@@ -1,4 +1,5 @@
 import { adminEn, dashboardLocaleEn, systemNotificationsEn } from './portal-en'
+import { commerceEn } from './commerce-en'
 
 /** UI chrome, template labels and form copy. Page content lives in /content with Localized fields. */
 export const en = {
@@ -202,7 +203,7 @@ export const en = {
     projectTypes: ['New website', 'Website redesign', 'Landing pages', 'Online store', 'CRM setup only', 'Not sure yet'],
     features: ['Quote / contact forms', 'Online booking', 'Click-to-call', 'Service area pages', 'Photo gallery', 'Reviews display', 'Blog', 'Online payments', 'Multilingual (EN/ES)', 'Live chat'],
     timelines: ['As soon as possible', 'Within 1 month', '1–3 months', '3+ months', 'Just exploring'],
-    budgets: ['Starter budget', 'Growth budget', 'Scale budget', 'Custom / multi-location', 'Not sure — advise me'],
+    budgets: ['Starter budget', 'Growth budget', 'Scale budget', 'Custom / multi-location', 'Not sure ��� advise me'],
     confirmationTitle: 'Your project details are in.',
     confirmationBody: 'Thank you. The WebXXL team will review your details and reach out within one business day to schedule your strategy call.',
     confirmationRef: 'Reference',
@@ -248,6 +249,8 @@ export const en = {
       notifications: 'Notifications',
       notificationSettings: 'Notification settings',
       ownerReview: 'Owner review',
+      marketplace: 'Marketplace',
+      billingCredits: 'Billing & credits',
     },
     overviewTitle: 'Overview',
     overviewDescription: 'Your project status, next steps, and recent updates.',
@@ -590,6 +593,7 @@ export const en = {
   },
   admin: adminEn,
   systemNotifications: systemNotificationsEn,
+  commerce: commerceEn,
   blog: {
     categories: 'Categories',
     all: 'All',

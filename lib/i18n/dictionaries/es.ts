@@ -1,5 +1,6 @@
 import type { Dictionary } from './en'
 import { adminEs, dashboardLocaleEs, systemNotificationsEs } from './portal-es'
+import { commerceEs } from './commerce-es'
 
 export const es: Dictionary = {
   common: {
@@ -248,6 +249,8 @@ export const es: Dictionary = {
       notifications: 'Notificaciones',
       notificationSettings: 'Preferencias de notificaciones',
       ownerReview: 'Revisión del propietario',
+      marketplace: 'Marketplace',
+      billingCredits: 'Facturación y créditos',
     },
     overviewTitle: 'Resumen',
     overviewDescription: 'Estado del proyecto, próximos pasos y novedades.',
@@ -592,6 +595,7 @@ export const es: Dictionary = {
   },
   admin: adminEs,
   systemNotifications: systemNotificationsEs,
+  commerce: commerceEs,
   blog: {
     categories: 'Categorías',
     all: 'Todos',

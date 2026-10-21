@@ -387,6 +387,7 @@ export const adminEs = {
     approvals: 'Aprobaciones',
     requests: 'Solicitudes de cambio',
     support: 'Soporte',
+    commerce: 'Comercio',
   },
   errors: {
     unauthorized: 'No tienes permiso para hacer eso.',
