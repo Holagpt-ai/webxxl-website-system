@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client'
 import { createHash } from 'crypto'
+import { mintCreditsFromVerifiedFundingEvidence } from '@/lib/platform/wallet/funding-mint'
 import { validateCreditAmount } from '@/lib/platform/wallet/validation'
 import { resolveWalletCreditPack } from '@/lib/platform/wallet/top-up-pricing'
 
@@ -110,10 +111,7 @@ export async function prepareWalletTopUpQuote(prisma: PrismaClient, input: TopUp
   return { ok: true as const, value: quote, fingerprint }
 }
 
-/** Credits require verified WalletFundingEvidence — quotes alone never increase balance. */
-export async function mintCreditsFromFundingEvidence(
-  _prisma: PrismaClient,
-  _externalPaymentRef: string,
-): Promise<{ ok: false; error: 'UNAUTHORIZED_SETTLE' }> {
-  return { ok: false, error: 'UNAUTHORIZED_SETTLE' }
+/** Credits require verified WalletFundingEvidence. Mint stays disabled unless COMMERCE_WALLET_MINT_ENABLED. */
+export async function mintCreditsFromFundingEvidence(prisma: PrismaClient, externalPaymentRef: string) {
+  return mintCreditsFromVerifiedFundingEvidence(prisma, externalPaymentRef)
 }

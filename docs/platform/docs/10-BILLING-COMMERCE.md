@@ -12,6 +12,8 @@
 
 **WALLET-09 (2026-10-18, pending merge):** Durable Prisma wallet engine (`lib/platform/wallet/durable-service.ts`) implements posted/held/available balance from ledger + open reservations, `FOR UPDATE` wallet serialization, reservation CAS settle/release, compensating refund entries, fixture rate plans, top-up **quote only** (`WalletTopUpQuote`), and provider event receipts for future reconciliation. Migration `20261018250000_wallet09_foundation` **not applied**. All `WALLET_*` / adapter flags default **false**; live top-up mint requires `WalletFundingEvidence` (COMMERCE-11).
 
+**COMMERCE-11:** Provider-neutral catalog, checkout, payment, subscription, invoice, and fulfillment services live in `lib/platform/commerce`. WebXXL owns product, price, order, and payment ids. Stripe, Paddle, and Lemon Squeezy adapters are unconfigured stubs. The development adapter is disabled unless `COMMERCE_PROVIDER_MODE=mock` outside production. Verified webhooks are the only payment confirmation. Credit fulfillment calls `mintCreditsFromFundingEvidence` and does not write the ledger unless `COMMERCE_WALLET_MINT_ENABLED` is set. AUTO-10 preparation jobs stay blocked while `COMMERCE_WORKFLOW_ENQUEUE_ENABLED` and the workflow flags are off. Migration `20261020120000_commerce11_foundation` is not applied. OPEN-001 included services remain unpurchasable.
+
 ## 2. Illustrative ABMED balance example
 
 | Event | Origin account | Credits delta | Available (assuming no holds) |

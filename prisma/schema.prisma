@@ -562,6 +562,11 @@ model CustomerAccount {
   competitorMarkets            CompetitorMarket[]
   seoProviderSyncRuns          SeoProviderSyncRun[]
   workflowJobs                 WorkflowJob[]
+  commerceOrders               CommerceOrder[]
+  commercePayments             CommercePayment[]
+  commerceSubscriptions        CommerceSubscription[]
+  commerceInvoices             CommerceInvoiceReference[]
+  projectServices              ProjectService[]
 }
 
 model CustomerMembership {
@@ -614,6 +619,9 @@ model Project {
   hostingServices HostingService[]
   ownerReviewDecisions ProjectOwnerReviewDecision[]
   websitePreview  WebsitePreview?
+  commerceOrders        CommerceOrder[]
+  commerceSubscriptions CommerceSubscription[]
+  projectServices       ProjectService[]
 
   @@index([customerAccountId])
 }
@@ -851,6 +859,7 @@ model CustomerService {
   updatedAt         DateTime              @updatedAt
 
   customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  projectServices ProjectService[]
 
   @@unique([customerAccountId, serviceKey])
 }
@@ -1069,6 +1078,7 @@ model ServiceOrder {
   requestedBy     User            @relation("ServiceOrderRequester", fields: [requestedById], references: [id], onDelete: Cascade)
   assignedTo      User?           @relation("ServiceOrderAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
   activities      ServiceOrderActivity[]
+  commerceOrder   CommerceOrder?
 
   @@index([customerAccountId, createdAt])
   @@index([status, createdAt])
@@ -1405,6 +1415,11 @@ model BillingGroup {
   messageUsage     MessageUsage[]
   topUpQuotes      WalletTopUpQuote[]
   fundingEvidence  WalletFundingEvidence[]
+  commerceOrders        CommerceOrder[]
+  commercePayments      CommercePayment[]
+  commerceSubscriptions CommerceSubscription[]
+  commerceInvoices      CommerceInvoiceReference[]
+  commerceAuditEvents   CommerceAuditEvent[]
 }
 
 model BillingGroupMembership {
@@ -1680,6 +1695,9 @@ model WalletFundingEvidence {
   externalPaymentRef String    @unique
   creditAmount       Int
   ledgerEntryId      String?
+  commerceOrderId    String?
+  commercePaymentId  String?
+  priceVersion       String?
   verifiedAt         DateTime?
   createdAt          DateTime  @default(now())
 
@@ -4000,4 +4018,425 @@ model WorkflowRepairAudit {
   createdAt     DateTime @default(now())
 
   @@index([workflowJobId, createdAt])
+}
+
+// COMMERCE-11 provider-neutral catalog, checkout, and fulfillment.
+// WebXXL owns product, price, order, and payment identifiers.
+
+enum CommerceProductKind {
+  WEBSITE_PACKAGE
+  HOSTING
+  DOMAIN
+  CRM
+  MARKETING
+  SEO
+  AI_WORKFORCE
+  MESSAGING_CREDITS
+  SUBSCRIPTION
+  ADDON
+}
+
+enum CommercePricingMode {
+  INCLUDED_FREE
+  RECURRING
+  ONE_TIME
+  METERED_EXTERNAL
+}
+
+enum CommerceBillingInterval {
+  NONE
+  MONTH
+  YEAR
+}
+
+enum CommerceActivationStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+}
+
+enum CommerceOrderStatus {
+  PENDING
+  CHECKOUT_CREATED
+  PAYMENT_PENDING
+  PAID
+  FULFILLMENT_PENDING
+  FULFILLED
+  FULFILLMENT_BLOCKED
+  CANCELLED
+  REFUNDED
+  FAILED
+}
+
+enum CommerceCheckoutStatus {
+  CREATED
+  READY
+  DISABLED
+  EXPIRED
+  CANCELLED
+}
+
+enum CommercePaymentStatus {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  CANCELLED
+}
+
+enum CommerceSubscriptionStatus {
+  INCOMPLETE
+  ACTIVE
+  PAST_DUE
+  CANCEL_SCHEDULED
+  CANCELLED
+  PAUSED
+}
+
+enum CommerceFulfillmentStatus {
+  NOT_STARTED
+  PREPARED
+  BLOCKED
+  COMPLETED
+  FAILED
+}
+
+enum CommerceWebhookStatus {
+  RECEIVED
+  DUPLICATE
+  OUT_OF_ORDER
+  PROCESSED
+  FAILED
+  IGNORED
+}
+
+model CommerceProduct {
+  id                  String                   @id @default(cuid())
+  publicId            String                   @unique
+  productKey          String                   @unique
+  kind                CommerceProductKind
+  name                String
+  description         String?                  @db.Text
+  status              CommerceActivationStatus @default(DRAFT)
+  pricingMode         CommercePricingMode
+  entitlementKey      String?
+  creditEligible      Boolean                  @default(false)
+  eligibilityCohort   String                   @default("SUBSCRIBER_ONLY")
+  featureFlag         String?
+  purchasable         Boolean                  @default(false)
+  providerPassThrough Boolean                  @default(false)
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+
+  prices        CommerceProductPrice[]
+  orderItems    CommerceOrderItem[]
+  subscriptions CommerceSubscription[]
+
+  @@index([status, kind])
+}
+
+model CommerceProductPrice {
+  id              String                   @id @default(cuid())
+  publicId        String                   @unique
+  productId       String
+  currency        String
+  amountMinor     Int
+  billingInterval CommerceBillingInterval  @default(NONE)
+  status          CommerceActivationStatus @default(DRAFT)
+  effectiveFrom   DateTime
+  effectiveTo     DateTime?
+  priceVersion    String
+  creditAmount    Int?
+  includedUsage   Json?
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  product       CommerceProduct            @relation(fields: [productId], references: [id], onDelete: Restrict)
+  providerMaps  CommerceProviderPriceMap[]
+  orderItems    CommerceOrderItem[]
+  subscriptions CommerceSubscription[]
+
+  @@unique([productId, priceVersion, currency])
+  @@index([productId, status, effectiveFrom])
+}
+
+/// Future processor price ids. Inactive until a provider is selected.
+model CommerceProviderPriceMap {
+  id               String                   @id @default(cuid())
+  productPriceId   String
+  providerKey      String
+  externalPriceRef String?
+  status           CommerceActivationStatus @default(INACTIVE)
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  productPrice CommerceProductPrice @relation(fields: [productPriceId], references: [id], onDelete: Cascade)
+
+  @@unique([productPriceId, providerKey])
+}
+
+model CommerceOrder {
+  id                 String              @id @default(cuid())
+  publicId           String              @unique
+  billingGroupId     String
+  customerAccountId  String?
+  projectId          String?
+  payerUserId        String?
+  status             CommerceOrderStatus @default(PENDING)
+  currency           String
+  subtotalMinor      Int
+  taxMinor           Int                 @default(0)
+  totalMinor         Int
+  idempotencyKey     String              @unique
+  requestFingerprint String
+  serviceOrderId     String?             @unique
+  failureCode        String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  billingGroup    BillingGroup               @relation(fields: [billingGroupId], references: [id], onDelete: Restrict)
+  customerAccount CustomerAccount?           @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  project         Project?                   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  serviceOrder    ServiceOrder?              @relation(fields: [serviceOrderId], references: [id], onDelete: SetNull)
+  items           CommerceOrderItem[]
+  checkouts       CommerceCheckoutIntent[]
+  payments        CommercePayment[]
+  subscriptions   CommerceSubscription[]
+  invoices        CommerceInvoiceReference[]
+  projectServices ProjectService[]
+  webhooks        CommerceWebhookEvent[]
+  fulfillment     CommerceFulfillment?
+
+  @@index([billingGroupId, createdAt])
+  @@index([customerAccountId, createdAt])
+  @@index([status, createdAt])
+}
+
+model CommerceOrderItem {
+  id              String   @id @default(cuid())
+  orderId         String
+  productId       String
+  productPriceId  String
+  productKey      String
+  quantity        Int
+  unitAmountMinor Int
+  currency        String
+  priceVersion    String
+  creditAmount    Int?
+  snapshot        Json
+  createdAt       DateTime @default(now())
+
+  order        CommerceOrder        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product      CommerceProduct      @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productPrice CommerceProductPrice @relation(fields: [productPriceId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model CommerceCheckoutIntent {
+  id                  String                 @id @default(cuid())
+  publicId            String                 @unique
+  orderId             String
+  providerKey         String
+  status              CommerceCheckoutStatus @default(CREATED)
+  externalCheckoutRef String?
+  expiresAt           DateTime
+  idempotencyKey      String                 @unique
+  failureCode         String?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+
+  order CommerceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([providerKey, externalCheckoutRef])
+  @@index([orderId, createdAt])
+}
+
+model CommercePayment {
+  id                 String                @id @default(cuid())
+  publicId           String                @unique
+  orderId            String
+  billingGroupId     String
+  customerAccountId  String?
+  providerKey        String
+  externalPaymentRef String?
+  status             CommercePaymentStatus @default(PENDING)
+  amountMinor        Int
+  currency           String
+  lastEventSequence  Int                   @default(0)
+  idempotencyKey     String                @unique
+  capturedAt         DateTime?
+  failureCode        String?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  order           CommerceOrder            @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  billingGroup    BillingGroup             @relation(fields: [billingGroupId], references: [id], onDelete: Restrict)
+  customerAccount CustomerAccount?         @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)
+  attempts        CommercePaymentAttempt[]
+  webhooks        CommerceWebhookEvent[]
+
+  @@unique([providerKey, externalPaymentRef])
+  @@index([orderId])
+  @@index([billingGroupId, createdAt])
+}
+
+model CommercePaymentAttempt {
+  id              String                @id @default(cuid())
+  paymentId       String
+  attemptNumber   Int
+  status          CommercePaymentStatus
+  providerEventId String?
+  failureCode     String?
+  createdAt       DateTime              @default(now())
+
+  payment CommercePayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@unique([paymentId, attemptNumber])
+  @@index([providerEventId])
+}
+
+model CommerceSubscription {
+  id                      String                     @id @default(cuid())
+  publicId                String                     @unique
+  billingGroupId          String
+  customerAccountId       String?
+  projectId               String?
+  productId               String
+  productPriceId          String
+  orderId                 String?
+  providerKey             String
+  externalSubscriptionRef String?
+  status                  CommerceSubscriptionStatus @default(INCOMPLETE)
+  billingInterval         CommerceBillingInterval
+  currentPeriodStart      DateTime?
+  currentPeriodEnd        DateTime?
+  cancelAt                DateTime?
+  cancelledAt             DateTime?
+  renewalMetadata         Json?
+  createdAt               DateTime                   @default(now())
+  updatedAt               DateTime                   @updatedAt
+
+  billingGroup    BillingGroup               @relation(fields: [billingGroupId], references: [id], onDelete: Restrict)
+  customerAccount CustomerAccount?           @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)
+  project         Project?                   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  product         CommerceProduct            @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productPrice    CommerceProductPrice       @relation(fields: [productPriceId], references: [id], onDelete: Restrict)
+  order           CommerceOrder?             @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  invoices        CommerceInvoiceReference[]
+
+  @@unique([providerKey, externalSubscriptionRef])
+  @@index([billingGroupId, status])
+  @@index([customerAccountId])
+}
+
+model CommerceInvoiceReference {
+  id                 String    @id @default(cuid())
+  publicId           String    @unique
+  billingGroupId     String
+  customerAccountId  String?
+  orderId            String?
+  subscriptionId     String?
+  providerKey        String
+  externalInvoiceRef String?
+  currency           String
+  amountMinor        Int
+  taxMinor           Int       @default(0)
+  status             String
+  issuedAt           DateTime?
+  createdAt          DateTime  @default(now())
+
+  billingGroup    BillingGroup          @relation(fields: [billingGroupId], references: [id], onDelete: Restrict)
+  customerAccount CustomerAccount?      @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)
+  order           CommerceOrder?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  subscription    CommerceSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@unique([providerKey, externalInvoiceRef])
+  @@index([billingGroupId, createdAt])
+  @@index([customerAccountId, createdAt])
+  @@index([orderId])
+}
+
+/// Purchased service attached to a project. Does not grant sibling-tenant operational access.
+model ProjectService {
+  id                String                    @id @default(cuid())
+  projectId         String
+  customerAccountId String
+  commerceOrderId   String?
+  serviceOrderId    String?
+  productKey        String
+  status            CommerceFulfillmentStatus @default(NOT_STARTED)
+  entitlementKey    String?
+  customerServiceId String?
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  customerAccount CustomerAccount  @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  commerceOrder   CommerceOrder?   @relation(fields: [commerceOrderId], references: [id], onDelete: SetNull)
+  customerService CustomerService? @relation(fields: [customerServiceId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([customerAccountId, createdAt])
+  @@index([commerceOrderId])
+}
+
+model CommerceWebhookEvent {
+  id               String                @id @default(cuid())
+  providerKey      String
+  externalEventId  String
+  eventType        String
+  payloadHash      String
+  signatureValid   Boolean
+  processingStatus CommerceWebhookStatus @default(RECEIVED)
+  sequenceHint     Int?
+  orderId          String?
+  paymentId        String?
+  failureCode      String?
+  receivedAt       DateTime              @default(now())
+  processedAt      DateTime?
+
+  order   CommerceOrder?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  payment CommercePayment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@unique([providerKey, externalEventId])
+  @@index([orderId, receivedAt])
+  @@index([paymentId])
+}
+
+model CommerceFulfillment {
+  id                      String                    @id @default(cuid())
+  orderId                 String                    @unique
+  kind                    String
+  status                  CommerceFulfillmentStatus @default(PREPARED)
+  idempotencyKey          String                    @unique
+  externalPaymentRef      String?                   @unique
+  walletFundingEvidenceId String?
+  ledgerEntryId           String?
+  attemptCount            Int                       @default(0)
+  lastError               String?
+  completedAt             DateTime?
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+
+  order CommerceOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
+}
+
+model CommerceAuditEvent {
+  id             String   @id @default(cuid())
+  billingGroupId String?
+  actorUserId    String?
+  action         String
+  entityType     String
+  entityId       String
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  billingGroup BillingGroup? @relation(fields: [billingGroupId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId, createdAt])
+  @@index([billingGroupId, createdAt])
 }

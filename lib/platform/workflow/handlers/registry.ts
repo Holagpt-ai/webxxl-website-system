@@ -3,6 +3,7 @@ import type { HandlerExecutionContext, HandlerExecutionResult } from '@/lib/plat
 import { executeCommsReceiptWorkflow } from '@/lib/platform/workflow/handlers/comms-receipt'
 import { executeMarketingFollowUpWorkflow } from '@/lib/platform/workflow/handlers/marketing-followup'
 import { executeSeoSyncPrepareWorkflow } from '@/lib/platform/workflow/handlers/seo-sync-prepare'
+import { executeCommerceWorkflow } from '@/lib/platform/workflow/handlers/commerce-fulfillment'
 
 export type WorkflowHandler = (ctx: HandlerExecutionContext, payload: Record<string, unknown>) => Promise<HandlerExecutionResult>
 
@@ -20,6 +21,11 @@ const REGISTRY: Record<WorkflowJobKind, WorkflowHandler> = {
   WORKFORCE_TASK_PREPARE: DISABLED_HANDLER,
   WALLET_RECONCILIATION_REVIEW: DISABLED_HANDLER,
   NOTIFICATION_DELIVERY: DISABLED_HANDLER,
+  COMMERCE_PAYMENT_FULFILL: executeCommerceWorkflow,
+  COMMERCE_CREDIT_ISSUE_PREPARE: executeCommerceWorkflow,
+  COMMERCE_SERVICE_PROVISION_PREPARE: executeCommerceWorkflow,
+  COMMERCE_SUBSCRIPTION_LIFECYCLE: executeCommerceWorkflow,
+  COMMERCE_FULFILLMENT_RECOVERY: executeCommerceWorkflow,
 }
 
 export function getWorkflowHandler(jobKind: string): WorkflowHandler | null {
