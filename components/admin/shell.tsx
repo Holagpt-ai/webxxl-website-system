@@ -22,6 +22,7 @@ const NAV: { href: string; key: keyof Dictionary['admin']['nav']; match: (p: str
   },
   { href: '/admin/leads', key: 'leads', match: (p) => !!p?.includes('/admin/leads') },
   { href: '/admin/service-orders', key: 'serviceOrders', match: (p) => !!p?.includes('/admin/service-orders') },
+  { href: '/admin/commerce', key: 'commerce', match: (p) => !!p?.includes('/admin/commerce') },
   { href: '/admin/infrastructure', key: 'infrastructure', match: (p) => !!p?.includes('/admin/infrastructure') },
   { href: '/admin/automation', key: 'automation', match: (p) => !!p?.includes('/admin/automation') },
   { href: '/admin/projects', key: 'projects', match: (p) => !!p?.includes('/admin/projects') },
