@@ -1,6 +1,7 @@
 import type { Dictionary } from './en'
 import { adminEs, dashboardLocaleEs, systemNotificationsEs } from './portal-es'
 import { commerceEs } from './commerce-es'
+import { aiEmployeesEs } from './ai-employees-es'
 
 export const es: Dictionary = {
   common: {
@@ -251,6 +252,7 @@ export const es: Dictionary = {
       ownerReview: 'Revisión del propietario',
       marketplace: 'Marketplace',
       billingCredits: 'Facturación y créditos',
+      aiEmployees: 'Empleados de IA',
     },
     overviewTitle: 'Resumen',
     overviewDescription: 'Estado del proyecto, próximos pasos y novedades.',
@@ -596,6 +598,7 @@ export const es: Dictionary = {
   admin: adminEs,
   systemNotifications: systemNotificationsEs,
   commerce: commerceEs,
+  aiEmployees: aiEmployeesEs,
   blog: {
     categories: 'Categorías',
     all: 'Todos',
