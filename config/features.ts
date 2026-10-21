@@ -25,6 +25,8 @@ export const features = {
   automationWhatsappChannel: false,
   automationPushChannel: false,
   purchasableAiEmployees: false,
+  /** Customer analytics & BI HTTP APIs (BATCH-14). Default off. */
+  analyticsBackend: false,
 } as const
 
 export type FeatureFlag = keyof typeof features
