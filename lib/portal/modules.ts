@@ -75,6 +75,7 @@ export function getDashboardNavModules(): PortalModule[] {
     ...core,
     { key: 'ecommerce', navLabel: 'marketplace', route: '/dashboard/marketplace', icon: 'cart', enabled: true },
     { key: 'billing', navLabel: 'billingCredits', route: '/dashboard/billing', icon: 'card', enabled: true },
+    { key: 'analytics', navLabel: 'analytics', route: '/dashboard/analytics', icon: 'chart', enabled: true },
     { key: 'ai', navLabel: 'aiEmployees', route: '/dashboard/ai-employees', icon: 'bot', enabled: true },
     ...infrastructureNav,
     ...automationNav,
