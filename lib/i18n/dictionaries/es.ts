@@ -2,6 +2,7 @@ import type { Dictionary } from './en'
 import { adminEs, dashboardLocaleEs, systemNotificationsEs } from './portal-es'
 import { commerceEs } from './commerce-es'
 import { aiEmployeesEs } from './ai-employees-es'
+import { analyticsEs } from './analytics-es'
 
 export const es: Dictionary = {
   common: {
@@ -599,6 +600,7 @@ export const es: Dictionary = {
   systemNotifications: systemNotificationsEs,
   commerce: commerceEs,
   aiEmployees: aiEmployeesEs,
+  analytics: analyticsEs,
   blog: {
     categories: 'Categorías',
     all: 'Todos',
