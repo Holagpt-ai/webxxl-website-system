@@ -113,6 +113,8 @@
 
 **AUTO-10D (in PR #42):** CAS-before-abandon ordering for attempt start and expired-lease recovery; outbox acknowledgment uses live clock (not batch `now`) with lease-valid finalize/fail CAS.
 
+**ANALYTICS-14 (batch):** Unified customer analytics & BI HTTP layer (`/api/v1/analytics/accounts/:id/*`) reusing SEO-07 connections/metrics/keywords/sync runs; additive conversion definition/event tables; provider adapters (GA4, GSC, GBP, rank vendor, WebXXL events); deterministic summaries without attribution claims. Flags `ANALYTICS_*` + `features.analyticsBackend` default **OFF**. Contract: `docs/platform/docs/ANALYTICS-14-API-CONTRACT.md`.
+
 ## INFRA-02 (2026-10-18) — repository infrastructure only; live staging BLOCKED
 
 | Area | Evidence | Honest status |

@@ -73,6 +73,17 @@ export const PLATFORM_ENTITLEMENTS: ServiceEntitlementDefinition[] = [
     providerPassThrough: false,
   },
   {
+    entitlementKey: 'core.analytics',
+    name: 'Analytics & business intelligence',
+    pricingMode: 'INCLUDED_FREE',
+    includedOrPaid: 'INCLUDED_FREE',
+    eligibleSubscriberCohort: 'UNRESOLVED',
+    featureFlag: 'analyticsBackend',
+    purchasable: false,
+    providerPassThrough: false,
+    fairUsePolicy: 'Read-only reporting; provider credentials and ingestion remain separately authorized.',
+  },
+  {
     entitlementKey: 'core.ai-landing-pages',
     name: 'AI landing-page production',
     pricingMode: 'INCLUDED_FREE',

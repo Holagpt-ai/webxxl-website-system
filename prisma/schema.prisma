@@ -573,6 +573,9 @@ model CustomerAccount {
   customerAiKnowledgeItems     CustomerAiKnowledgeItem[]
   customerAiChatSessions       CustomerAiChatSession[]
   customerAiUsagePolicy        CustomerAiAccountUsagePolicy?
+  analyticsConversionDefinitions AnalyticsConversionDefinition[]
+  analyticsConversionObservations AnalyticsConversionObservation[]
+  webxxlConversionEvents       WebxxlConversionEvent[]
 }
 
 model CustomerMembership {
@@ -948,6 +951,9 @@ model ManagedSite {
   siteSpendingPolicies      SiteSpendingPolicy[]
   customerAiEmployees       CustomerAiEmployee[]
   customerAiChatSessions    CustomerAiChatSession[]
+  analyticsConversionDefinitions AnalyticsConversionDefinition[]
+  analyticsConversionObservations AnalyticsConversionObservation[]
+  webxxlConversionEvents    WebxxlConversionEvent[]
 
   @@index([customerAccountId])
   @@index([projectId])
@@ -3556,6 +3562,7 @@ enum SeoAnalyticsProvider {
   PLACES
   RANK_VENDOR
   WEBXXL_CRAWL
+  WEBXXL_EVENTS
 }
 
 enum SeoPageInventoryStatus {
@@ -4726,4 +4733,74 @@ model CustomerAiEmployeeUsageCounter {
 
   @@unique([employeeId, periodKey])
   @@index([customerAccountId, periodKey])
+}
+
+enum AnalyticsConversionSourceKind {
+  WEBXXL_FIRST_PARTY
+  GA4_IMPORTED
+  OPERATOR_DEFINED
+}
+
+model AnalyticsConversionDefinition {
+  id                String                        @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String?
+  publicId          String                        @unique
+  key               String
+  displayName       String
+  description       String?
+  sourceKind        AnalyticsConversionSourceKind @default(WEBXXL_FIRST_PARTY)
+  matchEventKey     String?
+  isActive          Boolean                       @default(true)
+  createdAt         DateTime                      @default(now())
+  updatedAt         DateTime                      @updatedAt
+
+  customerAccount CustomerAccount                  @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite?                     @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  observations    AnalyticsConversionObservation[]
+
+  @@unique([customerAccountId, key])
+  @@index([customerAccountId, isActive])
+}
+
+model AnalyticsConversionObservation {
+  id                String               @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String
+  definitionId      String?
+  conversionKey     String
+  count             Int                  @default(0)
+  value             Float?
+  periodDate        DateTime
+  dataState         SeoDataState         @default(READY)
+  sourceProvider    SeoAnalyticsProvider
+  observedAt        DateTime
+  ingestedAt        DateTime             @default(now())
+  idempotencyKey    String               @unique
+
+  customerAccount CustomerAccount              @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite                  @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
+  definition      AnalyticsConversionDefinition? @relation(fields: [definitionId], references: [id], onDelete: SetNull)
+
+  @@index([managedSiteId, periodDate])
+  @@index([customerAccountId, conversionKey, periodDate])
+}
+
+model WebxxlConversionEvent {
+  id                String   @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String?
+  eventKey          String
+  occurredAt        DateTime
+  visitorRef        String?
+  sessionRef        String?
+  payload           Json?
+  idempotencyKey    String   @unique
+  ingestedAt        DateTime @default(now())
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+
+  @@index([customerAccountId, eventKey, occurredAt])
+  @@index([managedSiteId, occurredAt])
 }
