@@ -445,6 +445,8 @@ model User {
   socialCampaignApprovals  SocialCampaignApproval[] @relation("SocialCampaignApprover")
   marketingRequestsCreated MarketingRequest[] @relation("MarketingRequestCreator")
   socialWorkspacesAuthorized SocialProviderWorkspaceMapping[]
+  customerAiEmployeesCreated CustomerAiEmployee[] @relation("CustomerAiEmployeeCreator")
+  customerAiEmployeesUpdated CustomerAiEmployee[] @relation("CustomerAiEmployeeUpdater")
 }
 
 model Account {
@@ -567,6 +569,10 @@ model CustomerAccount {
   commerceSubscriptions        CommerceSubscription[]
   commerceInvoices             CommerceInvoiceReference[]
   projectServices              ProjectService[]
+  customerAiEmployees          CustomerAiEmployee[]
+  customerAiKnowledgeItems     CustomerAiKnowledgeItem[]
+  customerAiChatSessions       CustomerAiChatSession[]
+  customerAiUsagePolicy        CustomerAiAccountUsagePolicy?
 }
 
 model CustomerMembership {
@@ -622,6 +628,7 @@ model Project {
   commerceOrders        CommerceOrder[]
   commerceSubscriptions CommerceSubscription[]
   projectServices       ProjectService[]
+  customerAiEmployees   CustomerAiEmployee[]
 
   @@index([customerAccountId])
 }
@@ -939,6 +946,8 @@ model ManagedSite {
   seoProviderSyncRuns       SeoProviderSyncRun[]
   creditReservations        CreditReservation[]
   siteSpendingPolicies      SiteSpendingPolicy[]
+  customerAiEmployees       CustomerAiEmployee[]
+  customerAiChatSessions    CustomerAiChatSession[]
 
   @@index([customerAccountId])
   @@index([projectId])
@@ -3296,6 +3305,8 @@ model ChatwootConversationMapping {
   tenantMapping   ChatwootTenantMapping @relation(fields: [tenantMappingId], references: [id], onDelete: Restrict)
   crmContact      CrmContact?           @relation(fields: [crmContactId], references: [id], onDelete: SetNull)
 
+  customerAiChatSessions CustomerAiChatSession[]
+
   @@unique([customerAccountId, externalConversationId])
   @@index([customerAccountId, webxxlStatus, lastActivityAt])
 }
@@ -4439,4 +4450,280 @@ model CommerceAuditEvent {
 
   @@index([entityType, entityId, createdAt])
   @@index([billingGroupId, createdAt])
+}
+
+// --- AI-CUSTOMER-13: customer AI workforce foundation (additive) ---
+
+enum CustomerAiEmployeeStatus {
+  DRAFT
+  INACTIVE
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum CustomerAiKnowledgeKind {
+  BUSINESS_PROFILE
+  SERVICE_INFO
+  FAQ
+  DOCUMENT
+  REFERENCE
+}
+
+enum CustomerAiKnowledgeStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum CustomerAiChatSessionStatus {
+  OPEN
+  PAUSED
+  CLOSED
+  HANDOFF_PENDING
+  HANDOFF_ACTIVE
+}
+
+enum CustomerAiChatMessageRole {
+  VISITOR
+  ASSISTANT
+  SYSTEM
+  OPERATOR
+}
+
+enum CustomerAiHandoffStatus {
+  REQUESTED
+  ASSIGNED
+  ACCEPTED
+  COMPLETED
+  CANCELLED
+}
+
+enum CustomerAiToolAccessMode {
+  READ
+  WRITE
+}
+
+/// WebXXL-owned customer AI employee instance (one operating account; billing-group siblings do not inherit access).
+model CustomerAiEmployee {
+  id                String                   @id @default(cuid())
+  publicId          String                   @unique
+  customerAccountId String
+  managedSiteId     String?
+  projectId         String?
+  displayName       String
+  roleTitle         String
+  description       String?                  @db.Text
+  configJson        Json                     @default("{}")
+  primaryLocale     String                   @default("en")
+  secondaryLocales  Json                     @default("[]")
+  status            CustomerAiEmployeeStatus @default(DRAFT)
+  entitlementKey    String                   @default("future.ai-employee")
+  emergencyPaused   Boolean                  @default(false)
+  createdByUserId   String?
+  updatedByUserId   String?
+  archivedAt        DateTime?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+
+  customerAccount CustomerAccount                    @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite?                       @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  project         Project?                           @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  creator         User?                              @relation("CustomerAiEmployeeCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  updater         User?                              @relation("CustomerAiEmployeeUpdater", fields: [updatedByUserId], references: [id], onDelete: SetNull)
+  auditEvents     CustomerAiEmployeeAuditEvent[]
+  toolPermissions CustomerAiEmployeeToolPermission[]
+  chatSessions    CustomerAiChatSession[]
+  usageCounters   CustomerAiEmployeeUsageCounter[]
+
+  @@index([customerAccountId, status])
+  @@index([customerAccountId, createdAt])
+}
+
+model CustomerAiEmployeeAuditEvent {
+  id                String                    @id @default(cuid())
+  employeeId        String
+  customerAccountId String
+  action            String
+  fromStatus        CustomerAiEmployeeStatus?
+  toStatus          CustomerAiEmployeeStatus?
+  actorUserId       String?
+  metadata          Json?
+  createdAt         DateTime                  @default(now())
+
+  employee CustomerAiEmployee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, createdAt])
+  @@index([customerAccountId, createdAt])
+}
+
+model CustomerAiKnowledgeItem {
+  id                String                    @id @default(cuid())
+  publicId          String                    @unique
+  customerAccountId String
+  kind              CustomerAiKnowledgeKind
+  status            CustomerAiKnowledgeStatus @default(DRAFT)
+  title             String
+  summary           String?                   @db.Text
+  languageTag       String                    @default("en")
+  classification    CommsDataClassification   @default(GENERAL_BUSINESS)
+  currentRevisionId String?
+  createdByUserId   String?
+  approvedByUserId  String?
+  publishedAt       DateTime?
+  archivedAt        DateTime?
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+
+  customerAccount CustomerAccount              @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  revisions       CustomerAiKnowledgeRevision[]
+
+  @@index([customerAccountId, status])
+  @@index([customerAccountId, kind, languageTag])
+}
+
+model CustomerAiKnowledgeRevision {
+  id               String   @id @default(cuid())
+  knowledgeItemId  String
+  revisionNumber   Int
+  contentJson      Json
+  provenanceJson   Json?
+  createdByUserId  String?
+  createdAt        DateTime @default(now())
+
+  knowledgeItem CustomerAiKnowledgeItem @relation(fields: [knowledgeItemId], references: [id], onDelete: Cascade)
+
+  @@unique([knowledgeItemId, revisionNumber])
+}
+
+model CustomerAiEmployeeToolPermission {
+  id                String                   @id @default(cuid())
+  employeeId        String
+  customerAccountId String
+  toolKey           String
+  accessMode        CustomerAiToolAccessMode
+  granted           Boolean                  @default(false)
+  grantedByUserId   String?
+  grantedAt         DateTime?
+  revokedAt         DateTime?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+
+  employee CustomerAiEmployee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, toolKey, accessMode])
+  @@index([customerAccountId, toolKey])
+}
+
+model CustomerAiChatSession {
+  id                            String                      @id @default(cuid())
+  publicId                      String                      @unique
+  customerAccountId             String
+  employeeId                    String?
+  managedSiteId                 String?
+  status                        CustomerAiChatSessionStatus @default(OPEN)
+  visitorRef                    String?
+  visitorLocale                 String?
+  chatwootConversationMappingId String?
+  dataClassification            CommsDataClassification     @default(GENERAL_BUSINESS)
+  lastMessageAt                 DateTime?
+  createdAt                     DateTime                    @default(now())
+  updatedAt                     DateTime                    @updatedAt
+
+  customerAccount             CustomerAccount              @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  employee                    CustomerAiEmployee?          @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  managedSite                 ManagedSite?                 @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  chatwootConversationMapping ChatwootConversationMapping? @relation(fields: [chatwootConversationMappingId], references: [id], onDelete: SetNull)
+  messages                    CustomerAiChatMessage[]
+  handoffs                    CustomerAiHandoffRequest[]
+  auditEvents                 CustomerAiConversationAuditEvent[]
+
+  @@index([customerAccountId, status, lastMessageAt])
+  @@index([employeeId, status])
+}
+
+model CustomerAiChatMessage {
+  id                String                    @id @default(cuid())
+  sessionId         String
+  customerAccountId String
+  idempotencyKey    String
+  role              CustomerAiChatMessageRole
+  bodyText          String                    @db.Text
+  contentJson       Json?
+  ingestionSource   String?
+  createdAt         DateTime                  @default(now())
+
+  session CustomerAiChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, idempotencyKey])
+  @@index([customerAccountId, createdAt])
+}
+
+model CustomerAiHandoffRequest {
+  id                String                  @id @default(cuid())
+  sessionId         String
+  customerAccountId String
+  status            CustomerAiHandoffStatus @default(REQUESTED)
+  reason            String?                 @db.Text
+  requestedByUserId String?
+  assignedUserId    String?
+  chatwootHandoffRef String?
+  resolvedAt        DateTime?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  session CustomerAiChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, status])
+  @@index([customerAccountId, createdAt])
+}
+
+model CustomerAiConversationAuditEvent {
+  id                String   @id @default(cuid())
+  sessionId         String
+  customerAccountId String
+  eventType         String
+  actorUserId       String?
+  metadata          Json?
+  createdAt         DateTime @default(now())
+
+  session CustomerAiChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+}
+
+model CustomerAiAccountUsagePolicy {
+  id                    String   @id @default(cuid())
+  customerAccountId     String   @unique
+  maxActiveEmployees    Int      @default(0)
+  monthlyMessageBudget  Int?
+  monthlyTokenBudget    Int?
+  rateLimitPerMinute    Int      @default(0)
+  executionEnabled      Boolean  @default(false)
+  emergencyDisabled     Boolean  @default(false)
+  updatedByUserId       String?
+  updatedAt             DateTime @updatedAt
+  createdAt             DateTime @default(now())
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+}
+
+model CustomerAiEmployeeUsageCounter {
+  id                  String   @id @default(cuid())
+  employeeId          String
+  customerAccountId   String
+  periodKey           String
+  messagesIngested    Int      @default(0)
+  tokensReserved      Int      @default(0)
+  toolCallsAuthorized Int      @default(0)
+  toolCallsDenied     Int      @default(0)
+  updatedAt           DateTime @updatedAt
+  createdAt           DateTime @default(now())
+
+  employee CustomerAiEmployee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, periodKey])
+  @@index([customerAccountId, periodKey])
 }
