@@ -27,7 +27,15 @@ import {
   verifyCaptureRequestSignature,
 } from '@/lib/platform/analytics/capture/signature-auth'
 import { isApprovedCaptureEventKey } from '@/lib/platform/analytics/capture/event-keys'
-import { validateCaptureEventPayload } from '@/lib/platform/analytics/capture/validate-payload'
+import {
+  validateCaptureEventPayload,
+  type CaptureEventBody,
+} from '@/lib/platform/analytics/capture/validate-payload'
+
+/** Simulates JSON.parse of an untrusted request body (extra keys are not in CaptureEventBody). */
+function untrustedCaptureBody(json: string): CaptureEventBody {
+  return JSON.parse(json) as CaptureEventBody
+}
 import { checkCaptureRateLimit } from '@/lib/platform/analytics/capture/rate-limit'
 import { boundedBackfillDays, runAnalyticsProviderIngest } from '@/lib/platform/analytics/ingestion/provider-ingest'
 import { persistGscDailyMetrics } from '@/lib/platform/analytics/ingestion/persist-observations'
@@ -63,8 +71,8 @@ describe('BATCH-15 analytics ingestion & conversion pipeline', () => {
     })
     expect(bad.ok).toBe(false)
     const unknownField = validateCaptureEventPayload({
-      rawBody: '{}',
-      parsed: { eventKey: 'form_submit', consentGranted: true, email: 'a@b.com' },
+      rawBody: '{"eventKey":"form_submit","consentGranted":true,"email":"a@b.com"}',
+      parsed: untrustedCaptureBody('{"eventKey":"form_submit","consentGranted":true,"email":"a@b.com"}'),
     })
     expect(unknownField.ok).toBe(false)
     const noConsent = validateCaptureEventPayload({
