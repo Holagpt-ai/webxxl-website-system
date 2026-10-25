@@ -1,0 +1,82 @@
+name: App validate
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: app-validate-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  scope:
+    runs-on: ubuntu-latest
+    outputs:
+      app: ${{ steps.filter.outputs.app }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: filter
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+          elif [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            BASE="HEAD^"
+          else
+            BASE="${{ github.event.before }}"
+          fi
+          if git diff --name-only "$BASE" HEAD | grep -Eq '^(app|components|lib|prisma|config|content|public)/|^(package.json|pnpm-lock.yaml|next.config.mjs|tsconfig.json|vitest.config.ts|auth.ts|proxy.ts)$'; then
+            echo "app=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "app=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  app:
+    needs: scope
+    if: needs.scope.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/webxxl?schema=public
+      DIRECT_URL: postgresql://ci:ci@127.0.0.1:5432/webxxl?schema=public
+      AUTH_SECRET: continuity-ci-placeholder-not-production
+      AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_SITE_URL: https://www.webbxxl.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.3.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec prisma validate
+      - run: pnpm exec prisma generate
+      - run: pnpm typecheck
+      - run: pnpm build
+
+  app-validate-gate:
+    needs: [scope, app]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report application validation
+        shell: bash
+        run: |
+          if [ "${{ needs.scope.result }}" != "success" ]; then
+            echo "Could not classify the changed paths."
+            exit 1
+          fi
+          if [ "${{ needs.scope.outputs.app }}" != "true" ]; then
+            echo "Application validation is not applicable to this diff."
+            exit 0
+          fi
+          if [ "${{ needs.app.result }}" != "success" ]; then
+            echo "Application validation failed."
+            exit 1
+          fi
+          echo "Application validation passed."

@@ -4,14 +4,18 @@
 
 ## Mandatory reading sequence for every fresh work session
 
-1. Read the root `README.md` and **entire `01-MASTER-TAD.md`**.
-2. Read **`02-CURRENT-STATE.md`**, then **`15-DECISIONS-CHANGELOG.md`**. Follow relevant domain specifications in full before the corresponding batch.
+1. Read the root `README.md`, `AGENTS.md`, `docs/PROJECT_MEMORY.md`, and `docs/SESSION_HANDOFF.md`. Read **`01-MASTER-TAD.md`** when the batch changes architecture, policy, tenancy, or commercial scope. Do not re-read the entire TAD on an ordinary implementation batch.
+2. Read **`02-CURRENT-STATE.md`**, then **`15-DECISIONS-CHANGELOG.md`**. Follow the domain specification sections that the batch actually changes.
 3. Identify the actual repository, branch, code revision, relevant schema, applicable feature flags and last merged batch. The TAD is architecture; source and deployed evidence determine actual status.
 4. Confirm the chosen implementation batch, exact modules and file ownership; show affected contracts, migration impact, external providers and acceptance cases.
 5. Do not infer permission to deploy, charge, import PHI, send SMS, run voice calls, start ads or publish websites from documentation approval.
 6. Execute in **large, coherent, non-overlapping Cursor batches**, with only focused verification necessary for safe continuation. Save extensive end-to-end/release audits for staging/production gates.
 7. After each batch, update `02-CURRENT-STATE.md` (facts/evidence), `13-IMPLEMENTATION-ROADMAP.md` (status), and `15-DECISIONS-CHANGELOG.md` if decisions changed. Every plan must be updated against reality rather than copied forward as completed.
 8. Preserve a fresh, copyable handoff: goal, implemented, unmerged/unreleased, known issues, changed files, commit/PR/deployment IDs, exact next step.
+
+## Continuity layer
+
+Ordinary Cursor sessions read root `AGENTS.md`, `docs/PROJECT_MEMORY.md`, and `docs/SESSION_HANDOFF.md` first, then this protocol and only the domain sections the batch touches. Do not re-audit the whole repository every session. This file and `01-MASTER-TAD.md` stay canonical for architecture and policy. New decision files live in `docs/adr/` starting at ADR-018. ADR-001 through ADR-017 stay in `15-DECISIONS-CHANGELOG.md` and are not renumbered.
 
 ## Authoritative priority order
 

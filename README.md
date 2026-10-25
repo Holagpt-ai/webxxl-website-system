@@ -1,41 +1,51 @@
-# webxxl-website-system
+# WebXXL — Website & Business Operations Platform
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
+**Repository:** [`Holagpt-ai/webxxl-website-system`](https://github.com/Holagpt-ai/webxxl-website-system) · **Primary branch:** `main` · **Product:** WebXXL · **Portal reference:** `https://www.webbxxl.com` (double `b`) · **Reconciled:** 2026-10-25.
 
-## Built with v0
+WebXXL is a modular, multi-tenant managed-website and business-operations platform. Source on `main` is not the same thing as an enabled provider, an applied migration, or a verified customer workflow.
 
-This repository is linked to a [v0](https://v0.app) project. You can continue developing by visiting the link below -- start new chats to make changes, and v0 will push commits directly to this repo. Every merge to `main` will automatically deploy.
+## First read
 
-[Continue working on v0 →](https://v0.app/chat/projects/prj_38qv35wOirTFEBIH3uuJChdmS2b8)
+1. [`AGENTS.md`](AGENTS.md) — who edits what, and what a session must not assume.
+2. [`docs/PROJECT_MEMORY.md`](docs/PROJECT_MEMORY.md) — current decisions and source checkpoint.
+3. [`docs/SESSION_HANDOFF.md`](docs/SESSION_HANDOFF.md) — latest batch, evidence, and next assignment.
+4. [`docs/platform/docs/00-SESSION-START.md`](docs/platform/docs/00-SESSION-START.md) and [`docs/platform/docs/01-MASTER-TAD.md`](docs/platform/docs/01-MASTER-TAD.md) — approved target architecture. Do not replace that Master TAD.
 
-## Getting Started
+## Operational index
 
-First, run the development server:
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — short system map.
+- [`docs/ROUTE_MAP.md`](docs/ROUTE_MAP.md) — route families and the navigation check.
+- [`docs/DATA_AND_SERVICES.md`](docs/DATA_AND_SERVICES.md) — data custody, adapters, workers, flags.
+- [`docs/DEPLOYMENT_STATUS.md`](docs/DEPLOYMENT_STATUS.md) — deploy SHA, migrations, and activation kept apart.
+- [`docs/ISSUE_REGISTER.md`](docs/ISSUE_REGISTER.md) — open defects, deferrals, and blockers.
+- [`docs/CHANGELOG.md`](docs/CHANGELOG.md) — merged source milestones.
+- [`docs/RELEASE_GATES.md`](docs/RELEASE_GATES.md) — PR, deploy, and activation gates.
+- [`docs/CHATGPT_PROJECT_INSTRUCTIONS.md`](docs/CHATGPT_PROJECT_INSTRUCTIONS.md) — copyable ChatGPT project instructions.
+- [`docs/adr/INDEX.md`](docs/adr/INDEX.md) and [`docs/adr/README.md`](docs/adr/README.md) — ADR-018+ registry. ADR-001 through ADR-017 stay in the Master TAD decision log.
+
+## Technical quick start
+
+Next.js App Router 16.3.3, React 19, TypeScript, Prisma 6.19.3, Auth.js (NextAuth), PostgreSQL/Supabase. `package.json` declares `pnpm@12.3.4`.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+pnpm exec prisma generate
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Use `pnpm typecheck`, `pnpm test`, and `pnpm build` for the change in front of you. `pnpm db:migrate` writes to a database. Do not run it against production without a separate owner authorization. Secrets belong in the environment store. `.env.example` documents names only.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Continuity checks (no install):
 
-## Learn More
+```bash
+node scripts/validate-continuity.mjs
+node scripts/validate-adr.mjs
+node scripts/validate-routes.mjs
+node scripts/validate-seo.mjs
+node scripts/validate-generated.mjs
+node --test __tests__/docs/*.test.mjs
+```
 
-To learn more, take a look at the following resources:
+## Delivery control
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
-
-## Platform architecture
-
-The WebXXL Master Blueprint and Technical Architecture Document v1.0.0 is the authoritative architecture reference:
-
-- [Platform blueprint](docs/platform/README.md)
-- [Session start](docs/platform/docs/00-SESSION-START.md)
-- [Master TAD](docs/platform/docs/01-MASTER-TAD.md)
+Cursor owns backend, data, APIs, migrations, docs, CI, Git, and deployment logic. v0.app owns visual UI/UX. Do not edit the same files from both tools unless the assignment explicitly says it is an integration PR. GitHub is the source repository. Vercel hosts the WebXXL application. Every nontrivial change goes branch, focused tests, pull request, owner review. Do not merge from an agent session unless the owner asked for the merge.

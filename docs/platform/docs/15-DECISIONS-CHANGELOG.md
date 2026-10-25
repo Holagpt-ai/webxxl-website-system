@@ -24,6 +24,10 @@
 | ADR-016 | No unapproved downgrade, deletion of promised function, relabeling free as paid, or architecture substitution | Any constraint must be presented as a decision/upgrade path to owner |
 | ADR-017 | ABMED Clinical sensitive communications and Resend email activation remain compliance/production gated | Build reusable architecture without derailing existing ABMED site delivery |
 
+## ADR-018 and later
+
+New records are files under `docs/adr/`. ADR-018, ADR-019, and ADR-020 were added on 2026-10-25 as **PROPOSED**. They are not owner decisions, they do not supersede ADR-001 through ADR-017, and they do not authorize a CMS, an automation builder, or any provider rollout. Approval still requires an explicit owner decision recorded here.
+
 ## Open decisions (must be resolved at the specified gate, not guessed)
 
 | Open ID | Decision needed | Default until resolved |
@@ -70,3 +74,4 @@ TAD version after approval:
 | 2026-10-17 | 1.0.0 | Initial consolidated documentation deliverable derived from owner-approved project direction and focused GitHub main/screenshot review. Does not claim deployment or GitHub commit. |
 | 2026-10-18 | 1.0.0-doc | FOUND-01 merged PR #33 @ `68c5fde`. INFRA-02 repository staging assets added; live Hostinger staging explicitly **BLOCKED**; Postiz at `app.webbxxl.com` inventoried read-only, not reinstalled. |
 | 2026-10-18 | 1.0.0-doc | INFRA-02A: Docker Compose merge hardening (`!reset`/`!override`), Chatwoot `x-` anchor fix, effective `docker compose config` validation. |
+| 2026-10-25 | 1.0.0-doc | Source checkpoint at `c0a21db`. ADR-018..020 added as PROPOSED under `docs/adr/`. Legacy ADR-001..017 unchanged and not superseded. |
