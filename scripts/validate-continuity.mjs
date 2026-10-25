@@ -3,9 +3,10 @@
  * Required continuity files, relative links, and the ADR approval boundary.
  * Does not crawl the Master TAD for prose quality.
  */
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { validateAdrs } from './validate-adr.mjs';
 
 export const REQUIRED_FILES = [
   'README.md',
@@ -59,6 +60,33 @@ export function relativeLinkErrors(root, rel) {
   return errors;
 }
 
+/** Session handoff must carry merge/migration facts and a durable next-assignment block. */
+export function validateSessionHandoff(handoff) {
+  const errors = [];
+  for (const marker of ['Branch', 'Merged', 'Migration', 'Do NOT touch']) {
+    if (!handoff.includes(marker)) errors.push(`SESSION_HANDOFF.md is missing "${marker}"`);
+  }
+  const nextHeading = '## Next assignment';
+  const nextStart = handoff.indexOf(nextHeading);
+  const templateStart = handoff.indexOf('## Handoff template', nextStart);
+  const hasTemplateField = handoff.includes('Next exact assignment / owning tool');
+  if (nextStart < 0 && !hasTemplateField) {
+    errors.push('SESSION_HANDOFF.md must include a Next assignment section or the handoff template next-assignment field');
+  }
+  const nextBody =
+    nextStart >= 0
+      ? handoff.slice(nextStart, templateStart > nextStart ? templateStart : undefined)
+      : handoff;
+  const nextText = nextBody.replace(/\s+/g, ' ').trim();
+  if (nextText.length < 48) {
+    errors.push('SESSION_HANDOFF.md next assignment must describe the work with enough context');
+  }
+  if (!/\b(Cursor|v0\.app|owner)\b/i.test(nextText)) {
+    errors.push('SESSION_HANDOFF.md next assignment must name the responsible platform or owner');
+  }
+  return errors;
+}
+
 export function validateContinuity(root) {
   const errors = [];
   for (const rel of REQUIRED_FILES) {
@@ -68,9 +96,8 @@ export function validateContinuity(root) {
   if (readme.includes('bootstrapped with')) errors.push('README.md still uses the v0 starter introduction');
   if (!readme.includes('docs/PROJECT_MEMORY.md')) errors.push('README.md must link the project memory');
   const handoff = existsSync(join(root, 'docs/SESSION_HANDOFF.md')) ? readFileSync(join(root, 'docs/SESSION_HANDOFF.md'), 'utf8') : '';
-  for (const marker of ['Branch', 'Merged', 'Migration', 'Batch 15', 'Do NOT touch']) {
-    if (!handoff.includes(marker)) errors.push(`SESSION_HANDOFF.md is missing "${marker}"`);
-  }
+  if (!handoff) errors.push('missing docs/SESSION_HANDOFF.md');
+  else errors.push(...validateSessionHandoff(handoff));
   const decisions = existsSync(join(root, 'docs/platform/docs/15-DECISIONS-CHANGELOG.md'))
     ? readFileSync(join(root, 'docs/platform/docs/15-DECISIONS-CHANGELOG.md'), 'utf8')
     : '';
@@ -83,14 +110,7 @@ export function validateContinuity(root) {
   if (!tad.startsWith('# 01 — WebXXL Technical Architecture Document (Master TAD)')) {
     errors.push('Master TAD heading changed; this check refuses a replaced architecture document');
   }
-  const adrDir = join(root, 'docs', 'adr');
-  if (existsSync(adrDir)) {
-    for (const name of readdirSync(adrDir)) {
-      if (!/^ADR-\d{3}-.+\.md$/.test(name)) continue;
-      const body = readFileSync(join(adrDir, name), 'utf8');
-      if (/^status:\s*APPROVED\s*$/m.test(body)) errors.push(`${name} is APPROVED; new records in this batch must stay PROPOSED`);
-    }
-  }
+  errors.push(...validateAdrs(root).errors);
   for (const rel of LINKED_DOCS) {
     if (existsSync(join(root, rel))) errors.push(...relativeLinkErrors(root, rel));
   }

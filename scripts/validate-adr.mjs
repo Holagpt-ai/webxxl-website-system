@@ -28,6 +28,8 @@ export function validateAdrs(root) {
   }
   const files = readdirSync(adrDir).filter((f) => f.startsWith('ADR-') && f.endsWith('.md'));
   const index = readFileSync(indexPath, 'utf8');
+  const decisionsPath = join(root, 'docs', 'platform', 'docs', '15-DECISIONS-CHANGELOG.md');
+  const decisions = existsSync(decisionsPath) ? readFileSync(decisionsPath, 'utf8') : '';
   const ids = new Set();
   const indexRecords = new Map();
   for (const line of index.split(/\r?\n/)) {
@@ -60,6 +62,15 @@ export function validateAdrs(root) {
     }
     if (['APPROVED', 'REJECTED', 'SUPERSEDED'].includes(fields.status) && (!fields.approval_evidence || fields.approval_evidence === 'NONE')) {
       errors.push(`${name}: ${fields.status} requires non-NONE owner decision evidence`);
+    }
+    if (fields.status === 'APPROVED') {
+      const evidence = fields.approval_evidence ?? '';
+      const citedInLog =
+        decisions.includes(fields.id)
+        || (evidence !== 'NONE' && evidence.length > 0 && decisions.includes(evidence));
+      if (!citedInLog) {
+        errors.push(`${name}: APPROVED requires ${fields.id} or approval_evidence in 15-DECISIONS-CHANGELOG.md`);
+      }
     }
     if (fields.status === 'SUPERSEDED' && (!fields.superseded_by || fields.superseded_by === 'NONE')) {
       errors.push(`${name}: SUPERSEDED requires superseded_by`);
