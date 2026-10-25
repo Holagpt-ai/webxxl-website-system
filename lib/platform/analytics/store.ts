@@ -37,6 +37,7 @@ export type AnalyticsConversionObsRow = {
   conversionKey: string
   displayName: string
   count: number
+  uniqueCount?: number
   sourceProvider: string
   dataState: string
 }

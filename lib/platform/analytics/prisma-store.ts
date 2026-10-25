@@ -126,7 +126,7 @@ export const prismaAnalyticsStore: AnalyticsStore = {
         managedSiteId: input.managedSiteId,
         periodDate: { gte: input.range.start, lte: input.range.end },
       },
-      _sum: { count: true },
+      _sum: { count: true, uniqueCount: true },
     })
     const defs = await prisma.analyticsConversionDefinition.findMany({
       where: { customerAccountId: input.customerAccountId },
@@ -137,6 +137,7 @@ export const prismaAnalyticsStore: AnalyticsStore = {
       conversionKey: g.conversionKey,
       displayName: nameByKey.get(g.conversionKey) ?? g.conversionKey,
       count: g._sum.count ?? 0,
+      uniqueCount: g._sum.uniqueCount ?? g._sum.count ?? 0,
       sourceProvider: g.sourceProvider,
       dataState: g.dataState,
     }))
