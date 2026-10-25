@@ -27,6 +27,8 @@ WebXXL is a scalable, multi-tenant website-subscription and managed-business-ope
 
 **Mandatory session-read gate:** Open and read `docs/00-SESSION-START.md` and `docs/01-MASTER-TAD.md` first, then the domain document(s) and `docs/15-DECISIONS-CHANGELOG.md`. Verify GitHub `main` and inspect relevant implemented code before claiming any feature works. In session replies, state the TAD version, current batch and what is **Implemented / Verified / Planned / Deferred / Blocked**. Never rely solely on an old conversation recap; bring this package into the new conversation or load it from GitHub after it has been committed.
 
+Operational continuity (living index, not a second architecture): [`../PROJECT_MEMORY.md`](../PROJECT_MEMORY.md), [`../SESSION_HANDOFF.md`](../SESSION_HANDOFF.md), and [`../adr/INDEX.md`](../adr/INDEX.md).
+
 ## Document map
 
 | Document | Purpose |

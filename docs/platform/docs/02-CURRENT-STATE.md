@@ -1,6 +1,8 @@
 # 02 — Verified Repository Baseline and Honest Status
 
-**Inspection:** GitHub `main` on 2026-10-18. **DOC-00 merged:** `9b0886afc4b312450a589a6fa6768612312a2ef8` (PR #32). **FOUND-01 merged:** `68c5fde5345813899e2db34ac422a90cb5956f52` (PR #33). **INFRA-02 merged:** `7277f94bdceb064600315a702f77d3d29d66eaed` (PR #34). Production Vercel deployment and Supabase migration application remain separate gates.
+**Source checkpoint 2026-10-25:** GitHub `main` is `c0a21db93d730c838fc58d9b862ed547927bd72f` (PR #49). Source through ANALYTICS-14 backend (PR #48, `336b89b6ae59784c5cdd001e9b88ecfe1e874d78`) and the customer Analytics dashboard (PR #49) is merged. GitHub deployment `7233002736`, created by `vercel[bot]` for environment Production, succeeded for that same SHA at 2026-10-21T17:41:12Z. Production migration application and live flag values remain **UNVERIFIED**. Paragraphs below that still say "in PR" are historical notes from the October 18–21 batches, not the current merge state. Operational summary: `docs/PROJECT_MEMORY.md` and `docs/DEPLOYMENT_STATUS.md`.
+
+**Inspection (historical):** GitHub `main` on 2026-10-18. **DOC-00 merged:** `9b0886afc4b312450a589a6fa6768612312a2ef8` (PR #32). **FOUND-01 merged:** `68c5fde5345813899e2db34ac422a90cb5956f52` (PR #33). **INFRA-02 merged:** `7277f94bdceb064600315a702f77d3d29d66eaed` (PR #34). Production Vercel deployment and Supabase migration application remain separate gates.
 
 ## FOUND-01 — merged on GitHub; production migration not applied from INFRA-02
 
@@ -113,7 +115,7 @@
 
 **AUTO-10D (in PR #42):** CAS-before-abandon ordering for attempt start and expired-lease recovery; outbox acknowledgment uses live clock (not batch `now`) with lease-valid finalize/fail CAS.
 
-**ANALYTICS-14 (batch):** Unified customer analytics & BI HTTP layer (`/api/v1/analytics/accounts/:id/*`) reusing SEO-07 connections/metrics/keywords/sync runs; additive conversion definition/event tables; provider adapters (GA4, GSC, GBP, rank vendor, WebXXL events); deterministic summaries without attribution claims. Flags `ANALYTICS_*` + `features.analyticsBackend` default **OFF**. Contract: `docs/platform/docs/ANALYTICS-14-API-CONTRACT.md`.
+**ANALYTICS-14 (merged source):** Unified customer analytics and BI HTTP layer (`/api/v1/analytics/accounts/:id/*`) reusing SEO-07 connections/metrics/keywords/sync runs; additive conversion definition/event tables; provider adapters (GA4, GSC, GBP, rank vendor, WebXXL events); deterministic summaries without attribution claims. Backend PR #48 and dashboard PR #49 are on `main`. `ANALYTICS_BACKEND_ENABLED`, `ANALYTICS_INGESTION_ENABLED`, and `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED` default **OFF** in `config/analytics-backend.ts`. `features.analyticsBackend` is `false`. Gated helpers under `lib/platform/analytics/ingestion/` are not an activated pipeline. **Batch 15 — Analytics Ingestion & Conversion Pipeline is PLANNED**, not merged. Whether migration `20261021120000_analytics14_foundation` is applied in production is **UNVERIFIED**. Contract: `docs/platform/docs/ANALYTICS-14-API-CONTRACT.md`.
 
 ## INFRA-02 (2026-10-18) — repository infrastructure only; live staging BLOCKED
 
