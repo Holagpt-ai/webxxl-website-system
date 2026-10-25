@@ -7,7 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { classifyDivergence } from '../../scripts/check-branch-divergence.mjs';
 import { assessEvidence } from '../../scripts/check-deployment-evidence.mjs';
 import { buildHandoffDraft } from '../../scripts/draft-session-handoff.mjs';
-import { validateContinuity } from '../../scripts/validate-continuity.mjs';
+import { validateAdrs } from '../../scripts/validate-adr.mjs';
+import { validateContinuity, validateSessionHandoff } from '../../scripts/validate-continuity.mjs';
 import { validateGenerated } from '../../scripts/validate-generated.mjs';
 import { validateNavHrefs } from '../../scripts/validate-routes.mjs';
 import { validateRoutes } from '../../scripts/validate-routes.mjs';
@@ -56,6 +57,31 @@ test('handoff draft keeps production claims out of the git head', () => {
   const draft = buildHandoffDraft({ branch: 'feature/example', headSha: 'abc', mainSha: 'def' });
   assert.match(draft, /Do NOT touch:/);
   assert.match(draft, /do not copy the head SHA into production/);
+});
+
+test('session handoff accepts a future batch label without hardcoding Batch 15', () => {
+  const handoff = [
+    '## This session',
+    'Branch: feature/example',
+    'Merged: NO',
+    'Migration applied: NO',
+    '## Next assignment',
+    'Batch 16 — Example follow-on work. Cursor owns backend; v0.app owns UI after APIs land.',
+    '## Handoff template',
+    'Do NOT touch:',
+    'Next exact assignment / owning tool:',
+  ].join('\n');
+  assert.deepEqual(validateSessionHandoff(handoff), []);
+});
+
+test('session handoff rejects a missing next-assignment block', () => {
+  const handoff = 'Branch: x\nMerged: NO\nMigration applied: NO\nDo NOT touch:\n';
+  assert.match(validateSessionHandoff(handoff).join('\n'), /Next assignment/);
+});
+
+test('continuity delegates ADR approval rules to validate-adr', () => {
+  assert.deepEqual(validateContinuity(ROOT).errors, []);
+  assert.equal(validateAdrs(ROOT).checked, 3);
 });
 
 test('missing evidence stays unverified', () => {

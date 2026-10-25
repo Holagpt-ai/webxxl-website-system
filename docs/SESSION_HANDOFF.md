@@ -28,7 +28,7 @@
 
 ## Next assignment
 
-**Batch 15 — Analytics Ingestion & Conversion Pipeline**, branch planned `feature/webxxl-analytics-ingestion-15`, after the owner reviews this pull request. Extend the existing analytics model and AUTO-10 boundary. Keep collection, scheduling, and provider fetch off until a separate activation. Do not start a CMS or automation-builder implementation from ADR-019 or ADR-020.
+**Cursor: Batch 15 — Analytics Ingestion & Conversion Pipeline**, branch planned `feature/webxxl-analytics-ingestion-15`, after the owner reviews this pull request. Extend the existing analytics model and AUTO-10 boundary. Keep collection, scheduling, and provider fetch off until a separate activation. Do not start a CMS or automation-builder implementation from ADR-019 or ADR-020.
 
 ## Handoff template
 
