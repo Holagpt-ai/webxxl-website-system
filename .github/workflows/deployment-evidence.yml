@@ -1,0 +1,22 @@
+name: Deployment evidence
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate committed deployment evidence
+        env:
+          WEBXXL_DEPLOYMENT_REPORT: deployment-evidence-report.txt
+        run: node scripts/check-deployment-evidence.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deployment-sha-evidence
+          path: deployment-evidence-report.txt

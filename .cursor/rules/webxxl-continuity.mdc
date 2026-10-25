@@ -1,0 +1,6 @@
+---
+description: WebXXL source-grounded continuity and no-drift requirements
+alwaysApply: true
+---
+
+Read root `AGENTS.md`, `docs/PROJECT_MEMORY.md`, `docs/SESSION_HANDOFF.md`, and `docs/platform/docs/00-SESSION-START.md` before starting WebXXL coding. Read Master TAD and relevant domain spec before changing architecture. Use current origin/main and real files, never conversation recollection as release proof. Cursor owns nonvisual code/docs/CI/Git; v0.app alone owns UI/UX; avoid overlapping changes. No production migration/flags/sends/charges/schedules/DNS without separate owner authorization. Keep every PR bounded, source-tested and unmerged for owner review; update impacted continuity docs and exact session handoff. Distinguish merged/deployed/migrated/activated/verified. Check legacy ADR-001..017 and `docs/adr/INDEX.md` before major architectural or vendor changes. New ADR-018+ drafts start PROPOSED and need explicit owner evidence plus canonical decision-log entry before APPROVED.

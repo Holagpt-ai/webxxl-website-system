@@ -2,6 +2,20 @@
 
 **Execution mode:** Cursor primary for backend/logic/Git; v0.app exclusively all UI/UX; Vercel for WebXXL deployment; Hostinger/Docker for approved isolated providers. Large cohesive non-overlapping implementation batches, focused validation, honest results. **Document freeze first, implementation second.** Dates below are **not fixed commitments**. Do not let optional vendors block unrelated core modules.
 
+## Source checkpoint 2026-10-25
+
+The batch table and later status blocks keep their original planning wording, including "In PR" and "In progress". GitHub `main` at `c0a21db93d730c838fc58d9b862ed547927bd72f` has moved past that wording. Use this checkpoint and `docs/PROJECT_MEMORY.md` for current source status. A merge or a Vercel production deployment is not migration application, flag activation, or a live provider test.
+
+| Executed batch | Source evidence on `main` | Source state | Runtime |
+|---|---|---|---|
+| DOC-00 | PR #32 | MERGED | Documentation only |
+| FOUND-01 through AUTO-10 | PRs #33–#42 | MERGED | Flags and provider calls remain separately gated; production migration apply **UNVERIFIED** |
+| COMMERCE-11 / COMMERCE-12 | PRs #43–#45 | MERGED | Checkout and marketplace source; live charges not authorized by the merge |
+| AI-CUSTOMER-13 | PRs #46–#47 | MERGED | Workforce APIs and dashboard source; live execution not inferred |
+| ANALYTICS-14 | PRs #48–#49 | MERGED | Backend and Analytics dashboard source. Included in Vercel production deployment `7233002736` of `c0a21db`. Ingestion flags default OFF |
+
+Numbering note: the table row **ANALYTICS-13** was implemented as **ANALYTICS-14**. The row **AI-CUSTOMER-12** was implemented as **AI-CUSTOMER-13**. **RELEASE-14** in this roadmap is the later launch gate, not the analytics batch. **FUTURE-15** is deferred product expansion, not **Batch 15 — Analytics Ingestion & Conversion Pipeline**. Batch 15 is the next planned application batch and has no merged PR.
+
 ## Program release strategy
 
 **Foundation to customer value:** preserve current customer portal, establish group identities and policies, deploy safe internal agents, activate free Postiz/Marketing Studio and robust CRM/Chatwoot, execute SEO reporting, and add shared wallet/payment/service-commerce infrastructure. Feature flags permit staged release without scope cuts. Future AI employee purchasing and regulated voice/campaign classes remain architected but gated.

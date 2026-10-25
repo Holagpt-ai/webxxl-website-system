@@ -1,0 +1,39 @@
+name: Continuity
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: continuity-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  continuity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch main for the divergence advisory
+        run: git fetch origin main
+      - name: Branch divergence advisory
+        run: node scripts/check-branch-divergence.mjs
+      - name: Continuity documents
+        run: node scripts/validate-continuity.mjs
+      - name: Routes and navigation
+        run: node scripts/validate-routes.mjs
+      - name: Sitemap and canonical rules
+        run: node scripts/validate-seo.mjs
+      - name: Migrations and platform checksums
+        run: node scripts/validate-generated.mjs
+      - name: Deployment evidence shape
+        run: node scripts/check-deployment-evidence.mjs
+      - name: ADR registry
+        run: node scripts/validate-adr.mjs
+      - name: Validator tests
+        run: node --test __tests__/docs/adr-validator.test.mjs __tests__/docs/continuity-validators.test.mjs

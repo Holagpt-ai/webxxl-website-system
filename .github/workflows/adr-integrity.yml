@@ -1,0 +1,30 @@
+name: ADR integrity
+on:
+  pull_request:
+    paths:
+      - 'docs/adr/**'
+      - 'scripts/validate-adr.mjs'
+      - '__tests__/docs/adr-validator.test.mjs'
+      - '.github/workflows/adr-integrity.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/adr/**'
+      - 'scripts/validate-adr.mjs'
+      - '__tests__/docs/adr-validator.test.mjs'
+      - '.github/workflows/adr-integrity.yml'
+permissions:
+  contents: read
+jobs:
+  adr-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate ADR metadata and registry
+        run: node scripts/validate-adr.mjs
+      - name: Test validator
+        run: node --test __tests__/docs/adr-validator.test.mjs
