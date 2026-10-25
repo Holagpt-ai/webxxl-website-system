@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-25 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `c0a21db93d730c838fc58d9b862ed547927bd72f`
+**Evidence review:** 2026-10-25 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `622b352592f2cdcb359034e1c6462cb62130b1d1` (PR #50)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -38,10 +38,11 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Vercel production SHA | DEPLOYED | GitHub deployment `7233002736` by `vercel[bot]`, environment Production, state success, 2026-10-21T17:41:12Z, same SHA as `main` |
 | Production migrations | UNVERIFIED | Not read from the production database |
 | Analytics flags | Source default OFF; production values UNVERIFIED | `config/analytics-backend.ts`, `config/features.ts` `analyticsBackend: false` |
-| Batch 15 ingestion pipeline | PLANNED | No merged Batch 15 pull request on 2026-10-25 |
+| PR #50 continuity / ADR | MERGED | `622b352592f2cdcb359034e1c6462cb62130b1d1` |
+| Batch 15 ingestion pipeline | IN PR | Branch `feature/webxxl-analytics-ingestion-15`; not activated |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
-Gated analytics helpers already exist under `lib/platform/analytics/ingestion/`. They are not Batch 15 and they are not an enabled pipeline. `ANALYTICS_INGESTION_ENABLED` and `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED` default off.
+Batch 15 extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.
 
 ## Architecture decision controls
 

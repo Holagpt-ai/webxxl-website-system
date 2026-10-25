@@ -24,14 +24,15 @@ From `config/analytics-backend.ts` and `config/features.ts`, read on 2026-10-25:
 | `ANALYTICS_BACKEND_ENABLED` | off |
 | `ANALYTICS_INGESTION_ENABLED` | off |
 | `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED` | off |
+| `ANALYTICS_PROVIDER_FETCH_ENABLED` | off |
 
 Production environment values were not read. Do not describe these as activated.
 
-`lib/platform/analytics/ingestion/sync-intent.ts` and `idempotent-metric-upsert.ts` are gated helpers shipped with ANALYTICS-14. Batch 15 is the planned ingestion and conversion pipeline. It is not a second engine and it is not started as its own merged batch.
+Batch 15 (in PR) adds `POST /api/v1/analytics/capture/events`, worker batch under `lib/platform/analytics/ingestion/worker-batch.ts`, AUTO-10 kinds `ANALYTICS_PROVIDER_SYNC` and `ANALYTICS_CONVERSION_AGGREGATE`, and model `AnalyticsSiteCaptureCredential`. Live Google HTTP still requires SEO OAuth/API flags plus `ANALYTICS_PROVIDER_FETCH_ENABLED` and `WORKFLOW_EXTERNAL_EFFECTS_ENABLED`.
 
 ## Migrations in the repository
 
-`prisma/migrations/` contains 33 folders, including `20261021120000_analytics14_foundation`. A folder in Git is not an applied production migration.
+`prisma/migrations/` includes `20261021120000_analytics14_foundation` and `20261025120000_analytics15_ingestion`. A folder in Git is not an applied production migration.
 
 ## Secrets
 

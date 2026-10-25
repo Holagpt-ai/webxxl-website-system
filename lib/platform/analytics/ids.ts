@@ -19,3 +19,11 @@ export function buildWebxxlEventIdempotencyKey(input: {
 }): string {
   return [input.customerAccountId, input.eventKey, input.idempotencySeed].join(':')
 }
+
+export function buildAnalyticsProviderSyncJobIdempotencyKey(input: {
+  managedSiteId: string
+  provider: string
+  periodDate: string
+}): string {
+  return ['analytics-sync', input.managedSiteId, input.provider, input.periodDate].join(':')
+}

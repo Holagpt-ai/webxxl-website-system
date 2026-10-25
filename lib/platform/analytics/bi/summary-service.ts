@@ -186,6 +186,7 @@ export async function buildAnalyticsOverview(
     conversionKey: c.conversionKey,
     displayName: c.displayName,
     count: c.count,
+    uniqueCount: c.uniqueCount ?? c.count,
     rate: conversionRate(c.count, sessionSum.total),
     dataState: mapSeoDataStateToFreshness(c.dataState),
     sourceProvider: c.sourceProvider,

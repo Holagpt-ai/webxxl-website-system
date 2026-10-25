@@ -2,48 +2,44 @@
 
 **Compiled:** 2026-10-25 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor, for owner review
 
-## Completed before this session
+## Baseline
 
-- PR #48 analytics backend merged 2026-10-21.
-- PR #49 analytics dashboard merged 2026-10-21. Original head `402d762004cd4fa696b18d48b94bff0c5dc0b478`. Squash merge `c0a21db93d730c838fc58d9b862ed547927bd72f`, which is `origin/main`.
-- Vercel production deployment `7233002736` succeeded for that SHA. Migrations and flags were not verified.
+- **`origin/main`:** `622b352592f2cdcb359034e1c6462cb62130b1d1` (PR #50 continuity / ADR merge)
+- **Worktree:** `C:\Projects\webxxl-analytics-ingestion-15`
+- **Branch:** `feature/webxxl-analytics-ingestion-15`
 
-## This session
+## This session — Batch 15
 
-- Branch: `feature/webxxl-continuity-adr-v1`
-- Base: `c0a21db93d730c838fc58d9b862ed547927bd72f`
-- Head SHA: the pull request head. It cannot be written inside the same commit that creates it.
-- Merged: NO
-- Production deployed SHA: unchanged, still the `c0a21db` record above
-- Migration applied: NO
-- Flags and providers: unchanged
-- Scope: continuity docs, ADR-018..020 as PROPOSED, validators, and CI. No application feature edits.
+- Scope: analytics ingestion and conversion pipeline (backend only)
+- Merged: **NO**
+- Production deployed SHA: unchanged from prior records
+- Migration applied: **NO** (additive `20261025120000_analytics15_ingestion` in repo only)
+- Flags: all analytics capture/ingestion/fetch flags remain **default OFF**
 
-## Not claimed
+## Delivered capabilities (source)
 
-- Production migration level.
-- Production values of `ANALYTICS_*` or other flags.
-- Authenticated analytics behavior.
-- A live Google, Chatwoot, Postiz, Twilio, or Resend connection.
+- Signed site-bound first-party capture with idempotency, consent gate, rate limits, tenant-scoped credentials model
+- UTC daily aggregation from `WebxxlConversionEvent` to `AnalyticsConversionObservation` (count + uniqueCount)
+- Provider sync intents with `SeoProviderSyncRun` persistence; GSC metric/keyword upsert helpers; GA4/GBP bounded blocked states
+- AUTO-10 workflow handlers for provider sync and conversion aggregation
+- Analytics-14 reporting compatibility (`uniqueCount` optional on conversion DTO)
 
 ## Next assignment
 
-**Cursor: Batch 15 — Analytics Ingestion & Conversion Pipeline**, branch planned `feature/webxxl-analytics-ingestion-15`, after the owner reviews this pull request. Extend the existing analytics model and AUTO-10 boundary. Keep collection, scheduling, and provider fetch off until a separate activation. Do not start a CMS or automation-builder implementation from ADR-019 or ADR-020.
+Owner review of Batch 15 PR. Do **not** enable flags, apply production migrations, or connect live Google accounts without separate authorization.
 
 ## Handoff template
 
 ```
-Date / scope / owner:
-Repo / main SHA:
-Branch / head SHA / PR:
-Merged state / production deployed SHA:
-Migration applied? IDs + evidence or UNVERIFIED:
-Flag activation / providers / scheduler:
-Files and modules changed:
-Focused validation:
-Completed / in-progress / blocked / deferred:
-Next exact assignment / owning tool:
-Do NOT touch:
+Date / scope / owner: 2026-10-25 / BATCH-15 / Cursor
+Repo / main SHA: Holagpt-ai/webxxl-website-system / 622b352592f2cdcb359034e1c6462cb62130b1d1
+Branch / head SHA / PR: feature/webxxl-analytics-ingestion-15 / (see PR) / (see PR)
+Merged state / production deployed SHA: NOT MERGED / unchanged
+Migration applied? IDs + evidence or UNVERIFIED: UNVERIFIED — 20261025120000_analytics15_ingestion in Git only
+Flag activation / providers / scheduler: all OFF by default; no scheduler activation
+Files and modules changed: lib/platform/analytics/capture/*, aggregation/*, ingestion/*, workflow handlers, API routes, prisma migration
+Focused validation: vitest batch14+batch15, prisma validate, tsc, build
+Completed / in-progress / blocked / deferred: implementation complete IN PR; activation deferred
+Next exact assignment / owning tool: Owner review → merge authorization
+Do NOT touch: billing, checkout, dashboard UI, live provider OAuth, production migrations
 ```
-
-`node scripts/draft-session-handoff.mjs` prints a draft from local Git facts. Finish the deployment, migration, flag, and blocker lines by hand.
