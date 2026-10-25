@@ -32,6 +32,37 @@ async function loadCredential(publicKeyId: string) {
   })
 }
 
+async function assertCredentialSiteBinding(credential: {
+  customerAccountId: string
+  managedSiteId: string
+}): Promise<boolean> {
+  const site = await prisma.managedSite.findFirst({
+    where: {
+      id: credential.managedSiteId,
+      customerAccountId: credential.customerAccountId,
+    },
+    select: { id: true },
+  })
+  return Boolean(site)
+}
+
+async function assertCustomConversionDefinition(input: {
+  customerAccountId: string
+  managedSiteId: string
+  customConversionKey: string
+}): Promise<boolean> {
+  const def = await prisma.analyticsConversionDefinition.findFirst({
+    where: {
+      customerAccountId: input.customerAccountId,
+      key: input.customConversionKey,
+      isActive: true,
+      OR: [{ managedSiteId: input.managedSiteId }, { managedSiteId: null }],
+    },
+    select: { id: true },
+  })
+  return Boolean(def)
+}
+
 export async function ingestFirstPartyConversionEvent(input: {
   publicKeyId: string | null
   idempotencyKeyHeader: string | null
@@ -55,7 +86,10 @@ export async function ingestFirstPartyConversionEvent(input: {
   if (!credential || !credential.enabled || credential.revokedAt) {
     return { ok: false, code: 'UNAUTHORIZED', message: 'Invalid capture key', status: 401 }
   }
-  const rate = checkCaptureRateLimit({ publicKeyId: credential.publicKeyId })
+  if (!(await assertCredentialSiteBinding(credential))) {
+    return { ok: false, code: 'UNAUTHORIZED', message: 'Capture credential site binding invalid', status: 401 }
+  }
+  const rate = await checkCaptureRateLimit({ publicKeyId: credential.publicKeyId })
   if (!rate.ok) {
     return { ok: false, code: 'RATE_LIMIT', message: rate.message, status: 429 }
   }
@@ -81,11 +115,30 @@ export async function ingestFirstPartyConversionEvent(input: {
     const status = validated.code === 'PAYLOAD_TOO_LARGE' ? 413 : 400
     return { ok: false, code: validated.code, message: validated.message, status }
   }
+  if (validated.value.eventKey === 'custom_conversion') {
+    if (!validated.value.customConversionKey) {
+      return { ok: false, code: 'VALIDATION', message: 'customConversionKey is required', status: 400 }
+    }
+    const allowed = await assertCustomConversionDefinition({
+      customerAccountId: credential.customerAccountId,
+      managedSiteId: credential.managedSiteId,
+      customConversionKey: validated.value.customConversionKey,
+    })
+    if (!allowed) {
+      return {
+        ok: false,
+        code: 'UNSUPPORTED_EVENT',
+        message: 'customConversionKey is not an active conversion definition for this site',
+        status: 400,
+      }
+    }
+  }
   const clientSeed =
     input.idempotencyKeyHeader?.trim() ||
     `${verified.timestampSeconds}:${validated.value.eventKey}:${validated.value.occurredAt.toISOString()}`
   const idempotencyKey = buildWebxxlEventIdempotencyKey({
     customerAccountId: credential.customerAccountId,
+    managedSiteId: credential.managedSiteId,
     eventKey: validated.value.eventKey,
     idempotencySeed: clientSeed,
   })

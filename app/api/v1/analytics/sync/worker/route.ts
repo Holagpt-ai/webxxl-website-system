@@ -1,18 +1,7 @@
 import { NextResponse } from 'next/server'
-import { isAnalyticsIngestionEnabled } from '@/config/analytics-backend'
-import { runAnalyticsIngestionWorkerBatch } from '@/lib/platform/analytics/ingestion/worker-batch'
+import { handleAnalyticsSyncWorkerRequest } from '@/lib/platform/analytics/ingestion/sync-worker-handler'
 
-export async function POST() {
-  if (!isAnalyticsIngestionEnabled()) {
-    return NextResponse.json(
-      { code: 'ANALYTICS_DISABLED', message: 'Analytics ingestion worker is disabled' },
-      { status: 503 },
-    )
-  }
-  const result = await runAnalyticsIngestionWorkerBatch()
-  return NextResponse.json({
-    ok: true,
-    processed: result.processed,
-    outcomes: result.outcomes,
-  })
+export async function POST(request: Request) {
+  const result = await handleAnalyticsSyncWorkerRequest(request.headers)
+  return NextResponse.json(result.body, { status: result.status })
 }

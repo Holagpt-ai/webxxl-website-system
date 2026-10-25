@@ -24,6 +24,11 @@ export function isAnalyticsProviderFetchEnabled(): boolean {
   return envFlag('ANALYTICS_PROVIDER_FETCH_ENABLED', false)
 }
 
+/** GSC HTTP transport for analytics ingestion (separate from fetch gate). Default off — no live Google in Batch 15. */
+export function isAnalyticsGscLiveTransportEnabled(): boolean {
+  return envFlag('ANALYTICS_GSC_LIVE_TRANSPORT_ENABLED', false)
+}
+
 export const ANALYTICS_MAX_DATE_RANGE_DAYS = Number(process.env.ANALYTICS_MAX_DATE_RANGE_DAYS ?? '366')
 export const ANALYTICS_DEFAULT_TIMEZONE = process.env.ANALYTICS_DEFAULT_TIMEZONE ?? 'UTC'
 export const ANALYTICS_CAPTURE_MAX_BODY_BYTES = Number(process.env.ANALYTICS_CAPTURE_MAX_BODY_BYTES ?? '8192')

@@ -1,58 +1,45 @@
 import { prisma } from '@/lib/db'
 import { buildConversionObservationIdempotencyKey } from '@/lib/platform/analytics/ids'
-import { resolveConversionKeyForEvent } from '@/lib/platform/analytics/capture/event-keys'
+import {
+  BUILTIN_CONVERSION_EVENT_KEYS,
+  resolveConversionKeyForEvent,
+} from '@/lib/platform/analytics/capture/event-keys'
 
 function utcPeriodDate(d: Date): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
 }
 
-function periodDateIso(d: Date): string {
+export function periodDateIso(d: Date): string {
   return d.toISOString().slice(0, 10)
 }
 
-export type DailyAggregationResult = {
-  managedSiteId: string
-  periodDate: string
-  rowsWritten: number
-  eventsProcessed: number
+export function computeUniqueConversionCount(count: number, uniqueRefs: Set<string>): number {
+  if (uniqueRefs.size > 0) return uniqueRefs.size
+  return count
 }
 
-export async function aggregateFirstPartyConversionsForSite(input: {
-  customerAccountId: string
-  managedSiteId: string
-  periodStartUtc: Date
-  periodEndUtc: Date
-}): Promise<DailyAggregationResult> {
-  const events = await prisma.webxxlConversionEvent.findMany({
-    where: {
-      customerAccountId: input.customerAccountId,
-      managedSiteId: input.managedSiteId,
-      consentGranted: true,
-      occurredAt: { gte: input.periodStartUtc, lt: input.periodEndUtc },
-    },
-    select: {
-      eventKey: true,
-      customConversionKey: true,
-      occurredAt: true,
-      sessionRef: true,
-      visitorRef: true,
-    },
-  })
-  const defs = await prisma.analyticsConversionDefinition.findMany({
-    where: {
-      customerAccountId: input.customerAccountId,
-      isActive: true,
-      OR: [{ managedSiteId: input.managedSiteId }, { managedSiteId: null }],
-    },
-    select: { id: true, key: true, matchEventKey: true },
-  })
+export type DailyAggregationAcc = {
+  count: number
+  uniqueRefs: Set<string>
+  definitionId: string | null
+  conversionKey: string
+}
+
+export function buildDailyAggregationMap(
+  events: Array<{
+    eventKey: string
+    customConversionKey: string | null
+    occurredAt: Date
+    sessionRef: string | null
+    visitorRef: string | null
+  }>,
+  defs: Array<{ id: string; key: string; matchEventKey: string | null }>,
+): Map<string, DailyAggregationAcc> {
   const defByKey = new Map(defs.map((d) => [d.key, d]))
   const defByMatch = new Map(
     defs.filter((d) => d.matchEventKey).map((d) => [d.matchEventKey as string, d]),
   )
-
-  type Acc = { count: number; uniqueRefs: Set<string>; definitionId: string | null; conversionKey: string }
-  const byDayKey = new Map<string, Acc>()
+  const byDayKey = new Map<string, DailyAggregationAcc>()
 
   for (const event of events) {
     let conversionKey = resolveConversionKeyForEvent({
@@ -77,15 +64,76 @@ export async function aggregateFirstPartyConversionsForSite(input: {
     const uniqueRef = event.sessionRef ?? event.visitorRef
     if (uniqueRef) acc.uniqueRefs.add(uniqueRef)
   }
+  return byDayKey
+}
+
+export type DailyAggregationResult = {
+  managedSiteId: string
+  periodDate: string
+  rowsWritten: number
+  eventsProcessed: number
+}
+
+export async function aggregateFirstPartyConversionsForSite(input: {
+  customerAccountId: string
+  managedSiteId: string
+  periodStartUtc: Date
+  periodEndUtc: Date
+}): Promise<DailyAggregationResult> {
+  const periodDateStr = periodDateIso(input.periodStartUtc)
+  const periodDate = utcPeriodDate(input.periodStartUtc)
+
+  const events = await prisma.webxxlConversionEvent.findMany({
+    where: {
+      customerAccountId: input.customerAccountId,
+      managedSiteId: input.managedSiteId,
+      consentGranted: true,
+      occurredAt: { gte: input.periodStartUtc, lt: input.periodEndUtc },
+    },
+    select: {
+      eventKey: true,
+      customConversionKey: true,
+      occurredAt: true,
+      sessionRef: true,
+      visitorRef: true,
+    },
+  })
+
+  const defs = await prisma.analyticsConversionDefinition.findMany({
+    where: {
+      customerAccountId: input.customerAccountId,
+      isActive: true,
+      OR: [{ managedSiteId: input.managedSiteId }, { managedSiteId: null }],
+    },
+    select: { id: true, key: true, matchEventKey: true },
+  })
+
+  const byDayKey = buildDailyAggregationMap(events, defs)
+
+  const existing = await prisma.analyticsConversionObservation.findMany({
+    where: {
+      customerAccountId: input.customerAccountId,
+      managedSiteId: input.managedSiteId,
+      sourceProvider: 'WEBXXL_EVENTS',
+      periodDate: { gte: input.periodStartUtc, lt: input.periodEndUtc },
+    },
+    select: { conversionKey: true },
+  })
+
+  const keysToWrite = new Set<string>([...BUILTIN_CONVERSION_EVENT_KEYS, ...defs.map((d) => d.key)])
+  for (const mapKey of byDayKey.keys()) keysToWrite.add(mapKey.split(':')[1]!)
+  for (const row of existing) keysToWrite.add(row.conversionKey)
 
   let rowsWritten = 0
   const observedAt = new Date()
-  for (const [mapKey, acc] of byDayKey) {
-    const periodDateStr = mapKey.split(':')[0]!
-    const periodDate = utcPeriodDate(new Date(`${periodDateStr}T00:00:00.000Z`))
+
+  for (const conversionKey of keysToWrite) {
+    const acc = byDayKey.get(`${periodDateStr}:${conversionKey}`)
+    const count = acc?.count ?? 0
+    const uniqueCount = acc ? computeUniqueConversionCount(acc.count, acc.uniqueRefs) : 0
     const idempotencyKey = buildConversionObservationIdempotencyKey({
       managedSiteId: input.managedSiteId,
-      conversionKey: acc.conversionKey,
+      conversionKey,
       periodDate: periodDateStr,
       sourceProvider: 'WEBXXL_EVENTS',
     })
@@ -94,22 +142,22 @@ export async function aggregateFirstPartyConversionsForSite(input: {
       create: {
         customerAccountId: input.customerAccountId,
         managedSiteId: input.managedSiteId,
-        definitionId: acc.definitionId,
-        conversionKey: acc.conversionKey,
-        count: acc.count,
-        uniqueCount: acc.uniqueRefs.size || acc.count,
+        definitionId: acc?.definitionId ?? null,
+        conversionKey,
+        count,
+        uniqueCount,
         periodDate,
-        dataState: 'READY',
+        dataState: count > 0 ? 'READY' : 'PARTIAL',
         sourceProvider: 'WEBXXL_EVENTS',
         observedAt,
         idempotencyKey,
       },
       update: {
-        count: acc.count,
-        uniqueCount: acc.uniqueRefs.size || acc.count,
-        definitionId: acc.definitionId,
+        count,
+        uniqueCount,
+        definitionId: acc?.definitionId ?? null,
         observedAt,
-        dataState: 'READY',
+        dataState: count > 0 ? 'READY' : 'PARTIAL',
       },
     })
     rowsWritten += 1
@@ -117,7 +165,7 @@ export async function aggregateFirstPartyConversionsForSite(input: {
 
   return {
     managedSiteId: input.managedSiteId,
-    periodDate: periodDateIso(input.periodStartUtc),
+    periodDate: periodDateStr,
     rowsWritten,
     eventsProcessed: events.length,
   }

@@ -7,6 +7,7 @@ export function hashCaptureSecret(secret: string): string {
   return createHash('sha256').update(secret, 'utf8').digest('hex')
 }
 
+/** Signing secret must remain on the managed site's trusted server — never in browser JavaScript. */
 export function resolveCaptureSecretMaterial(input: {
   publicKeyId: string
   secretRef: string | null

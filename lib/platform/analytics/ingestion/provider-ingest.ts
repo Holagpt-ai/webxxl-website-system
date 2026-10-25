@@ -1,6 +1,7 @@
 import {
   isAnalyticsIngestionEnabled,
   isAnalyticsProviderFetchEnabled,
+  isAnalyticsGscLiveTransportEnabled,
   ANALYTICS_INGESTION_MAX_BACKFILL_DAYS,
 } from '@/config/analytics-backend'
 import {
@@ -12,6 +13,7 @@ import {
 import { isWorkflowExternalEffectsEnabled } from '@/config/workflow-backend'
 import { prepareAnalyticsProviderSync } from '@/lib/platform/analytics/ingestion/sync-intent'
 import { upsertAnalyticsSyncRun } from '@/lib/platform/analytics/ingestion/sync-run-persist'
+import { runGscProviderIngest, noopGscTransport, type GscIngestDeps } from '@/lib/platform/analytics/ingestion/gsc-ingest'
 import type { SeoAnalyticsProvider } from '@prisma/client'
 
 export type ProviderIngestScope = {
@@ -29,6 +31,10 @@ export type ProviderIngestOutcome = {
   dataState: string
   reason: string
   externalFetchAttempted: boolean
+}
+
+export type ProviderIngestRuntimeDeps = {
+  gsc?: Partial<GscIngestDeps> & { allowNetwork?: boolean }
 }
 
 function providerApiEnabled(provider: SeoAnalyticsProvider): boolean {
@@ -53,7 +59,38 @@ export function boundedBackfillDays(requested?: number): number {
   return Math.max(1, Math.min(raw, ANALYTICS_INGESTION_MAX_BACKFILL_DAYS))
 }
 
-export async function runAnalyticsProviderIngest(scope: ProviderIngestScope): Promise<ProviderIngestOutcome> {
+function externalFetchGateOpen(): boolean {
+  return isAnalyticsProviderFetchEnabled() && isWorkflowExternalEffectsEnabled()
+}
+
+async function recordBlocked(scope: ProviderIngestScope, input: {
+  reason: string
+  dataState: string
+  errorClass: string
+}): Promise<ProviderIngestOutcome> {
+  await upsertAnalyticsSyncRun({
+    customerAccountId: scope.customerAccountId,
+    managedSiteId: scope.managedSiteId,
+    provider: scope.provider,
+    idempotencyKey: scope.idempotencyKey,
+    status: 'BLOCKED',
+    dataState: input.dataState as never,
+    errorClass: input.errorClass,
+    processedAt: new Date(),
+  })
+  return {
+    provider: scope.provider,
+    status: 'BLOCKED',
+    dataState: input.dataState,
+    reason: input.reason,
+    externalFetchAttempted: false,
+  }
+}
+
+export async function runAnalyticsProviderIngest(
+  scope: ProviderIngestScope,
+  deps: ProviderIngestRuntimeDeps = {},
+): Promise<ProviderIngestOutcome> {
   if (!isAnalyticsIngestionEnabled()) {
     await upsertAnalyticsSyncRun({
       customerAccountId: scope.customerAccountId,
@@ -102,50 +139,73 @@ export async function runAnalyticsProviderIngest(scope: ProviderIngestScope): Pr
     }
   }
 
-  const fetchAllowed =
-    isAnalyticsProviderFetchEnabled() &&
-    isWorkflowExternalEffectsEnabled() &&
-    scope.provider !== 'GBP' &&
-    scope.provider !== 'GA4'
+  if (scope.provider === 'GA4' || scope.provider === 'GBP') {
+    return recordBlocked(scope, {
+      reason: 'Live provider ingest adapter not available for this provider',
+      dataState: 'NOT_CONNECTED',
+      errorClass: 'NOT_SUPPORTED',
+    })
+  }
 
-  if (!fetchAllowed) {
-    const reason =
-      scope.provider === 'GBP' || scope.provider === 'GA4'
-        ? 'Provider adapter does not perform live fetch in this batch'
-        : 'External provider fetch disabled by flags'
+  if (scope.provider === 'RANK_VENDOR') {
+    return recordBlocked(scope, {
+      reason: 'Rank vendor ingest requires licensed provider activation',
+      dataState: 'NOT_CONNECTED',
+      errorClass: 'NOT_CONNECTED',
+    })
+  }
+
+  if (scope.provider === 'WEBXXL_EVENTS') {
     await upsertAnalyticsSyncRun({
       customerAccountId: scope.customerAccountId,
       managedSiteId: scope.managedSiteId,
       provider: scope.provider,
       idempotencyKey: scope.idempotencyKey,
-      status: 'BLOCKED',
-      dataState: 'FETCHING',
-      errorClass: 'EXTERNAL_EFFECTS_DISABLED',
+      status: 'SKIPPED',
+      dataState: 'READY',
+      errorClass: 'FIRST_PARTY_ONLY',
       processedAt: new Date(),
     })
     return {
       provider: scope.provider,
-      status: 'BLOCKED',
-      dataState: 'FETCHING',
-      reason,
+      status: 'SKIPPED',
+      dataState: 'READY',
+      reason: 'First-party events use capture API and aggregation jobs, not provider fetch',
       externalFetchAttempted: false,
     }
   }
 
-  await upsertAnalyticsSyncRun({
-    customerAccountId: scope.customerAccountId,
-    managedSiteId: scope.managedSiteId,
-    provider: scope.provider,
-    idempotencyKey: scope.idempotencyKey,
-    status: 'COMPLETED',
-    dataState: 'READY',
-    processedAt: new Date(),
-  })
-  return {
-    provider: scope.provider,
-    status: 'COMPLETED',
-    dataState: 'READY',
-    reason: `Prepared bounded backfill window (${boundedBackfillDays(scope.backfillDays)} day(s)); live GSC transport wired separately`,
-    externalFetchAttempted: true,
+  if (!externalFetchGateOpen()) {
+    return recordBlocked(scope, {
+      reason: 'External provider fetch disabled by flags',
+      dataState: 'FETCHING',
+      errorClass: 'EXTERNAL_EFFECTS_DISABLED',
+    })
   }
+
+  if (scope.provider === 'GSC') {
+    const allowNetwork = deps.gsc?.allowNetwork ?? isAnalyticsGscLiveTransportEnabled()
+    if (!allowNetwork) {
+      return recordBlocked(scope, {
+        reason: 'GSC live transport not activated for this deployment',
+        dataState: 'FETCHING',
+        errorClass: 'NOT_CONFIGURED',
+      })
+    }
+    const gscDeps: GscIngestDeps = {
+      transport: deps.gsc?.transport ?? noopGscTransport,
+      resolveAccessTokenRef:
+        deps.gsc?.resolveAccessTokenRef ??
+        (async () => {
+          return null
+        }),
+    }
+    return runGscProviderIngest(scope, gscDeps)
+  }
+
+  return recordBlocked(scope, {
+    reason: 'Unsupported analytics provider',
+    dataState: 'NOT_CONNECTED',
+    errorClass: 'NOT_SUPPORTED',
+  })
 }

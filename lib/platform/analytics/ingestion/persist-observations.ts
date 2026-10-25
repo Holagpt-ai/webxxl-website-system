@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db'
 import { buildSeoKeywordIdempotencyKey, buildSeoMetricIdempotencyKey } from '@/lib/platform/seo/ingest-idempotency'
+import { aggregateGscTraffic } from '@/lib/platform/seo/gsc-normalize'
 import type { GscNormalizedRow } from '@/lib/platform/seo/gsc-types'
 import type { SeoAnalyticsProvider, SeoDataState } from '@prisma/client'
 
@@ -12,47 +13,94 @@ export async function persistGscDailyMetrics(input: {
   observedAt: Date
   dataState: SeoDataState
 }): Promise<{ metrics: number; keywords: number }> {
-  let metrics = 0
-  let keywords = 0
+  const byDate = new Map<string, GscNormalizedRow[]>()
   for (const row of input.rows) {
     if (!row.date) continue
-    const day = new Date(`${row.date}T00:00:00.000Z`)
-    if (row.clicks != null || row.impressions != null) {
-      const idempotencyKey = buildSeoMetricIdempotencyKey({
+    const list = byDate.get(row.date) ?? []
+    list.push(row)
+    byDate.set(row.date, list)
+  }
+
+  let metrics = 0
+  let keywords = 0
+
+  for (const [dateIso, dayRows] of byDate) {
+    const day = new Date(`${dateIso}T00:00:00.000Z`)
+    const totals = aggregateGscTraffic(dayRows)
+    if (totals.clicks != null || totals.impressions != null) {
+      const clicksKey = buildSeoMetricIdempotencyKey({
         managedSiteId: input.managedSiteId,
         provider: input.provider,
         metricDefinition: 'gsc.clicks',
-        date: row.date,
+        dimension: 'site',
+        dimensionValue: 'daily',
+        date: dateIso,
       })
       await prisma.seoMetricObservation.upsert({
-        where: { idempotencyKey },
+        where: { idempotencyKey: clicksKey },
         create: {
           customerAccountId: input.customerAccountId,
           managedSiteId: input.managedSiteId,
           provider: input.provider,
           metricDefinition: 'gsc.clicks',
-          value: row.clicks ?? null,
+          dimension: 'site',
+          dimensionValue: 'daily',
+          value: totals.clicks,
           dataState: input.dataState,
           date: day,
           observedAt: input.observedAt,
           sourceRef: input.propertyRef,
-          idempotencyKey,
+          idempotencyKey: clicksKey,
         },
         update: {
-          value: row.clicks ?? null,
+          value: totals.clicks,
+          dataState: input.dataState,
+          observedAt: input.observedAt,
+        },
+      })
+      metrics += 1
+
+      const impressionsKey = buildSeoMetricIdempotencyKey({
+        managedSiteId: input.managedSiteId,
+        provider: input.provider,
+        metricDefinition: 'gsc.impressions',
+        dimension: 'site',
+        dimensionValue: 'daily',
+        date: dateIso,
+      })
+      await prisma.seoMetricObservation.upsert({
+        where: { idempotencyKey: impressionsKey },
+        create: {
+          customerAccountId: input.customerAccountId,
+          managedSiteId: input.managedSiteId,
+          provider: input.provider,
+          metricDefinition: 'gsc.impressions',
+          dimension: 'site',
+          dimensionValue: 'daily',
+          value: totals.impressions,
+          dataState: input.dataState,
+          date: day,
+          observedAt: input.observedAt,
+          sourceRef: input.propertyRef,
+          idempotencyKey: impressionsKey,
+        },
+        update: {
+          value: totals.impressions,
           dataState: input.dataState,
           observedAt: input.observedAt,
         },
       })
       metrics += 1
     }
-    if (row.query) {
+
+    for (const row of dayRows) {
+      if (!row.query) continue
       const idempotencyKey = buildSeoKeywordIdempotencyKey({
         managedSiteId: input.managedSiteId,
         provider: input.provider,
         query: row.query,
         page: row.page ?? null,
-        date: row.date,
+        date: dateIso,
       })
       await prisma.seoKeywordObservation.upsert({
         where: { idempotencyKey },
@@ -83,6 +131,7 @@ export async function persistGscDailyMetrics(input: {
       keywords += 1
     }
   }
+
   return { metrics, keywords }
 }
 

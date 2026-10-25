@@ -25,14 +25,15 @@ From `config/analytics-backend.ts` and `config/features.ts`, read on 2026-10-25:
 | `ANALYTICS_INGESTION_ENABLED` | off |
 | `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED` | off |
 | `ANALYTICS_PROVIDER_FETCH_ENABLED` | off |
+| `ANALYTICS_GSC_LIVE_TRANSPORT_ENABLED` | off |
 
 Production environment values were not read. Do not describe these as activated.
 
-Batch 15 (in PR) adds `POST /api/v1/analytics/capture/events`, worker batch under `lib/platform/analytics/ingestion/worker-batch.ts`, AUTO-10 kinds `ANALYTICS_PROVIDER_SYNC` and `ANALYTICS_CONVERSION_AGGREGATE`, and model `AnalyticsSiteCaptureCredential`. Live Google HTTP still requires SEO OAuth/API flags plus `ANALYTICS_PROVIDER_FETCH_ENABLED` and `WORKFLOW_EXTERNAL_EFFECTS_ENABLED`.
+Batch 15 (in PR) adds signed capture (`POST /api/v1/analytics/capture/events`), authenticated sync worker (`x-automation-worker-secret`), PostgreSQL capture rate windows, and honest provider sync states (no fabricated `COMPLETED`). Live GSC HTTP requires SEO flags plus `ANALYTICS_PROVIDER_FETCH_ENABLED`, `WORKFLOW_EXTERNAL_EFFECTS_ENABLED`, and `ANALYTICS_GSC_LIVE_TRANSPORT_ENABLED`.
 
 ## Migrations in the repository
 
-`prisma/migrations/` includes `20261021120000_analytics14_foundation` and `20261025120000_analytics15_ingestion`. A folder in Git is not an applied production migration.
+`prisma/migrations/` includes `20261021120000_analytics14_foundation`, `20261025120000_analytics15_ingestion`, and `20261025180000_analytics151_rate_limit`. A folder in Git is not an applied production migration.
 
 ## Secrets
 

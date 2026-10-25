@@ -4832,3 +4832,13 @@ model AnalyticsSiteCaptureCredential {
   @@index([managedSiteId, enabled])
   @@index([customerAccountId])
 }
+
+model AnalyticsCaptureRateWindow {
+  publicKeyId  String
+  windowStart  DateTime
+  requestCount Int      @default(0)
+  expiresAt    DateTime
+
+  @@id([publicKeyId, windowStart])
+  @@index([expiresAt])
+}
