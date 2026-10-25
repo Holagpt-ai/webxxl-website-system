@@ -1,11 +1,16 @@
 import { NextResponse } from 'next/server'
 import { ingestFirstPartyConversionEvent } from '@/lib/platform/analytics/capture/ingest-service'
+import { readCaptureRequestBody } from '@/lib/platform/analytics/capture/read-body'
 import type { CaptureEventBody } from '@/lib/platform/analytics/capture/validate-payload'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
-  const rawBody = await request.text()
+  const bodyRead = await readCaptureRequestBody(request)
+  if (!bodyRead.ok) {
+    return NextResponse.json({ code: bodyRead.code, message: bodyRead.message }, { status: 413 })
+  }
+  const rawBody = bodyRead.rawBody
   let parsed: CaptureEventBody
   try {
     parsed = rawBody ? (JSON.parse(rawBody) as CaptureEventBody) : {}

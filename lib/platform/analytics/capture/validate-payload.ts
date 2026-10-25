@@ -16,6 +16,18 @@ const FORBIDDEN_PAYLOAD_KEYS = new Set([
   'dateOfBirth',
 ])
 
+const ALLOWED_CAPTURE_BODY_KEYS = new Set([
+  'eventKey',
+  'occurredAt',
+  'consentGranted',
+  'consentVersion',
+  'sessionRef',
+  'visitorRef',
+  'pagePath',
+  'customConversionKey',
+  'metadata',
+])
+
 export type CaptureEventBody = {
   eventKey?: unknown
   occurredAt?: unknown
@@ -83,6 +95,13 @@ export function validateCaptureEventPayload(input: {
   if (Buffer.byteLength(input.rawBody, 'utf8') > ANALYTICS_CAPTURE_MAX_BODY_BYTES) {
     return { ok: false, code: 'PAYLOAD_TOO_LARGE', message: 'Request body exceeds capture limit' }
   }
+  if (input.parsed && typeof input.parsed === 'object' && !Array.isArray(input.parsed)) {
+    for (const key of Object.keys(input.parsed as Record<string, unknown>)) {
+      if (!ALLOWED_CAPTURE_BODY_KEYS.has(key)) {
+        return { ok: false, code: 'VALIDATION', message: `Unknown field: ${key}` }
+      }
+    }
+  }
   const eventKey = asTrimmedString(input.parsed.eventKey, 64)
   if (!eventKey) {
     return { ok: false, code: 'VALIDATION', message: 'eventKey is required' }
@@ -119,7 +138,12 @@ export function validateCaptureEventPayload(input: {
   }
   const consentGranted = input.parsed.consentGranted === true
   if (!consentGranted) {
-    return { ok: false, code: 'VALIDATION', message: 'consentGranted must be true for capture' }
+    return {
+      ok: false,
+      code: 'VALIDATION',
+      message:
+        'consentGranted must be true; the originating site is responsible for consent evidence (WebXXL does not verify legal proof in this API)',
+    }
   }
   const metadata = sanitizeMetadata(input.parsed.metadata)
   if (input.parsed.metadata != null && metadata == null && typeof input.parsed.metadata === 'object') {

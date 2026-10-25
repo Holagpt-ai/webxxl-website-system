@@ -21,6 +21,14 @@ export function isApprovedCaptureEventKey(input: { eventKey: string; customConve
   return false
 }
 
+/** Structural check only; active `AnalyticsConversionDefinition` is enforced in ingest-service. */
+export function isCustomConversionEventShape(input: {
+  eventKey: string
+  customConversionKey?: string | null
+}): boolean {
+  return input.eventKey === 'custom_conversion' && typeof input.customConversionKey === 'string'
+}
+
 export function resolveConversionKeyForEvent(input: {
   eventKey: string
   customConversionKey?: string | null
