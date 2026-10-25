@@ -576,6 +576,7 @@ model CustomerAccount {
   analyticsConversionDefinitions AnalyticsConversionDefinition[]
   analyticsConversionObservations AnalyticsConversionObservation[]
   webxxlConversionEvents       WebxxlConversionEvent[]
+  analyticsSiteCaptureCredentials AnalyticsSiteCaptureCredential[]
 }
 
 model CustomerMembership {
@@ -954,6 +955,7 @@ model ManagedSite {
   analyticsConversionDefinitions AnalyticsConversionDefinition[]
   analyticsConversionObservations AnalyticsConversionObservation[]
   webxxlConversionEvents    WebxxlConversionEvent[]
+  analyticsSiteCaptureCredentials AnalyticsSiteCaptureCredential[]
 
   @@index([customerAccountId])
   @@index([projectId])
@@ -4770,6 +4772,7 @@ model AnalyticsConversionObservation {
   definitionId      String?
   conversionKey     String
   count             Int                  @default(0)
+  uniqueCount       Int                  @default(0)
   value             Float?
   periodDate        DateTime
   dataState         SeoDataState         @default(READY)
@@ -4794,6 +4797,11 @@ model WebxxlConversionEvent {
   occurredAt        DateTime
   visitorRef        String?
   sessionRef        String?
+  consentGranted    Boolean  @default(false)
+  consentVersion    String?
+  pagePath          String?
+  provenance        String   @default("capture_api")
+  customConversionKey String?
   payload           Json?
   idempotencyKey    String   @unique
   ingestedAt        DateTime @default(now())
@@ -4803,4 +4811,34 @@ model WebxxlConversionEvent {
 
   @@index([customerAccountId, eventKey, occurredAt])
   @@index([managedSiteId, occurredAt])
+}
+
+model AnalyticsSiteCaptureCredential {
+  id                String    @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String
+  publicKeyId       String    @unique
+  /// Opaque pointer to secret material outside the database (never store raw secret).
+  secretRef         String?
+  secretHash        String
+  enabled           Boolean   @default(true)
+  revokedAt         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite     @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
+
+  @@index([managedSiteId, enabled])
+  @@index([customerAccountId])
+}
+
+model AnalyticsCaptureRateWindow {
+  publicKeyId  String
+  windowStart  DateTime
+  requestCount Int      @default(0)
+  expiresAt    DateTime
+
+  @@id([publicKeyId, windowStart])
+  @@index([expiresAt])
 }

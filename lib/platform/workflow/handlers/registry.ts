@@ -3,6 +3,8 @@ import type { HandlerExecutionContext, HandlerExecutionResult } from '@/lib/plat
 import { executeCommsReceiptWorkflow } from '@/lib/platform/workflow/handlers/comms-receipt'
 import { executeMarketingFollowUpWorkflow } from '@/lib/platform/workflow/handlers/marketing-followup'
 import { executeSeoSyncPrepareWorkflow } from '@/lib/platform/workflow/handlers/seo-sync-prepare'
+import { executeAnalyticsProviderSyncWorkflow } from '@/lib/platform/workflow/handlers/analytics-provider-sync'
+import { executeAnalyticsConversionAggregateWorkflow } from '@/lib/platform/workflow/handlers/analytics-conversion-aggregate'
 import { executeCommerceWorkflow } from '@/lib/platform/workflow/handlers/commerce-fulfillment'
 
 export type WorkflowHandler = (ctx: HandlerExecutionContext, payload: Record<string, unknown>) => Promise<HandlerExecutionResult>
@@ -16,6 +18,8 @@ const REGISTRY: Record<WorkflowJobKind, WorkflowHandler> = {
   COMMS_RECEIPT_PROCESS: executeCommsReceiptWorkflow,
   CRM_FOLLOWUP_EVALUATE: executeMarketingFollowUpWorkflow,
   SEO_SYNC_PREPARE: executeSeoSyncPrepareWorkflow,
+  ANALYTICS_PROVIDER_SYNC: executeAnalyticsProviderSyncWorkflow,
+  ANALYTICS_CONVERSION_AGGREGATE: executeAnalyticsConversionAggregateWorkflow,
   MARKETING_DRAFT_PREPARE: DISABLED_HANDLER,
   SOCIAL_STATUS_RECONCILE: DISABLED_HANDLER,
   WORKFORCE_TASK_PREPARE: DISABLED_HANDLER,

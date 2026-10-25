@@ -68,6 +68,8 @@ export type AnalyticsConversionSummaryRowDto = {
   conversionKey: string
   displayName: string
   count: number
+  /** Distinct session/visitor conversions when first-party refs are present; otherwise equals count. */
+  uniqueCount?: number
   rate: number | null
   dataState: AnalyticsFreshnessState
   sourceProvider: string

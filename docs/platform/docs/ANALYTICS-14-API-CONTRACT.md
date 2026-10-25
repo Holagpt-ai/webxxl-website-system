@@ -11,7 +11,9 @@ Source of truth for the v0.app customer analytics dashboard. All routes require 
 | Analytics HTTP | `ANALYTICS_BACKEND_ENABLED` + `features.analyticsBackend` | 503 `ANALYTICS_DISABLED` when off |
 | Entitlement | `core.analytics` | 403/503 when disabled or policy unresolved |
 | Ingestion worker | `ANALYTICS_INGESTION_ENABLED` | Worker returns 503 when off |
-| First-party capture | `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED` | Reserved for future event POST |
+| First-party capture | `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED` | POST capture API returns 503 when off |
+| Provider fetch | `ANALYTICS_PROVIDER_FETCH_ENABLED` + `WORKFLOW_EXTERNAL_EFFECTS_ENABLED` | Does not perform live HTTP by itself |
+| GSC live transport | `ANALYTICS_GSC_LIVE_TRANSPORT_ENABLED` | Required for actual GSC HTTP (default off) |
 | Provider APIs | `SEO_*` flags in `config/seo-backend.ts` | Connections report `NOT_CONNECTED` / `PENDING` |
 
 **Tenant rules:** Path `accountId` must equal the active customer membership account. Billing-group siblings **cannot** read another account’s metrics (same rule as SEO-07).
@@ -99,7 +101,25 @@ Recent `SeoProviderSyncRun` rows and ingestion flag state.
 
 ## POST `/api/v1/analytics/sync/worker`
 
-Internal ingestion entry point. **503** unless `ANALYTICS_INGESTION_ENABLED=true`. Does not call external APIs in BATCH-14.
+Internal ingestion entry point. **503** unless `ANALYTICS_INGESTION_ENABLED=true`. Requires `x-automation-worker-secret` matching `AUTOMATION_WORKER_SECRET` (same as AUTO-10 workflow worker). Processes bounded sync intents; `COMPLETED`/`READY` only after real persisted provider evidence. Live GSC HTTP additionally requires `ANALYTICS_GSC_LIVE_TRANSPORT_ENABLED` (default off).
+
+---
+
+## POST `/api/v1/analytics/capture/events`
+
+Site-bound first-party conversion capture (customer websites). **503** unless `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED=true`.
+
+**Trust model:** `publicKeyId` may be public; HMAC secret MUST stay on the managed site's trusted server (never browser JS). `consentGranted: true` is a site assertion — WebXXL does not independently verify legal consent proof in this API. Rate limits are enforced in PostgreSQL (`AnalyticsCaptureRateWindow`).
+
+**Headers:** `X-Webxxl-Capture-Key` (public key id), `X-Webxxl-Timestamp`, `X-Webxxl-Signature` (`sha256=` HMAC of `{timestamp}.{rawBody}`), optional `X-Idempotency-Key`.
+
+**Body:** `{ eventKey, occurredAt?, consentGranted: true, consentVersion?, sessionRef?, visitorRef?, pagePath?, customConversionKey?, metadata? }`
+
+Approved classes: `form_submit`, `contact_request`, `appointment_request`, `qualified_lead`, or `custom_conversion` with `customConversionKey` matching an active `AnalyticsConversionDefinition`.
+
+No PHI, medical form content, email, phone, or free-text message bodies. Rate limited per capture key.
+
+**Response:** `{ ok, eventId, duplicate }` with **201** on first persist, **200** on idempotent replay.
 
 ---
 
@@ -120,7 +140,17 @@ Internal ingestion entry point. **503** unless `ANALYTICS_INGESTION_ENABLED=true
 - `WebxxlConversionEvent`
 - Enum extension: `SeoAnalyticsProvider.WEBXXL_EVENTS`
 
+## Prisma (BATCH-15 additive)
+
+- `AnalyticsSiteCaptureCredential` (site-bound public key + secret hash/ref; never store raw secret)
+- `AnalyticsConversionObservation.uniqueCount`
+- Consent and provenance columns on `WebxxlConversionEvent`
+
+Migration: `20261025120000_analytics15_ingestion` (not applied in production unless separately authorized).
+
 Provider connection and metric time series remain on SEO-07 models to avoid duplicate ingestion.
+
+AUTO-10 job kinds: `ANALYTICS_PROVIDER_SYNC`, `ANALYTICS_CONVERSION_AGGREGATE`.
 
 ---
 

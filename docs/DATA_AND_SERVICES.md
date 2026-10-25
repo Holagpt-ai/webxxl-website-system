@@ -24,14 +24,16 @@ From `config/analytics-backend.ts` and `config/features.ts`, read on 2026-10-25:
 | `ANALYTICS_BACKEND_ENABLED` | off |
 | `ANALYTICS_INGESTION_ENABLED` | off |
 | `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED` | off |
+| `ANALYTICS_PROVIDER_FETCH_ENABLED` | off |
+| `ANALYTICS_GSC_LIVE_TRANSPORT_ENABLED` | off |
 
 Production environment values were not read. Do not describe these as activated.
 
-`lib/platform/analytics/ingestion/sync-intent.ts` and `idempotent-metric-upsert.ts` are gated helpers shipped with ANALYTICS-14. Batch 15 is the planned ingestion and conversion pipeline. It is not a second engine and it is not started as its own merged batch.
+Batch 15 (in PR) adds signed capture (`POST /api/v1/analytics/capture/events`), authenticated sync worker (`x-automation-worker-secret`), PostgreSQL capture rate windows, and honest provider sync states (no fabricated `COMPLETED`). Live GSC HTTP requires SEO flags plus `ANALYTICS_PROVIDER_FETCH_ENABLED`, `WORKFLOW_EXTERNAL_EFFECTS_ENABLED`, and `ANALYTICS_GSC_LIVE_TRANSPORT_ENABLED`.
 
 ## Migrations in the repository
 
-`prisma/migrations/` contains 33 folders, including `20261021120000_analytics14_foundation`. A folder in Git is not an applied production migration.
+`prisma/migrations/` includes `20261021120000_analytics14_foundation`, `20261025120000_analytics15_ingestion`, and `20261025180000_analytics151_rate_limit`. A folder in Git is not an applied production migration.
 
 ## Secrets
 

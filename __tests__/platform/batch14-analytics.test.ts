@@ -87,6 +87,7 @@ describe('BATCH-14 analytics foundation', () => {
     })).toContain('lead')
     expect(buildWebxxlEventIdempotencyKey({
       customerAccountId: 'a',
+      managedSiteId: 'site-1',
       eventKey: 'form_submit',
       idempotencySeed: 'x',
     })).toContain('form_submit')
