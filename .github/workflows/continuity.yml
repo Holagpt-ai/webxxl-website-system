@@ -23,6 +23,8 @@ jobs:
         run: git fetch origin main
       - name: Branch divergence advisory
         run: node scripts/check-branch-divergence.mjs
+      - name: Stale operational status advisory
+        run: node scripts/check-stale-operational-status.mjs
       - name: Continuity documents
         run: node scripts/validate-continuity.mjs
       - name: Routes and navigation

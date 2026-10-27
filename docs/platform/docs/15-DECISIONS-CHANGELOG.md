@@ -75,3 +75,4 @@ TAD version after approval:
 | 2026-10-18 | 1.0.0-doc | FOUND-01 merged PR #33 @ `68c5fde`. INFRA-02 repository staging assets added; live Hostinger staging explicitly **BLOCKED**; Postiz at `app.webbxxl.com` inventoried read-only, not reinstalled. |
 | 2026-10-18 | 1.0.0-doc | INFRA-02A: Docker Compose merge hardening (`!reset`/`!override`), Chatwoot `x-` anchor fix, effective `docker compose config` validation. |
 | 2026-10-25 | 1.0.0-doc | Source checkpoint at `c0a21db`. ADR-018..020 added as PROPOSED under `docs/adr/`. Legacy ADR-001..017 unchanged and not superseded. |
+| 2026-10-26 | 1.0.0-doc | Source checkpoint at `f315e897218a48bfac44a0d50724c91d32b6c9c9` (PR #51). PR #50 is also merged. Batch 16 customer-dashboard ownership is an execution direction under ADR-003, recorded in PROJECT_MEMORY. No locked decision changed. ADR-018..020 stay PROPOSED. |

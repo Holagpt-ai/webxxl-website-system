@@ -20,6 +20,6 @@ Customer, admin, and public UI (Next.js App Router, EN/ES, Vercel; v0.app owns t
 
 `CustomerAccount` owns operational data. `BillingGroup` aggregates authorized payment. Approval of a website version is not approval to spend, publish, or cut DNS over. Each adapter keeps its own credentials and audit scope.
 
-Source modules on `main` at `c0a21db`: `lib/platform/{analytics,commerce,comms,crm,customer-ai-workforce,marketing,seo,social,wallet,workflow,workforce}` and `app/api/v1/*`. Presence in that tree is MERGED source. See [`DATA_AND_SERVICES.md`](DATA_AND_SERVICES.md) before calling any of it activated.
+Source modules on `main` at `f315e897218a48bfac44a0d50724c91d32b6c9c9` (PR #51): `lib/platform/{analytics,commerce,comms,crm,customer-ai-workforce,marketing,seo,social,wallet,workflow,workforce}` and `app/api/v1/*`. Presence in that tree is MERGED source. See [`DATA_AND_SERVICES.md`](DATA_AND_SERVICES.md) before calling any of it activated.
 
 Further contracts: [`03-DATA-MODEL`](platform/docs/03-DATA-MODEL.md), [`04-API-INTEGRATIONS`](platform/docs/04-API-INTEGRATIONS.md), [`07-CRM-COMMUNICATIONS`](platform/docs/07-CRM-COMMUNICATIONS.md), [`09-SEO-INTELLIGENCE`](platform/docs/09-SEO-INTELLIGENCE.md), [`10-BILLING-COMMERCE`](platform/docs/10-BILLING-COMMERCE.md), [`11-SECURITY-COMPLIANCE`](platform/docs/11-SECURITY-COMPLIANCE.md), [`12-INFRA-OPERATIONS`](platform/docs/12-INFRA-OPERATIONS.md).

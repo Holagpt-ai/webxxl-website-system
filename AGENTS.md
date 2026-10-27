@@ -25,3 +25,11 @@ Start with a compact status: current source SHA, active batch, known production 
 Every significant architecture PR must cite its ADR ID (or a legacy decision ID), and ordinary PRs must state when an ADR is not required. Each PR must update only impacted operational docs. Source-impact matrix: route/nav → `ROUTE_MAP`; provider/data/worker → `DATA_AND_SERVICES`; decision/scope → `PROJECT_MEMORY` and existing `docs/platform/docs/15-DECISIONS-CHANGELOG.md`; release → `DEPLOYMENT_STATUS` only after evidence; defect/defer → `ISSUE_REGISTER`; every completed batch → `CHANGELOG` and `SESSION_HANDOFF`.
 
 End each session with one copyable handoff: exact repo, branch, SHA, PR, merged/production/flag/migration states, changed files, tests, blockers, next action, owner and prohibited actions. Do not describe unmerged code as shipped.
+
+## Cross-session commands
+
+**WEBXXL HANDOFF** is the command for the final session record. Include the verified GitHub `main` SHA; branch, pull request, head SHA, and merge status; last completed batch; changes and validations; deployment, migration, feature-activation, and provider states; new architectural or owner decisions; blockers, pending issues, and deliberate deferrals; the exact next assignment and responsible platform; and repository synchronization status. Cursor updates the affected living-blueprint files in the working pull request before reporting engineering completion. An open pull request is not merged.
+
+**PENDING REPOSITORY SYNC** marks a material decision, status change, or implementation handoff that exists in ChatGPT or v0.app and is not yet in GitHub. Each item names what must be synchronized, the repository file that receives it, the responsible platform, and the next action. Clear the marker only after that update is committed and the pull request or merge is recorded.
+
+Cursor owns repository documentation and Git synchronization. v0.app supplies an exact UI delivery handoff with edited paths and verification evidence, and Cursor reconciles it into GitHub. ChatGPT coordinates, identifies discrepancies, and writes handoffs. ChatGPT does not claim that a session end wrote the repository or that session end was detected automatically. No overlapping Cursor and v0.app file edits.

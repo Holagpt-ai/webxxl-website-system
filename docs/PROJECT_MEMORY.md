@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-25 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `622b352592f2cdcb359034e1c6462cb62130b1d1` (PR #50)
+**Evidence review:** 2026-10-26 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `f315e897218a48bfac44a0d50724c91d32b6c9c9` (PR #51)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,14 +35,26 @@ Merged code is not an activated service. A production deployment of a SHA is not
 |---|---|---|
 | PR #48 analytics backend | MERGED | [PR #48](https://github.com/Holagpt-ai/webxxl-website-system/pull/48), `336b89b6ae59784c5cdd001e9b88ecfe1e874d78` |
 | PR #49 analytics dashboard | MERGED | [PR #49](https://github.com/Holagpt-ai/webxxl-website-system/pull/49), head `402d762004cd4fa696b18d48b94bff0c5dc0b478`, squash `c0a21db93d730c838fc58d9b862ed547927bd72f` |
-| Vercel production SHA | DEPLOYED | GitHub deployment `7233002736` by `vercel[bot]`, environment Production, state success, 2026-10-21T17:41:12Z, same SHA as `main` |
+| Vercel production SHA (2026-10-21) | DEPLOYED | GitHub deployment `7233002736` by `vercel[bot]`, environment Production, state success, 2026-10-21T17:41:12Z, SHA `c0a21db93d730c838fc58d9b862ed547927bd72f`. Preserved record |
+| Vercel production SHA (2026-10-25, PR #50) | DEPLOYED | GitHub deployment `7319600836` by `vercel[bot]`, environment Production, state success, 2026-10-25T21:42:28Z, SHA `622b352592f2cdcb359034e1c6462cb62130b1d1`. SHA only |
+| Vercel production SHA (2026-10-25, PR #51) | DEPLOYED | GitHub deployment `7319975513` by `vercel[bot]`, environment Production, state success, 2026-10-25T22:16:18Z, SHA `f315e897218a48bfac44a0d50724c91d32b6c9c9`. SHA only. Not a migration or activation |
 | Production migrations | UNVERIFIED | Not read from the production database |
 | Analytics flags | Source default OFF; production values UNVERIFIED | `config/analytics-backend.ts`, `config/features.ts` `analyticsBackend: false` |
 | PR #50 continuity / ADR | MERGED | `622b352592f2cdcb359034e1c6462cb62130b1d1` |
-| Batch 15 ingestion pipeline | IN PR | Branch `feature/webxxl-analytics-ingestion-15`; not activated |
+| Batch 15 ingestion pipeline (PR #51) | MERGED | [PR #51](https://github.com/Holagpt-ai/webxxl-website-system/pull/51), `f315e897218a48bfac44a0d50724c91d32b6c9c9`. Flags default off. Production migration UNVERIFIED |
+| Batch 16 CRM, Marketing Studio, and Local SEO dashboards | PLANNED | Owner approved the ownership direction on 2026-10-26. Not implemented. No pull request |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
-Batch 15 extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.
+Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.
+
+## Batch 16 ownership (approved direction)
+
+Recorded 2026-10-26 from an owner decision. This applies ADR-003 to the next customer-dashboard batch. It is not an implementation claim and it does not approve a vendor, a flag, or a migration.
+
+- v0.app owns the complete CRM, Marketing Studio, and Local SEO customer dashboard UI/UX.
+- Cursor owns backend, APIs, Prisma, integration engineering, tests, Git, and deployment engineering.
+- No overlapping file edits. Exact file paths are named before the two owners work at the same time.
+- English and Spanish stay in scope. Existing portal designs stay in place.
 
 ## Architecture decision controls
 
@@ -53,3 +65,7 @@ Batch 15 extends `lib/platform/analytics/` with capture, aggregation, and ingest
 ## Update protocol
 
 A meaningful merge updates this file with the SHA, the PR, the date, and the owner. Deployment, migration, and flag facts change only when new evidence exists. Do not paste the Master TAD into this file.
+
+## Cross-session commands
+
+`WEBXXL HANDOFF` is the final session record. The field list is in [`AGENTS.md`](../AGENTS.md) and [`SESSION_HANDOFF.md`](SESSION_HANDOFF.md). `PENDING REPOSITORY SYNC` means a material decision or status exists in ChatGPT or v0.app and is not yet committed. Each use names the fact, the target file, the responsible platform, and the next action. Clear it only after the commit is on a recorded pull request or on `main`. An open pull request is not merged.

@@ -41,6 +41,7 @@ Deferred. Do not start a full release audit inside an ordinary build batch.
 | ADR validator again | `.github/workflows/adr-integrity.yml` | Only when ADR, validator, or that workflow changes | Do not also require it. A path-filtered check is skipped on other PRs, and a skipped required check blocks merge |
 | `prisma validate`, `prisma generate`, `pnpm typecheck`, `pnpm build` | `.github/workflows/app-validate.yml` | Pull requests that touch the application, Prisma, or package manifests | The gate job always reports. Require `app-validate-gate` only after one green application PR. Full `pnpm test` stays in the batch, not in this workflow, until a green baseline exists |
 | Branch divergence | `scripts/check-branch-divergence.mjs` inside Continuity | Every pull request | Advisory. A behind branch prints a warning and exits 0 |
+| Stale open-status wording | `scripts/check-stale-operational-status.mjs` inside Continuity | Every pull request | Advisory. Prints a warning and exits 0. It uses the latest MERGED batch and PR numbers in `docs/PROJECT_MEMORY.md`. It does not compare document text to the current commit SHA |
 | Deployment SHA | `.github/workflows/deployment-evidence.yml` | Manual `workflow_dispatch` only | Report artifact only. No repository write |
 
 Recommended branch protection, for the owner to apply by hand: pull request required, Continuity required, no direct pushes, no force-push. This PR does not change repository settings. No workflow deploys, migrates, or commits to `main`.

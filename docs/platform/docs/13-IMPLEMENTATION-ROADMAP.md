@@ -2,9 +2,10 @@
 
 **Execution mode:** Cursor primary for backend/logic/Git; v0.app exclusively all UI/UX; Vercel for WebXXL deployment; Hostinger/Docker for approved isolated providers. Large cohesive non-overlapping implementation batches, focused validation, honest results. **Document freeze first, implementation second.** Dates below are **not fixed commitments**. Do not let optional vendors block unrelated core modules.
 
-## Source checkpoint 2026-10-25
+## Source checkpoint 2026-10-26
 
-The batch table and later status blocks keep their original planning wording, including "In PR" and "In progress". GitHub `main` at `c0a21db93d730c838fc58d9b862ed547927bd72f` has moved past that wording. Use this checkpoint and `docs/PROJECT_MEMORY.md` for current source status. A merge or a Vercel production deployment is not migration application, flag activation, or a live provider test.
+The batch table and later status blocks keep their original planning wording, including "In PR" and "In progress".
+GitHub `main` at `f315e897218a48bfac44a0d50724c91d32b6c9c9` (PR #51) has moved past that wording. Use this checkpoint and `docs/PROJECT_MEMORY.md` for current source status. A merge or a Vercel production deployment is not migration application, flag activation, or a live provider test.
 
 | Executed batch | Source evidence on `main` | Source state | Runtime |
 |---|---|---|---|
@@ -13,8 +14,19 @@ The batch table and later status blocks keep their original planning wording, in
 | COMMERCE-11 / COMMERCE-12 | PRs #43–#45 | MERGED | Checkout and marketplace source; live charges not authorized by the merge |
 | AI-CUSTOMER-13 | PRs #46–#47 | MERGED | Workforce APIs and dashboard source; live execution not inferred |
 | ANALYTICS-14 | PRs #48–#49 | MERGED | Backend and Analytics dashboard source. Included in Vercel production deployment `7233002736` of `c0a21db`. Ingestion flags default OFF |
+| CONTINUITY-01 | PR #50 | MERGED | Documentation and validators. ADR-018, ADR-019, and ADR-020 remain PROPOSED |
+| ANALYTICS-15 | PR #51 | MERGED | Ingestion and conversion capture source. Flags default OFF. Production migration UNVERIFIED |
 
-Numbering note: the table row **ANALYTICS-13** was implemented as **ANALYTICS-14**. The row **AI-CUSTOMER-12** was implemented as **AI-CUSTOMER-13**. **RELEASE-14** in this roadmap is the later launch gate, not the analytics batch. **FUTURE-15** is deferred product expansion, not **Batch 15 — Analytics Ingestion & Conversion Pipeline**. Batch 15 is the next planned application batch and has no merged PR.
+Numbering note: the table row **ANALYTICS-13** was implemented as **ANALYTICS-14**. The row **AI-CUSTOMER-12** was implemented as **AI-CUSTOMER-13**. **RELEASE-14** in this roadmap is the later launch gate, not the analytics batch. **FUTURE-15** is deferred product expansion, not **Batch 15 — Analytics Ingestion & Conversion Pipeline**. Batch 15 is merged source as PR #51. It is not FUTURE-15.
+
+## Batch 16 — approved direction, not implemented
+
+Owner decision 2026-10-26, under ADR-003. There is no Batch 16 commit and no Batch 16 pull request.
+
+- v0.app owns the complete CRM, Marketing Studio, and Local SEO customer dashboard UI/UX.
+- Cursor owns backend, APIs, Prisma, integration engineering, tests, Git, and deployment engineering.
+- No overlapping file edits. Exact file ownership is established before concurrent implementation.
+- English, Spanish, and the existing portal designs stay in place.
 
 ## Program release strategy
 
