@@ -1,6 +1,6 @@
 # Route and Navigation Register
 
-**Inventory date:** 2026-10-25 · **Source:** `main` `c0a21db93d730c838fc58d9b862ed547927bd72f` · **Checker:** `scripts/validate-routes.mjs`
+**Inventory date:** 2026-10-26 · **Source:** `main` `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` · **Checker:** `scripts/validate-routes.mjs`
 
 Locales are `en` (unprefixed) and `es` (`/es/...`), via `proxy.ts` and `app/[locale]`. A nav href is unprefixed. The checker strips `[locale]` and requires an exact `page.tsx`. Dynamic segments such as `[siteId]` are real routes; they are not treated as broken links.
 
@@ -54,3 +54,5 @@ Route handlers under `app/api`, MERGED, not indexed:
 | Files | `/api/files/[fileId]` |
 
 Planned screens in [`docs/platform/docs/05-SITEMAP-WIREFRAMES.md`](platform/docs/05-SITEMAP-WIREFRAMES.md) are targets until a `page.tsx` exists. The checker does not invent those paths.
+
+Batch 16A locks the customer workspace paths in [`docs/platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md`](platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md): `/dashboard/crm/**`, `/dashboard/marketing/**`, and `/dashboard/seo/**`. Those `page.tsx` files do not exist yet, so they are not registered in `getDashboardNavModules()`. `/dashboard/social`, `/dashboard/communications`, and `/dashboard/crm/leads` are not part of that lock.
