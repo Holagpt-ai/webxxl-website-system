@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { classifyDivergence } from '../../scripts/check-branch-divergence.mjs';
+import { collectStaleStatusWarnings, loadOperationalStatus } from '../../scripts/check-stale-operational-status.mjs';
 import { assessEvidence } from '../../scripts/check-deployment-evidence.mjs';
 import { buildHandoffDraft } from '../../scripts/draft-session-handoff.mjs';
 import { validateAdrs } from '../../scripts/validate-adr.mjs';
@@ -82,6 +83,61 @@ test('session handoff rejects a missing next-assignment block', () => {
 test('continuity delegates ADR approval rules to validate-adr', () => {
   assert.deepEqual(validateContinuity(ROOT).errors, []);
   assert.equal(validateAdrs(ROOT).checked, 3);
+});
+
+const MERGED_MEMORY = [
+  '| Item | State | Evidence |',
+  '| PR #50 continuity / ADR | MERGED | 622b352592f2cdcb359034e1c6462cb62130b1d1 |',
+  '| Batch 15 ingestion pipeline (PR #51) | MERGED | f315e897218a48bfac44a0d50724c91d32b6c9c9 |',
+  '| Batch 16 dashboards | PLANNED | direction only |',
+].join('\n');
+
+test('stale open wording is warned only for the latest merged batch or a recorded merged PR', () => {
+  const warnings = collectStaleStatusWarnings({
+    projectMemory: MERGED_MEMORY,
+    handoff: '## This session — Batch 15\nMerged: **NO**\n## Handoff template\nNOT MERGED\n',
+    documents: [
+      { name: 'docs/CHANGELOG.md', text: '| 2026-10-25 | Batch 15 | IN PR. No activation claim |' },
+      { name: 'docs/platform/docs/02-CURRENT-STATE.md', text: '**COMMS-06A (in PR #38):** historical note' },
+      { name: 'docs/SESSION_HANDOFF.md', text: 'main SHA f315e897218a48bfac44a0d50724c91d32b6c9c9 differs from an older note' },
+    ],
+  });
+  const text = warnings.join('\n');
+  assert.match(text, /Batch 15/);
+  assert.match(text, /docs\/CHANGELOG.md:1/);
+  assert.equal(warnings.some((warning) => warning.includes('PR #38')), false);
+  assert.equal(warnings.some((warning) => warning.includes('differs from an older note')), false);
+});
+
+test('a merged handoff and a different documentation SHA stay quiet', () => {
+  const warnings = collectStaleStatusWarnings({
+    projectMemory: MERGED_MEMORY,
+    handoff: [
+      '## Latest completed batch',
+      'Batch 15 is MERGED as PR #51',
+      '## Next assignment',
+      'Batch 16 awaits file ownership. Cursor owns backend. v0.app owns UI.',
+      '## Handoff template',
+      'Next exact assignment / owning tool: Cursor',
+    ].join('\n'),
+    documents: [
+      { name: 'docs/CHANGELOG.md', text: '| Batch 15 | MERGED | older SHA c0a21db remains a separate deploy record |' },
+    ],
+  });
+  assert.deepEqual(warnings, []);
+});
+
+test('recorded merged PR numbers still marked open are warned without reading HEAD', () => {
+  const warnings = collectStaleStatusWarnings({
+    projectMemory: MERGED_MEMORY,
+    handoff: '## Baseline\nPR #50 is on main\n',
+    documents: [{ name: 'docs/ISSUE_REGISTER.md', text: '| CONT-001 | IN PR | closed by PR #50 |' }],
+  });
+  assert.match(warnings.join('\n'), /PR #50/);
+});
+
+test('the current operational records do not describe the latest merged batch as open', () => {
+  assert.deepEqual(collectStaleStatusWarnings(loadOperationalStatus(ROOT)), []);
 });
 
 test('missing evidence stays unverified', () => {
