@@ -12,5 +12,6 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-10-25 | Continuity and ADR controls | [PR #50](https://github.com/Holagpt-ai/webxxl-website-system/pull/50), `622b352592f2cdcb359034e1c6462cb62130b1d1` | MERGED. ADR-018..020 remain PROPOSED |
 | 2026-10-25 | ANALYTICS-15 ingestion and conversion pipeline | [PR #51](https://github.com/Holagpt-ai/webxxl-website-system/pull/51), `f315e897218a48bfac44a0d50724c91d32b6c9c9` | MERGED. No activation or production-migration claim |
 | 2026-10-26 | Operational records for PR #50 and PR #51, plus Batch 16 ownership direction | Continuity sync. Batch 16 has no implementation commit | Documentation only. Batch 16 is approved direction and is not implemented |
+| 2026-10-26 | Continuity correction | [PR #52](https://github.com/Holagpt-ai/webxxl-website-system/pull/52), `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` | MERGED. Documentation only. No flag or migration claim |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

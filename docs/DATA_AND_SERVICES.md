@@ -29,6 +29,19 @@ From `config/analytics-backend.ts` and `config/features.ts`, read on 2026-10-25:
 
 Production environment values were not read. Do not describe these as activated.
 
+## CRM, Marketing, Social, and SEO flags on this source tree
+
+Read from `config/crm-backend.ts`, `config/mkt-backend.ts`, `config/social-marketing.ts`, and `config/seo-backend.ts` on 2026-10-26. The customer UI contract is [`platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md`](platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md). Production values were not read.
+
+| Flag | Source default |
+|---|---|
+| `CRM_BACKEND_ENABLED`, `CRM_IMPORT_ENABLED`, `CRM_EXPORT_ENABLED`, `CRM_EXTERNAL_SYNC_ENABLED`, `CRM_AI_ACTIONS_ENABLED` | off |
+| `MKT_BACKEND_ENABLED`, `MKT_DRAFT_PREPARATION_ENABLED`, `MKT_APPROVAL_WORKFLOW_ENABLED`, `MKT_LEAD_MONITOR_ENABLED`, `MKT_AI_GENERATION_ENABLED`, `MKT_EXTERNAL_HANDOFF_ENABLED`, `MKT_AUTOMATED_EXECUTION_ENABLED` | off |
+| `SOCIAL_MARKETING_ENABLED`, `POSTIZ_API_ENABLED`, `POSTIZ_LIVE_PUBLISHING_ENABLED`, `SOCIAL_AUTOMATED_APPROVAL_ENABLED` | off |
+| `SEO_BACKEND_ENABLED`, `SEO_CRAWLER_ENABLED`, `SEO_GSC_API_ENABLED`, `SEO_GOOGLE_OAUTH_ENABLED`, `SEO_GA4_API_ENABLED`, `SEO_GBP_API_ENABLED`, `SEO_PLACES_API_ENABLED`, `SEO_RANK_PROVIDER_ENABLED`, `SEO_AI_EXECUTION_ENABLED` | off |
+
+`core.crm`, `core.marketing-studio`, and `core.local-seo` stay `POLICY_UNRESOLVED` (OPEN-001) even if a backend flag is later turned on. This table does not enable any flag.
+
 Batch 15 (merged as PR #51) adds signed capture (`POST /api/v1/analytics/capture/events`), authenticated sync worker (`x-automation-worker-secret`), PostgreSQL capture rate windows, and honest provider sync states (no fabricated `COMPLETED`). Live GSC HTTP requires SEO flags plus `ANALYTICS_PROVIDER_FETCH_ENABLED`, `WORKFLOW_EXTERNAL_EFFECTS_ENABLED`, and `ANALYTICS_GSC_LIVE_TRANSPORT_ENABLED`. Those flags stay off in source. The merge does not show a production migration or a connected provider.
 
 ## Migrations in the repository

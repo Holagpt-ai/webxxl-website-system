@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-26 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `f315e897218a48bfac44a0d50724c91d32b6c9c9` (PR #51)
+**Evidence review:** 2026-10-26 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` (PR #52)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -42,7 +42,8 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Analytics flags | Source default OFF; production values UNVERIFIED | `config/analytics-backend.ts`, `config/features.ts` `analyticsBackend: false` |
 | PR #50 continuity / ADR | MERGED | `622b352592f2cdcb359034e1c6462cb62130b1d1` |
 | Batch 15 ingestion pipeline (PR #51) | MERGED | [PR #51](https://github.com/Holagpt-ai/webxxl-website-system/pull/51), `f315e897218a48bfac44a0d50724c91d32b6c9c9`. Flags default off. Production migration UNVERIFIED |
-| Batch 16 CRM, Marketing Studio, and Local SEO dashboards | PLANNED | Owner approved the ownership direction on 2026-10-26. Not implemented. No pull request |
+| PR #52 continuity correction | MERGED | [PR #52](https://github.com/Holagpt-ai/webxxl-website-system/pull/52), `2b7ec7be2aeadccfb595a2ab7edf59b775876efe`. Documentation only |
+| Batch 16A workspace contract | IN PR | Branch `feature/batch-16a-customer-workspace-contract`. Contract only. No UI, flag, or migration. Awaits owner review |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.
@@ -55,6 +56,8 @@ Recorded 2026-10-26 from an owner decision. This applies ADR-003 to the next cus
 - Cursor owns backend, APIs, Prisma, integration engineering, tests, Git, and deployment engineering.
 - No overlapping file edits. Exact file paths are named before the two owners work at the same time.
 - English and Spanish stay in scope. Existing portal designs stay in place.
+
+Batch 16A names those paths, the locked routes, and the API matrix in [`docs/platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md`](platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md). The contract is on the working branch. It is not a merge, and it does not enable flags.
 
 ## Architecture decision controls
 
