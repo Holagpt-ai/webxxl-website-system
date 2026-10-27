@@ -65,3 +65,7 @@ Recorded 2026-10-26 from an owner decision. This applies ADR-003 to the next cus
 ## Update protocol
 
 A meaningful merge updates this file with the SHA, the PR, the date, and the owner. Deployment, migration, and flag facts change only when new evidence exists. Do not paste the Master TAD into this file.
+
+## Cross-session commands
+
+`WEBXXL HANDOFF` is the final session record. The field list is in [`AGENTS.md`](../AGENTS.md) and [`SESSION_HANDOFF.md`](SESSION_HANDOFF.md). `PENDING REPOSITORY SYNC` means a material decision or status exists in ChatGPT or v0.app and is not yet committed. Each use names the fact, the target file, the responsible platform, and the next action. Clear it only after the commit is on a recorded pull request or on `main`. An open pull request is not merged.
