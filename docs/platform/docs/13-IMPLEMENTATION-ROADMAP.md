@@ -22,7 +22,7 @@ Numbering note: the table row **ANALYTICS-13** was implemented as **ANALYTICS-14
 
 ## Batch 16 — contract written, UI not started
 
-Owner decision 2026-10-26, under ADR-003. Batch 16A locks routes, the API matrix, and file ownership in `BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md` on `feature/batch-16a-customer-workspace-contract`. No dashboard pages, flags, or migrations are in that contract. v0.app builds the named UI paths only after this contract is the reference. Cursor wires navigation after that UI handoff.
+Owner decision 2026-10-26, under ADR-003. Batch 16A locks routes, the API matrix, and file ownership in `BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md` on [PR #53](https://github.com/Holagpt-ai/webxxl-website-system/pull/53). No dashboard pages, flags, or migrations are in that contract. **Batch 16B:** v0.app builds the Stage B UI paths only after owner merge of PR #53. Cursor wires navigation after that UI handoff.
 
 - v0.app owns the complete CRM, Marketing Studio, and Local SEO customer dashboard UI/UX.
 - Cursor owns backend, APIs, Prisma, integration engineering, tests, Git, and deployment engineering.

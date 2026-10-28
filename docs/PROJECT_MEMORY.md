@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-26 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` (PR #52)
+**Evidence review:** 2026-10-28 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` (PR #52)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -38,12 +38,14 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Vercel production SHA (2026-10-21) | DEPLOYED | GitHub deployment `7233002736` by `vercel[bot]`, environment Production, state success, 2026-10-21T17:41:12Z, SHA `c0a21db93d730c838fc58d9b862ed547927bd72f`. Preserved record |
 | Vercel production SHA (2026-10-25, PR #50) | DEPLOYED | GitHub deployment `7319600836` by `vercel[bot]`, environment Production, state success, 2026-10-25T21:42:28Z, SHA `622b352592f2cdcb359034e1c6462cb62130b1d1`. SHA only |
 | Vercel production SHA (2026-10-25, PR #51) | DEPLOYED | GitHub deployment `7319975513` by `vercel[bot]`, environment Production, state success, 2026-10-25T22:16:18Z, SHA `f315e897218a48bfac44a0d50724c91d32b6c9c9`. SHA only. Not a migration or activation |
+| Vercel production SHA (2026-10-27, PR #52) | DEPLOYED | GitHub deployment `7347386169` by `vercel[bot]`, environment Production, state success, 2026-10-27T00:50:15Z, SHA `2b7ec7be2aeadccfb595a2ab7edf59b775876efe`. SHA only. Not a migration or activation |
 | Production migrations | UNVERIFIED | Not read from the production database |
 | Analytics flags | Source default OFF; production values UNVERIFIED | `config/analytics-backend.ts`, `config/features.ts` `analyticsBackend: false` |
 | PR #50 continuity / ADR | MERGED | `622b352592f2cdcb359034e1c6462cb62130b1d1` |
 | Batch 15 ingestion pipeline (PR #51) | MERGED | [PR #51](https://github.com/Holagpt-ai/webxxl-website-system/pull/51), `f315e897218a48bfac44a0d50724c91d32b6c9c9`. Flags default off. Production migration UNVERIFIED |
 | PR #52 continuity correction | MERGED | [PR #52](https://github.com/Holagpt-ai/webxxl-website-system/pull/52), `2b7ec7be2aeadccfb595a2ab7edf59b775876efe`. Documentation only |
-| Batch 16A workspace contract | IN PR | Branch `feature/batch-16a-customer-workspace-contract`. Contract only. No UI, flag, or migration. Awaits owner review |
+| Batch 16A workspace contract | IN PR | [PR #53](https://github.com/Holagpt-ai/webxxl-website-system/pull/53), branch `feature/batch-16a-customer-workspace-contract`, [`BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md`](platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md). Contract only. Open for owner review |
+| Batch 16B customer workspace UI | PLANNED | v0.app Stage B paths in the contract. Starts after owner merge of PR #53. Not started |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.
@@ -57,7 +59,7 @@ Recorded 2026-10-26 from an owner decision. This applies ADR-003 to the next cus
 - No overlapping file edits. Exact file paths are named before the two owners work at the same time.
 - English and Spanish stay in scope. Existing portal designs stay in place.
 
-Batch 16A names those paths, the locked routes, and the API matrix in [`docs/platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md`](platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md). The contract is on the working branch. It is not a merge, and it does not enable flags.
+Batch 16A names those paths, the locked routes, and the API matrix in [`docs/platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md`](platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md). The contract is on [PR #53](https://github.com/Holagpt-ai/webxxl-website-system/pull/53). An open pull request is not merged, and it does not enable flags. Batch 16B is the UI implementation pass after that merge.
 
 ## Architecture decision controls
 
