@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { EmptyNote, LoadingRows, Section, StatusPill, td } from '@/components/commerce/ui'
 import {
   GapNotice,
@@ -57,9 +57,7 @@ export function MarketingOverview({ accountId, userId, locale, copy, base }: Mar
         title={o.requestsTitle}
         description={o.requestsBody}
         action={
-          <Button asChild variant="outline" size="sm">
-            <Link href={`${base}/requests`}>{o.viewAll}</Link>
-          </Button>
+          <Link className={buttonVariants({ variant: "outline", size: "sm" })} href={`${base}/requests`}>{o.viewAll}</Link>
         }
       >
         {requests.isLoading ? (

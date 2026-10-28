@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, CalendarClock, CheckCircle2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { EmptyNote, LoadingRows, Section, StatusPill } from '@/components/commerce/ui'
 import {
   Facts,
@@ -28,12 +28,10 @@ export function MarketingCampaignDetail({ accountId, locale, copy, base, campaig
   const kit = copy.kit
 
   const back = (
-    <Button asChild variant="ghost" size="sm" className="self-start">
-      <Link href={`${base}/campaigns`}>
+    <Link className={buttonVariants({ variant: "ghost", size: "sm", className: "self-start" })} href={`${base}/campaigns`}>
         <ArrowLeft className="size-4" aria-hidden="true" />
         {c.back}
       </Link>
-    </Button>
   )
 
   if (list.isLoading) return <LoadingRows label={kit.loading} rows={4} />

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { LoadingRows, Section, StatusPill } from '@/components/commerce/ui'
 import { Facts, SuccessNote, WorkspaceState } from '@/components/crm/workspace-kit'
 import { useAction, useWorkspace } from '@/lib/crm-ui/use-workspace'
@@ -21,12 +21,10 @@ export function MarketingRequestDetail(props: MarketingViewProps & { requestId: 
   const kit = copy.kit
 
   const back = (
-    <Button asChild variant="ghost" size="sm" className="self-start">
-      <Link href={`${base}/requests`}>
+    <Link className={buttonVariants({ variant: "ghost", size: "sm", className: "self-start" })} href={`${base}/requests`}>
         <ArrowLeft className="size-4" aria-hidden="true" />
         {q.back}
       </Link>
-    </Button>
   )
 
   if (request.isLoading) return <LoadingRows label={kit.loading} rows={4} />

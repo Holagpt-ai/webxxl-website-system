@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { EmptyNote, LoadingRows, Section, StatusPill } from '@/components/commerce/ui'
 import {
   Facts,
@@ -33,12 +33,10 @@ export function MarketingDeliverableDetail({ accountId, locale, copy, base, arti
   const kit = copy.kit
 
   const back = (
-    <Button asChild variant="ghost" size="sm" className="self-start">
-      <Link href={`${base}/deliverables`}>
+    <Link className={buttonVariants({ variant: "ghost", size: "sm", className: "self-start" })} href={`${base}/deliverables`}>
         <ArrowLeft className="size-4" aria-hidden="true" />
         {d.back}
       </Link>
-    </Button>
   )
 
   if (detail.isLoading) return <LoadingRows label={kit.loading} rows={4} />
