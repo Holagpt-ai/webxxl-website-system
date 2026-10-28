@@ -5,7 +5,7 @@
 ## Source checkpoint 2026-10-26
 
 The batch table and later status blocks keep their original planning wording, including "In PR" and "In progress".
-GitHub `main` at `f315e897218a48bfac44a0d50724c91d32b6c9c9` (PR #51) has moved past that wording. Use this checkpoint and `docs/PROJECT_MEMORY.md` for current source status. A merge or a Vercel production deployment is not migration application, flag activation, or a live provider test.
+GitHub `main` at `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` (PR #52) has moved past that wording. Use this checkpoint and `docs/PROJECT_MEMORY.md` for current source status. A merge or a Vercel production deployment is not migration application, flag activation, or a live provider test.
 
 | Executed batch | Source evidence on `main` | Source state | Runtime |
 |---|---|---|---|
@@ -16,12 +16,13 @@ GitHub `main` at `f315e897218a48bfac44a0d50724c91d32b6c9c9` (PR #51) has moved p
 | ANALYTICS-14 | PRs #48–#49 | MERGED | Backend and Analytics dashboard source. Included in Vercel production deployment `7233002736` of `c0a21db`. Ingestion flags default OFF |
 | CONTINUITY-01 | PR #50 | MERGED | Documentation and validators. ADR-018, ADR-019, and ADR-020 remain PROPOSED |
 | ANALYTICS-15 | PR #51 | MERGED | Ingestion and conversion capture source. Flags default OFF. Production migration UNVERIFIED |
+| CONTINUITY-02 | PR #52 | MERGED | Handoff conventions and deployment evidence. Documentation only |
 
 Numbering note: the table row **ANALYTICS-13** was implemented as **ANALYTICS-14**. The row **AI-CUSTOMER-12** was implemented as **AI-CUSTOMER-13**. **RELEASE-14** in this roadmap is the later launch gate, not the analytics batch. **FUTURE-15** is deferred product expansion, not **Batch 15 — Analytics Ingestion & Conversion Pipeline**. Batch 15 is merged source as PR #51. It is not FUTURE-15.
 
-## Batch 16 — approved direction, not implemented
+## Batch 16 — contract written, UI not started
 
-Owner decision 2026-10-26, under ADR-003. There is no Batch 16 commit and no Batch 16 pull request.
+Owner decision 2026-10-26, under ADR-003. Batch 16A locks routes, the API matrix, and file ownership in `BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md` on [PR #53](https://github.com/Holagpt-ai/webxxl-website-system/pull/53). No dashboard pages, flags, or migrations are in that contract. **Batch 16B:** v0.app builds the Stage B UI paths only after owner merge of PR #53. Cursor wires navigation after that UI handoff.
 
 - v0.app owns the complete CRM, Marketing Studio, and Local SEO customer dashboard UI/UX.
 - Cursor owns backend, APIs, Prisma, integration engineering, tests, Git, and deployment engineering.
