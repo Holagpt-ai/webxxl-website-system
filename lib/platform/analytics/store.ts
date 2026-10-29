@@ -76,6 +76,7 @@ export type AnalyticsStore = {
       date: Date
       dataState: string
       idempotencyKey: string
+      observedAt: Date
     }[]
   >
   countLocalRankObservations(managedSiteId: string, range: AnalyticsDateRange): Promise<number>

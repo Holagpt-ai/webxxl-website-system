@@ -107,6 +107,7 @@ describe('SEO-07B merge readiness', () => {
           averagePosition: 3,
           date: new Date('2026-10-01'),
           dataState: 'READY',
+          observedAt: new Date('2026-10-02T00:00:00Z'),
         },
       ],
       requireVerifiedSnapshotWindow: true,

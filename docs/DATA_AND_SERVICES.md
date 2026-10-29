@@ -8,7 +8,7 @@ Specifications: [`03-DATA-MODEL`](platform/docs/03-DATA-MODEL.md), [`04-API-INTE
 | Preview and review | Projects, immutable versions, owner approvals | GitHub, Vercel deployment ids | MERGED | Per-site approval is data, not a code flag |
 | CRM | `lib/platform/crm/**`, `/api/v1/crm/*`, `lib/crm-ui/**`, `components/crm/**` | Twenty adapter returns not configured until flags and mapping exist. Batch 17A HTTP and 17B/17C UI merged on `main` | MERGED | `CRM_BACKEND_ENABLED` off; external sync not inferred |
 | Communications | `lib/platform/comms/**` | Chatwoot, SMS, email candidates | MERGED | No live send inferred |
-| Marketing and social | `lib/platform/marketing/**`, `lib/marketing-studio-ui/**`, `components/marketing-studio/**`, `/api/v1/marketing/*`, `/api/v1/social/*` | Postiz adapter. Batch 18A list APIs merged; Batch 18B/18C Marketing Studio UI (IN PR until merge) | MERGED (backend); Marketing UI IN PR | Publishing off until authorized |
+| Marketing and social | `lib/platform/marketing/**`, `lib/marketing-studio-ui/**`, `components/marketing-studio/**`, `/api/v1/marketing/*`, `/api/v1/social/*` | Postiz adapter. Batch 18A list APIs + Batch 18B/18C Marketing Studio UI merged (PR #58) | MERGED | Publishing off until authorized |
 | SEO and analytics | `lib/platform/seo/**`, `lib/platform/analytics/**` | GSC, GA4, GBP, rank vendor | MERGED | See flags below |
 | Wallet and commerce | `lib/platform/wallet/**`, `lib/platform/commerce/**` | No processor selected as the system of record | MERGED | No live charge inferred |
 | Workflow | `lib/platform/workflow/**`, legacy notification worker | AUTO-10 is Prisma-first; Hatchet is not provisioned | MERGED | `WORKFLOW_*` default off in the AUTO-10 contract |
@@ -71,6 +71,21 @@ Session-scoped `CustomerAccount`; gates via `requireMktApiActor` (`MKT_BACKEND_E
 | POST | `/api/v1/marketing/reviews/[id]/decide` | `marketing.artifact.review` | Human-only; transactional CAS |
 
 UI binding contract: [`platform/docs/BATCH18B-MARKETING-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH18B-MARKETING-UI-INTEGRATION-CONTRACT.md).
+
+## SEO customer HTTP (SEO-07 + Batch 19A)
+
+Session-scoped `CustomerAccount`; gates via `requireSeoApiActor` (`SEO_BACKEND_ENABLED` + entitlement + permission). Stored reads only — no live Google on GET.
+
+| Method | Path | Permission | Notes |
+|---|---|---|---|
+| GET | `/api/v1/seo/sites/[siteId]/overview` | `seo.read` | `SeoSiteOverviewDto`; GSC section from `loadGscStoredSiteBundle` + `buildGscPerformanceFromObservations` |
+| GET | `/api/v1/seo/sites/[siteId]/performance` | `seo.read` | `{ gsc, limitations }` aggregate |
+| GET | `/api/v1/seo/sites/[siteId]/keywords` | `seo.read` | Per-query stored rows; cursor + search; shared GSC context |
+| GET | `/api/v1/seo/sites/[siteId]/opportunities` | `seo.read` | Cursor pagination; optional state/severity/confidence filters |
+
+Shared loader: `lib/platform/seo/gsc-site-read.ts` (connection + latest matching `SeoSnapshot` + keyword window). Marketing create validates `seoOpportunityId` against account and site in `request-service.ts`.
+
+UI binding contract: [`platform/docs/BATCH19B-LOCAL-SEO-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH19B-LOCAL-SEO-UI-INTEGRATION-CONTRACT.md).
 
 Batch 15 (merged as PR #51) adds signed capture (`POST /api/v1/analytics/capture/events`), authenticated sync worker (`x-automation-worker-secret`), PostgreSQL capture rate windows, and honest provider sync states (no fabricated `COMPLETED`). Live GSC HTTP requires SEO flags plus `ANALYTICS_PROVIDER_FETCH_ENABLED`, `WORKFLOW_EXTERNAL_EFFECTS_ENABLED`, and `ANALYTICS_GSC_LIVE_TRANSPORT_ENABLED`. Those flags stay off in source. The merge does not show a production migration or a connected provider.
 

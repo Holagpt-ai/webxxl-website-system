@@ -103,7 +103,8 @@ The server recomputes/validates all IDs from actor membership, not from user inp
 | `GET /api/v1/seo/sites/{id}/findings` | `seo.read` | pagination | crawl/rule findings |
 | `GET /api/v1/seo/sites/{id}/opportunities` | `seo.read` | pagination | evidence-backed opportunities |
 | `GET /api/v1/seo/sites/{id}/connections` | `seo.read` | — | analytics connection metadata (no secrets) |
-| `GET /api/v1/seo/sites/{id}/performance` | `seo.read` | — | stored GSC observations or `NOT_CONNECTED` |
+| `GET /api/v1/seo/sites/{id}/performance` | `seo.read` | — | stored GSC aggregate + `limitations[]` (shared bundle with overview/keywords) |
+| `GET /api/v1/seo/sites/{id}/keywords` | `seo.read` | `take`, `cursor`, `q`/`search` | stored GSC query rows + aggregate context; no live Google fetch |
 | `GET /api/v1/seo/sites/{id}/competitors` | `seo.read` | — | markets + top competitor profiles |
 | `POST /api/v1/seo/sites/{id}/markets` | `seo.market.manage` | market definition | ranked competitor candidates (synthetic/live gated) |
 | `POST /api/v1/seo/sites/{id}/scan-previews` | `seo.scan.prepare` | idempotency key | crawl run **prepared/blocked** — not arbitrary URL crawl |

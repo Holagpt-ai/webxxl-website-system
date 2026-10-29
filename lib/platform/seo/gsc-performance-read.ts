@@ -12,6 +12,7 @@ export type PersistedKeywordRow = {
   averagePosition: number | null
   date: Date
   dataState: string
+  observedAt: Date
 }
 
 export type GscPerformanceReadModel = {
@@ -87,7 +88,8 @@ export function buildGscPerformanceFromObservations(input: {
   const byMetricKey = new Map<string, PersistedKeywordRow>()
   for (const row of input.rows) {
     const metricKey = `${row.query}|${row.page ?? ''}|${toIsoDate(row.date)}`
-    if (!byMetricKey.has(metricKey)) byMetricKey.set(metricKey, row)
+    const existing = byMetricKey.get(metricKey)
+    if (!existing || row.observedAt > existing.observedAt) byMetricKey.set(metricKey, row)
   }
   const uniqueRows = [...byMetricKey.values()]
   if (uniqueRows.length === 0) {

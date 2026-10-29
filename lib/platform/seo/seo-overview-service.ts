@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/db'
 import { buildSeoSiteOverviewDto } from '@/lib/platform/seo/dashboard-read-model'
+import { loadGscStoredSiteBundle } from '@/lib/platform/seo/gsc-site-read'
+import { applyStoredGscPerformanceToOverview } from '@/lib/platform/seo/overview-gsc-apply'
 import type { CompetitorProvenanceSource } from '@/lib/platform/seo/competitor-ranking'
 import { sortOpportunitiesDeterministic } from '@/lib/platform/seo/opportunity-engine'
 import { localRankWhenProviderDisconnected } from '@/lib/platform/seo/local-rank-contract'
@@ -91,7 +93,13 @@ export async function loadSeoSiteOverview(input: {
     rankProviderState: rankState,
   })
 
-  if (gscConnection && gscConnection.dataState !== 'NOT_CONNECTED') {
+  const gscBundle = await loadGscStoredSiteBundle({
+    customerAccountId: input.customerAccountId,
+    managedSiteId: site.id,
+  })
+  if (gscBundle.ok) {
+    applyStoredGscPerformanceToOverview(dto, gscBundle.value.performance)
+  } else if (gscConnection && gscConnection.dataState !== 'NOT_CONNECTED') {
     dto.sections.gscPerformance.dataState = gscConnection.dataState as SeoFreshnessState
   }
 

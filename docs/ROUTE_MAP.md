@@ -32,7 +32,7 @@ All of these exist as `app/[locale]/dashboard/**/page.tsx`. They are authenticat
 
 `/dashboard`, `/dashboard/project`, `/dashboard/sites`, `/dashboard/sites/[siteId]`, `/dashboard/files`, `/dashboard/messages`, `/dashboard/approvals`, `/dashboard/requests`, `/dashboard/review`, `/dashboard/support`, `/dashboard/services`, `/dashboard/marketplace`, `/dashboard/billing`, `/dashboard/analytics`, `/dashboard/ai-employees`, `/dashboard/notifications`, `/dashboard/settings/notifications`, `/dashboard/infrastructure`, `/dashboard/infrastructure/domains`, `/dashboard/infrastructure/email`, `/dashboard/infrastructure/hosting`.
 
-**Batch 16 customer workspaces (IN PR, not on production `main` until merge):** 25 locked routes under `/dashboard/crm/**` (9 pages), `/dashboard/marketing/**` (10 pages), and `/dashboard/seo/**` (6 pages). English unprefixed and Spanish `/es/dashboard/...` variants resolve via `app/[locale]/dashboard/`. Dynamic segments: `/dashboard/crm/contacts/[contactId]`, `/dashboard/marketing/requests/[requestId]`, `/dashboard/marketing/deliverables/[artifactId]`, `/dashboard/marketing/campaigns/[campaignId]`. `/dashboard/social`, `/dashboard/communications`, and `/dashboard/crm/leads` are not part of Batch 16.
+**Batch 16 customer workspaces (MERGED on `main`, PR #54):** 25 locked routes under `/dashboard/crm/**` (9 pages), `/dashboard/marketing/**` (10 pages), and `/dashboard/seo/**` (6 pages). English unprefixed and Spanish `/es/dashboard/...` variants resolve via `app/[locale]/dashboard/`. Dynamic segments: `/dashboard/crm/contacts/[contactId]`, `/dashboard/marketing/requests/[requestId]`, `/dashboard/marketing/deliverables/[artifactId]`, `/dashboard/marketing/campaigns/[campaignId]`. `/dashboard/social`, `/dashboard/communications`, and `/dashboard/crm/leads` are not part of Batch 16.
 
 `getDashboardNavModules()` includes CRM → `/dashboard/crm`, Marketing Studio → `/dashboard/marketing`, and Local SEO → `/dashboard/seo`, plus the overview, project, core portal, marketplace, billing, analytics, and AI employees routes. Infrastructure and notification links are present in source because `infrastructureManagement` and `automationNotifications` are `true` in `config/features.ts`. Registry keys such as `scheduler` have no `route` and are not pages. Nav visibility is not authorization; CRM, Marketing, and SEO APIs remain flag-disabled at source defaults.
 
@@ -53,6 +53,8 @@ Route handlers under `app/api`, MERGED, not indexed:
 | CRM, marketing, social, SEO | `/api/v1/crm/*`, `/api/v1/marketing/*`, `/api/v1/social/*`, `/api/v1/seo/*` |
 
 Batch 18A Marketing extensions (backend; UI in Batch 18B): `GET /api/v1/marketing/artifacts` (account-wide list, cursor pagination), `GET /api/v1/marketing/reviews` (approval inbox). Existing per-request artifact and decide routes unchanged.
+
+Batch 19A SEO extensions (backend; UI in Batch 19B): `GET /api/v1/seo/sites/[siteId]/keywords` (stored GSC per-query rows, cursor + search); overview and performance reuse `loadGscStoredSiteBundle`; opportunities list adds cursor and optional `state`/`severity`/`confidence` filters.
 
 Batch 17A CRM extensions (backend merged; UI wired in Batch 17B/17C integration PR): `GET /api/v1/crm/contacts` (`q`, `cursor`, `take`), `PATCH /api/v1/crm/deals/[id]/stage`, `PATCH /api/v1/crm/tasks/[id]`, `GET|POST /api/v1/crm/contacts/[id]/consent`, `POST /api/v1/crm/contacts/[id]/suppression`.
 | Communications and workflows | `/api/v1/communications/*`, `/api/v1/workflows/*` |
