@@ -4,6 +4,7 @@ import type { Prisma } from '@prisma/client'
 import {
   ApprovalArtifactCasRollbackError,
   ApprovalReviewConcurrentDecisionError,
+  ApprovalSubmitArtifactUpdateError,
 } from '@/lib/platform/marketing/approval-errors'
 import type { MktResult } from '@/lib/platform/marketing/types'
 
@@ -34,26 +35,64 @@ export async function submitMarketingArtifactReview(input: {
   if (!latestRevision) return { ok: false, code: 'VALIDATION', message: 'Unknown revision hash' }
   if (!artifact.marketingRequestId) return { ok: false, code: 'VALIDATION', message: 'Artifact missing request link' }
 
-  const review = await prisma.marketingArtifactReview.create({
-    data: {
-      customerAccountId: input.customerAccountId,
-      managedSiteId: artifact.managedSiteId,
-      marketingRequestId: artifact.marketingRequestId,
-      marketingArtifactId: artifact.id,
-      revisionHash: input.revisionHash,
-      intendedAction: input.intendedAction,
-      allowedChannel: input.allowedChannel,
-      allowedTarget: input.allowedTarget,
-      status: 'SUBMITTED',
-      policyVersion: MKT_APPROVAL_POLICY_VERSION,
-      expiresAt: new Date(Date.now() + 7 * 86400000),
-    },
-  })
-  await prisma.marketingArtifact.update({
-    where: { id: artifact.id },
-    data: { reviewStatus: 'SUBMITTED' },
-  })
-  return { ok: true, value: { reviewId: review.id } }
+  try {
+    const reviewId = await prisma.$transaction(async (tx) => {
+      const head = await tx.marketingArtifact.findFirst({
+        where: { id: input.artifactId, customerAccountId: input.customerAccountId },
+      })
+      if (!head) throw new ApprovalSubmitArtifactUpdateError('Artifact not found')
+      if (head.revisionHash !== input.revisionHash) {
+        throw new ApprovalSubmitArtifactUpdateError('Revision hash mismatch — submit the current revision')
+      }
+      const revision = await tx.marketingArtifactRevision.findFirst({
+        where: { marketingArtifactId: head.id, revisionHash: input.revisionHash },
+      })
+      if (!revision) throw new ApprovalSubmitArtifactUpdateError('Unknown revision hash')
+      if (!head.marketingRequestId) throw new ApprovalSubmitArtifactUpdateError('Artifact missing request link')
+
+      const review = await tx.marketingArtifactReview.create({
+        data: {
+          customerAccountId: input.customerAccountId,
+          managedSiteId: head.managedSiteId,
+          marketingRequestId: head.marketingRequestId,
+          marketingArtifactId: head.id,
+          revisionHash: input.revisionHash,
+          intendedAction: input.intendedAction,
+          allowedChannel: input.allowedChannel,
+          allowedTarget: input.allowedTarget,
+          status: 'SUBMITTED',
+          policyVersion: MKT_APPROVAL_POLICY_VERSION,
+          expiresAt: new Date(Date.now() + 7 * 86400000),
+        },
+      })
+      const artifactUpdated = await tx.marketingArtifact.updateMany({
+        where: {
+          id: head.id,
+          customerAccountId: input.customerAccountId,
+          revisionHash: input.revisionHash,
+        },
+        data: { reviewStatus: 'SUBMITTED' },
+      })
+      if (artifactUpdated.count !== 1) {
+        throw new ApprovalSubmitArtifactUpdateError()
+      }
+      return review.id
+    })
+    return { ok: true, value: { reviewId } }
+  } catch (error) {
+    if (error instanceof ApprovalSubmitArtifactUpdateError) {
+      const msg = error.message
+      if (msg.includes('not found')) return { ok: false, code: 'NOT_FOUND', message: msg }
+      if (msg.includes('missing request') || msg.includes('Unknown revision')) {
+        return { ok: false, code: 'VALIDATION', message: msg }
+      }
+      if (msg.includes('mismatch')) {
+        return { ok: false, code: 'CONFLICT', message: msg }
+      }
+      return { ok: false, code: 'CONFLICT', message: msg }
+    }
+    throw error
+  }
 }
 
 export async function decideMarketingArtifactReview(input: {
