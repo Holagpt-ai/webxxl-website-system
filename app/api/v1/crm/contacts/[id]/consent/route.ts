@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
-import type { CrmConsentChannel, CrmConsentPurpose, CrmConsentStatus } from '@prisma/client'
 import {
   listContactConsentAndSuppression,
   recordContactConsentWithEvidence,
 } from '@/lib/platform/crm/consent-service'
+import { parseConsentRecordInput } from '@/lib/platform/crm/crm-consent-input'
 import { crmResultHttpStatus } from '@/lib/platform/crm/crm-api-map'
 import { requireCrmApiActor, CrmApiError } from '@/lib/platform/crm/route-auth'
 
@@ -30,33 +30,15 @@ export async function POST(request: Request, { params }: Params) {
   try {
     const { id: contactId } = await params
     const actor = await requireCrmApiActor('crm.consent.manage')
-    const body = (await request.json()) as {
-      channel?: CrmConsentChannel
-      purpose?: CrmConsentPurpose
-      status?: CrmConsentStatus
-      source?: string
-      capturedAt?: string
-      termsVersion?: string
-      idempotencyKey?: string
-      evidence?: { evidenceRef?: string; detail?: Record<string, unknown> }[]
-    }
-    if (!body.channel || !body.purpose || !body.status || !body.source || !body.capturedAt) {
-      return NextResponse.json({ code: 'VALIDATION_ERROR', message: 'channel, purpose, status, source, capturedAt required' }, { status: 400 })
+    const body = (await request.json()) as Record<string, unknown>
+    const parsed = parseConsentRecordInput(body as Parameters<typeof parseConsentRecordInput>[0])
+    if (!parsed.ok) {
+      return NextResponse.json({ code: parsed.code, message: parsed.message }, { status: crmResultHttpStatus(parsed.code) })
     }
     const recorded = await recordContactConsentWithEvidence({
       customerAccountId: actor.customerAccountId,
       contactId,
-      channel: body.channel,
-      purpose: body.purpose,
-      status: body.status,
-      source: body.source,
-      capturedAt: new Date(body.capturedAt),
-      termsVersion: body.termsVersion,
-      idempotencyKey: body.idempotencyKey,
-      evidence: body.evidence?.map((row) => ({
-        evidenceRef: row.evidenceRef ?? '',
-        detail: row.detail,
-      })),
+      ...parsed.value,
     })
     if (!recorded.ok) {
       return NextResponse.json({ code: recorded.code, message: recorded.message }, { status: crmResultHttpStatus(recorded.code) })

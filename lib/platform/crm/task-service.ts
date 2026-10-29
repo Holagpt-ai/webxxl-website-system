@@ -44,6 +44,22 @@ export async function createCrmTask(input: {
 }
 
 const TERMINAL_TASK_STATUSES = new Set(['COMPLETED', 'CANCELLED'])
+const TASK_STATUSES = new Set(['OPEN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'])
+const TASK_PRIORITIES = new Set(['LOW', 'NORMAL', 'HIGH', 'URGENT'])
+
+async function assertCrmTaskAssigneeMembership(
+  customerAccountId: string,
+  assignedUserId: string | null | undefined,
+): Promise<CrmResult<true>> {
+  if (assignedUserId === undefined || assignedUserId === null) return { ok: true, value: true }
+  const membership = await prisma.customerMembership.findUnique({
+    where: { userId_customerAccountId: { userId: assignedUserId, customerAccountId } },
+  })
+  if (!membership) {
+    return { ok: false, code: 'VALIDATION_ERROR', message: 'Assignee must be a member of the customer account' }
+  }
+  return { ok: true, value: true }
+}
 
 export type UpdateCrmTaskPatch = {
   title?: string
@@ -67,6 +83,17 @@ export async function updateCrmTask(input: {
 
   if (input.patch.assignedUserId !== undefined && !input.allowAssigneeChange) {
     return { ok: false, code: 'FORBIDDEN', message: 'Task assignee changes require owner or staff' }
+  }
+  if (input.patch.assignedUserId !== undefined) {
+    const assignee = await assertCrmTaskAssigneeMembership(input.customerAccountId, input.patch.assignedUserId)
+    if (!assignee.ok) return assignee
+  }
+
+  if (input.patch.status !== undefined && !TASK_STATUSES.has(input.patch.status)) {
+    return { ok: false, code: 'VALIDATION_ERROR', message: 'Invalid status' }
+  }
+  if (input.patch.priority !== undefined && !TASK_PRIORITIES.has(input.patch.priority)) {
+    return { ok: false, code: 'VALIDATION_ERROR', message: 'Invalid priority' }
   }
 
   if (input.patch.title !== undefined && !input.patch.title.trim()) {

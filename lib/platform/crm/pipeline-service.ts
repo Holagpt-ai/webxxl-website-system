@@ -100,7 +100,23 @@ export async function moveDealStage(input: {
     })
     if (!current) return { ok: false as const, code: 'NOT_FOUND' as const, message: 'Deal not found' }
     if (current.stageId === input.toStageId) return { ok: true as const, id: current.id }
-    await tx.crmDeal.update({ where: { id: current.id }, data: { stageId: input.toStageId } })
+
+    const updated = await tx.crmDeal.updateMany({
+      where: {
+        id: current.id,
+        customerAccountId: input.customerAccountId,
+        stageId: current.stageId,
+      },
+      data: { stageId: input.toStageId },
+    })
+    if (updated.count !== 1) {
+      return {
+        ok: false as const,
+        code: 'CONFLICT' as const,
+        message: 'Deal stage changed concurrently; retry with current stage',
+      }
+    }
+
     await tx.crmDealStageHistory.create({
       data: {
         customerAccountId: input.customerAccountId,

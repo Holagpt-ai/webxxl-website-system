@@ -150,36 +150,67 @@ export async function recordContactConsentWithEvidence(input: {
   idempotencyKey?: string
   evidence?: { evidenceRef: string; detail?: Record<string, unknown> }[]
 }): Promise<CrmResult<{ id: string }>> {
-  if (input.status === 'GRANTED') {
-    const refs = (input.evidence ?? []).filter((row) => row.evidenceRef?.trim())
-    if (!refs.length) {
-      return { ok: false, code: 'VALIDATION_ERROR', message: 'GRANTED consent requires evidence' }
-    }
+  const evidenceRows = (input.evidence ?? []).filter((row) => row.evidenceRef?.trim())
+  if (input.status === 'GRANTED' && !evidenceRows.length) {
+    return { ok: false, code: 'VALIDATION_ERROR', message: 'GRANTED consent requires evidence' }
   }
   if (input.source === 'crm.import' || input.source === 'import.csv') {
     return { ok: false, code: 'FORBIDDEN', message: 'Import paths cannot record consent via API' }
   }
-  const recorded = await recordContactConsent({
-    customerAccountId: input.customerAccountId,
-    contactId: input.contactId,
-    channel: input.channel,
-    purpose: input.purpose,
-    status: input.status,
-    source: input.source,
-    capturedAt: input.capturedAt,
-    termsVersion: input.termsVersion,
-    idempotencyKey: input.idempotencyKey,
-  })
-  if (!recorded.ok) return recorded
-  const evidenceRows = (input.evidence ?? []).filter((row) => row.evidenceRef?.trim())
-  if (evidenceRows.length) {
-    await prisma.contactConsentEvidence.createMany({
-      data: evidenceRows.map((row) => ({
-        consentId: recorded.value.id,
-        evidenceRef: row.evidenceRef.trim(),
-        detail: (row.detail ?? undefined) as Prisma.InputJsonValue | undefined,
-      })),
+
+  const owned = await assertCrmContactOwnedByAccount(input.contactId, input.customerAccountId)
+  if (!owned.ok) return owned
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      if (input.idempotencyKey) {
+        const existing = await tx.contactConsent.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
+        if (existing) {
+          if (!consentPayloadMatches(existing, input)) {
+            return { ok: false as const, code: 'CONFLICT' as const, message: 'Consent idempotency key reused with different payload' }
+          }
+          if (existing.customerAccountId !== input.customerAccountId) {
+            return { ok: false as const, code: 'CONFLICT' as const, message: 'Consent idempotency key conflict' }
+          }
+          return { ok: true as const, value: { id: existing.id } }
+        }
+      }
+
+      const row = await tx.contactConsent.create({
+        data: {
+          customerAccountId: input.customerAccountId,
+          contactId: input.contactId,
+          channel: input.channel,
+          purpose: input.purpose,
+          status: input.status,
+          source: input.source,
+          capturedAt: input.capturedAt,
+          termsVersion: input.termsVersion,
+          idempotencyKey: input.idempotencyKey,
+        },
+      })
+
+      if (evidenceRows.length) {
+        await tx.contactConsentEvidence.createMany({
+          data: evidenceRows.map((evidenceRow) => ({
+            consentId: row.id,
+            evidenceRef: evidenceRow.evidenceRef.trim(),
+            detail: (evidenceRow.detail ?? undefined) as Prisma.InputJsonValue | undefined,
+          })),
+        })
+      }
+
+      return { ok: true as const, value: { id: row.id } }
     })
+  } catch (error) {
+    const prismaError = error as { code?: string }
+    if (prismaError.code === 'P2002' && input.idempotencyKey) {
+      const existing = await prisma.contactConsent.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
+      if (existing && consentPayloadMatches(existing, input) && existing.customerAccountId === input.customerAccountId) {
+        return { ok: true, value: { id: existing.id } }
+      }
+      return { ok: false, code: 'CONFLICT', message: 'Consent idempotency key conflict' }
+    }
+    throw error
   }
-  return recorded
 }

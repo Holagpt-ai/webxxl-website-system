@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import type { CrmConsentChannel, CrmConsentPurpose } from '@prisma/client'
 import { recordContactSuppression } from '@/lib/platform/crm/consent-service'
+import { parseSuppressionRecordInput } from '@/lib/platform/crm/crm-consent-input'
 import { crmResultHttpStatus } from '@/lib/platform/crm/crm-api-map'
 import { requireCrmApiActor, CrmApiError } from '@/lib/platform/crm/route-auth'
 
@@ -10,27 +10,15 @@ export async function POST(request: Request, { params }: Params) {
   try {
     const { id: contactId } = await params
     const actor = await requireCrmApiActor('crm.consent.manage')
-    const body = (await request.json()) as {
-      channel?: CrmConsentChannel
-      purpose?: CrmConsentPurpose
-      reason?: string
-      source?: string
-      idempotencyKey?: string
-    }
-    if (!body.channel || !body.purpose || !body.reason?.trim() || !body.source?.trim()) {
-      return NextResponse.json(
-        { code: 'VALIDATION_ERROR', message: 'channel, purpose, reason, source required' },
-        { status: 400 },
-      )
+    const body = (await request.json()) as Record<string, unknown>
+    const parsed = parseSuppressionRecordInput(body as Parameters<typeof parseSuppressionRecordInput>[0])
+    if (!parsed.ok) {
+      return NextResponse.json({ code: parsed.code, message: parsed.message }, { status: crmResultHttpStatus(parsed.code) })
     }
     const recorded = await recordContactSuppression({
       customerAccountId: actor.customerAccountId,
       contactId,
-      channel: body.channel,
-      purpose: body.purpose,
-      reason: body.reason.trim(),
-      source: body.source.trim(),
-      idempotencyKey: body.idempotencyKey,
+      ...parsed.value,
     })
     if (!recorded.ok) {
       return NextResponse.json({ code: recorded.code, message: recorded.message }, { status: crmResultHttpStatus(recorded.code) })
