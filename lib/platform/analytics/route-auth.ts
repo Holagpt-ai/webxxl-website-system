@@ -4,6 +4,30 @@ import { isStaffRole } from '@/lib/admin/roles'
 import { requireIncludedFreeSoftwareMembership } from '@/lib/platform/open001/module-api-gate'
 import type { AnalyticsError } from '@/lib/platform/analytics/types'
 
+export function analyticsErrorFromApiCode(code: string): AnalyticsError {
+  if (code === 'INTERNAL') return 'UNKNOWN'
+  if (code === 'FREE_SOFTWARE_NOT_ELIGIBLE') return 'FORBIDDEN'
+  if (
+    code === 'SUBSCRIPTION_EVIDENCE_UNAVAILABLE' ||
+    code === 'LEGACY_EVIDENCE_AMBIGUOUS' ||
+    code === 'POLICY_UNRESOLVED'
+  ) {
+    return 'ENTITLEMENT_UNRESOLVED'
+  }
+  const known: AnalyticsError[] = [
+    'ANALYTICS_DISABLED',
+    'UNAUTHORIZED',
+    'FORBIDDEN',
+    'TENANT_MISMATCH',
+    'VALIDATION',
+    'ENTITLEMENT_UNRESOLVED',
+    'NOT_FOUND',
+    'PROVIDER_UNAVAILABLE',
+    'UNKNOWN',
+  ]
+  return known.includes(code as AnalyticsError) ? (code as AnalyticsError) : 'UNKNOWN'
+}
+
 export class AnalyticsApiError extends Error {
   constructor(
     readonly status: number,

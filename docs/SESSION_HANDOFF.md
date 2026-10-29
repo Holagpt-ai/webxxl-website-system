@@ -15,6 +15,7 @@
 - Batch 20C **MERGED** as PR #62 at `16861d9c796dd5b808c4186bc4611e10f0a434a2`
 - **OPEN-001:** RESOLVED in Batch 21B PR — `SUBSCRIBER_ONLY` policy + account-level enforcement (not yet on `main` until 21B merges)
 - Production migrations, module flags, providers: **UNVERIFIED** / source defaults **OFF**
+- **Migration / flags / providers:** not applied or activated in this batch; production migration state **UNVERIFIED**
 - Staging pilot accounts: **not provisioned** (documented in [`PILOT-21B-STAGING-EXECUTION-PLAN.md`](PILOT-21B-STAGING-EXECUTION-PLAN.md))
 
 ## This session
