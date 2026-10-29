@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
-import { buildGscPerformanceFromObservations } from '@/lib/platform/seo/gsc-performance-read'
+import { loadGscStoredSiteBundle } from '@/lib/platform/seo/gsc-site-read'
 import { requireSeoApiActor, SeoApiError } from '@/lib/platform/seo/route-auth'
+import { seoResultHttpStatus } from '@/lib/platform/seo/seo-api-map'
 
 type Params = { params: Promise<{ siteId: string }> }
 
@@ -9,68 +9,14 @@ export async function GET(_request: Request, { params }: Params) {
   try {
     const actor = await requireSeoApiActor('seo.read')
     const { siteId } = await params
-    const connection = await prisma.siteAnalyticsConnection.findFirst({
-      where: { managedSiteId: siteId, customerAccountId: actor.customerAccountId, provider: 'GSC' },
+    const bundle = await loadGscStoredSiteBundle({
+      customerAccountId: actor.customerAccountId,
+      managedSiteId: siteId,
     })
-    if (!connection || connection.dataState === 'NOT_CONNECTED') {
-      return NextResponse.json({
-        gsc: buildGscPerformanceFromObservations({
-          connectionDataState: 'NOT_CONNECTED',
-          propertyRef: '',
-          rows: [],
-        }),
-      })
+    if (!bundle.ok) {
+      return NextResponse.json({ code: bundle.code, message: bundle.message }, { status: seoResultHttpStatus(bundle.code) })
     }
-
-    const snapshot = await prisma.seoSnapshot.findFirst({
-      where: { managedSiteId: siteId, provider: 'GSC', propertyRef: connection.propertyRef },
-      orderBy: { ingestedAt: 'desc' },
-    })
-
-    if (!snapshot) {
-      return NextResponse.json({
-        gsc: buildGscPerformanceFromObservations({
-          connectionDataState: connection.dataState,
-          propertyRef: connection.propertyRef,
-          rows: [],
-          requireVerifiedSnapshotWindow: true,
-        }),
-      })
-    }
-
-    const keywords = await prisma.seoKeywordObservation.findMany({
-      where: {
-        managedSiteId: siteId,
-        customerAccountId: actor.customerAccountId,
-        provider: 'GSC',
-        date: { gte: snapshot.dateRangeStart, lte: snapshot.dateRangeEnd },
-      },
-      take: 25000,
-    })
-
-    const gsc = buildGscPerformanceFromObservations({
-      connectionDataState: connection.dataState,
-      propertyRef: connection.propertyRef,
-      rows: keywords.map((k) => ({
-        idempotencyKey: k.idempotencyKey,
-        query: k.query,
-        page: k.page,
-        clicks: k.clicks,
-        impressions: k.impressions,
-        ctr: k.ctr,
-        averagePosition: k.averagePosition,
-        date: k.date,
-        dataState: k.dataState,
-      })),
-      snapshot: {
-        start: snapshot.dateRangeStart.toISOString().slice(0, 10),
-        end: snapshot.dateRangeEnd.toISOString().slice(0, 10),
-        observedAt: snapshot.observedAt.toISOString(),
-        methodologyVersion: snapshot.methodologyVersion,
-      },
-    })
-
-    return NextResponse.json({ gsc })
+    return NextResponse.json({ gsc: bundle.value.performance, limitations: bundle.value.limitations })
   } catch (error) {
     if (error instanceof SeoApiError) {
       return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })

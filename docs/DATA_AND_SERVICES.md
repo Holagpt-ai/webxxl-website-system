@@ -72,6 +72,21 @@ Session-scoped `CustomerAccount`; gates via `requireMktApiActor` (`MKT_BACKEND_E
 
 UI binding contract: [`platform/docs/BATCH18B-MARKETING-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH18B-MARKETING-UI-INTEGRATION-CONTRACT.md).
 
+## SEO customer HTTP (SEO-07 + Batch 19A)
+
+Session-scoped `CustomerAccount`; gates via `requireSeoApiActor` (`SEO_BACKEND_ENABLED` + entitlement + permission). Stored reads only — no live Google on GET.
+
+| Method | Path | Permission | Notes |
+|---|---|---|---|
+| GET | `/api/v1/seo/sites/[siteId]/overview` | `seo.read` | `SeoSiteOverviewDto`; GSC section from `loadGscStoredSiteBundle` + `buildGscPerformanceFromObservations` |
+| GET | `/api/v1/seo/sites/[siteId]/performance` | `seo.read` | `{ gsc, limitations }` aggregate |
+| GET | `/api/v1/seo/sites/[siteId]/keywords` | `seo.read` | Per-query stored rows; cursor + search; shared GSC context |
+| GET | `/api/v1/seo/sites/[siteId]/opportunities` | `seo.read` | Cursor pagination; optional state/severity/confidence filters |
+
+Shared loader: `lib/platform/seo/gsc-site-read.ts` (connection + latest matching `SeoSnapshot` + keyword window). Marketing create validates `seoOpportunityId` against account and site in `request-service.ts`.
+
+UI binding contract: [`platform/docs/BATCH19B-LOCAL-SEO-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH19B-LOCAL-SEO-UI-INTEGRATION-CONTRACT.md).
+
 Batch 15 (merged as PR #51) adds signed capture (`POST /api/v1/analytics/capture/events`), authenticated sync worker (`x-automation-worker-secret`), PostgreSQL capture rate windows, and honest provider sync states (no fabricated `COMPLETED`). Live GSC HTTP requires SEO flags plus `ANALYTICS_PROVIDER_FETCH_ENABLED`, `WORKFLOW_EXTERNAL_EFFECTS_ENABLED`, and `ANALYTICS_GSC_LIVE_TRANSPORT_ENABLED`. Those flags stay off in source. The merge does not show a production migration or a connected provider.
 
 ## Migrations in the repository

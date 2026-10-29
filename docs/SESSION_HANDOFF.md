@@ -4,46 +4,41 @@
 
 ## Baseline
 
-- **Verified `origin/main`:** `5e2759d9cca6b1461492cff59172c84693123f2c` (PR #57, Batch 18A Marketing backend)
-- **Previous `main`:** `b6b8f5f88b65f27a606a5e2df0e9e35051ce05f4` (PR #56, Batch 17B+17C CRM UI)
-- **Working branch:** `feature/batch-18bc-marketing-ui-integration`
-- **Pull request:** open for Batch 18B+18C (see latest push)
-- **Production SHA (owner evidence):** `5e2759d9cca6b1461492cff59172c84693123f2c` — Vercel `dpl_7CngvEWJTDWmYGGGYFWRZdLPXyyn` (READY). SHA only; Marketing production activation UNVERIFIED.
+- **Verified `origin/main`:** `fa2a13a11e6200b542cfe978f96cd67b184dfb0c` (PR #58, Batch 18B+18C Marketing UI)
+- **Previous `main`:** `5e2759d9cca6b1461492cff59172c84693123f2c` (PR #57, Batch 18A Marketing backend)
+- **Working branch:** `feature/batch-19a-local-seo-intelligence`
+- **Pull request:** open for Batch 19A (see latest push)
+- **Production SHA (PR #58):** merge confirmed on GitHub; Vercel `dpl_96p6EHuXyMrB1bWxR3uTFCyBMnYo` was **BUILDING** at session start — **not** recorded as DEPLOYED
 
-## Latest completed batch
+## Latest completed batch on main
 
-- Batch 18A (+ 18A.1 approval integrity) **MERGED** as PR #57 at `5e2759d9cca6b1461492cff59172c84693123f2c`
-- Batch 17B+17C **MERGED** as PR #56 at `b6b8f5f88b65f27a606a5e2df0e9e35051ce05f4`
-- Production migrations and live MKT flag values: **UNVERIFIED**
-
-## Open integration (owner review)
-
-- Batch 18B v0 UI on `v0/marketing-ui-18b` @ `11b4ec2e47f0a8b29bd9a55cfec9fcbb76cfe570` (7 files)
-- Batch 18C on branch `feature/batch-18bc-marketing-ui-integration` — open pull request until owner merge
+- Batch 18B+18C **MERGED** as PR #58 at `fa2a13a11e6200b542cfe978f96cd67b184dfb0c`
+- Batch 18A **MERGED** as PR #57 at `5e2759d9cca6b1461492cff59172c84693123f2c`
+- Production migrations and live SEO/MKT flag values: **UNVERIFIED**
 
 ## This session
 
-Batch 18C: ff-merge v0 Batch 18B; account-wide deliverables + approvals inbox verification; `generationMode` column on library table; UI/API contract test; continuity for PR #57 deploy evidence. No backend expansion, flags, migrations, or merge to `main`.
+Batch 19A: stored GSC keyword list API, overview GSC section from shared bundle, opportunities filters/cursor, Marketing request `seoOpportunityId` tenant validation, BATCH19B v0 contract, continuity for PR #58 merge and honest PR #58 deploy status. No schema migration, no Google live calls, no Local SEO UI edits.
 
 ## Next assignment
 
-**Owner review** of Batch 18B+18C PR. Authenticated Marketing UI smoke remains owner/environment. v0.app Stage B complete for this batch.
+**Owner review** of Batch 19A PR. **v0.app Batch 19B** Local SEO UI against [`BATCH19B-LOCAL-SEO-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH19B-LOCAL-SEO-UI-INTEGRATION-CONTRACT.md).
 
 ## PENDING REPOSITORY SYNC
 
-None once the Batch 18C PR is pushed with continuity updates.
+None once Batch 19A PR is pushed with continuity updates.
 
 ## Handoff template
 
 ```
-Date / scope / owner: 2026-10-29 / BATCH-18B+18C Marketing UI integration / Cursor
-Repo / main SHA at session start: Holagpt-ai/webxxl-website-system / 5e2759d9cca6b1461492cff59172c84693123f2c
-Branch / head SHA / PR: feature/batch-18bc-marketing-ui-integration / see latest push / open (unmerged)
-Merged state / production deployed SHA: Batch 18A merged 5e2759d / production SHA-only dpl_7CngvEWJTDWmYGGGYFWRZdLPXyyn
-Migration applied? IDs + evidence or UNVERIFIED: UNVERIFIED
-Flag activation / providers: MKT source defaults OFF; production values UNVERIFIED
-Completed / deferred: 18B UI incorporated; 18C integration IN PR; Postiz live publish DEFERRED
-Next exact assignment / owning tool: Owner review integration PR
-Repository synchronization: committed on integration branch
-Do NOT touch: production migrations, flag activation, CRM/SEO UI, Postiz OAuth/publish
+Date / scope / owner: 2026-10-29 / BATCH-19A Local SEO stored intelligence / Cursor
+Repo / main SHA at session start: Holagpt-ai/webxxl-website-system / fa2a13a11e6200b542cfe978f96cd67b184dfb0c
+Branch / head SHA / PR: feature/batch-19a-local-seo-intelligence / see latest push / open (unmerged)
+Merged state / production deployed SHA: PR #58 merged fa2a13a; Vercel dpl_96p6EHuXyMrB1bWxR3uTFCyBMnYo BUILDING (not DEPLOYED)
+Migration applied? IDs + evidence or UNVERIFIED: UNVERIFIED (no new migration in 19A)
+Flag activation / providers: SEO/MKT source defaults OFF; production values UNVERIFIED
+Completed / deferred: 19A backend IN PR; opportunity dismiss/accept DEFERRED; PR #58 deploy READY check DEFERRED to owner
+Next exact assignment / owning tool: Owner review 19A PR; v0.app Batch 19B UI
+Repository synchronization: committed on feature/batch-19a-local-seo-intelligence
+Do NOT touch: production migrations, Google OAuth activation, Local SEO UI (v0), merge to main without owner
 ```

@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-29 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `5e2759d9cca6b1461492cff59172c84693123f2c` (PR #57)
+**Evidence review:** 2026-10-29 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `fa2a13a11e6200b542cfe978f96cd67b184dfb0c` (PR #58)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -53,8 +53,9 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 17B CRM UI (v0) + Batch 17C integration | MERGED | [PR #56](https://github.com/Holagpt-ai/webxxl-website-system/pull/56), `b6b8f5f88b65f27a606a5e2df0e9e35051ce05f4`. [`BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md) |
 | Vercel production SHA (2026-10-29, PR #57) | DEPLOYED | Owner-reported Vercel deployment `dpl_7CngvEWJTDWmYGGGYFWRZdLPXyyn`, READY, SHA `5e2759d9cca6b1461492cff59172c84693123f2c`. SHA only. Not migration or activation |
 | Batch 18A Marketing deliverables & approvals backend | MERGED | [PR #57](https://github.com/Holagpt-ai/webxxl-website-system/pull/57), `5e2759d9cca6b1461492cff59172c84693123f2c`. List APIs + submit-review atomicity |
-| Batch 18B Marketing UI (v0) | IN PR | `v0/marketing-ui-18b` @ `11b4ec2e47f0a8b29bd9a55cfec9fcbb76cfe570`; integrated in Batch 18C PR. [`BATCH18B-MARKETING-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH18B-MARKETING-UI-INTEGRATION-CONTRACT.md) |
-| Batch 18C Marketing UI integration | IN PR | Cursor ff-merge + generationMode table column, tests, continuity |
+| Batch 18B Marketing UI (v0) + Batch 18C integration | MERGED | [PR #58](https://github.com/Holagpt-ai/webxxl-website-system/pull/58), `fa2a13a11e6200b542cfe978f96cd67b184dfb0c`. [`BATCH18B-MARKETING-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH18B-MARKETING-UI-INTEGRATION-CONTRACT.md) |
+| Vercel production SHA (2026-10-29, PR #58) | UNVERIFIED (BUILDING at last checkpoint) | Owner-reported deployment `dpl_96p6EHuXyMrB1bWxR3uTFCyBMnYo` was **BUILDING** when Batch 19A started; READY not confirmed in-repo |
+| Batch 19A Local SEO stored intelligence | IN PR | GSC keywords API, overview GSC metrics, opportunities pagination, Marketing `seoOpportunityId` validation, [`BATCH19B-LOCAL-SEO-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH19B-LOCAL-SEO-UI-INTEGRATION-CONTRACT.md) |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.

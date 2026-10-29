@@ -56,6 +56,21 @@ export async function createMarketingRequestRecord(input: {
     if (!site.ok) return site
   }
 
+  if (input.seoOpportunityId) {
+    const opportunity = await prisma.seoOpportunity.findFirst({
+      where: { id: input.seoOpportunityId, customerAccountId: input.customerAccountId },
+    })
+    if (!opportunity) {
+      return { ok: false, code: 'NOT_FOUND', message: 'SEO opportunity not found for account' }
+    }
+    if (input.managedSiteId && opportunity.managedSiteId !== input.managedSiteId) {
+      return { ok: false, code: 'FORBIDDEN', message: 'SEO opportunity does not belong to the selected site' }
+    }
+    if (!input.managedSiteId && opportunity.managedSiteId) {
+      return { ok: false, code: 'VALIDATION', message: 'managedSiteId required when linking an SEO opportunity' }
+    }
+  }
+
   const sourceRefs = input.sourceRefs ?? []
   const fingerprint = computeMarketingRequestFingerprint({
     customerAccountId: input.customerAccountId,
