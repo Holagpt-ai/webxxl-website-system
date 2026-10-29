@@ -5,7 +5,6 @@ import { buttonVariants } from '@/components/ui/button'
 import {
   EmptyNote,
   Facts,
-  GapNotice,
   LoadingRows,
   PlainTable,
   Section,
@@ -18,7 +17,7 @@ import { useWorkspace } from '@/lib/crm-ui/use-workspace'
 import { DASH, enumLabel, formatDateTime, formatNumber } from '@/lib/crm-ui/workspace'
 import { SEO_API, type SeoOverview } from '@/lib/local-seo-ui/types'
 import type { SeoViewProps } from '@/lib/local-seo-ui/server'
-import { DATA_TONE, LEVEL_TONE, SiteBar, useSelectedSite } from './shared'
+import { DATA_TONE, GscPanel, LEVEL_TONE, SiteBar, useSelectedSite } from './shared'
 
 export function SeoOverviewView({ accountId, locale, copy, base, sites }: SeoViewProps) {
   const siteId = useSelectedSite(sites)
@@ -76,10 +75,19 @@ function OverviewBody({
         </div>
       </Section>
 
-      <GapNotice title={o.searchTitle} body={o.searchBody} />
-      <div>
-        <Link className={buttonVariants({ variant: "outline", size: "sm" })} href={`${base}/keywords${q}`}>{o.openSearch}</Link>
-      </div>
+      <GscPanel
+        gsc={s.gscPerformance}
+        copy={copy}
+        locale={locale}
+        connectionsHref={`${base}/connections${q}`}
+        action={
+          s.gscPerformance.dataState !== 'NOT_CONNECTED' && (
+            <Link className={buttonVariants({ variant: 'outline', size: 'sm' })} href={`${base}/keywords${q}`}>
+              {o.openSearch}
+            </Link>
+          )
+        }
+      />
 
       <Section title={o.freshnessTitle}>
         {!s.sourceFreshness.providers.length ? (

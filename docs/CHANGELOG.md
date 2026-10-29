@@ -27,6 +27,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-10-29 | Vercel production deployment of `5e2759d` (PR #57) | Owner deployment `dpl_7CngvEWJTDWmYGGGYFWRZdLPXyyn`, READY | DEPLOYED SHA only |
 | 2026-10-29 | Batch 18B Marketing UI (v0) + Batch 18C integration | [PR #58](https://github.com/Holagpt-ai/webxxl-website-system/pull/58), `fa2a13a11e6200b542cfe978f96cd67b184dfb0c` | MERGED. Marketing Studio UI on `main`. Not activated |
 | 2026-10-29 | Vercel production deployment of `fa2a13a` (PR #58) | Owner deployment `dpl_96p6EHuXyMrB1bWxR3uTFCyBMnYo`, READY | DEPLOYED SHA only |
-| 2026-10-29 | Batch 19A Local SEO stored intelligence | [PR #59](https://github.com/Holagpt-ai/webxxl-website-system/pull/59), branch `feature/batch-19a-local-seo-intelligence` | IN PR. Stored GSC read APIs; 19A.1 integrity/cursor fixes on same PR |
+| 2026-10-29 | Batch 19A Local SEO stored intelligence | [PR #59](https://github.com/Holagpt-ai/webxxl-website-system/pull/59), `6ff105cf2334a9039d1d57d2dc0a3df878ad1730` | MERGED. Stored GSC read APIs + 19A.1 integrity. Not activated |
+| 2026-10-29 | Vercel production deployment of `6ff105c` (PR #59) | Owner deployment `dpl_J5FdQqN19DQQDZdDuCb9x1YeNw3Z`, READY | DEPLOYED SHA only |
+| 2026-10-29 | Batch 19B Local SEO UI (v0) + Batch 19C integration | Open PR, branch `feature/batch-19bc-local-seo-ui-integration`, v0 `59315094` | IN PR. UI wired to 19A APIs. Not activated |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
