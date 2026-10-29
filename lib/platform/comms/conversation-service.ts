@@ -1,6 +1,11 @@
-import { COMMS_CONVERSATION_STALE_MINUTES, COMMS_LIST_DEFAULT_TAKE, COMMS_LIST_MAX_TAKE } from '@/config/comms-backend'
+import { COMMS_CONVERSATION_STALE_MINUTES } from '@/config/comms-backend'
 import { prisma } from '@/lib/db'
-import { decodeCommsListCursor, encodeCommsListCursor } from '@/lib/platform/comms/comms-list-cursor'
+import { buildConversationKeysetWhere, encodeConversationListCursor } from '@/lib/platform/comms/comms-conversation-sort'
+import { decodeCommsListCursor } from '@/lib/platform/comms/comms-list-cursor'
+import {
+  parseConversationListTake,
+  resolveVerifiedInboxExternalId,
+} from '@/lib/platform/comms/conversation-list-validation'
 import type { CommsConversationFilter, CommsResult } from '@/lib/platform/comms/types'
 import type { CommsConversationStatus, Prisma } from '@prisma/client'
 
@@ -45,10 +50,6 @@ function isSyncStale(lastSyncAt: Date | null, now: Date): boolean {
   if (!lastSyncAt) return true
   const ageMs = now.getTime() - lastSyncAt.getTime()
   return ageMs > COMMS_CONVERSATION_STALE_MINUTES * 60_000
-}
-
-function activitySortTime(row: { lastActivityAt: Date | null; updatedAt: Date }): number {
-  return (row.lastActivityAt ?? row.updatedAt).getTime()
 }
 
 function mapProviderStatus(status: string): CommsConversationStatus {
@@ -102,26 +103,6 @@ function applyStatusFilter(
   }
 }
 
-function cursorWhere(
-  base: Prisma.ChatwootConversationMappingWhereInput,
-  cursor: { t: number; i: string },
-): Prisma.ChatwootConversationMappingWhereInput {
-  const cursorAt = new Date(cursor.t)
-  return {
-    AND: [
-      base,
-      {
-        OR: [
-          { lastActivityAt: { not: null, lt: cursorAt } },
-          { lastActivityAt: null, updatedAt: { lt: cursorAt } },
-          { lastActivityAt: { not: null, equals: cursorAt }, id: { gt: cursor.i } },
-          { lastActivityAt: null, updatedAt: cursorAt, id: { gt: cursor.i } },
-        ],
-      },
-    ],
-  }
-}
-
 function toSummary(row: {
   id: string
   externalConversationId: string
@@ -162,21 +143,21 @@ export async function listAccountConversations(input: {
   const filter = parseFilter(input.filter)
   if (!filter.ok) return filter
 
-  const take = Math.min(Math.max(input.take ?? COMMS_LIST_DEFAULT_TAKE, 1), COMMS_LIST_MAX_TAKE)
+  const takeParsed = parseConversationListTake(input.take)
+  if (!takeParsed.ok) return takeParsed
+  const take = takeParsed.value
   const now = new Date()
 
   let where: Prisma.ChatwootConversationMappingWhereInput = { customerAccountId: input.customerAccountId }
   applyStatusFilter(where, filter.value, input.assignedUserRef)
 
   if (input.inboxId) {
-    const inbox = await prisma.chatwootInboxMapping.findFirst({
-      where: {
-        customerAccountId: input.customerAccountId,
-        OR: [{ id: input.inboxId }, { externalInboxId: input.inboxId }],
-      },
+    const inbox = await resolveVerifiedInboxExternalId({
+      customerAccountId: input.customerAccountId,
+      inboxId: input.inboxId,
     })
-    if (!inbox) return { ok: false, code: 'VALIDATION', message: 'Inbox not found for account' }
-    where.externalInboxId = inbox.externalInboxId
+    if (!inbox.ok) return inbox
+    where.externalInboxId = inbox.value
   }
 
   if (input.channel) {
@@ -186,7 +167,7 @@ export async function listAccountConversations(input: {
   if (input.cursor) {
     const decoded = decodeCommsListCursor(input.cursor)
     if (!decoded.ok) return decoded
-    where = cursorWhere(where, decoded.value)
+    where = buildConversationKeysetWhere(where, decoded.value)
   }
 
   const rows = await prisma.chatwootConversationMapping.findMany({
@@ -204,7 +185,7 @@ export async function listAccountConversations(input: {
   let nextCursor: string | undefined
   if (rows.length === take) {
     const last = rows[rows.length - 1]!
-    nextCursor = encodeCommsListCursor({ t: activitySortTime(last), i: last.id })
+    nextCursor = encodeConversationListCursor(last)
   }
 
   return { ok: true, value: { conversations, nextCursor } }

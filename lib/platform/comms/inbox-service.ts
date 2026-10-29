@@ -19,10 +19,20 @@ export async function listAccountInboxes(input: { customerAccountId: string }): 
   const rows = await prisma.chatwootInboxMapping.findMany({
     where: { customerAccountId: input.customerAccountId },
     include: {
-      tenantMapping: { select: { verificationState: true, revokedAt: true, lastVerifiedAt: true } },
+      tenantMapping: { select: { verificationState: true, revokedAt: true } },
     },
     orderBy: { updatedAt: 'desc' },
   })
+
+  const syncByInbox = await prisma.chatwootConversationMapping.groupBy({
+    by: ['externalInboxId'],
+    where: { customerAccountId: input.customerAccountId, lastSyncAt: { not: null } },
+    _max: { lastSyncAt: true },
+  })
+  const lastSyncByExternalInbox = new Map(
+    syncByInbox.map((row) => [row.externalInboxId, row._max.lastSyncAt] as const),
+  )
+
   const now = Date.now()
   const staleMs = COMMS_CONVERSATION_STALE_MINUTES * 60_000
 
@@ -30,8 +40,8 @@ export async function listAccountInboxes(input: { customerAccountId: string }): 
     ok: true,
     value: {
       inboxes: rows.map((row) => {
-        const lastVerified = row.tenantMapping.lastVerifiedAt
-        const syncStale = !lastVerified || now - lastVerified.getTime() > staleMs
+        const lastSyncAt = lastSyncByExternalInbox.get(row.externalInboxId) ?? null
+        const syncStale = lastSyncAt != null && now - lastSyncAt.getTime() > staleMs
         const tenantRevoked = row.tenantMapping.revokedAt != null
         return {
           id: row.id,
@@ -46,7 +56,7 @@ export async function listAccountInboxes(input: { customerAccountId: string }): 
             inboxVerificationState: row.verificationState,
             syncStale,
           }),
-          lastSyncAt: lastVerified?.toISOString() ?? null,
+          lastSyncAt: lastSyncAt?.toISOString() ?? null,
           syncStale,
         }
       }),

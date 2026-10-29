@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server'
-import { COMMS_LIST_MAX_TAKE } from '@/config/comms-backend'
 import { listAccountConversations } from '@/lib/platform/comms/conversation-service'
 import { commsResultHttpStatus } from '@/lib/platform/comms/comms-api-map'
 import { requireCommsApiActor, CommsApiError } from '@/lib/platform/comms/route-auth'
 
 const MAX_CHANNEL_LEN = 64
+
+function parseTakeQuery(raw: string | null): number | undefined | 'invalid' {
+  if (raw === null || raw === '') return undefined
+  const value = Number(raw)
+  if (!Number.isFinite(value)) return 'invalid'
+  return value
+}
 
 export async function GET(request: Request) {
   try {
@@ -14,7 +20,11 @@ export async function GET(request: Request) {
     const inboxId = url.searchParams.get('inboxId') ?? url.searchParams.get('inbox') ?? undefined
     const channelRaw = url.searchParams.get('channel') ?? undefined
     const cursor = url.searchParams.get('cursor') ?? undefined
-    const take = Math.min(Math.max(Number(url.searchParams.get('take') ?? '50'), 1), COMMS_LIST_MAX_TAKE)
+    const takeParsed = parseTakeQuery(url.searchParams.get('take'))
+
+    if (takeParsed === 'invalid') {
+      return NextResponse.json({ code: 'VALIDATION', message: 'Invalid take parameter' }, { status: 400 })
+    }
 
     if (channelRaw && channelRaw.length > MAX_CHANNEL_LEN) {
       return NextResponse.json({ code: 'VALIDATION', message: 'Invalid channel filter' }, { status: 400 })
@@ -26,7 +36,7 @@ export async function GET(request: Request) {
       assignedUserRef: filter === 'assigned_to_me' ? actor.userId : undefined,
       inboxId,
       channel: channelRaw,
-      take,
+      take: takeParsed,
       cursor,
     })
     if (!result.ok) {

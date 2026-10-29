@@ -69,7 +69,9 @@ All routes use session-derived account scope; never send `customerAccountId` in 
 }
 ```
 
-Existing consumers that ignore `nextCursor` remain valid. **`400`** `VALIDATION` for bad filter, cursor, or unknown inbox. **`404`** not used for list.
+Existing consumers that ignore `nextCursor` remain valid. **`400`** `VALIDATION` for bad filter, cursor, malformed/out-of-range `take`, or unavailable inbox. **`404`** not used for list.
+
+List cursor is an opaque anchor on `(lastActivityAt, updatedAt, id)` matching server sort order (not a coalesced timestamp alone).
 
 Empty inbox: `{ "conversations": [] }` with helpful EN/ES empty state (not configured vs no conversations).
 
@@ -123,7 +125,11 @@ Empty inbox: `{ "conversations": [] }` with helpful EN/ES empty state (not confi
 }
 ```
 
+`lastSyncAt` on each inbox is the latest stored `lastSyncAt` from conversation mappings for that inbox (not tenant verification time). When no sync evidence exists, `lastSyncAt` is `null` and `syncStale` is `false`.
+
 Filter chips on inbox list should only offer **verified** inboxes for conversation filters; show pending/revoked rows on connections page with honest labels.
+
+Conversation list `inboxId` / `inbox` query must reference a **verified** inbox with an active verified tenant mapping; otherwise **`400`** `VALIDATION`.
 
 ---
 

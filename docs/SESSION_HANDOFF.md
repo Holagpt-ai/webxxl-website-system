@@ -17,7 +17,7 @@
 
 ## This session
 
-Batch 20A: unified communications read APIs (conversation list cursor/filters, detail metadata, inbox/connection visibility), BATCH20B UI contract for v0.app, focused COMMS tests, continuity for PR #60 merge/deploy.
+Batch 20A (+ 20A.1 on PR #61): unified communications read APIs; 20A.1 fixes keyset pagination, revoked connection visibility, inbox sync timestamps, and list input/inbox validation.
 
 ## Next assignment
 

@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db'
 import { createDefaultProviderRegistry } from '@/lib/platform/providers/registry'
 import type { CommsResult } from '@/lib/platform/comms/types'
 
-function chatwootConnectionState(input: {
+export function chatwootConnectionState(input: {
   mapping: {
     verificationState: string
     revokedAt: Date | null
@@ -84,7 +84,8 @@ export async function listCommsConnections(input: {
 > {
   void input.actorUserId
   const mapping = await prisma.chatwootTenantMapping.findFirst({
-    where: { customerAccountId: input.customerAccountId, revokedAt: null },
+    where: { customerAccountId: input.customerAccountId },
+    orderBy: [{ revokedAt: { sort: 'asc', nulls: 'first' } }, { updatedAt: 'desc' }],
     include: { inboxMappings: true },
   })
   createDefaultProviderRegistry()

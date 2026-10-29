@@ -27,12 +27,17 @@ describe('COMMS-20A inbox foundation', () => {
     vi.clearAllMocks()
   })
 
-  it('cursor round-trip encodes activity time and mapping id', () => {
-    const raw = encodeCommsListCursor({ t: 1_700_000_000_000, i: 'cm_conv_1' })
+  it('cursor round-trip encodes list sort anchor', () => {
+    const raw = encodeCommsListCursor({
+      la: '2023-11-14T22:13:20.000Z',
+      u: 1_700_000_000_000,
+      i: 'cm_conv_1',
+    })
     const decoded = decodeCommsListCursor(raw)
     expect(decoded.ok).toBe(true)
     if (decoded.ok) {
-      expect(decoded.value).toEqual({ t: 1_700_000_000_000, i: 'cm_conv_1' })
+      expect(decoded.value.i).toBe('cm_conv_1')
+      expect(decoded.value.u).toBe(1_700_000_000_000)
     }
   })
 
