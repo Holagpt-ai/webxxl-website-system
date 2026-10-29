@@ -36,5 +36,5 @@ Merged / deployed: PR #58 merged; production SHA dpl_96p6EHuXyMrB1bWxR3uTFCyBMnY
 Migration / flags: UNVERIFIED
 Completed: 19A.1 fixes on PR #59; PR #58 deploy recorded
 Next: Owner review PR #59; v0 Batch 19B UI
-Do NOT: merge without owner, production migrations, Google activation
+Do NOT touch: merge without owner, production migrations, Google activation, Local SEO UI (v0)
 ```
