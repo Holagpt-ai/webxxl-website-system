@@ -6,7 +6,7 @@ Specifications: [`03-DATA-MODEL`](platform/docs/03-DATA-MODEL.md), [`04-API-INTE
 |---|---|---|---|---|
 | Identity and tenancy | Auth.js, Prisma `CustomerAccount`, `lib/platform/account-isolation.ts` | Supabase/PostgreSQL | MERGED | Production schema level UNVERIFIED |
 | Preview and review | Projects, immutable versions, owner approvals | GitHub, Vercel deployment ids | MERGED | Per-site approval is data, not a code flag |
-| CRM | `lib/platform/crm/**` | Twenty adapter returns not configured until flags and mapping exist | MERGED | External sync not inferred |
+| CRM | `lib/platform/crm/**`, `/api/v1/crm/*` | Twenty adapter returns not configured until flags and mapping exist. Batch 17A adds search/pagination, deal stage PATCH, task PATCH, consent/suppression HTTP (IN PR until merge) | MERGED | `CRM_BACKEND_ENABLED` off; external sync not inferred |
 | Communications | `lib/platform/comms/**` | Chatwoot, SMS, email candidates | MERGED | No live send inferred |
 | Marketing and social | `lib/platform/marketing/**`, `lib/platform/social/**` | Postiz adapter | MERGED | Publishing off until authorized |
 | SEO and analytics | `lib/platform/seo/**`, `lib/platform/analytics/**` | GSC, GA4, GBP, rank vendor | MERGED | See flags below |
@@ -41,6 +41,21 @@ Read from `config/crm-backend.ts`, `config/mkt-backend.ts`, `config/social-marke
 | `SEO_BACKEND_ENABLED`, `SEO_CRAWLER_ENABLED`, `SEO_GSC_API_ENABLED`, `SEO_GOOGLE_OAUTH_ENABLED`, `SEO_GA4_API_ENABLED`, `SEO_GBP_API_ENABLED`, `SEO_PLACES_API_ENABLED`, `SEO_RANK_PROVIDER_ENABLED`, `SEO_AI_EXECUTION_ENABLED` | off |
 
 `core.crm`, `core.marketing-studio`, and `core.local-seo` stay `POLICY_UNRESOLVED` (OPEN-001) even if a backend flag is later turned on. This table does not enable any flag.
+
+## CRM customer HTTP (Batch 17A)
+
+Session-scoped `CustomerAccount`; gates via `requireCrmApiActor` (`CRM_BACKEND_ENABLED` + entitlement + permission).
+
+| Method | Path | Permission | Notes |
+|---|---|---|---|
+| GET | `/api/v1/crm/contacts` | `crm.read` | Optional `q`/`search`, `cursor`, `take`; response `{ contacts, nextCursor? }` |
+| PATCH | `/api/v1/crm/deals/[id]/stage` | `crm.write` | Body `{ stageId }`; transactional stage history |
+| PATCH | `/api/v1/crm/tasks/[id]` | `crm.write` | Task lifecycle; assignee change owner/staff only |
+| GET | `/api/v1/crm/contacts/[id]/consent` | `crm.read` | Consent history + suppressions |
+| POST | `/api/v1/crm/contacts/[id]/consent` | `crm.consent.manage` | Append consent; `GRANTED` requires evidence |
+| POST | `/api/v1/crm/contacts/[id]/suppression` | `crm.consent.manage` | Append suppression; does not auto-clear on new consent |
+
+UI binding contract: [`platform/docs/BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md).
 
 Batch 15 (merged as PR #51) adds signed capture (`POST /api/v1/analytics/capture/events`), authenticated sync worker (`x-automation-worker-secret`), PostgreSQL capture rate windows, and honest provider sync states (no fabricated `COMPLETED`). Live GSC HTTP requires SEO flags plus `ANALYTICS_PROVIDER_FETCH_ENABLED`, `WORKFLOW_EXTERNAL_EFFECTS_ENABLED`, and `ANALYTICS_GSC_LIVE_TRANSPORT_ENABLED`. Those flags stay off in source. The merge does not show a production migration or a connected provider.
 

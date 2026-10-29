@@ -328,7 +328,8 @@ These are gaps for a later Cursor batch. They are not v0 workarounds and not per
 
 | Gap | Class |
 |---|---|
-| CRM search, cursor pagination, company detail, deal stage move, task update, consent read/write, custom fields | NOT IMPLEMENTED |
+| CRM search, cursor pagination, deal stage move, task update, consent read/write | Implemented in Batch 17A backend (see `BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md` for UI). Still DISABLED at source flag defaults |
+| Company detail HTTP, custom fields, suppression lift API | NOT IMPLEMENTED |
 | Account-wide marketing artifact list and marketing review list | NOT IMPLEMENTED |
 | HTTP social handoff, HTTP social approve, live schedule, channel connect | NOT IMPLEMENTED or DEFERRED (`501` / `503`) |
 | Per-query keyword rows, SEO overview GSC totals, OAuth connect, crawl execution, opportunity execution, live rank | NOT IMPLEMENTED or DEFERRED |

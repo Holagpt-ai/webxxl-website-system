@@ -20,9 +20,13 @@ GitHub `main` at `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` (PR #52) has moved p
 
 Numbering note: the table row **ANALYTICS-13** was implemented as **ANALYTICS-14**. The row **AI-CUSTOMER-12** was implemented as **AI-CUSTOMER-13**. **RELEASE-14** in this roadmap is the later launch gate, not the analytics batch. **FUTURE-15** is deferred product expansion, not **Batch 15 — Analytics Ingestion & Conversion Pipeline**. Batch 15 is merged source as PR #51. It is not FUTURE-15.
 
-## Batch 16 — contract merged; UI and integration in PR
+## Batch 16 — merged (customer workspace UI)
 
-Owner decision 2026-10-26, under ADR-003. **Batch 16A** is **MERGED** ([PR #53](https://github.com/Holagpt-ai/webxxl-website-system/pull/53), `69981c4c9576e8cc43ebe83aa2b486f27db5a6f3`). **Batch 16B:** v0.app delivered Stage B UI on `v0/business-workspace-16b` (`565935adde708eb66cef2c23603aef26a303ba51`). **Batch 16C:** Cursor path reconciliation, dashboard nav, and continuity — combined with 16B on one open pull request for owner review. No flags, migrations, or provider activation in this batch.
+**Batch 16A** **MERGED** (PR #53). **Batch 16B+16C** **MERGED** ([PR #54](https://github.com/Holagpt-ai/webxxl-website-system/pull/54), `7fc7e264fb6044d6f3984f9fe69ada3787ddb3da`). Production SHA record for PR #54 is deployment evidence only; CRM/Marketing/SEO flags stay source-default off.
+
+## Batch 17 — CRM core workflows (backend)
+
+**Batch 17A (Cursor):** contact search/cursor pagination, deal stage PATCH, task PATCH, consent/suppression HTTP on native CRM-05 — open PR for owner review. **Batch 17B (v0.app):** UI binding per `BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md` after 17A merge. No vendor replacement, migrations, or flag activation in 17A.
 
 - v0.app owns the complete CRM, Marketing Studio, and Local SEO customer dashboard UI/UX.
 - Cursor owns backend, APIs, Prisma, integration engineering, tests, Git, and deployment engineering.

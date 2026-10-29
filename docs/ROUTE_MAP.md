@@ -51,6 +51,8 @@ Route handlers under `app/api`, MERGED, not indexed:
 | Analytics | `/api/v1/analytics/accounts/[accountId]/{overview,properties,traffic,search,local,conversions,trends,sync-status}` |
 | Commerce and wallet | `/api/v1/commerce/*`, `/api/v1/admin/commerce/*`, `/api/v1/billing-groups/*`, `/api/v1/wallet/*` |
 | CRM, marketing, social, SEO | `/api/v1/crm/*`, `/api/v1/marketing/*`, `/api/v1/social/*`, `/api/v1/seo/*` |
+
+Batch 17A CRM extensions (backend; UI in Batch 17B): `GET /api/v1/crm/contacts` (`q`, `cursor`, `take`), `PATCH /api/v1/crm/deals/[id]/stage`, `PATCH /api/v1/crm/tasks/[id]`, `GET|POST /api/v1/crm/contacts/[id]/consent`, `POST /api/v1/crm/contacts/[id]/suppression`.
 | Communications and workflows | `/api/v1/communications/*`, `/api/v1/workflows/*` |
 | Customer AI | `/api/v1/customer-ai/accounts/[accountId]/*` |
 | Files | `/api/files/[fileId]` |

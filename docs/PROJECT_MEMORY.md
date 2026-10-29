@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-29 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `69981c4c9576e8cc43ebe83aa2b486f27db5a6f3` (PR #53)
+**Evidence review:** 2026-10-29 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `7fc7e264fb6044d6f3984f9fe69ada3787ddb3da` (PR #54)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -45,8 +45,10 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 15 ingestion pipeline (PR #51) | MERGED | [PR #51](https://github.com/Holagpt-ai/webxxl-website-system/pull/51), `f315e897218a48bfac44a0d50724c91d32b6c9c9`. Flags default off. Production migration UNVERIFIED |
 | PR #52 continuity correction | MERGED | [PR #52](https://github.com/Holagpt-ai/webxxl-website-system/pull/52), `2b7ec7be2aeadccfb595a2ab7edf59b775876efe`. Documentation only |
 | Batch 16A workspace contract | MERGED | [PR #53](https://github.com/Holagpt-ai/webxxl-website-system/pull/53), `69981c4c9576e8cc43ebe83aa2b486f27db5a6f3`. [`BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md`](platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md) |
-| Batch 16B customer workspace UI | IN PR | v0.app delivery (commits on integration branch). Combined with 16C on [PR #54](https://github.com/Holagpt-ai/webxxl-website-system/pull/54), head see latest push on PR #54. Not production-activated |
-| Batch 16C dashboard integration | IN PR | [PR #54](https://github.com/Holagpt-ai/webxxl-website-system/pull/54): nav wiring, Local SEO path reconciliation, continuity. Awaiting owner merge |
+| Vercel production SHA (2026-10-29, PR #54) | DEPLOYED | Owner-reported Vercel deployment `dpl_42XP6bJhgp8q9HnJntTQJ4w51McY`, READY, SHA `7fc7e264fb6044d6f3984f9fe69ada3787ddb3da`. SHA only. Not migration or activation |
+| Batch 16B+16C customer workspace | MERGED | [PR #54](https://github.com/Holagpt-ai/webxxl-website-system/pull/54), `7fc7e264fb6044d6f3984f9fe69ada3787ddb3da`. UI on `main`; CRM APIs remain flag-disabled at source defaults |
+| Batch 17A CRM core workflows | IN PR | Search/pagination, deal stage, task update, consent HTTP; branch `feature/batch-17a-crm-core-workflows`. Open for owner review |
+| Batch 17B CRM UI (v0) | PLANNED | [`BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md). After 17A merge |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.
@@ -60,7 +62,7 @@ Recorded 2026-10-26 from an owner decision. This applies ADR-003 to the next cus
 - No overlapping file edits. Exact file paths are named before the two owners work at the same time.
 - English and Spanish stay in scope. Existing portal designs stay in place.
 
-Batch 16A names those paths, the locked routes, and the API matrix in [`docs/platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md`](platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md). PR #53 is **MERGED** at `69981c4c9576e8cc43ebe83aa2b486f27db5a6f3`. Batch 16B UI and Batch 16C integration are on one open pull request for owner review. Merge does not enable flags or activate providers.
+Batch 16 customer workspace UI is **MERGED** (PR #54). Batch 17A extends native CRM HTTP on the same architecture (CRM-05); it does not replace the vendor stack or enable flags.
 
 ## Architecture decision controls
 

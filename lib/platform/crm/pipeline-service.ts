@@ -91,19 +91,29 @@ export async function moveDealStage(input: {
     where: { id: input.toStageId, pipelineId: deal.pipelineId, customerAccountId: input.customerAccountId },
   })
   if (!stage) return { ok: false, code: 'VALIDATION_ERROR', message: 'Invalid stage for pipeline' }
-  await prisma.$transaction([
-    prisma.crmDeal.update({ where: { id: deal.id }, data: { stageId: input.toStageId } }),
-    prisma.crmDealStageHistory.create({
+  if (deal.stageId === input.toStageId) {
+    return { ok: true, value: { id: deal.id } }
+  }
+  const moved = await prisma.$transaction(async (tx) => {
+    const current = await tx.crmDeal.findFirst({
+      where: { id: input.dealId, customerAccountId: input.customerAccountId },
+    })
+    if (!current) return { ok: false as const, code: 'NOT_FOUND' as const, message: 'Deal not found' }
+    if (current.stageId === input.toStageId) return { ok: true as const, id: current.id }
+    await tx.crmDeal.update({ where: { id: current.id }, data: { stageId: input.toStageId } })
+    await tx.crmDealStageHistory.create({
       data: {
         customerAccountId: input.customerAccountId,
-        dealId: deal.id,
-        fromStageId: deal.stageId,
+        dealId: current.id,
+        fromStageId: current.stageId,
         toStageId: input.toStageId,
         changedByUserId: input.changedByUserId,
       },
-    }),
-  ])
-  return { ok: true, value: { id: deal.id } }
+    })
+    return { ok: true as const, id: current.id }
+  })
+  if (!moved.ok) return moved
+  return { ok: true, value: { id: moved.id } }
 }
 
 export async function linkContactCompany(input: {
