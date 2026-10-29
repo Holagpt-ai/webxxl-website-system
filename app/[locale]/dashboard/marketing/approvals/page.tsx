@@ -1,8 +1,8 @@
 import { getMarketingPageProps } from '@/lib/marketing-studio-ui/server'
-import { MarketingDeliverables } from '@/components/marketing-studio/deliverables'
+import { MarketingApprovals } from '@/components/marketing-studio/approvals'
 
 export const dynamic = 'force-dynamic'
 
 export default async function MarketingApprovalsPage({ params }: { params: Promise<{ locale: string }> }) {
-  return <MarketingDeliverables {...await getMarketingPageProps(params)} onlySubmitted />
+  return <MarketingApprovals {...await getMarketingPageProps(params)} />
 }

@@ -11,6 +11,8 @@ export const MKT_API = {
   revisions: (id: string) => `/api/v1/marketing/artifacts/${enc(id)}/revisions`,
   submitReview: (id: string) => `/api/v1/marketing/artifacts/${enc(id)}/submit-review`,
   decide: (reviewId: string) => `/api/v1/marketing/reviews/${enc(reviewId)}/decide`,
+  artifacts: '/api/v1/marketing/artifacts',
+  reviews: '/api/v1/marketing/reviews',
   followUps: '/api/v1/marketing/follow-ups',
   evaluate: '/api/v1/marketing/follow-ups/evaluate',
   prepareTask: (id: string) => `/api/v1/marketing/follow-ups/${enc(id)}/prepare-task`,
@@ -59,6 +61,65 @@ export type MarketingArtifact = {
   safetyClass: string
   createdAt: string
 }
+
+export const ARTIFACT_TYPES = [
+  'SOCIAL_CAMPAIGN',
+  'SOCIAL_POST',
+  'LANDING_PAGE',
+  'AD_CREATIVE',
+  'SEO_FIX',
+  'CAMPAIGN_PLAN',
+] as const
+
+export const ARTIFACT_REVIEW_STATUSES = ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'EXPIRED', 'REVOKED'] as const
+
+/** Effective buckets accepted by `GET /api/v1/marketing/reviews?status=`. `SUBMITTED` means non-expired pending. */
+export const REVIEW_INBOX_STATUSES = ['SUBMITTED', 'APPROVED', 'REJECTED', 'REVOKED', 'EXPIRED'] as const
+
+export const MKT_PAGE_SIZE = 50
+
+/** `GET /api/v1/marketing/artifacts` items omit `payload` and revision bodies. */
+export type MarketingArtifactListItem = {
+  id: string
+  managedSiteId: string | null
+  marketingRequestId: string | null
+  artifactType: string
+  revisionHash: string
+  generationMode: string
+  reviewStatus: string
+  locale: string
+  safetyClass: string
+  createdAt: string
+}
+
+export type MarketingArtifactListResponse = { artifacts: MarketingArtifactListItem[]; nextCursor?: string }
+
+export type MarketingReview = {
+  id: string
+  marketingArtifactId: string
+  marketingRequestId: string
+  managedSiteId: string | null
+  revisionHash: string
+  status: string
+  effectiveStatus: string
+  intendedAction: string
+  allowedChannel: string | null
+  allowedTarget: string | null
+  policyVersion: string
+  expiresAt: string | null
+  decidedAt: string | null
+  revokedAt: string | null
+  createdAt: string
+  approverUserId: string | null
+  allowedActions: {
+    canDecide: boolean
+    intendedAction: string
+    allowedChannel: string | null
+    allowedTarget: string | null
+  }
+}
+
+export type MarketingReviewListResponse = { reviews: MarketingReview[]; nextCursor?: string }
 
 export type MarketingArtifactRevision = {
   id: string
