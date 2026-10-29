@@ -35,6 +35,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-10-29 | Vercel production deployment of `1389b32` (PR #61) | Owner deployment `dpl_GEbx95vE3hxF3M3vRkfmW3Y16pXH`, READY | DEPLOYED SHA only |
 | 2026-10-29 | Batch 20B Communications UI (v0) + Batch 20C integration | [PR #62](https://github.com/Holagpt-ai/webxxl-website-system/pull/62), `16861d9c796dd5b808c4186bc4611e10f0a434a2`, v0 `efa20676` | MERGED. UI + nav wired to 20A APIs. Not activated |
 | 2026-10-29 | Vercel production deployment of `16861d9` (PR #62) | Owner deployment `dpl_6yeBmge7TwyYmeTKZaSGFKABoms9`, READY | DEPLOYED SHA only |
-| 2026-10-29 | Batch 21A + 21A.1 Controlled customer pilot readiness | Open PR #63, branch `feature/batch-21a-pilot-readiness` | IN PR. Read-only pilot:readiness; migration completion + full-chain probe. Not activation |
+| 2026-10-29 | Batch 21A + 21A.1 Controlled customer pilot readiness | [PR #63](https://github.com/Holagpt-ai/webxxl-website-system/pull/63), `603a601f42728cf758bd632507e0bdd2c8fdcc6b` | MERGED. Read-only pilot:readiness. Not activation |
+| 2026-10-29 | Vercel production deployment of `603a601` (PR #63) | Owner deployment `dpl_Rf71rKnvwjngSRntTCjfFc7fHXGP`, READY | DEPLOYED SHA only |
+| 2026-10-29 | Batch 21B OPEN-001 policy + staging preparation | Open PR, branch `feature/batch-21b-open001` | IN PR. SUBSCRIBER_ONLY enforcement. Not provisioning |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

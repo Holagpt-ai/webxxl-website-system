@@ -34,7 +34,7 @@ Older module sections that describe open pull requests are historical notes from
 | Persistence | Prisma migration `20261018190000_crm05_foundation` | **Pending apply** (not production/staging) |
 | API routes | `app/api/v1/crm/*` | Auth.js membership + `CRM_BACKEND_ENABLED=false` default |
 | SalesLead | `SalesLead`, `LeadActivity`, `saleslead-bridge.ts` | **Unchanged**; bridge candidates only — no bulk migration |
-| OPEN-001 | `core.crm` entitlement | **POLICY_UNRESOLVED** |
+| OPEN-001 | `core.crm` entitlement | **SUBSCRIBER_ONLY** (Batch 21B) — policy resolved; account subscription proof at API gate |
 
 ## SEO-07 (2026-10-18) — Local SEO intelligence backend; live Google/crawl OFF
 
@@ -44,7 +44,7 @@ Older module sections that describe open pull requests are historical notes from
 | Providers | `google-gsc-seo.ts`, `google-ga4-seo.ts`, `google-gbp-seo.ts`, `google-places-seo.ts` | GSC typed Search Analytics path; GA4/GBP **NOT_CONNECTED/NOT_SUPPORTED**; Places discovery stores **place_id only** contract |
 | Persistence | Prisma migration `20261018230000_seo07_foundation` | **Pending apply** (not production/staging) |
 | API routes | `app/api/v1/seo/*` | Auth.js membership + `SEO_BACKEND_ENABLED=false` default; scan prepare **does not live-crawl** when `SEO_CRAWLER_ENABLED=false` |
-| OPEN-001 | `core.local-seo` entitlement | **POLICY_UNRESOLVED** |
+| OPEN-001 | `core.local-seo` entitlement | **SUBSCRIBER_ONLY** (Batch 21B) |
 | Production | — | **No Google OAuth**, **no live GSC/Places**, **no production crawl**, **no AI SEO execution** |
 
 ## COMMS-06 (2026-10-18) — unified communications backend; live Chatwoot/SMS/email OFF
@@ -56,7 +56,7 @@ Older module sections that describe open pull requests are historical notes from
 | Persistence | Prisma migration `20261018210000_comms06_foundation` | **Pending apply** (not production/staging) |
 | API routes | `app/api/v1/communications/*` | Auth.js membership + feature flags default **false**; webhook route **503** until relay auth configured |
 | Wallet / transport | `gateway-service.ts`, `wallet-boundary.ts` (WALLET-09) | Durable reservation path **implemented but flag-disabled**; outbound dispatch **NOT_CONFIGURED** |
-| OPEN-001 | `core.communications` entitlement | **POLICY_UNRESOLVED** (inbox software ≠ free SMS) |
+| OPEN-001 | `core.communications` entitlement | **SUBSCRIBER_ONLY** (Batch 21B; inbox software ≠ free SMS) |
 
 **COMMS-06A (in PR #38):** Webhook relay auth binds `x-webxxl-chatwoot-timestamp` into HMAC; scoped `eventDedupeKey`; trusted receipt processor (`processCommsWebhookReceiptById`) — HTTP ingest leaves **PENDING** until worker activated; channel-aware timeline mapping; intent fingerprint conflicts; synthetic quotes gated by `COMMS_SYNTHETIC_QUOTE_ENABLED`.
 
@@ -68,7 +68,7 @@ Older module sections that describe open pull requests are historical notes from
 | Postiz adapter | `lib/platform/providers/postiz-social.ts`, `postiz-http.ts` | Typed Public API (`/integrations`, `/posts`) per **docs.postiz.com**; reference app pin **v2.25.1**; **NOT_CONFIGURED** without credentials/flags |
 | Persistence | Prisma migration `20261018170000_social04_marketing_studio` | **Pending apply** (not production/staging) |
 | API routes | `app/api/v1/social/*` | Auth.js membership + backend flags; schedule/approve return **501/503** until pilot hydration |
-| OPEN-001 eligibility | `lib/platform/entitlements.ts` | **POLICY_UNRESOLVED** — no silent enrollment change |
+| OPEN-001 eligibility | `lib/platform/open001/` + `lib/platform/entitlements.ts` | **RESOLVED** — `SUBSCRIBER_ONLY`; no silent enrollment change |
 | Production | — | **No live posts**; `POSTIZ_LIVE_PUBLISHING_ENABLED=false` default; app.webbxxl.com untouched |
 
 ## MKT-08 (2026-10-18) — unified marketing preparation, CRM lead recovery; all execution OFF
@@ -77,7 +77,7 @@ Older module sections that describe open pull requests are historical notes from
 |---|---|---|
 | Domain services | `lib/platform/marketing/*`, `config/mkt-backend.ts` | Durable **MarketingRequest** lifecycle, brand context versions, artifact revisions/reviews, SEO→landing handoff prep, lead follow-up evaluation, CRM task + COMMS draft handoff boundaries — **Vitest covered (mocked Prisma + pure logic)** |
 | Persistence | Prisma migration `20261018240000_mkt08_foundation` | **Pending apply** (not production/staging). Extends SOCIAL-04 `MarketingRequest` / `MarketingArtifact`; does not replace CRM/social authorities |
-| API routes | `app/api/v1/marketing/*` | Auth.js membership + `marketing.*` permissions + `core.marketing-studio` entitlement (OPEN-001 **POLICY_UNRESOLVED** unchanged). Returns **503 MKT_DISABLED** until `MKT_BACKEND_ENABLED` |
+| API routes | `app/api/v1/marketing/*` | Auth.js membership + permissions + OPEN-001 subscriber gate + `MKT_BACKEND_ENABLED`. **503 MKT_DISABLED** when flag off; **403 FREE_SOFTWARE_NOT_ELIGIBLE** when non-subscriber |
 | Creative generation | `creative-generator.ts` | **DETERMINISTIC_DRAFT** only; `MKT_AI_GENERATION_ENABLED=false`; no live LLM attribution |
 | Approvals | `MarketingArtifactReview` | Human-only decide path; revision hash binding; no publish/send/wallet |
 | Lead monitor | `follow-up-evaluation-service.ts` | Coverage uses `CrmFollowUpCoverage` (+ summary `NOT_ELIGIBLE` for suppressions); **no outbound** SMS/email |
@@ -138,7 +138,7 @@ Older module sections that describe open pull requests are historical notes from
 | Billing group identity | `prisma/schema.prisma` models `BillingGroup`, `BillingGroupMembership`, `BillingGroupRole`, `BillingProfile`, `SiteSpendingPolicy` | **Implemented in source** on `feature/webxxl-found-01`. Additive migration `20261017220000_found01_platform_identity` is **not applied** to production |
 | Shared wallet contracts | `lib/platform/wallet/*` plus Prisma `CreditWallet`, `WalletLedgerEntry`, `CreditReservation`, `MessageUsage` | **Contract + synthetic engine implemented and unit-tested**. FOUND-01A corrected partial holds, amount validation, actor authorization, funding uniqueness, and restrictive financial FK deletes. FOUND-01B rejects caller-forged `SERVICE` actors (server registry only), validates membership activation before mutate, and blocks expired reservation create/settle paths. No live top-up, Twilio send, or payment execution |
 | Authorization split | `lib/platform/billing-authz.ts`, `lib/platform/account-isolation.ts` | Group billing rights are independent of `CustomerMembership` / CRM access. Existing Auth.js and `lib/portal/authz.ts` unchanged |
-| Entitlements | `lib/platform/entitlements.ts`; catalog types in `lib/marketplace/catalog.ts` | FREE vs PAID classifications exist. Existing marketplace quote strings and historical order amounts are unchanged. OPEN-001 eligibility remains `UNRESOLVED` |
+| Entitlements | `lib/platform/entitlements.ts`; `lib/platform/open001/` | FREE vs PAID classifications exist. Marketplace quotes unchanged. OPEN-001 **SUBSCRIBER_ONLY** (2026-10-29) |
 | Provider registry | `lib/platform/providers/*` | Typed replaceable interfaces. Existing Postiz stub, Resend email, worker, and billing identifiers are wrapped. Twenty, Chatwoot, Paperclip, Twilio, and payment processors are **not installed** |
 | AI tool registry | `lib/platform/ai-tools/*` | Deny-by-default contracts only. No autonomous agents activated. `purchasableAiEmployees` flag is `false` |
 | ABMED data | `lib/platform/fixtures/abmed.ts` | Synthetic test identities only. Live `abmed-account` memberships, projects, and approvals were **not migrated** |
@@ -165,7 +165,7 @@ Older module sections that describe open pull requests are historical notes from
 
 ## Known source/policy mismatch — resolve without deleting orders
 
-`lib/marketplace/catalog.ts` still advertises **SEO & local visibility as quoted monthly/project service**, **CRM & follow-up automation as custom quote**, and **Marketing & ad campaigns as quote per campaign**. FOUND-01 did **not** change those production-facing prices. A parallel entitlement catalog now classifies the approved FREE core services and paid website/SMS/hosting/domain/email offerings. Historical `ServiceOrder` quotes remain intact. OPEN-001 (free prospect eligibility) is still unresolved and configurable.
+`lib/marketplace/catalog.ts` still advertises **SEO & local visibility as quoted monthly/project service**, **CRM & follow-up automation as custom quote**, and **Marketing & ad campaigns as quote per campaign**. FOUND-01 did **not** change those production-facing prices. A parallel entitlement catalog now classifies the approved FREE core services and paid website/SMS/hosting/domain/email offerings. Historical `ServiceOrder` quotes remain intact. OPEN-001 (free prospect eligibility) is **resolved** as **SUBSCRIBER_ONLY**; `ALL_SIGNUPS` / `HYBRID` remain inactive future options.
 
 ## Existing role nuance
 

@@ -1,6 +1,10 @@
 import { parseAnalyticsDateRange } from '@/lib/platform/analytics/date-range'
 import { analyticsDisabledResponse, analyticsResultResponse } from '@/lib/platform/analytics/http'
-import { AnalyticsApiError, requireAnalyticsApiActor } from '@/lib/platform/analytics/route-auth'
+import {
+  AnalyticsApiError,
+  analyticsErrorFromApiCode,
+  requireAnalyticsApiActor,
+} from '@/lib/platform/analytics/route-auth'
 import type { AnalyticsDateRange } from '@/lib/platform/analytics/date-range'
 import type { AnalyticsActor } from '@/lib/platform/analytics/types'
 
@@ -52,7 +56,7 @@ export async function parseAnalyticsRouteContext(
         ok: false,
         response: analyticsResultResponse({
           ok: false,
-          error: error.code === 'INTERNAL' ? 'UNKNOWN' : error.code,
+          error: analyticsErrorFromApiCode(error.code),
           message: error.message,
         }),
       }
@@ -97,7 +101,7 @@ export async function parseAnalyticsRouteContextNoRange(
         ok: false,
         response: analyticsResultResponse({
           ok: false,
-          error: error.code === 'INTERNAL' ? 'UNKNOWN' : error.code,
+          error: analyticsErrorFromApiCode(error.code),
           message: error.message,
         }),
       }

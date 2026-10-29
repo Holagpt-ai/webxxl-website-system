@@ -14,7 +14,11 @@ export function commsResultHttpStatus(code: CommsErrorCode): number {
     case 'NOT_CONFIGURED':
     case 'POLICY_UNRESOLVED':
     case 'COMMS_DISABLED':
+    case 'SUBSCRIPTION_EVIDENCE_UNAVAILABLE':
+    case 'LEGACY_EVIDENCE_AMBIGUOUS':
       return 503
+    case 'FREE_SOFTWARE_NOT_ELIGIBLE':
+      return 403
     case 'QUARANTINED':
       return 422
     default:

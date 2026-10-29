@@ -21,11 +21,11 @@ describe('CRM-05A corrections', () => {
     vi.resetModules()
   })
 
-  it('A: unresolved FREE eligibility is POLICY_UNRESOLVED (not INCLUDED)', () => {
+  it('A: OPEN-001 policy allows INCLUDED_FREE at source; account proof is separate', () => {
     const entitlement = getServiceEntitlement('core.crm')
     expect(entitlement).toBeDefined()
     const access = evaluateEntitlementAccess(entitlement!)
-    expect(access.access).toBe('POLICY_UNRESOLVED')
+    expect(access.access).toBe('INCLUDED')
   })
 
   it('B/M: MEMBER lacks import/export; OWNER has elevated permissions', () => {

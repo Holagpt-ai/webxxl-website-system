@@ -40,7 +40,7 @@ Read from `config/crm-backend.ts`, `config/mkt-backend.ts`, `config/social-marke
 | `SOCIAL_MARKETING_ENABLED`, `POSTIZ_API_ENABLED`, `POSTIZ_LIVE_PUBLISHING_ENABLED`, `SOCIAL_AUTOMATED_APPROVAL_ENABLED` | off |
 | `SEO_BACKEND_ENABLED`, `SEO_CRAWLER_ENABLED`, `SEO_GSC_API_ENABLED`, `SEO_GOOGLE_OAUTH_ENABLED`, `SEO_GA4_API_ENABLED`, `SEO_GBP_API_ENABLED`, `SEO_PLACES_API_ENABLED`, `SEO_RANK_PROVIDER_ENABLED`, `SEO_AI_EXECUTION_ENABLED` | off |
 
-`core.crm`, `core.marketing-studio`, and `core.local-seo` stay `POLICY_UNRESOLVED` (OPEN-001) even if a backend flag is later turned on. This table does not enable any flag.
+OPEN-001 resolved (**SUBSCRIBER_ONLY**). Module APIs require qualifying website subscription evidence per `CustomerAccount` even when backend flags are on. This table does not enable any flag.
 
 ## CRM customer HTTP (Batch 17A)
 

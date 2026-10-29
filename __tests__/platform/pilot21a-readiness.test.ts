@@ -142,10 +142,10 @@ describe('Batch 21A controlled pilot readiness', () => {
     expect(full?.status).toBe('BLOCKED')
   })
 
-  it('reports OPEN-001 POLICY_UNRESOLVED for core pilot entitlements', () => {
+  it('reports OPEN-001 resolved at policy source for core pilot entitlements', () => {
     for (const key of ['core.crm', 'core.marketing-studio', 'core.local-seo', 'core.communications'] as const) {
       const ent = getServiceEntitlement(key)!
-      expect(evaluateEntitlementAccess(ent).access).toBe('POLICY_UNRESOLVED')
+      expect(evaluateEntitlementAccess(ent).access).toBe('INCLUDED')
     }
   })
 

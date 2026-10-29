@@ -1,10 +1,8 @@
-import type { MktErrorCode } from '@/lib/platform/marketing/types'
-
 export class MktApiError extends Error {
   readonly status: number
-  readonly code: MktErrorCode
+  readonly code: string
 
-  constructor(status: number, message: string, code: MktErrorCode) {
+  constructor(status: number, message: string, code = 'FORBIDDEN') {
     super(message)
     this.status = status
     this.code = code

@@ -5,6 +5,7 @@ import {
   type ServiceBillingClass,
   type ServicePricingMode,
 } from '@/lib/marketplace/catalog'
+import { getOpen001FreeSoftwareCohort } from '@/lib/platform/open001/policy'
 
 export type { FreeServiceEligibilityCohort, ServicePricingMode }
 
@@ -22,7 +23,8 @@ export type ServiceEntitlementDefinition = {
   fairUsePolicy?: string
 }
 
-export const FREE_SERVICE_ELIGIBILITY_DEFAULT: FreeServiceEligibilityCohort = 'UNRESOLVED'
+/** Owner-approved OPEN-001 default (2026-10-29): website subscribers only. */
+export const FREE_SERVICE_ELIGIBILITY_DEFAULT: FreeServiceEligibilityCohort = 'SUBSCRIBER_ONLY'
 
 export const PLATFORM_ENTITLEMENTS: ServiceEntitlementDefinition[] = [
   {
@@ -30,7 +32,7 @@ export const PLATFORM_ENTITLEMENTS: ServiceEntitlementDefinition[] = [
     name: 'CRM',
     pricingMode: 'INCLUDED_FREE',
     includedOrPaid: 'INCLUDED_FREE',
-    eligibleSubscriberCohort: 'UNRESOLVED',
+    eligibleSubscriberCohort: 'SUBSCRIBER_ONLY',
     purchasable: false,
     providerPassThrough: false,
     fairUsePolicy: 'Included software service; carrier and provider usage remain separately billed.',
@@ -40,7 +42,7 @@ export const PLATFORM_ENTITLEMENTS: ServiceEntitlementDefinition[] = [
     name: 'Unified communications',
     pricingMode: 'INCLUDED_FREE',
     includedOrPaid: 'INCLUDED_FREE',
-    eligibleSubscriberCohort: 'UNRESOLVED',
+    eligibleSubscriberCohort: 'SUBSCRIBER_ONLY',
     purchasable: false,
     providerPassThrough: false,
     fairUsePolicy: 'Included inbox software; SMS/email/voice carrier usage billed separately via wallet.',
@@ -50,7 +52,7 @@ export const PLATFORM_ENTITLEMENTS: ServiceEntitlementDefinition[] = [
     name: 'Marketing Studio',
     pricingMode: 'INCLUDED_FREE',
     includedOrPaid: 'INCLUDED_FREE',
-    eligibleSubscriberCohort: 'UNRESOLVED',
+    eligibleSubscriberCohort: 'SUBSCRIBER_ONLY',
     purchasable: false,
     providerPassThrough: false,
   },
@@ -59,7 +61,7 @@ export const PLATFORM_ENTITLEMENTS: ServiceEntitlementDefinition[] = [
     name: 'Postiz social automation',
     pricingMode: 'INCLUDED_FREE',
     includedOrPaid: 'INCLUDED_FREE',
-    eligibleSubscriberCohort: 'UNRESOLVED',
+    eligibleSubscriberCohort: 'SUBSCRIBER_ONLY',
     purchasable: false,
     providerPassThrough: false,
   },
@@ -68,7 +70,7 @@ export const PLATFORM_ENTITLEMENTS: ServiceEntitlementDefinition[] = [
     name: 'Local SEO intelligence',
     pricingMode: 'INCLUDED_FREE',
     includedOrPaid: 'INCLUDED_FREE',
-    eligibleSubscriberCohort: 'UNRESOLVED',
+    eligibleSubscriberCohort: 'SUBSCRIBER_ONLY',
     purchasable: false,
     providerPassThrough: false,
   },
@@ -77,7 +79,7 @@ export const PLATFORM_ENTITLEMENTS: ServiceEntitlementDefinition[] = [
     name: 'Analytics & business intelligence',
     pricingMode: 'INCLUDED_FREE',
     includedOrPaid: 'INCLUDED_FREE',
-    eligibleSubscriberCohort: 'UNRESOLVED',
+    eligibleSubscriberCohort: 'SUBSCRIBER_ONLY',
     featureFlag: 'analyticsBackend',
     purchasable: false,
     providerPassThrough: false,
@@ -88,7 +90,7 @@ export const PLATFORM_ENTITLEMENTS: ServiceEntitlementDefinition[] = [
     name: 'AI landing-page production',
     pricingMode: 'INCLUDED_FREE',
     includedOrPaid: 'INCLUDED_FREE',
-    eligibleSubscriberCohort: 'UNRESOLVED',
+    eligibleSubscriberCohort: 'SUBSCRIBER_ONLY',
     purchasable: false,
     providerPassThrough: false,
   },
@@ -97,7 +99,7 @@ export const PLATFORM_ENTITLEMENTS: ServiceEntitlementDefinition[] = [
     name: 'Campaign preparation',
     pricingMode: 'INCLUDED_FREE',
     includedOrPaid: 'INCLUDED_FREE',
-    eligibleSubscriberCohort: 'UNRESOLVED',
+    eligibleSubscriberCohort: 'SUBSCRIBER_ONLY',
     purchasable: false,
     providerPassThrough: false,
   },
@@ -106,7 +108,7 @@ export const PLATFORM_ENTITLEMENTS: ServiceEntitlementDefinition[] = [
     name: 'Ad creative',
     pricingMode: 'INCLUDED_FREE',
     includedOrPaid: 'INCLUDED_FREE',
-    eligibleSubscriberCohort: 'UNRESOLVED',
+    eligibleSubscriberCohort: 'SUBSCRIBER_ONLY',
     purchasable: false,
     providerPassThrough: false,
     fairUsePolicy: 'Creative production is included. Ad platform spend is never implied.',
@@ -116,7 +118,7 @@ export const PLATFORM_ENTITLEMENTS: ServiceEntitlementDefinition[] = [
     name: 'Included AI marketing agents',
     pricingMode: 'INCLUDED_FREE',
     includedOrPaid: 'INCLUDED_FREE',
-    eligibleSubscriberCohort: 'UNRESOLVED',
+    eligibleSubscriberCohort: 'SUBSCRIBER_ONLY',
     purchasable: false,
     providerPassThrough: false,
   },
@@ -204,11 +206,12 @@ export function evaluateEntitlementAccess(
   }
   if (entitlement.pricingMode === 'INCLUDED_FREE') {
     const cohort = resolveFreeServiceEligibility(
-      options?.configuredCohort ?? entitlement.eligibleSubscriberCohort,
+      options?.configuredCohort ?? entitlement.eligibleSubscriberCohort ?? getOpen001FreeSoftwareCohort(),
     )
     if (cohort === 'UNRESOLVED') {
       return { classification: 'INCLUDED_FREE', access: 'POLICY_UNRESOLVED' }
     }
+    // Policy allows included FREE software for qualifying accounts; account-level proof is enforced at API gates.
     return { classification: 'INCLUDED_FREE', access: 'INCLUDED' }
   }
   return { classification: entitlement.pricingMode, access: 'PAID' }

@@ -28,11 +28,16 @@
 
 New records are files under `docs/adr/`. ADR-018, ADR-019, and ADR-020 were added on 2026-10-25 as **PROPOSED**. They are not owner decisions, they do not supersede ADR-001 through ADR-017, and they do not authorize a CMS, an automation builder, or any provider rollout. Approval still requires an explicit owner decision recorded here.
 
+## Resolved owner decisions (canonical)
+
+| Open ID | Decision | Recorded |
+|---|---|---|
+| OPEN-001 | **Website subscribers** receive WebXXL included FREE business software (CRM, Marketing Studio, Local SEO, Communications inbox software). **Non-subscribers do not automatically qualify.** Active cohort: **`SUBSCRIBER_ONLY`**. Future **`ALL_SIGNUPS`** and **`HYBRID`** remain in schema/env but inactive until separate owner authorization. Included FREE software stays included for qualifying subscribers; external provider charges remain separately governed. Policy implementation: `lib/platform/open001/` version **`2026-10-29.1`**. Batch **21B** merged in GitHub continuity. | **2026-10-29 — RESOLVED OWNER APPROVED** |
+
 ## Open decisions (must be resolved at the specified gate, not guessed)
 
 | Open ID | Decision needed | Default until resolved |
 |---|---|---|
-| OPEN-001 | Who may use free CRM/Marketing Studio/SEO before paying for website: all signups, subscribers only, or hybrid? | Support both via entitlement schema; no live free prospect signup claim |
 | OPEN-002 | Twenty CRM actual production selection vs EspoCRM/Corteza/native, and AGPL/enterprise/multiworkspace compliance | `CrmProvider` interface and staging POC only |
 | OPEN-003 | Paperclip/Chatwoot/Postiz/Hatchet exact deployed versions, licenses, edition-dependent features and multi-tenant rights | Pinned sandbox and license review before production |
 | OPEN-004 | Wallet package pricing, unit conversion, expiry/refund/chargeback and transfer terms | Ledger/rate version schema, test-only credits |
