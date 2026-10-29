@@ -4,41 +4,39 @@
 
 ## Baseline
 
-- **Verified `origin/main`:** `1389b328b07a17bd242179816448791477f3dd27` (PR #61, Batch 20A unified comms inbox)
-- **v0 Batch 20B UI commit:** `efa206760ae076118a9c4c7c4fb7b6a716166f66` on `v0/communications-ui-20b`
-- **Working branch:** `feature/batch-20c-comms-ui-integration`
-- **Pull request:** open for Batch 20C (see latest push)
-- **Production SHA (PR #61):** DEPLOYED — Vercel `dpl_GEbx95vE3hxF3M3vRkfmW3Y16pXH`, state **READY**, SHA `1389b328b07a17bd242179816448791477f3dd27` (SHA only)
+- **Verified `origin/main`:** `16861d9c796dd5b808c4186bc4611e10f0a434a2` (PR #62, Batch 20C Communications UI)
+- **Production SHA (PR #62):** DEPLOYED — Vercel `dpl_6yeBmge7TwyYmeTKZaSGFKABoms9`, state **READY**, SHA `16861d9c796dd5b808c4186bc4611e10f0a434a2` (SHA only)
+- **Working branch:** `feature/batch-21a-pilot-readiness`
+- **Pull request:** open for Batch 21A (see latest push)
 
 ## Latest completed batch on main
 
-- Batch 20A (+ 20A.1) **MERGED** as PR #61 at `1389b328b07a17bd242179816448791477f3dd27`
-- Batch 19B+19C **MERGED** as PR #60 at `8b7cd4daf84ccd5f8ad3bd5af98fd8fb7b4b356e`
-- Production migrations, Chatwoot/COMMS activation, OPEN-001: **UNVERIFIED** / source defaults **OFF**
-- Authenticated customer comms smoke: **UNVERIFIED**
+- Batch 20C **MERGED** as PR #62 at `16861d9c796dd5b808c4186bc4611e10f0a434a2`
+- Batch 20A **MERGED** as PR #61 at `1389b328b07a17bd242179816448791477f3dd27`
+- Production migrations, OPEN-001, Chatwoot/COMMS activation: **UNVERIFIED** / source defaults **OFF**
+- Authenticated customer pilot smoke: **UNVERIFIED** / **BLOCKED** in automated harness
 
 ## This session
 
-Batch 20C: integrate v0 communications workspace (inbox, detail, connections), portal nav (Communications / Comunicaciones), inbox cursor recovery, list CRM via detail, focused contract tests, continuity for PR #61 merge/deploy.
+Batch 21A + **21A.1** on PR #63: read-only `pnpm pilot:readiness` (completed vs incomplete/rolled-back/missing migrations; pilot-module vs full `prisma/migrations` chain), migration/entitlement doc, synthetic two-account tests, CI pilot regression, continuity for PR #62 merge/deploy.
 
 ## Next assignment
 
-**Owner review** of Batch 20C integration PR. Authenticated dashboard smoke remains owner/environment.
+**Owner review** of Batch 21A PR #63 (includes 21A.1 migration accuracy). Then owner: OPEN-001 decisions, full-chain pilot-environment migrations (if authorized), flag enablement, authenticated EN/ES smoke — not inferred from CI.
 
 ## PENDING REPOSITORY SYNC
 
-None once the integration PR is pushed.
+None once the Batch 21A PR is pushed.
 
 ## Handoff template
 
 ```
-Date / scope / owner: 2026-10-29 / BATCH-20C Communications UI integration / Cursor
-Repo / main SHA: Holagpt-ai/webxxl-website-system / 1389b328b07a17bd242179816448791477f3dd27
-Branch / PR: feature/batch-20c-comms-ui-integration / open (unmerged)
-Merged / deployed: PR #61 merged; Vercel dpl_GEbx95vE3hxF3M3vRkfmW3Y16pXH READY @ 1389b32
-v0 UI preserved at: efa206760ae076118a9c4c7c4fb7b6a716166f66
+Date / scope / owner: 2026-10-29 / BATCH-21A Controlled customer pilot readiness / Cursor
+Repo / main SHA: Holagpt-ai/webxxl-website-system / 16861d9c796dd5b808c4186bc4611e10f0a434a2
+Branch / PR: feature/batch-21a-pilot-readiness / open (unmerged)
+Merged / deployed: PR #62 merged; Vercel dpl_6yeBmge7TwyYmeTKZaSGFKABoms9 READY @ 16861d9
 Migration / flags / OPEN-001: UNVERIFIED
-Deferred: live transcripts, outbound send, Chatwoot install, provider OAuth UI
-Next: Owner review integration PR
-Do NOT touch: merge without owner, production migrations, COMMS flag activation, /dashboard/messages redesign
+Pilot command: pnpm pilot:readiness (PILOT_READINESS_DB_PROBE=1 optional read-only)
+Next: Owner review 21A PR; then owner pilot-environment gates
+Do NOT touch: production migrations, flag activation, provider connect, merge without owner
 ```

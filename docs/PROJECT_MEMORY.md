@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-29 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `1389b328b07a17bd242179816448791477f3dd27` (PR #61)
+**Evidence review:** 2026-10-29 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `16861d9c796dd5b808c4186bc4611e10f0a434a2` (PR #62)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -62,7 +62,9 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Vercel production SHA (2026-10-29, PR #61) | DEPLOYED | Owner-reported Vercel deployment `dpl_GEbx95vE3hxF3M3vRkfmW3Y16pXH`, state **READY**, SHA `1389b328b07a17bd242179816448791477f3dd27`. SHA only. Not migration or activation |
 | Batch 20A Unified comms inbox foundation | MERGED | [PR #61](https://github.com/Holagpt-ai/webxxl-website-system/pull/61), `1389b328b07a17bd242179816448791477f3dd27`. Read APIs + [`BATCH20B-COMMUNICATIONS-UI-CONTRACT.md`](platform/docs/BATCH20B-COMMUNICATIONS-UI-CONTRACT.md); no live Chatwoot/outbound |
 | Batch 20B Communications UI (v0) | DELIVERED | `v0/communications-ui-20b` @ `efa206760ae076118a9c4c7c4fb7b6a716166f66` |
-| Batch 20C Communications UI integration | IN PR | v0 UI + portal nav; COMMS flags source-default OFF |
+| Vercel production SHA (2026-10-29, PR #62) | DEPLOYED | Owner-reported Vercel deployment `dpl_6yeBmge7TwyYmeTKZaSGFKABoms9`, state **READY**, SHA `16861d9c796dd5b808c4186bc4611e10f0a434a2`. SHA only. Not migration or activation |
+| Batch 20C Communications UI integration | MERGED | [PR #62](https://github.com/Holagpt-ai/webxxl-website-system/pull/62), `16861d9c796dd5b808c4186bc4611e10f0a434a2`. v0 @ `efa20676` |
+| Batch 21A Controlled customer pilot readiness | IN PR | `pnpm pilot:readiness`, [`PILOT-21A-CONTROLLED-CUSTOMER-READINESS.md`](PILOT-21A-CONTROLLED-CUSTOMER-READINESS.md); no activation |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.
