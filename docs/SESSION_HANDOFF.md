@@ -13,9 +13,12 @@
 ## Latest completed batch
 
 - Batch 17A (+ 17A.1 integrity) **MERGED** as PR #55 at `2ef9a90cd10222466faf0c6070995130456b7363`
-- Batch 17B CRM UI delivered on `v0/crm-ui-17b` @ `b1b4270294406a4f8f9dc00655f6b1f37e734f17` (10 files)
-- Batch 17C integrates v0 UI onto `main` with narrow copy/error alignment; **IN PR** until owner merge
 - Production migrations, CRM flag values in production: **UNVERIFIED**
+
+## Open integration (owner review)
+
+- Batch 17B CRM UI delivered on `v0/crm-ui-17b` @ `b1b4270294406a4f8f9dc00655f6b1f37e734f17` (10 files)
+- Batch 17C on branch `feature/batch-17bc-crm-ui-integration` — open pull request until owner merge
 
 ## This session
 
