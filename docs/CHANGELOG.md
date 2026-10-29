@@ -23,6 +23,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-10-29 | Vercel production deployment of `2ef9a90` (PR #55) | Owner deployment `dpl_Gg2dKg34vncTJ1GMpVyC8mpYRFXv`, READY | DEPLOYED SHA only |
 | 2026-10-29 | Batch 17B CRM UI (v0) + Batch 17C integration | [PR #56](https://github.com/Holagpt-ai/webxxl-website-system/pull/56), `b6b8f5f88b65f27a606a5e2df0e9e35051ce05f4` | MERGED. CRM UI wired to 17A APIs. Not activated |
 | 2026-10-29 | Vercel production deployment of `b6b8f5f` (PR #56) | Owner deployment `dpl_3BZVPBZzFH1AJ4KjpbTTReS9N285`, READY | DEPLOYED SHA only |
-| 2026-10-29 | Batch 18A Marketing deliverables & approvals backend | Open PR, branch `feature/batch-18a-mkt-deliverables-approvals` | IN PR. Not merged |
+| 2026-10-29 | Batch 18A Marketing deliverables & approvals backend | [PR #57](https://github.com/Holagpt-ai/webxxl-website-system/pull/57), `5e2759d9cca6b1461492cff59172c84693123f2c` | MERGED. List APIs + 18A.1 submit integrity. Not activated |
+| 2026-10-29 | Vercel production deployment of `5e2759d` (PR #57) | Owner deployment `dpl_7CngvEWJTDWmYGGGYFWRZdLPXyyn`, READY | DEPLOYED SHA only |
+| 2026-10-29 | Batch 18B Marketing UI (v0) + Batch 18C integration | Open PR, branch `feature/batch-18bc-marketing-ui-integration` | IN PR. v0 commit `11b4ec2`. Not merged |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

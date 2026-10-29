@@ -1,7 +1,7 @@
 # Batch 18B — Marketing Studio deliverables & approvals UI (v0.app)
 
-**Status:** contract for the next UI pass. Backend Batch 18A implements the HTTP surface below.  
-**Baseline:** GitHub `main` after Batch 18A merge. **UI owner:** v0.app. **Backend owner:** Cursor (frozen for Stage B).
+**Status:** UI delivered on branch `v0/marketing-ui-18b` @ `11b4ec2e47f0a8b29bd9a55cfec9fcbb76cfe570`; integrated via Batch 18C owner-review PR. Backend Batch 18A is merged on `main` (`5e2759d`, PR #57).  
+**Baseline:** GitHub `main` after Batch 18A merge. **UI owner:** v0.app (Stage B complete). **Backend owner:** Cursor (frozen for Stage B).
 
 Do not call these routes when Marketing returns `503` `MKT_DISABLED` or `POLICY_UNRESOLVED`. Render the same unavailable states as Batch 16. When `MKT_APPROVAL_WORKFLOW_ENABLED` is off, approval inbox and decide actions stay disabled even if list routes respond.
 

@@ -122,7 +122,7 @@ export function MarketingDeliverables(props: MarketingViewProps) {
         <EmptyNote>{filtered ? d.emptyFiltered : d.empty}</EmptyNote>
       ) : (
         <>
-          <PlainTable label={d.listLabel} headers={[d.type, d.review, d.site, d.language, d.request, d.created]}>
+          <PlainTable label={d.listLabel} headers={[d.type, d.review, d.generation, d.site, d.language, d.request, d.created]}>
             {rows.map((a) => (
               <tr key={a.id}>
                 <td className={`${td} font-medium text-foreground`}>
@@ -133,6 +133,7 @@ export function MarketingDeliverables(props: MarketingViewProps) {
                 <td className={td}>
                   <StatusPill label={enumLabel(copy.enums.reviewStatus, a.reviewStatus)} tone={REVIEW_TONE[a.reviewStatus] ?? 'muted'} />
                 </td>
+                <td className={td}>{enumLabel(copy.enums.generation, a.generationMode)}</td>
                 <td className={td}>{siteLabel(sites, a.managedSiteId, d.noSite)}</td>
                 <td className={td}>{enumLabel(copy.enums.locale, a.locale)}</td>
                 <td className={td}>
