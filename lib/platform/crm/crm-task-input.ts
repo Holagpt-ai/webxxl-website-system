@@ -1,14 +1,17 @@
 import type { CrmResult } from '@/lib/platform/crm/types'
 import type { UpdateCrmTaskPatch } from '@/lib/platform/crm/task-service'
 
-const TASK_STATUSES = ['OPEN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] as const
-const TASK_PRIORITIES = ['LOW', 'NORMAL', 'HIGH', 'URGENT'] as const
+type TaskStatus = NonNullable<UpdateCrmTaskPatch['status']>
+type TaskPriority = NonNullable<UpdateCrmTaskPatch['priority']>
 
-function isTaskStatus(value: string): value is UpdateCrmTaskPatch['status'] {
+const TASK_STATUSES: readonly TaskStatus[] = ['OPEN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']
+const TASK_PRIORITIES: readonly TaskPriority[] = ['LOW', 'NORMAL', 'HIGH', 'URGENT']
+
+function isTaskStatus(value: string): value is TaskStatus {
   return (TASK_STATUSES as readonly string[]).includes(value)
 }
 
-function isTaskPriority(value: string): value is NonNullable<UpdateCrmTaskPatch['priority']> {
+function isTaskPriority(value: string): value is TaskPriority {
   return (TASK_PRIORITIES as readonly string[]).includes(value)
 }
 
