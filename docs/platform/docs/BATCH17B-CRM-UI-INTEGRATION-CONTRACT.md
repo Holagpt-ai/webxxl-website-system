@@ -1,7 +1,7 @@
 # Batch 17B — CRM UI integration contract (v0.app)
 
-**Status:** contract for the next UI pass. Backend Batch 17A implements the HTTP surface below.  
-**Baseline:** GitHub `main` after Batch 17A merge. **UI owner:** v0.app. **Backend owner:** Cursor (frozen for Stage B).
+**Status:** UI delivered on branch `v0/crm-ui-17b` @ `b1b4270294406a4f8f9dc00655f6b1f37e734f17`; integrated via Batch 17C owner-review PR. Backend Batch 17A is merged on `main` (`2ef9a90`, PR #55).  
+**Baseline:** GitHub `main` after Batch 17A merge. **UI owner:** v0.app (Stage B complete). **Backend owner:** Cursor (frozen for Stage B).
 
 Do not call these routes when CRM returns `503` `CRM_DISABLED` or `POLICY_UNRESOLVED`. Render the same unavailable states as Batch 16.
 

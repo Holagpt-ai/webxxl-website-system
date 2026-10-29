@@ -17,7 +17,6 @@ import {
 import {
   EmptyNote,
   FormActions,
-  GapNotice,
   LoadingRows,
   Section,
   SectionHeading,
@@ -88,8 +87,6 @@ export function CrmPipelineView({ accountId, locale, copy }: Props) {
         />
       )}
 
-      <GapNotice title={t.moveUnavailable.title} body={t.moveUnavailable.body} />
-
       {pipelines.isLoading || deals.isLoading ? (
         <LoadingRows label={kit.loading} rows={4} />
       ) : pipelines.error || deals.error ? (
@@ -157,6 +154,12 @@ export function CrmPipelineView({ accountId, locale, copy }: Props) {
                                 <StatusPill label={enumLabel(copy.enums.dealStatus, deal.status)} tone={DEAL_TONE[deal.status] ?? 'muted'} />
                                 <span className="text-xs text-muted-foreground">{formatDate(deal.updatedAt, locale)}</span>
                               </div>
+                              <DealStageControl
+                                deal={deal}
+                                stages={stages}
+                                copy={copy}
+                                onMoved={() => deals.mutate()}
+                              />
                             </li>
                           ))}
                         </ul>
@@ -169,6 +172,95 @@ export function CrmPipelineView({ accountId, locale, copy }: Props) {
             </Section>
           )
         })
+      )}
+    </div>
+  )
+}
+
+function DealStageControl({
+  deal,
+  stages,
+  copy,
+  onMoved,
+}: {
+  deal: CrmDeal
+  stages: CrmPipeline['stages']
+  copy: CrmWorkspaceCopy
+  onMoved: () => void
+}) {
+  const t = copy.pipeline
+  const [target, setTarget] = useState(deal.stageId)
+  const [movedTo, setMovedTo] = useState<string | null>(null)
+  const action = useAction<{ deal: CrmDeal }>()
+  const selectId = `deal-stage-${deal.id}`
+  const unchanged = target === deal.stageId
+  const conflict = action.error?.status === 409
+
+  async function move() {
+    if (unchanged) return
+    setMovedTo(null)
+    const result = await action.run(() => workspaceSend<{ deal: CrmDeal }>(CRM_API.dealStage(deal.id), { stageId: target }, 'PATCH'))
+    if (result.ok) {
+      const name = stages.find((s) => s.id === result.data.deal.stageId)?.name ?? ''
+      setMovedTo(name)
+      onMoved()
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5 border-t pt-2">
+      <label htmlFor={selectId} className="text-xs font-medium text-muted-foreground">
+        {t.stageLabel}
+      </label>
+      <div className="flex gap-1.5">
+        <select
+          id={selectId}
+          value={target}
+          onChange={(e) => {
+            setTarget(e.target.value)
+            action.reset()
+            setMovedTo(null)
+          }}
+          className="h-8 min-w-0 flex-1 rounded-md border bg-background px-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          disabled={action.pending}
+        >
+          {!stages.some((s) => s.id === deal.stageId) && <option value={deal.stageId}>{t.otherStage}</option>}
+          {stages.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+        <Button size="sm" variant="secondary" className="h-8" disabled={unchanged || action.pending} onClick={move}>
+          {action.pending ? t.moving : t.move}
+        </Button>
+      </div>
+      {movedTo !== null && (
+        <p role="status" className="text-xs text-muted-foreground">
+          {fill(t.moved, { stage: movedTo })}
+        </p>
+      )}
+      {conflict ? (
+        <div role="alert" className="flex flex-col gap-1.5 rounded-md bg-muted p-2 text-xs leading-relaxed">
+          <p>
+            <span className="font-medium text-foreground">{t.conflict.title}.</span>{' '}
+            <span className="text-muted-foreground">{t.conflict.body}</span>
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 self-start"
+            onClick={() => {
+              action.reset()
+              setTarget(deal.stageId)
+              onMoved()
+            }}
+          >
+            {t.refresh}
+          </Button>
+        </div>
+      ) : (
+        action.error && <WorkspaceState error={action.error} kit={copy.kit} workspace={copy.name} compact />
       )}
     </div>
   )

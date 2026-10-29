@@ -57,10 +57,61 @@ export type CrmTask = {
   status: string
   priority: string
   dueAt: string | null
+  completedAt?: string | null
+  disposition?: string | null
   contactId: string | null
   dealId: string | null
   createdAt: string
 }
+
+export const TASK_STATUSES = ['OPEN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] as const
+export const TASK_PRIORITIES = ['LOW', 'NORMAL', 'HIGH', 'URGENT'] as const
+
+/** The backend rejects any status change once a task is completed or cancelled. */
+export function isTerminalTask(status: string): boolean {
+  return status === 'COMPLETED' || status === 'CANCELLED'
+}
+
+export type CrmTaskPatch = {
+  title?: string
+  status?: string
+  priority?: string
+  dueAt?: string | null
+  disposition?: string | null
+}
+
+export type CrmConsentEvidence = { id: string; evidenceRef: string; capturedAt: string }
+
+export type CrmConsent = {
+  id: string
+  channel: string
+  purpose: string
+  status: string
+  source: string
+  termsVersion: string | null
+  jurisdiction: string | null
+  capturedAt: string
+  revokedAt: string | null
+  expiresAt: string | null
+  evidence?: CrmConsentEvidence[]
+}
+
+export type CrmSuppression = {
+  id: string
+  channel: string
+  purpose: string
+  reason: string
+  source: string
+  active: boolean
+  createdAt: string
+}
+
+export type CrmConsentState = { consents: CrmConsent[]; suppressions: CrmSuppression[] }
+
+export type CrmContactPage = { contacts: CrmContact[]; nextCursor?: string }
+
+/** Backend bound for `q`. */
+export const CRM_SEARCH_MAX = 120
 
 export type CrmSegment = { id: string; name: string; kind: string; createdAt: string; updatedAt: string }
 
@@ -107,10 +158,13 @@ export const CRM_API = {
   contacts: '/api/v1/crm/contacts',
   contact: (id: string) => `/api/v1/crm/contacts/${encodeURIComponent(id)}`,
   timeline: (id: string) => `/api/v1/crm/contacts/${encodeURIComponent(id)}/timeline`,
+  consent: (id: string) => `/api/v1/crm/contacts/${encodeURIComponent(id)}/consent`,
   companies: '/api/v1/crm/companies',
   pipelines: '/api/v1/crm/pipelines',
   deals: '/api/v1/crm/deals',
+  dealStage: (id: string) => `/api/v1/crm/deals/${encodeURIComponent(id)}/stage`,
   tasks: '/api/v1/crm/tasks',
+  task: (id: string) => `/api/v1/crm/tasks/${encodeURIComponent(id)}`,
   segments: '/api/v1/crm/segments',
   importPreview: '/api/v1/crm/imports/preview',
   importCommit: '/api/v1/crm/imports/commit',

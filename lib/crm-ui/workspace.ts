@@ -47,7 +47,8 @@ export function classifyWorkspaceError(status: number, body: unknown): Workspace
   // CRM import/export flags answer `403 FORBIDDEN` with "CRM import disabled" / "CRM export disabled".
   else if (status === 403) kind = message && /\bdisabled$/i.test(message) ? 'NOT_CONFIGURED' : 'FORBIDDEN'
   else if (status === 404 || code === 'NOT_FOUND') kind = 'NOT_FOUND'
-  else if (status === 400 || code === 'VALIDATION') kind = 'VALIDATION'
+  else if (status === 409 || code === 'CONFLICT') kind = 'ERROR'
+  else if (status === 400 || code === 'VALIDATION' || code === 'VALIDATION_ERROR') kind = 'VALIDATION'
   else kind = 'ERROR'
 
   return new WorkspaceError(status, kind, code, message)

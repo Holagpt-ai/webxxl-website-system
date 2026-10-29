@@ -18,7 +18,9 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-10-29 | Batch 16A contract | [PR #53](https://github.com/Holagpt-ai/webxxl-website-system/pull/53), `69981c4c9576e8cc43ebe83aa2b486f27db5a6f3` | MERGED. Documentation and contract on `main`. No flag or migration claim |
 | 2026-10-29 | Batch 16B customer workspace UI + Batch 16C integration | [PR #54](https://github.com/Holagpt-ai/webxxl-website-system/pull/54), `7fc7e264fb6044d6f3984f9fe69ada3787ddb3da` | MERGED. Customer dashboard UI. Not flag or migration claim |
 | 2026-10-29 | Vercel production deployment of `7fc7e26` (PR #54) | Owner deployment `dpl_42XP6bJhgp8q9HnJntTQJ4w51McY`, READY | DEPLOYED SHA only |
-| 2026-10-29 | Batch 17A CRM core workflows | [PR #55](https://github.com/Holagpt-ai/webxxl-website-system/pull/55), owner review | Backend APIs and tests. Awaiting owner merge. Not activated |
+| 2026-10-29 | Batch 17A CRM core workflows | [PR #55](https://github.com/Holagpt-ai/webxxl-website-system/pull/55), `2ef9a90cd10222466faf0c6070995130456b7363` | MERGED. Backend APIs and tests. Not activated |
 | 2026-10-29 | Batch 17A.1 CRM integrity corrections | Same PR #55 | Consent/evidence atomicity, task assignee validation, deal stage CAS, HTTP input validation |
+| 2026-10-29 | Vercel production deployment of `2ef9a90` (PR #55) | Owner deployment `dpl_Gg2dKg34vncTJ1GMpVyC8mpYRFXv`, READY | DEPLOYED SHA only |
+| 2026-10-29 | Batch 17B CRM UI (v0) + Batch 17C integration | Open PR, branch `feature/batch-17bc-crm-ui-integration` | IN PR. v0 commit `b1b4270`. Not merged |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
