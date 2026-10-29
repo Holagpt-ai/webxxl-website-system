@@ -7,7 +7,7 @@
 - **Verified `origin/main`:** `7fc7e264fb6044d6f3984f9fe69ada3787ddb3da` (PR #54, Batch 16B+16C customer workspace)
 - **Previous `main`:** `69981c4c9576e8cc43ebe83aa2b486f27db5a6f3` (PR #53, Batch 16A contract)
 - **Working branch:** `feature/batch-17a-crm-core-workflows`
-- **Pull request:** Batch 17A (open for owner review after push)
+- **Pull request:** [#55](https://github.com/Holagpt-ai/webxxl-website-system/pull/55), head `a8edbedcc2cdb0bfcc645dd6d1481975a558c360` (open, unmerged)
 - **Production SHA (owner evidence):** `7fc7e264fb6044d6f3984f9fe69ada3787ddb3da` — Vercel `dpl_42XP6bJhgp8q9HnJntTQJ4w51McY` (READY). SHA only; not CRM activation.
 
 ## Latest completed batch

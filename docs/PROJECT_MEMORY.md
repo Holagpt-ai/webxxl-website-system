@@ -47,7 +47,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 16A workspace contract | MERGED | [PR #53](https://github.com/Holagpt-ai/webxxl-website-system/pull/53), `69981c4c9576e8cc43ebe83aa2b486f27db5a6f3`. [`BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md`](platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md) |
 | Vercel production SHA (2026-10-29, PR #54) | DEPLOYED | Owner-reported Vercel deployment `dpl_42XP6bJhgp8q9HnJntTQJ4w51McY`, READY, SHA `7fc7e264fb6044d6f3984f9fe69ada3787ddb3da`. SHA only. Not migration or activation |
 | Batch 16B+16C customer workspace | MERGED | [PR #54](https://github.com/Holagpt-ai/webxxl-website-system/pull/54), `7fc7e264fb6044d6f3984f9fe69ada3787ddb3da`. UI on `main`; CRM APIs remain flag-disabled at source defaults |
-| Batch 17A CRM core workflows | IN PR | Search/pagination, deal stage, task update, consent HTTP; branch `feature/batch-17a-crm-core-workflows`. Open for owner review |
+| Batch 17A CRM core workflows | IN PR | [PR #55](https://github.com/Holagpt-ai/webxxl-website-system/pull/55), head `a8edbedcc2cdb0bfcc645dd6d1481975a558c360`. Search/pagination, deal stage, task update, consent HTTP |
 | Batch 17B CRM UI (v0) | PLANNED | [`BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md). After 17A merge |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
