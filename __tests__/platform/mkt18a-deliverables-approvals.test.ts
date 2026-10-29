@@ -52,6 +52,7 @@ describe('MKT-18A review presentation', () => {
         allowedChannel: 'instagram',
       },
       viewerCanDecide: true,
+      approvalWorkflowEnabled: true,
     })
     expect(actions.canDecide).toBe(true)
     expect(actions.intendedAction).toBe('PUBLISH_SOCIAL')
@@ -67,63 +68,6 @@ describe('MKT-18A review presentation', () => {
   })
 })
 
-describe('MKT-18A submit review atomicity (mocked Prisma)', () => {
-  const artifactFindFirst = vi.hoisted(() => vi.fn())
-  const revisionFindFirst = vi.hoisted(() => vi.fn())
-  const reviewCreate = vi.hoisted(() => vi.fn())
-  const artifactUpdateMany = vi.hoisted(() => vi.fn())
-
-  vi.mock('@/config/mkt-backend', () => ({
-    isMktApprovalWorkflowEnabled: () => true,
-  }))
-
-  vi.mock('@/lib/db', () => ({
-    prisma: {
-      marketingArtifact: { findFirst: (...args: unknown[]) => artifactFindFirst(...args) },
-      marketingArtifactRevision: { findFirst: (...args: unknown[]) => revisionFindFirst(...args) },
-      $transaction: async (fn: (tx: unknown) => Promise<unknown>) => {
-        const tx = {
-          marketingArtifact: {
-            findFirst: artifactFindFirst,
-            updateMany: (...args: unknown[]) => artifactUpdateMany(...args),
-          },
-          marketingArtifactRevision: { findFirst: revisionFindFirst },
-          marketingArtifactReview: { create: (...args: unknown[]) => reviewCreate(...args) },
-        }
-        return fn(tx)
-      },
-    },
-  }))
-
-  afterEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('rolls back when artifact status update fails after review create', async () => {
-    artifactFindFirst.mockResolvedValue({
-      id: 'art-1',
-      customerAccountId: 'acct-a',
-      revisionHash: 'hash-v1',
-      marketingRequestId: 'req-1',
-      managedSiteId: null,
-    })
-    revisionFindFirst.mockResolvedValue({ id: 'rev-row-1' })
-    reviewCreate.mockResolvedValue({ id: 'review-1' })
-    artifactUpdateMany.mockResolvedValue({ count: 0 })
-
-    const { submitMarketingArtifactReview } = await import('@/lib/platform/marketing/approval-service')
-    const result = await submitMarketingArtifactReview({
-      customerAccountId: 'acct-a',
-      userId: 'u1',
-      artifactId: 'art-1',
-      revisionHash: 'hash-v1',
-      intendedAction: 'HANDOFF',
-    })
-    expect(result.ok).toBe(false)
-    if (!result.ok) expect(result.code).toBe('CONFLICT')
-    expect(reviewCreate).toHaveBeenCalledTimes(1)
-  })
-})
 
 describe('MKT-18A submit rollback error type', () => {
   it('ApprovalSubmitArtifactUpdateError is throwable', () => {

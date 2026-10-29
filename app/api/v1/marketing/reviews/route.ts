@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { isMktApprovalWorkflowEnabled } from '@/config/mkt-backend'
 import { listMarketingReviews } from '@/lib/platform/marketing/review-list-service'
 import { mktRouteError } from '@/lib/platform/marketing/api-response'
 import { mktResultHttpStatus } from '@/lib/platform/marketing/mkt-api-map'
@@ -30,6 +31,7 @@ export async function GET(request: Request) {
       marketingArtifactId,
       status,
       viewerCanDecide,
+      approvalWorkflowEnabled: isMktApprovalWorkflowEnabled(),
     })
     if (!listed.ok) {
       return NextResponse.json({ code: listed.code, message: listed.message }, { status: mktResultHttpStatus(listed.code) })

@@ -103,6 +103,7 @@ export type ListMarketingReviewsInput = {
   marketingArtifactId?: string
   status?: string
   viewerCanDecide: boolean
+  approvalWorkflowEnabled: boolean
 }
 
 export async function listMarketingReviews(
@@ -148,6 +149,7 @@ export async function listMarketingReviews(
     const allowedActions = reviewAllowedActions({
       review: row,
       viewerCanDecide: input.viewerCanDecide,
+      approvalWorkflowEnabled: input.approvalWorkflowEnabled,
       now,
     })
     return { ...row, effectiveStatus, allowedActions }

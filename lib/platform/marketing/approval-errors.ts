@@ -26,3 +26,13 @@ export class ApprovalSubmitArtifactUpdateError extends Error {
     this.name = 'ApprovalSubmitArtifactUpdateError'
   }
 }
+
+/** Thrown when an actionable pending review already exists for the artifact revision. */
+export class ApprovalSubmitDuplicatePendingError extends Error {
+  readonly code = 'APPROVAL_SUBMIT_DUPLICATE_PENDING' as const
+
+  constructor(message = 'An active review is already pending for this artifact revision') {
+    super(message)
+    this.name = 'ApprovalSubmitDuplicatePendingError'
+  }
+}

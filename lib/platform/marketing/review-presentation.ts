@@ -41,6 +41,7 @@ export function reviewAllowedActions(input: {
     allowedTarget?: string | null
   }
   viewerCanDecide: boolean
+  approvalWorkflowEnabled: boolean
   now?: Date
 }): {
   canDecide: boolean
@@ -50,7 +51,7 @@ export function reviewAllowedActions(input: {
 } {
   const effective = computeReviewEffectiveStatus(input.review, input.now)
   return {
-    canDecide: input.viewerCanDecide && effective === 'SUBMITTED',
+    canDecide: input.approvalWorkflowEnabled && input.viewerCanDecide && effective === 'SUBMITTED',
     intendedAction: input.review.intendedAction,
     allowedChannel: input.review.allowedChannel ?? null,
     allowedTarget: input.review.allowedTarget ?? null,

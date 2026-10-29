@@ -115,7 +115,8 @@ Preserve **`GET /api/v1/marketing/requests/[id]/artifacts`** for request-scoped 
 **UI rules**
 
 - Treat **`effectiveStatus`** (not artifact `reviewStatus` alone) as the inbox truth for pending/expired.
-- **`allowedActions.canDecide`** is true only for owners (or staff where applicable) with `marketing.artifact.review`, when `effectiveStatus === SUBMITTED'`.
+- **`allowedActions.canDecide`** is true only when `MKT_APPROVAL_WORKFLOW_ENABLED` is on, the viewer has `marketing.artifact.review`, and `effectiveStatus === 'SUBMITTED'`.
+- **`POST .../submit-review`** returns **`409 CONFLICT`** when an active pending review already exists for the same artifact revision (artifact CAS + pending guard).
 - Decide via existing **`POST /api/v1/marketing/reviews/[id]/decide`** (`APPROVED` | `REJECTED`).
 - Submit via existing **`POST /api/v1/marketing/artifacts/[id]/submit-review`**.
 
