@@ -1,7 +1,13 @@
-import { COMMS_CONVERSATION_STALE_MINUTES, COMMS_LIST_MAX_TAKE } from '@/config/comms-backend'
+import { COMMS_CONVERSATION_STALE_MINUTES } from '@/config/comms-backend'
 import { prisma } from '@/lib/db'
+import { buildConversationKeysetWhere, encodeConversationListCursor } from '@/lib/platform/comms/comms-conversation-sort'
+import { decodeCommsListCursor } from '@/lib/platform/comms/comms-list-cursor'
+import {
+  parseConversationListTake,
+  resolveVerifiedInboxExternalId,
+} from '@/lib/platform/comms/conversation-list-validation'
 import type { CommsConversationFilter, CommsResult } from '@/lib/platform/comms/types'
-import type { CommsConversationStatus } from '@prisma/client'
+import type { CommsConversationStatus, Prisma } from '@prisma/client'
 
 export type ConversationSummary = {
   id: string
@@ -14,7 +20,31 @@ export type ConversationSummary = {
   lastSyncAt: Date | null
   syncStale: boolean
   coverageState: string
+  needsAttention: boolean
 }
+
+export type ConversationDetail = ConversationSummary & {
+  assignedUserRef: string | null
+  priority: string
+  syncError: string | null
+  inboxMappingId: string | null
+  crmContact: { id: string; displayName: string | null } | null
+  crmTimelinePath: string | null
+  tenantVerificationState: string | null
+  providerConnected: boolean
+  transcriptAvailable: false
+  transcriptNote: string
+}
+
+const FILTER_VALUES: CommsConversationFilter[] = [
+  'open',
+  'pending',
+  'resolved',
+  'assigned',
+  'assigned_to_me',
+  'unassigned',
+  'needs_attention',
+]
 
 function isSyncStale(lastSyncAt: Date | null, now: Date): boolean {
   if (!lastSyncAt) return true
@@ -33,22 +63,20 @@ export function translateChatwootConversationStatus(providerStatus: string): Com
   return mapProviderStatus(providerStatus)
 }
 
-export async function listAccountConversations(input: {
-  customerAccountId: string
-  filter?: CommsConversationFilter
-  assignedUserRef?: string
-  take?: number
-}): Promise<CommsResult<ConversationSummary[]>> {
-  const take = Math.min(Math.max(input.take ?? 50, 1), COMMS_LIST_MAX_TAKE)
-  const now = new Date()
-  const where: {
-    customerAccountId: string
-    webxxlStatus?: CommsConversationStatus
-    assignedUserRef?: string | null
-    syncError?: { not: null }
-  } = { customerAccountId: input.customerAccountId }
+function parseFilter(raw: string | undefined): CommsResult<CommsConversationFilter | undefined> {
+  if (!raw) return { ok: true, value: undefined }
+  if (!FILTER_VALUES.includes(raw as CommsConversationFilter)) {
+    return { ok: false, code: 'VALIDATION', message: 'Invalid conversation filter' }
+  }
+  return { ok: true, value: raw as CommsConversationFilter }
+}
 
-  switch (input.filter) {
+function applyStatusFilter(
+  where: Prisma.ChatwootConversationMappingWhereInput,
+  filter: CommsConversationFilter | undefined,
+  assignedUserRef?: string,
+): void {
+  switch (filter) {
     case 'open':
       where.webxxlStatus = 'OPEN'
       break
@@ -58,8 +86,11 @@ export async function listAccountConversations(input: {
     case 'resolved':
       where.webxxlStatus = 'RESOLVED'
       break
+    case 'assigned':
+      where.assignedUserRef = { not: null }
+      break
     case 'assigned_to_me':
-      where.assignedUserRef = input.assignedUserRef
+      where.assignedUserRef = assignedUserRef
       break
     case 'unassigned':
       where.assignedUserRef = null
@@ -70,52 +101,146 @@ export async function listAccountConversations(input: {
     default:
       break
   }
+}
+
+function toSummary(row: {
+  id: string
+  externalConversationId: string
+  externalInboxId: string
+  webxxlStatus: CommsConversationStatus
+  channel: string
+  crmContactId: string | null
+  lastActivityAt: Date | null
+  lastSyncAt: Date | null
+  coverageState: string
+  syncError: string | null
+  updatedAt: Date
+}, now: Date): ConversationSummary {
+  return {
+    id: row.id,
+    externalConversationId: row.externalConversationId,
+    externalInboxId: row.externalInboxId,
+    webxxlStatus: row.webxxlStatus,
+    channel: row.channel,
+    crmContactId: row.crmContactId,
+    lastActivityAt: row.lastActivityAt,
+    lastSyncAt: row.lastSyncAt,
+    syncStale: isSyncStale(row.lastSyncAt, now),
+    coverageState: row.coverageState,
+    needsAttention: Boolean(row.syncError),
+  }
+}
+
+export async function listAccountConversations(input: {
+  customerAccountId: string
+  filter?: string
+  assignedUserRef?: string
+  inboxId?: string
+  channel?: string
+  take?: number
+  cursor?: string
+}): Promise<CommsResult<{ conversations: ConversationSummary[]; nextCursor?: string }>> {
+  const filter = parseFilter(input.filter)
+  if (!filter.ok) return filter
+
+  const takeParsed = parseConversationListTake(input.take)
+  if (!takeParsed.ok) return takeParsed
+  const take = takeParsed.value
+  const now = new Date()
+
+  let where: Prisma.ChatwootConversationMappingWhereInput = { customerAccountId: input.customerAccountId }
+  applyStatusFilter(where, filter.value, input.assignedUserRef)
+
+  if (input.inboxId) {
+    const inbox = await resolveVerifiedInboxExternalId({
+      customerAccountId: input.customerAccountId,
+      inboxId: input.inboxId,
+    })
+    if (!inbox.ok) return inbox
+    where.externalInboxId = inbox.value
+  }
+
+  if (input.channel) {
+    where.channel = input.channel
+  }
+
+  if (input.cursor) {
+    const decoded = decodeCommsListCursor(input.cursor)
+    if (!decoded.ok) return decoded
+    where = buildConversationKeysetWhere(where, decoded.value)
+  }
 
   const rows = await prisma.chatwootConversationMapping.findMany({
     where,
-    orderBy: { lastActivityAt: 'desc' },
+    orderBy: [
+      { lastActivityAt: { sort: 'desc', nulls: 'last' } },
+      { updatedAt: 'desc' },
+      { id: 'asc' },
+    ],
     take,
   })
 
-  return {
-    ok: true,
-    value: rows.map((row) => ({
-      id: row.id,
-      externalConversationId: row.externalConversationId,
-      externalInboxId: row.externalInboxId,
-      webxxlStatus: row.webxxlStatus,
-      channel: row.channel,
-      crmContactId: row.crmContactId,
-      lastActivityAt: row.lastActivityAt,
-      lastSyncAt: row.lastSyncAt,
-      syncStale: isSyncStale(row.lastSyncAt, now),
-      coverageState: row.coverageState,
-    })),
+  const conversations = rows.map((row) => toSummary(row, now))
+
+  let nextCursor: string | undefined
+  if (rows.length === take) {
+    const last = rows[rows.length - 1]!
+    nextCursor = encodeConversationListCursor(last)
   }
+
+  return { ok: true, value: { conversations, nextCursor } }
 }
 
 export async function getAccountConversation(input: {
   customerAccountId: string
   conversationMappingId: string
-}): Promise<CommsResult<ConversationSummary>> {
+}): Promise<CommsResult<ConversationDetail>> {
   const row = await prisma.chatwootConversationMapping.findFirst({
     where: { id: input.conversationMappingId, customerAccountId: input.customerAccountId },
+    include: {
+      tenantMapping: { select: { verificationState: true, revokedAt: true } },
+      crmContact: { select: { id: true, customerAccountId: true, givenName: true, familyName: true, preferredName: true } },
+    },
   })
   if (!row) return { ok: false, code: 'NOT_FOUND', message: 'Conversation not found' }
+
+  const inbox = await prisma.chatwootInboxMapping.findFirst({
+    where: { customerAccountId: input.customerAccountId, externalInboxId: row.externalInboxId },
+    select: { id: true },
+  })
+
+  let crmContact: ConversationDetail['crmContact'] = null
+  let crmTimelinePath: string | null = null
+  if (row.crmContact && row.crmContact.customerAccountId === input.customerAccountId) {
+    const displayName =
+      row.crmContact.preferredName?.trim() ||
+      [row.crmContact.givenName, row.crmContact.familyName].filter(Boolean).join(' ').trim() ||
+      null
+    crmContact = { id: row.crmContact.id, displayName }
+    crmTimelinePath = `/api/v1/crm/contacts/${row.crmContact.id}/timeline`
+  }
+
   const now = new Date()
+  const authorizedContactId = crmContact ? row.crmContactId : null
+  const summary = toSummary({ ...row, crmContactId: authorizedContactId }, now)
+  const providerConnected =
+    row.tenantMapping.revokedAt == null && row.tenantMapping.verificationState === 'VERIFIED'
+
   return {
     ok: true,
     value: {
-      id: row.id,
-      externalConversationId: row.externalConversationId,
-      externalInboxId: row.externalInboxId,
-      webxxlStatus: row.webxxlStatus,
-      channel: row.channel,
-      crmContactId: row.crmContactId,
-      lastActivityAt: row.lastActivityAt,
-      lastSyncAt: row.lastSyncAt,
-      syncStale: isSyncStale(row.lastSyncAt, now),
-      coverageState: row.coverageState,
+      ...summary,
+      assignedUserRef: row.assignedUserRef,
+      priority: row.priority,
+      syncError: row.syncError,
+      inboxMappingId: inbox?.id ?? null,
+      crmContact,
+      crmTimelinePath,
+      tenantVerificationState: row.tenantMapping.verificationState,
+      providerConnected,
+      transcriptAvailable: false,
+      transcriptNote:
+        'Message transcript is not stored in WebXXL for customer read; use CRM timeline for linked contact history when authorized.',
     },
   }
 }

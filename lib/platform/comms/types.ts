@@ -26,6 +26,7 @@ export type CommsConversationFilter =
   | 'open'
   | 'pending'
   | 'resolved'
+  | 'assigned'
   | 'assigned_to_me'
   | 'unassigned'
   | 'needs_attention'

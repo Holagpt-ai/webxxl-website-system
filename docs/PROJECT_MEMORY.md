@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-29 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `6ff105cf2334a9039d1d57d2dc0a3df878ad1730` (PR #59)
+**Evidence review:** 2026-10-29 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `8b7cd4daf84ccd5f8ad3bd5af98fd8fb7b4b356e` (PR #60)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -57,8 +57,9 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Vercel production SHA (2026-10-29, PR #58) | DEPLOYED | Owner-reported Vercel deployment `dpl_96p6EHuXyMrB1bWxR3uTFCyBMnYo`, state **READY**, SHA `fa2a13a11e6200b542cfe978f96cd67b184dfb0c`. SHA only. Not migration or activation |
 | Vercel production SHA (2026-10-29, PR #59) | DEPLOYED | Owner-reported Vercel deployment `dpl_J5FdQqN19DQQDZdDuCb9x1YeNw3Z`, state **READY**, SHA `6ff105cf2334a9039d1d57d2dc0a3df878ad1730`. SHA only. Not migration or activation |
 | Batch 19A Local SEO stored intelligence | MERGED | [PR #59](https://github.com/Holagpt-ai/webxxl-website-system/pull/59), `6ff105cf2334a9039d1d57d2dc0a3df878ad1730`. GSC stored read APIs + 19A.1 integrity |
-| Batch 19B Local SEO UI (v0) | DELIVERED | `v0/local-seo-ui-19b` @ `59315094ed30d4e80e35b403cbc9def333280a21`. [`BATCH19B-LOCAL-SEO-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH19B-LOCAL-SEO-UI-INTEGRATION-CONTRACT.md) |
-| Batch 19C Local SEO UI integration | IN PR | Cursor ff-merge v0 19B + 19C fixes (limitations, cursor recovery); `.v0tmp` removed |
+| Vercel production SHA (2026-10-29, PR #60) | DEPLOYED | Owner-reported Vercel deployment `dpl_8rCQNVbuHAxxcC7kVmEGDh2oZyaT`, state **READY**, SHA `8b7cd4daf84ccd5f8ad3bd5af98fd8fb7b4b356e`. SHA only. Not migration or activation |
+| Batch 19B+19C Local SEO UI (v0 + integration) | MERGED | [PR #60](https://github.com/Holagpt-ai/webxxl-website-system/pull/60), `8b7cd4daf84ccd5f8ad3bd5af98fd8fb7b4b356e`. v0 @ `59315094`. [`BATCH19B-LOCAL-SEO-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH19B-LOCAL-SEO-UI-INTEGRATION-CONTRACT.md) |
+| Batch 20A Unified comms inbox foundation | IN PR | Read APIs + [`BATCH20B-COMMUNICATIONS-UI-CONTRACT.md`](platform/docs/BATCH20B-COMMUNICATIONS-UI-CONTRACT.md); no live Chatwoot/outbound |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.
