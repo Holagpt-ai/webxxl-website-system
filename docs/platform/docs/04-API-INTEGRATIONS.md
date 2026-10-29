@@ -85,13 +85,14 @@ The server recomputes/validates all IDs from actor membership, not from user inp
 | `POST /api/v1/communications/quotes` | `comms.quote` | channel, purpose, recipient scope | dry-run eligibility counts; **COST_UNAVAILABLE** without configured unit cost |
 | `POST /api/v1/communications/intents` | `comms.intent.prepare` | channel, purpose, recipient, idempotency | immutable content hash + policy decision; **no dispatch** |
 | `GET /api/v1/communications/intents/{id}` | `comms.read` | — | intent status, recipients, dispatch attempts (metadata only) |
-| `GET /api/v1/communications/inboxes` | `comms.read` | — | verified Chatwoot inbox mappings for operating account |
-| `GET /api/v1/communications/connections` | `comms.read` | — | Chatwoot mapping state; outbound flags honest OFF |
+| `GET /api/v1/communications/inboxes` | `comms.read` | — | all inbox mappings with visibility/sync state (no secrets) |
+| `GET /api/v1/communications/connections` | `comms.read` | — | Chatwoot configured/pending/revoked/stale summary; outbound flags honest |
+| `GET /api/v1/communications/conversations/{id}` | `comms.read` | — | account-scoped detail + CRM link; **metadata only** (`transcriptAvailable: false`) |
 | `POST /api/v1/communications/webhooks/chatwoot` | relay HMAC | signed body + idempotency | **503 until** `CHATWOOT_WEBHOOK_INGEST_ENABLED` + relay secret; quarantine unknown tenants |
 | `POST /api/v1/communications/campaigns` | campaign creator | draft + consent scope | DRAFT only, immutable revision hash |
 | `POST /api/v1/communications/campaigns/{id}/approve` | authorized approver | exact hash, budget | authorization; reserve credits transactionally |
 | `POST /api/v1/communications/campaigns/{id}/dispatch` | service actor | approved campaign | enqueue per-recipient messages; never bypass wallet |
-| `GET /api/v1/communications/conversations` | account inbox user | inbox/account filters | Chatwoot links and histories (redaction as needed) |
+| `GET /api/v1/communications/conversations` | `comms.read` | `filter`, `inboxId`, `channel`, `take`, `cursor` | stored mapping summaries; cursor pagination; no raw webhook payloads |
 | `GET /api/v1/social/connections` | account social manager | site/account | authorized connected social identities only |
 | `POST /api/v1/social/campaigns` | content creator | brief/platforms/cadence | DRAFT campaign |
 | `POST /api/v1/social/campaigns/{id}/approve` | business approver | artifact version, channels, dates | immutable policy approval |
