@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import useSWR from 'swr'
 import { WorkspaceError, workspaceGet } from '@/lib/crm-ui/workspace'
 
@@ -55,4 +55,18 @@ export function useCursorStack(resetKey: string) {
   const first = useCallback(() => setState({ key: resetKey, stack: [] }), [resetKey])
 
   return { cursor: stack.at(-1), page: stack.length + 1, hasPrevious: stack.length > 0, next, previous, first }
+}
+
+/** Reset opaque cursor paging when the API rejects a stale or malformed cursor. */
+export function useRecoverInvalidCursor(error: WorkspaceError | undefined, hasCursor: boolean, reset: () => void) {
+  const recovered = useRef(false)
+  useEffect(() => {
+    if (!error || error.kind !== 'VALIDATION' || !hasCursor) {
+      recovered.current = false
+      return
+    }
+    if (recovered.current) return
+    recovered.current = true
+    reset()
+  }, [error, hasCursor, reset])
 }

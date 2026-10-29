@@ -15,6 +15,7 @@ export type PortalModuleKey =
   | 'domains'
   | 'email'
   | 'crm'
+  | 'communications'
   | 'marketingStudio'
   | 'billing'
   | 'seo'
@@ -46,6 +47,7 @@ const REGISTRY: PortalModule[] = [
   { key: 'domains', navLabel: 'domains', icon: 'globe', enabled: false, entitlementRequired: 'domains', statusSource: 'customerService' },
   { key: 'email', navLabel: 'email', icon: 'mail', enabled: false, entitlementRequired: 'email', statusSource: 'customerService' },
   { key: 'crm', navLabel: 'crm', icon: 'contact', enabled: false, entitlementRequired: 'crm', statusSource: 'customerService' },
+  { key: 'communications', navLabel: 'communications', icon: 'headphones', enabled: true, statusSource: 'static' },
   {
     key: 'marketingStudio',
     navLabel: 'marketingStudio',
@@ -86,6 +88,13 @@ export function getDashboardNavModules(): PortalModule[] {
     { key: 'billing', navLabel: 'billingCredits', route: '/dashboard/billing', icon: 'card', enabled: true },
     { key: 'analytics', navLabel: 'analytics', route: '/dashboard/analytics', icon: 'chart', enabled: true },
     { key: 'crm', navLabel: 'crm', route: '/dashboard/crm', icon: 'contact', enabled: true },
+    {
+      key: 'communications',
+      navLabel: 'communications',
+      route: '/dashboard/communications',
+      icon: 'headphones',
+      enabled: true,
+    },
     { key: 'marketingStudio', navLabel: 'marketingStudio', route: '/dashboard/marketing', icon: 'megaphone', enabled: true },
     { key: 'seo', navLabel: 'seo', route: '/dashboard/seo', icon: 'search', enabled: true },
     { key: 'ai', navLabel: 'aiEmployees', route: '/dashboard/ai-employees', icon: 'bot', enabled: true },

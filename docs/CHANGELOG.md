@@ -31,6 +31,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-10-29 | Vercel production deployment of `6ff105c` (PR #59) | Owner deployment `dpl_J5FdQqN19DQQDZdDuCb9x1YeNw3Z`, READY | DEPLOYED SHA only |
 | 2026-10-29 | Batch 19B Local SEO UI (v0) + Batch 19C integration | [PR #60](https://github.com/Holagpt-ai/webxxl-website-system/pull/60), `8b7cd4daf84ccd5f8ad3bd5af98fd8fb7b4b356e`, v0 `59315094` | MERGED. UI wired to 19A APIs. Not activated |
 | 2026-10-29 | Vercel production deployment of `8b7cd4d` (PR #60) | Owner deployment `dpl_8rCQNVbuHAxxcC7kVmEGDh2oZyaT`, READY | DEPLOYED SHA only |
-| 2026-10-29 | Batch 20A Unified comms inbox foundation | Open PR, branch `feature/batch-20a-comms-inbox` | IN PR. Read-only inbox APIs + BATCH20B contract. Not activated |
+| 2026-10-29 | Batch 20A Unified comms inbox foundation (+ 20A.1 integrity) | [PR #61](https://github.com/Holagpt-ai/webxxl-website-system/pull/61), `1389b328b07a17bd242179816448791477f3dd27` | MERGED. Read-only inbox APIs + BATCH20B contract. Not activated |
+| 2026-10-29 | Vercel production deployment of `1389b32` (PR #61) | Owner deployment `dpl_GEbx95vE3hxF3M3vRkfmW3Y16pXH`, READY | DEPLOYED SHA only |
+| 2026-10-29 | Batch 20B Communications UI (v0) + Batch 20C integration | Open PR, branch `feature/batch-20c-comms-ui-integration`, v0 `efa20676` | IN PR. UI + nav wired to 20A APIs. Not activated |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

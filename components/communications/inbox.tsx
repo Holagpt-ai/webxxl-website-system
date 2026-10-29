@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { EmptyState } from '@/components/dashboard/primitives'
 import { LoadingRows, PlainTable, Section, StatusPill, selectClass, td } from '@/components/crm/workspace-kit'
 import { enumLabel, fill, formatDateTime, withQuery } from '@/lib/crm-ui/workspace'
-import { useComms, useCursorStack } from '@/lib/comms-ui/use-comms'
+import { useComms, useCursorStack, useRecoverInvalidCursor } from '@/lib/comms-ui/use-comms'
 import {
   COMMS_API,
   COMMS_PAGE_SIZE,
@@ -45,6 +45,7 @@ export function CommsInbox({ accountId, locale, copy, base, crmContactsBase }: C
     withQuery(COMMS_API.conversations, { take: COMMS_PAGE_SIZE, filter, inboxId, channel, cursor: pages.cursor }),
     accountId,
   )
+  useRecoverInvalidCursor(list.error, Boolean(pages.cursor), pages.first)
 
   const channelOptions = useMemo(() => {
     const set = new Set<string>()
@@ -214,10 +215,10 @@ export function CommsInbox({ accountId, locale, copy, base, crmContactsBase }: C
               <td className={`${td} whitespace-nowrap`}>
                 {row.crmContactId ? (
                   <Link
-                    href={`${crmContactsBase}/${encodeURIComponent(row.crmContactId)}`}
+                    href={`${base}/conversations/${encodeURIComponent(row.id)}`}
                     className="text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    {c.openContact}
+                    {c.openDetail}
                   </Link>
                 ) : (
                   <span className="text-muted-foreground">{c.notLinked}</span>

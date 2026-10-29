@@ -1,8 +1,7 @@
 # Batch 20B — Unified communications inbox UI contract (v0.app)
 
-**Status:** Backend Batch 20A read APIs on owner-review PR; **UI not started**.  
-**Baseline:** GitHub `main` after Batch 19B+19C merge (`8b7cd4daf84ccd5f8ad3bd5af98fd8fb7b4b356e`, PR #60).  
-**UI owner:** v0.app. **Backend owner:** Cursor (frozen for Stage B).
+**Status:** Backend Batch 20A **MERGED** (PR #61, `1389b328b07a17bd242179816448791477f3dd27`). UI delivered on `v0/communications-ui-20b` @ `efa206760ae076118a9c4c7c4fb7b6a716166f66`; Batch **20C** integrates UI + portal nav on owner-review PR.  
+**UI owner:** v0.app (Stage B complete). **Integration owner:** Cursor.
 
 Reserved customer routes (create in Batch 20B only; **do not** edit `/dashboard/messages` or shared dashboard nav in 20A):
 
@@ -173,7 +172,9 @@ When `crmContact` is present, deep-link to `/dashboard/crm/contacts/[contactId]`
 | `components/communications/**` | Inbox table, filters, detail header, connection cards |
 | `lib/comms-ui/**` | Fetch helpers, types, cursor recovery |
 
-Cursor will wire dashboard navigation **after** v0 handoff (not in 20A).
+Batch **20C** wires dashboard navigation via `lib/portal/modules.ts` (Communications vs project **Messages**).
+
+Inbox list rows with a linked contact id route to **conversation detail** first; CRM contact opens only from detail after server-side account validation.
 
 ## Verification (owner)
 
