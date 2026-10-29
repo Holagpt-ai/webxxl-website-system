@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import { getPageContext } from '@/lib/i18n/server'
 import { PageTitle } from '@/components/dashboard/primitives'
 import { WorkspaceIntro, WorkspaceSubnav } from '@/components/crm/workspace-kit'
-import { getSeoCopy, seoBase } from '@/lib/seo-workspace-ui/server'
+import { getSeoCopy, seoBase } from '@/lib/local-seo-ui/server'
 
 export default async function SeoLayout({
   children,

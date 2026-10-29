@@ -12,8 +12,8 @@ import {
 } from '@/components/crm/workspace-kit'
 import { useWorkspace } from '@/lib/crm-ui/use-workspace'
 import { enumLabel, fill, formatDateTime, formatNumber, withQuery } from '@/lib/crm-ui/workspace'
-import { SEO_API, type SeoOpportunity } from '@/lib/seo-workspace-ui/types'
-import type { SeoViewProps } from '@/lib/seo-workspace-ui/server'
+import { SEO_API, type SeoOpportunity } from '@/lib/local-seo-ui/types'
+import type { SeoViewProps } from '@/lib/local-seo-ui/server'
 import { LEVEL_TONE, SiteBar, useSelectedSite } from './shared'
 
 const TAKE = 50

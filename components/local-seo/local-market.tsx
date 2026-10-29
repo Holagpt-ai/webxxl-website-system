@@ -21,8 +21,8 @@ import {
   type CompetitorMarket,
   type CompetitorProfile,
   type CreateMarketResult,
-} from '@/lib/seo-workspace-ui/types'
-import type { SeoViewProps } from '@/lib/seo-workspace-ui/server'
+} from '@/lib/local-seo-ui/types'
+import type { SeoViewProps } from '@/lib/local-seo-ui/server'
 import { SiteBar, useSelectedSite } from './shared'
 
 export function SeoLocalMarketView({ accountId, locale, copy, sites }: SeoViewProps) {

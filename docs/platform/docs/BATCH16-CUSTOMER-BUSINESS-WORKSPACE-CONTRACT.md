@@ -320,6 +320,8 @@ v0 stops editing the Stage B paths before Cursor starts.
 
 No stage transfers ownership of `app/api/**` or `lib/platform/**` to v0.app.
 
+**Stage C path reconciliation (Batch 16C):** v0.app’s first Local SEO delivery used `components/seo-workspace/**`, `lib/seo-workspace-ui/**`, and `seo-workspace-en.ts` / `seo-workspace-es.ts`. Cursor renamed those paths to the Stage B names in this contract (`components/local-seo/**`, `lib/local-seo-ui/**`, `local-seo-workspace-en.ts`, `local-seo-workspace-es.ts`) with import updates only. No other Stage B visual files were edited.
+
 ## 7. Missing backend items
 
 These are gaps for a later Cursor batch. They are not v0 workarounds and not permission to invent responses.

@@ -1,6 +1,6 @@
 # Route and Navigation Register
 
-**Inventory date:** 2026-10-26 · **Source:** `main` `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` · **Checker:** `scripts/validate-routes.mjs`
+**Inventory date:** 2026-10-29 · **Source:** integration branch over `main` `69981c4c9576e8cc43ebe83aa2b486f27db5a6f3` · **Checker:** `scripts/validate-routes.mjs`
 
 Locales are `en` (unprefixed) and `es` (`/es/...`), via `proxy.ts` and `app/[locale]`. A nav href is unprefixed. The checker strips `[locale]` and requires an exact `page.tsx`. Dynamic segments such as `[siteId]` are real routes; they are not treated as broken links.
 
@@ -32,7 +32,9 @@ All of these exist as `app/[locale]/dashboard/**/page.tsx`. They are authenticat
 
 `/dashboard`, `/dashboard/project`, `/dashboard/sites`, `/dashboard/sites/[siteId]`, `/dashboard/files`, `/dashboard/messages`, `/dashboard/approvals`, `/dashboard/requests`, `/dashboard/review`, `/dashboard/support`, `/dashboard/services`, `/dashboard/marketplace`, `/dashboard/billing`, `/dashboard/analytics`, `/dashboard/ai-employees`, `/dashboard/notifications`, `/dashboard/settings/notifications`, `/dashboard/infrastructure`, `/dashboard/infrastructure/domains`, `/dashboard/infrastructure/email`, `/dashboard/infrastructure/hosting`.
 
-`getDashboardNavModules()` points at the overview, project, core portal, marketplace, billing, analytics, and AI employees routes. Infrastructure and notification links are present in source because `infrastructureManagement` and `automationNotifications` are `true` in `config/features.ts`. Registry keys such as `scheduler` have no `route` and are not pages.
+**Batch 16 customer workspaces (IN PR, not on production `main` until merge):** 25 locked routes under `/dashboard/crm/**` (9 pages), `/dashboard/marketing/**` (10 pages), and `/dashboard/seo/**` (6 pages). English unprefixed and Spanish `/es/dashboard/...` variants resolve via `app/[locale]/dashboard/`. Dynamic segments: `/dashboard/crm/contacts/[contactId]`, `/dashboard/marketing/requests/[requestId]`, `/dashboard/marketing/deliverables/[artifactId]`, `/dashboard/marketing/campaigns/[campaignId]`. `/dashboard/social`, `/dashboard/communications`, and `/dashboard/crm/leads` are not part of Batch 16.
+
+`getDashboardNavModules()` includes CRM → `/dashboard/crm`, Marketing Studio → `/dashboard/marketing`, and Local SEO → `/dashboard/seo`, plus the overview, project, core portal, marketplace, billing, analytics, and AI employees routes. Infrastructure and notification links are present in source because `infrastructureManagement` and `automationNotifications` are `true` in `config/features.ts`. Registry keys such as `scheduler` have no `route` and are not pages. Nav visibility is not authorization; CRM, Marketing, and SEO APIs remain flag-disabled at source defaults.
 
 ## Admin
 
@@ -55,4 +57,4 @@ Route handlers under `app/api`, MERGED, not indexed:
 
 Planned screens in [`docs/platform/docs/05-SITEMAP-WIREFRAMES.md`](platform/docs/05-SITEMAP-WIREFRAMES.md) are targets until a `page.tsx` exists. The checker does not invent those paths.
 
-Batch 16A locks the customer workspace paths in [`docs/platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md`](platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md): `/dashboard/crm/**`, `/dashboard/marketing/**`, and `/dashboard/seo/**`. Those `page.tsx` files do not exist yet, so they are not registered in `getDashboardNavModules()`. `/dashboard/social`, `/dashboard/communications`, and `/dashboard/crm/leads` are not part of that lock.
+Batch 16A contract: [`docs/platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md`](platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md). Implementation is on the Batch 16B + 16C integration pull request (open for owner review).

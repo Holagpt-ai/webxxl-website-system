@@ -1,4 +1,4 @@
-import type { SeoWorkspaceCopy } from './seo-workspace-en'
+import type { SeoWorkspaceCopy } from './local-seo-workspace-en'
 import { workspaceKitEs } from './crm-workspace-es'
 
 export const seoWorkspaceEs: SeoWorkspaceCopy = {

@@ -3,8 +3,8 @@ import { localizePath } from '@/lib/i18n/localize'
 import type { Locale } from '@/lib/i18n/config'
 import { requireCustomerMembership } from '@/lib/portal/authz'
 import { listManagedSitesForAccount } from '@/lib/managed-sites/queries'
-import { seoWorkspaceEn, type SeoWorkspaceCopy } from '@/lib/i18n/dictionaries/seo-workspace-en'
-import { seoWorkspaceEs } from '@/lib/i18n/dictionaries/seo-workspace-es'
+import { seoWorkspaceEn, type SeoWorkspaceCopy } from '@/lib/i18n/dictionaries/local-seo-workspace-en'
+import { seoWorkspaceEs } from '@/lib/i18n/dictionaries/local-seo-workspace-es'
 import type { ManagedSiteOption } from '@/lib/crm-ui/workspace'
 
 export function getSeoCopy(locale: string): SeoWorkspaceCopy {

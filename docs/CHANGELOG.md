@@ -15,5 +15,7 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-10-26 | Continuity correction | [PR #52](https://github.com/Holagpt-ai/webxxl-website-system/pull/52), `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` | MERGED. Documentation only. No flag or migration claim |
 | 2026-10-27 | Vercel production deployment of `2b7ec7b` (PR #52 on `main`) | GitHub deployment `7347386169`, state success | DEPLOYED SHA only. Not migration or activation |
 | 2026-10-28 | Batch 16A contract and continuity | [PR #53](https://github.com/Holagpt-ai/webxxl-website-system/pull/53), open | Documentation only. Contract not merged |
+| 2026-10-29 | Batch 16A contract | [PR #53](https://github.com/Holagpt-ai/webxxl-website-system/pull/53), `69981c4c9576e8cc43ebe83aa2b486f27db5a6f3` | MERGED. Documentation and contract on `main`. No flag or migration claim |
+| 2026-10-29 | Batch 16B customer workspace UI + Batch 16C integration | Combined integration PR (open) | Customer dashboard pages and nav wiring. Not merged. Not production-activated |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

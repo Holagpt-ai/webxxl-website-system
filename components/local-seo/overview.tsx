@@ -16,8 +16,8 @@ import {
 } from '@/components/crm/workspace-kit'
 import { useWorkspace } from '@/lib/crm-ui/use-workspace'
 import { DASH, enumLabel, formatDateTime, formatNumber } from '@/lib/crm-ui/workspace'
-import { SEO_API, type SeoOverview } from '@/lib/seo-workspace-ui/types'
-import type { SeoViewProps } from '@/lib/seo-workspace-ui/server'
+import { SEO_API, type SeoOverview } from '@/lib/local-seo-ui/types'
+import type { SeoViewProps } from '@/lib/local-seo-ui/server'
 import { DATA_TONE, LEVEL_TONE, SiteBar, useSelectedSite } from './shared'
 
 export function SeoOverviewView({ accountId, locale, copy, base, sites }: SeoViewProps) {

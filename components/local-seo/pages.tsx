@@ -17,8 +17,8 @@ import {
 } from '@/components/crm/workspace-kit'
 import { useAction, useWorkspace } from '@/lib/crm-ui/use-workspace'
 import { DASH, enumLabel, fill, formatDateTime, newIdempotencyKey, withQuery, workspaceSend } from '@/lib/crm-ui/workspace'
-import { SEO_API, type PageFinding, type ScanPreviewResult, type SitePage } from '@/lib/seo-workspace-ui/types'
-import type { SeoViewProps } from '@/lib/seo-workspace-ui/server'
+import { SEO_API, type PageFinding, type ScanPreviewResult, type SitePage } from '@/lib/local-seo-ui/types'
+import type { SeoViewProps } from '@/lib/local-seo-ui/server'
 import { LEVEL_TONE, SiteBar, useSelectedSite } from './shared'
 
 const TAKE = 100

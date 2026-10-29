@@ -12,8 +12,8 @@ import {
 } from '@/components/crm/workspace-kit'
 import { useWorkspace } from '@/lib/crm-ui/use-workspace'
 import { DASH, enumLabel, formatDate, formatDateTime, formatNumber, formatPercent } from '@/lib/crm-ui/workspace'
-import { SEO_API, type GscPerformance } from '@/lib/seo-workspace-ui/types'
-import type { SeoViewProps } from '@/lib/seo-workspace-ui/server'
+import { SEO_API, type GscPerformance } from '@/lib/local-seo-ui/types'
+import type { SeoViewProps } from '@/lib/local-seo-ui/server'
 import { DATA_TONE, SiteBar, useSelectedSite } from './shared'
 
 export function SeoKeywordsView({ accountId, locale, copy, sites }: SeoViewProps) {

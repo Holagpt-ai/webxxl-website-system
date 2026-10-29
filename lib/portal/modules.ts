@@ -15,6 +15,7 @@ export type PortalModuleKey =
   | 'domains'
   | 'email'
   | 'crm'
+  | 'marketingStudio'
   | 'billing'
   | 'seo'
   | 'ecommerce'
@@ -45,6 +46,14 @@ const REGISTRY: PortalModule[] = [
   { key: 'domains', navLabel: 'domains', icon: 'globe', enabled: false, entitlementRequired: 'domains', statusSource: 'customerService' },
   { key: 'email', navLabel: 'email', icon: 'mail', enabled: false, entitlementRequired: 'email', statusSource: 'customerService' },
   { key: 'crm', navLabel: 'crm', icon: 'contact', enabled: false, entitlementRequired: 'crm', statusSource: 'customerService' },
+  {
+    key: 'marketingStudio',
+    navLabel: 'marketingStudio',
+    icon: 'megaphone',
+    enabled: false,
+    entitlementRequired: 'marketing',
+    statusSource: 'customerService',
+  },
   { key: 'billing', navLabel: 'billing', icon: 'card', enabled: false, statusSource: 'static' },
   { key: 'seo', navLabel: 'seo', icon: 'search', enabled: false, entitlementRequired: 'seo', statusSource: 'customerService' },
   { key: 'ecommerce', navLabel: 'ecommerce', icon: 'cart', enabled: false, entitlementRequired: 'ecommerce', statusSource: 'customerService' },
@@ -76,6 +85,9 @@ export function getDashboardNavModules(): PortalModule[] {
     { key: 'ecommerce', navLabel: 'marketplace', route: '/dashboard/marketplace', icon: 'cart', enabled: true },
     { key: 'billing', navLabel: 'billingCredits', route: '/dashboard/billing', icon: 'card', enabled: true },
     { key: 'analytics', navLabel: 'analytics', route: '/dashboard/analytics', icon: 'chart', enabled: true },
+    { key: 'crm', navLabel: 'crm', route: '/dashboard/crm', icon: 'contact', enabled: true },
+    { key: 'marketingStudio', navLabel: 'marketingStudio', route: '/dashboard/marketing', icon: 'megaphone', enabled: true },
+    { key: 'seo', navLabel: 'seo', route: '/dashboard/seo', icon: 'search', enabled: true },
     { key: 'ai', navLabel: 'aiEmployees', route: '/dashboard/ai-employees', icon: 'bot', enabled: true },
     ...infrastructureNav,
     ...automationNav,

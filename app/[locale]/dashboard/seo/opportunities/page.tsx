@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
-import { getSeoPageProps } from '@/lib/seo-workspace-ui/server'
-import { SeoOpportunitiesView } from '@/components/seo-workspace/opportunities'
+import { getSeoPageProps } from '@/lib/local-seo-ui/server'
+import { SeoOpportunitiesView } from '@/components/local-seo/opportunities'
 
 export const dynamic = 'force-dynamic'
 
