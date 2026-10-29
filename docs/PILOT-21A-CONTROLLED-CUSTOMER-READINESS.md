@@ -1,6 +1,6 @@
 # Batch 21A — Controlled customer pilot readiness
 
-**Status:** Tooling and documentation on owner-review PR. **Not** production activation.  
+**Status:** Tooling and documentation on owner-review PR #63 (Batch 21A + 21A.1). **Not** production activation.  
 **Baseline `main`:** `16861d9c796dd5b808c4186bc4611e10f0a434a2` (PR #62).  
 **Production deploy (SHA only):** `dpl_6yeBmge7TwyYmeTKZaSGFKABoms9` — READY.
 
@@ -17,6 +17,13 @@ PILOT_READINESS_DB_PROBE=1 DATABASE_URL="postgresql://..." pnpm pilot:readiness
 ```
 
 Output distinguishes **APPLICATION_CODE**, **DATABASE_MIGRATION**, **BACKEND_FLAG**, **ENTITLEMENT_POLICY**, **PROVIDER_CONFIG**, **AUTHORIZED_ACCOUNT**, **AUTHENTICATED_TEST**, and **OPERATIONAL_CAPABILITY**. Build success does **not** imply operational readiness.
+
+When the optional DB probe runs, migration checks report **two** inventories:
+
+1. **Pilot module migrations** — CRM, COMMS, SEO, Marketing, Analytics folders listed below.
+2. **Full repository migration chain** — every folder under `prisma/migrations` (derived at runtime, not hand-maintained).
+
+A migration counts as **successfully completed** only when `_prisma_migrations` has `finished_at IS NOT NULL` and `rolled_back_at IS NULL`. Rows with null `finished_at` are **incomplete/failed** and must not be treated as applied. Rolled-back and missing migrations are reported separately. Matching history **does not** prove schema integrity, data correctness, or authenticated functionality.
 
 ## Synthetic pilot accounts (tests only)
 
@@ -37,7 +44,7 @@ Use `acct_unrelated_demo` as a third unrelated tenant in isolation tests. These 
 | Marketing | `20261018240000_mkt08_foundation` |
 | Analytics (optional pilot scope) | `20261021120000_analytics14_foundation`, `20261025120000_analytics15_ingestion`, `20261025180000_analytics151_rate_limit` |
 
-Production migration apply state remains **UNVERIFIED** until read from the target database.
+Production migration apply state remains **BLOCKED** or **UNVERIFIED** until the read-only probe succeeds against the target database.
 
 ## OPEN-001 / entitlements
 
@@ -74,4 +81,4 @@ Unavailable capabilities must surface honest **503** / disabled UI states.
 
 ## Focused tests
 
-`__tests__/platform/pilot21a-readiness.test.ts` — report shape, entitlements, isolation, navigation, locales.
+`__tests__/platform/pilot21a-readiness.test.ts` — migration completion states, module vs full-chain coverage, report shape, entitlements, isolation, navigation, locales.

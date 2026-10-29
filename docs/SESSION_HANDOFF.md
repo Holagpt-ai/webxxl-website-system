@@ -18,11 +18,11 @@
 
 ## This session
 
-Batch 21A: read-only `pnpm pilot:readiness` report, migration/entitlement dependency doc, synthetic two-account isolation tests, CI pilot regression, continuity for PR #62 merge/deploy.
+Batch 21A + **21A.1** on PR #63: read-only `pnpm pilot:readiness` (completed vs incomplete/rolled-back/missing migrations; pilot-module vs full `prisma/migrations` chain), migration/entitlement doc, synthetic two-account tests, CI pilot regression, continuity for PR #62 merge/deploy.
 
 ## Next assignment
 
-**Owner review** of Batch 21A PR. Then owner: OPEN-001 decisions, pilot-environment migrations (if authorized), flag enablement, authenticated EN/ES smoke — not inferred from CI.
+**Owner review** of Batch 21A PR #63 (includes 21A.1 migration accuracy). Then owner: OPEN-001 decisions, full-chain pilot-environment migrations (if authorized), flag enablement, authenticated EN/ES smoke — not inferred from CI.
 
 ## PENDING REPOSITORY SYNC
 

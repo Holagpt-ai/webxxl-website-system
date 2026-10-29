@@ -28,7 +28,13 @@ import {
 } from '@/config/wallet-backend'
 import { isWorkflowWorkerEnabled } from '@/config/workflow-backend'
 import { evaluateEntitlementAccess, getServiceEntitlement } from '@/lib/platform/entitlements'
+import {
+  analyzeMigrationCoverage,
+  formatMigrationCoverageDetail,
+  type MigrationCoverageSummary,
+} from '@/lib/platform/pilot/migration-probe-analyze'
 import { allPilotMigrationFolders } from '@/lib/platform/pilot/migration-prerequisites'
+import { allRepositoryMigrationFolders } from '@/lib/platform/pilot/migration-repository-chain'
 import type { PilotCheckResult, PilotReadinessReport } from '@/lib/platform/pilot/types'
 
 function check(
@@ -75,51 +81,114 @@ function entitlementCheck(entitlementKey: string, moduleLabel: string): PilotChe
 
 export type MigrationProbeResult =
   | { state: 'BLOCKED'; reason: string }
-  | { state: 'UNVERIFIED'; applied: string[]; missing: string[]; error?: string }
-  | { state: 'PASS'; applied: string[] }
-  | { state: 'FAIL'; applied: string[]; missing: string[] }
+  | { state: 'UNVERIFIED'; reason: string; error?: string }
+  | {
+      state: 'PROBED'
+      pilotModules: MigrationCoverageSummary
+      fullSchemaChain: MigrationCoverageSummary
+      /** Migration history match does not prove schema integrity, data correctness, or authenticated functionality. */
+      disclaimer: string
+    }
 
-export function assessMigrationProbe(probe: MigrationProbeResult): PilotCheckResult {
-  const expected = allPilotMigrationFolders()
+function assessMigrationCoverageCheck(
+  id: string,
+  label: string,
+  summary: MigrationCoverageSummary,
+  blockedReason?: string,
+): PilotCheckResult {
+  if (blockedReason) {
+    return check(
+      id,
+      label,
+      'DATABASE_MIGRATION',
+      'BLOCKED',
+      blockedReason,
+      `Expected folders when probed: ${summary.expected.join(', ')}`,
+    )
+  }
+  if (summary.status === 'PASS') {
+    return check(
+      id,
+      label,
+      'DATABASE_MIGRATION',
+      'PASS',
+      'All expected migrations successfully completed (finished_at set, not rolled back)',
+      formatMigrationCoverageDetail(summary),
+    )
+  }
+  return check(
+    id,
+    label,
+    'DATABASE_MIGRATION',
+    'FAIL',
+    'Migration chain incomplete or not successfully completed in target database',
+    formatMigrationCoverageDetail(summary),
+  )
+}
+
+export function assessMigrationProbeChecks(probe: MigrationProbeResult): PilotCheckResult[] {
+  const pilotExpected = allPilotMigrationFolders()
+  const fullExpected = allRepositoryMigrationFolders()
+  const emptyFullSummary = analyzeMigrationCoverage(fullExpected, [])
+
   switch (probe.state) {
     case 'BLOCKED':
-      return check(
-        'migrations.pilot_modules',
-        'Pilot module migrations',
-        'DATABASE_MIGRATION',
-        'BLOCKED',
-        probe.reason,
-        `Expected folders when probed: ${expected.join(', ')}`,
-      )
+      return [
+        assessMigrationCoverageCheck(
+          'migrations.pilot_modules',
+          'Pilot module migrations',
+          analyzeMigrationCoverage(pilotExpected, []),
+          probe.reason,
+        ),
+        assessMigrationCoverageCheck(
+          'migrations.full_schema_chain',
+          'Full repository migration chain',
+          emptyFullSummary,
+          probe.reason,
+        ),
+      ]
     case 'UNVERIFIED':
-      return check(
-        'migrations.pilot_modules',
-        'Pilot module migrations',
-        'DATABASE_MIGRATION',
-        'UNVERIFIED',
-        'Database not probed — migration apply state unknown',
-        probe.missing.length ? `Missing if DB matches repo: ${probe.missing.join(', ')}` : undefined,
-      )
-    case 'PASS':
-      return check(
-        'migrations.pilot_modules',
-        'Pilot module migrations',
-        'DATABASE_MIGRATION',
-        'PASS',
-        'All pilot module migrations reported applied',
-        probe.applied.join(', '),
-      )
-    case 'FAIL':
-      return check(
-        'migrations.pilot_modules',
-        'Pilot module migrations',
-        'DATABASE_MIGRATION',
-        'FAIL',
-        'Pilot module migrations missing in target database',
-        `Missing: ${probe.missing.join(', ')}`,
-      )
+      return [
+        check(
+          'migrations.pilot_modules',
+          'Pilot module migrations',
+          'DATABASE_MIGRATION',
+          'UNVERIFIED',
+          probe.reason,
+          probe.error,
+        ),
+        check(
+          'migrations.full_schema_chain',
+          'Full repository migration chain',
+          'DATABASE_MIGRATION',
+          'UNVERIFIED',
+          probe.reason,
+          probe.error,
+        ),
+      ]
+    case 'PROBED':
+      return [
+        assessMigrationCoverageCheck(
+          'migrations.pilot_modules',
+          'Pilot module migrations',
+          probe.pilotModules,
+        ),
+        assessMigrationCoverageCheck(
+          'migrations.full_schema_chain',
+          'Full repository migration chain',
+          probe.fullSchemaChain,
+          undefined,
+        ),
+      ]
   }
 }
+
+/** @deprecated Use assessMigrationProbeChecks — returns pilot-module check only for legacy callers. */
+export function assessMigrationProbe(probe: MigrationProbeResult): PilotCheckResult {
+  return assessMigrationProbeChecks(probe)[0]!
+}
+
+export { analyzeMigrationCoverage, formatMigrationCoverageDetail }
 
 export function buildPilotReadinessReport(input: {
   repositorySha: string
@@ -143,7 +212,7 @@ export function buildPilotReadinessReport(input: {
       'PASS',
       '/dashboard/messages remains project-scoped; /dashboard/communications is business inbox',
     ),
-    assessMigrationProbe(input.migrationProbe),
+    ...assessMigrationProbeChecks(input.migrationProbe),
   )
 
   checks.push(
@@ -226,7 +295,7 @@ export function buildPilotReadinessReport(input: {
 
   const ownerDecisionsRequired = [
     'Resolve OPEN-001 included-free eligibility cohort for core.crm, core.marketing-studio, core.local-seo, core.communications (no silent enrollment change).',
-    'Authorize target-environment `prisma migrate deploy` for pilot module migrations (see PILOT-21A migration table) — production apply is separate owner action.',
+    'Authorize target-environment `prisma migrate deploy` for the full repository migration chain (see `prisma/migrations` and PILOT-21A module table) — production apply is separate owner action.',
     'Explicitly enable per-module backend flags (CRM, MKT, SEO, COMMS, ANALYTICS) only after migrations and OPEN-001 decisions.',
     'Do not enable Chatwoot, Twilio, Resend, Postiz live publish, Google live ingestion, workflow workers, wallet settlement, or outbound comms without separate owner authorization.',
     'Provision or designate two non-production CustomerAccounts and memberships for internal pilot (synthetic ABMED accounts are test fixtures only).',

@@ -5,13 +5,17 @@
  */
 import { execSync } from 'node:child_process'
 import { PrismaClient } from '@prisma/client'
+import { analyzeMigrationCoverage } from '@/lib/platform/pilot/migration-probe-analyze'
+import { allPilotMigrationFolders } from '@/lib/platform/pilot/migration-prerequisites'
+import { allRepositoryMigrationFolders } from '@/lib/platform/pilot/migration-repository-chain'
 import {
-  assessMigrationProbe,
   buildPilotReadinessReport,
   summarizePilotReport,
   type MigrationProbeResult,
 } from '@/lib/platform/pilot/readiness-assess'
-import { allPilotMigrationFolders } from '@/lib/platform/pilot/migration-prerequisites'
+
+const MIGRATION_HISTORY_DISCLAIMER =
+  'Matching migration history does not prove schema integrity, data correctness, or authenticated functionality.'
 
 async function probeMigrations(): Promise<MigrationProbeResult> {
   if (process.env.PILOT_READINESS_DB_PROBE !== '1') {
@@ -23,19 +27,32 @@ async function probeMigrations(): Promise<MigrationProbeResult> {
   if (!process.env.DATABASE_URL?.trim()) {
     return { state: 'BLOCKED', reason: 'DATABASE_URL is not set' }
   }
-  const expected = allPilotMigrationFolders()
+
+  const pilotExpected = allPilotMigrationFolders()
+  const fullExpected = allRepositoryMigrationFolders()
   const prisma = new PrismaClient()
   try {
-    const rows = await prisma.$queryRaw<{ migration_name: string }[]>`
-      SELECT migration_name FROM "_prisma_migrations" WHERE rolled_back_at IS NULL
+    const rows = await prisma.$queryRaw<
+      { migration_name: string; finished_at: Date | null; rolled_back_at: Date | null }[]
+    >`
+      SELECT migration_name, finished_at, rolled_back_at
+      FROM "_prisma_migrations"
     `
-    const applied = new Set(rows.map((r) => r.migration_name))
-    const missing = expected.filter((m) => !applied.has(m))
-    if (missing.length === 0) return { state: 'PASS', applied: [...applied] }
-    return { state: 'FAIL', applied: [...applied], missing }
+    const pilotModules = analyzeMigrationCoverage(pilotExpected, rows)
+    const fullSchemaChain = analyzeMigrationCoverage(fullExpected, rows)
+    return {
+      state: 'PROBED',
+      pilotModules,
+      fullSchemaChain,
+      disclaimer: MIGRATION_HISTORY_DISCLAIMER,
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
-    return { state: 'UNVERIFIED', applied: [], missing: expected, error: message }
+    return {
+      state: 'UNVERIFIED',
+      reason: 'Database migration probe failed — apply state unknown',
+      error: message,
+    }
   } finally {
     await prisma.$disconnect()
   }
