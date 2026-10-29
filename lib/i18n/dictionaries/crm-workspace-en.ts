@@ -188,7 +188,7 @@ export const crmWorkspaceEn = {
       since: 'Since',
       importNote: 'Importing a contact does not establish consent.',
       readOnly: 'Consent cannot be recorded from this page.',
-      manageLink: 'Open CRM settings',
+      manageLink: 'Consent policy in CRM settings',
     },
     actionsTitle: 'Reach out',
     actions: { chat: 'Chat', sms: 'Send SMS', email: 'Send email', call: 'Call' },
@@ -370,7 +370,7 @@ export const crmWorkspaceEn = {
       {
         key: 'consent',
         title: 'Consent management',
-        body: 'Viewing and editing consent records is not available yet. The CRM never assumes someone has agreed to be contacted.',
+        body: 'Consent history and suppressions appear on each contact profile (read-only). Dashboard forms to record or revoke consent are not available yet. The CRM never assumes someone agreed to be contacted.',
         state: 'notAvailable',
       },
       {

@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-29 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `7fc7e264fb6044d6f3984f9fe69ada3787ddb3da` (PR #54)
+**Evidence review:** 2026-10-29 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `2ef9a90cd10222466faf0c6070995130456b7363` (PR #55)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -47,8 +47,10 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 16A workspace contract | MERGED | [PR #53](https://github.com/Holagpt-ai/webxxl-website-system/pull/53), `69981c4c9576e8cc43ebe83aa2b486f27db5a6f3`. [`BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md`](platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md) |
 | Vercel production SHA (2026-10-29, PR #54) | DEPLOYED | Owner-reported Vercel deployment `dpl_42XP6bJhgp8q9HnJntTQJ4w51McY`, READY, SHA `7fc7e264fb6044d6f3984f9fe69ada3787ddb3da`. SHA only. Not migration or activation |
 | Batch 16B+16C customer workspace | MERGED | [PR #54](https://github.com/Holagpt-ai/webxxl-website-system/pull/54), `7fc7e264fb6044d6f3984f9fe69ada3787ddb3da`. UI on `main`; CRM APIs remain flag-disabled at source defaults |
-| Batch 17A CRM core workflows | IN PR | [PR #55](https://github.com/Holagpt-ai/webxxl-website-system/pull/55), head `a8edbedcc2cdb0bfcc645dd6d1481975a558c360`. Search/pagination, deal stage, task update, consent HTTP |
-| Batch 17B CRM UI (v0) | PLANNED | [`BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md). After 17A merge |
+| Vercel production SHA (2026-10-29, PR #55) | DEPLOYED | Owner-reported Vercel deployment `dpl_Gg2dKg34vncTJ1GMpVyC8mpYRFXv`, READY, SHA `2ef9a90cd10222466faf0c6070995130456b7363`. SHA only. Not migration or activation |
+| Batch 17A CRM core workflows | MERGED | [PR #55](https://github.com/Holagpt-ai/webxxl-website-system/pull/55), `2ef9a90cd10222466faf0c6070995130456b7363`. Search/pagination, deal stage, task update, consent HTTP |
+| Batch 17B CRM UI (v0) | IN PR | v0 branch `v0/crm-ui-17b` @ `b1b4270294406a4f8f9dc00655f6b1f37e734f17`; integrated in Batch 17C PR. [`BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md) |
+| Batch 17C CRM UI integration | IN PR | Cursor ff-merge + narrow integration fixes, tests, continuity |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.

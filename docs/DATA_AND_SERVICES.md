@@ -6,7 +6,7 @@ Specifications: [`03-DATA-MODEL`](platform/docs/03-DATA-MODEL.md), [`04-API-INTE
 |---|---|---|---|---|
 | Identity and tenancy | Auth.js, Prisma `CustomerAccount`, `lib/platform/account-isolation.ts` | Supabase/PostgreSQL | MERGED | Production schema level UNVERIFIED |
 | Preview and review | Projects, immutable versions, owner approvals | GitHub, Vercel deployment ids | MERGED | Per-site approval is data, not a code flag |
-| CRM | `lib/platform/crm/**`, `/api/v1/crm/*` | Twenty adapter returns not configured until flags and mapping exist. Batch 17A adds search/pagination, deal stage PATCH, task PATCH, consent/suppression HTTP (IN PR until merge) | MERGED | `CRM_BACKEND_ENABLED` off; external sync not inferred |
+| CRM | `lib/platform/crm/**`, `/api/v1/crm/*`, `lib/crm-ui/**`, `components/crm/**` | Twenty adapter returns not configured until flags and mapping exist. Batch 17A HTTP merged on `main`. Batch 17B/17C wires customer CRM UI to those routes (IN PR until merge) | MERGED (backend); UI IN PR | `CRM_BACKEND_ENABLED` off; external sync not inferred |
 | Communications | `lib/platform/comms/**` | Chatwoot, SMS, email candidates | MERGED | No live send inferred |
 | Marketing and social | `lib/platform/marketing/**`, `lib/platform/social/**` | Postiz adapter | MERGED | Publishing off until authorized |
 | SEO and analytics | `lib/platform/seo/**`, `lib/platform/analytics/**` | GSC, GA4, GBP, rank vendor | MERGED | See flags below |

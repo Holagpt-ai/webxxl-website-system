@@ -188,7 +188,7 @@ export const crmWorkspaceEs: CrmWorkspaceCopy = {
       since: 'Desde',
       importNote: 'Importar un contacto no establece su consentimiento.',
       readOnly: 'El consentimiento no se puede registrar desde esta página.',
-      manageLink: 'Abrir configuración del CRM',
+      manageLink: 'Política de consentimiento en configuración del CRM',
     },
     actionsTitle: 'Contactar',
     actions: { chat: 'Chat', sms: 'Enviar SMS', email: 'Enviar correo', call: 'Llamar' },
@@ -370,7 +370,7 @@ export const crmWorkspaceEs: CrmWorkspaceCopy = {
       {
         key: 'consent',
         title: 'Gestión del consentimiento',
-        body: 'Ver y editar registros de consentimiento aún no está disponible. El CRM nunca supone que alguien aceptó ser contactado.',
+        body: 'El historial de consentimiento y las supresiones aparecen en cada ficha de contacto (solo lectura). Los formularios del panel para registrar o revocar consentimiento aún no están disponibles. El CRM nunca supone que alguien aceptó ser contactado.',
         state: 'notAvailable',
       },
       {
