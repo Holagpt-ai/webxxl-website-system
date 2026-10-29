@@ -20,7 +20,7 @@ import {
   type SeoOpportunitiesResponse,
 } from '@/lib/local-seo-ui/types'
 import type { SeoViewProps } from '@/lib/local-seo-ui/server'
-import { useCursorPages, useSeoList } from '@/lib/local-seo-ui/use-seo-list'
+import { useCursorPages, useRecoverInvalidCursor, useSeoList } from '@/lib/local-seo-ui/use-seo-list'
 import { LEVEL_TONE, Pager, SiteBar, useSelectedSite } from './shared'
 
 const TAKE = 25
@@ -45,6 +45,7 @@ export function SeoOpportunitiesView({ accountId, locale, copy, sites, marketing
       : null,
     accountId,
   )
+  useRecoverInvalidCursor(res.error, !!pages.cursor, pages.first)
   const o = copy.opportunities
   const kit = copy.kit
   const filtered = filters.state !== '' || filters.severity !== '' || filters.confidence !== ''

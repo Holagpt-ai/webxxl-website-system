@@ -9,7 +9,7 @@ Specifications: [`03-DATA-MODEL`](platform/docs/03-DATA-MODEL.md), [`04-API-INTE
 | CRM | `lib/platform/crm/**`, `/api/v1/crm/*`, `lib/crm-ui/**`, `components/crm/**` | Twenty adapter returns not configured until flags and mapping exist. Batch 17A HTTP and 17B/17C UI merged on `main` | MERGED | `CRM_BACKEND_ENABLED` off; external sync not inferred |
 | Communications | `lib/platform/comms/**` | Chatwoot, SMS, email candidates | MERGED | No live send inferred |
 | Marketing and social | `lib/platform/marketing/**`, `lib/marketing-studio-ui/**`, `components/marketing-studio/**`, `/api/v1/marketing/*`, `/api/v1/social/*` | Postiz adapter. Batch 18A list APIs + Batch 18B/18C Marketing Studio UI merged (PR #58) | MERGED | Publishing off until authorized |
-| SEO and analytics | `lib/platform/seo/**`, `lib/platform/analytics/**` | GSC, GA4, GBP, rank vendor | MERGED | See flags below |
+| SEO and analytics | `lib/platform/seo/**`, `lib/platform/analytics/**`, `lib/local-seo-ui/**`, `components/local-seo/**` | GSC, GA4, GBP, rank vendor | MERGED (19A backend); Local SEO UI IN PR (19B+19C) | See flags below |
 | Wallet and commerce | `lib/platform/wallet/**`, `lib/platform/commerce/**` | No processor selected as the system of record | MERGED | No live charge inferred |
 | Workflow | `lib/platform/workflow/**`, legacy notification worker | AUTO-10 is Prisma-first; Hatchet is not provisioned | MERGED | `WORKFLOW_*` default off in the AUTO-10 contract |
 | AI workforce | `lib/platform/workforce/**`, `lib/platform/customer-ai-workforce/**` | Paperclip is a candidate adapter | MERGED | Live execution not inferred |

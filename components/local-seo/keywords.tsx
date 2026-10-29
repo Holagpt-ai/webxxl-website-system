@@ -19,7 +19,7 @@ import { DASH, enumLabel, fill, formatDateTime, formatNumber, formatPercent, wit
 import { SEO_API, type GscKeywordsResponse } from '@/lib/local-seo-ui/types'
 import type { SeoViewProps } from '@/lib/local-seo-ui/server'
 import { formatDay } from '@/lib/local-seo-ui/format'
-import { useCursorPages, useSeoList } from '@/lib/local-seo-ui/use-seo-list'
+import { useCursorPages, useRecoverInvalidCursor, useSeoList } from '@/lib/local-seo-ui/use-seo-list'
 import { DATA_TONE, GscPanel, Pager, SiteBar, useDebounced, useSelectedSite } from './shared'
 
 const TAKE = 50
@@ -34,6 +34,7 @@ export function SeoKeywordsView({ accountId, locale, copy, sites, base }: SeoVie
     siteId ? withQuery(SEO_API.keywords(siteId), { take: TAKE, q: q || undefined, cursor: pages.cursor }) : null,
     accountId,
   )
+  useRecoverInvalidCursor(res.error, !!pages.cursor, pages.first)
   const k = copy.keywords
   const kit = copy.kit
   const gsc = res.data?.gsc
@@ -49,7 +50,14 @@ export function SeoKeywordsView({ accountId, locale, copy, sites, base }: SeoVie
         <WorkspaceState error={res.error} kit={kit} workspace={copy.name} onRetry={() => res.mutate()} />
       ) : gsc ? (
         <>
-          <GscPanel gsc={gsc} copy={copy} locale={locale} connectionsHref={connectionsHref} description={k.totalsBody} />
+          <GscPanel
+            gsc={gsc}
+            copy={copy}
+            locale={locale}
+            connectionsHref={connectionsHref}
+            description={k.totalsBody}
+            responseLimitations={res.data?.limitations}
+          />
           {gsc.completeness && gsc.dataState !== 'NOT_CONNECTED' && (
             <Facts
               items={[

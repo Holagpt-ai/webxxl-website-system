@@ -1,8 +1,9 @@
 # BATCH 19B — Local SEO UI integration contract (v0.app)
 
-**Backend batch:** 19A (stored GSC intelligence, overview metrics, opportunities pagination, Marketing handoff validation).  
-**Owner:** v0.app — customer Local SEO screens and copy only.  
-**Do not edit in 19B without v0 ownership:** `app/api/**`, `lib/platform/seo/**`, Prisma, workers.
+**Backend batch:** 19A **MERGED** (PR #59 @ `6ff105cf2334a9039d1d57d2dc0a3df878ad1730`).  
+**UI batch:** 19B delivered by v0.app @ `59315094ed30d4e80e35b403cbc9def333280a21`; **19C** Cursor integration IN PR.  
+**Owner:** v0.app — customer Local SEO screens and copy; Cursor integrates and tests without overlapping backend edits.  
+**Do not edit without v0 ownership:** `app/api/**`, `lib/platform/seo/**`, Prisma, workers.
 
 ## 1. v0.app-owned paths
 

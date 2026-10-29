@@ -19,6 +19,7 @@ import type { ManagedSiteOption, WorkspaceKitCopy } from '@/lib/crm-ui/workspace
 import type { SeoViewProps } from '@/lib/local-seo-ui/server'
 import type { GscPerformance, GscSummary } from '@/lib/local-seo-ui/types'
 import { formatDayRange } from '@/lib/local-seo-ui/format'
+import { mergeGscLimitationMessages } from '@/lib/local-seo-ui/limitations'
 
 type SeoCopy = SeoViewProps['copy']
 
@@ -55,6 +56,7 @@ export function GscPanel({
   connectionsHref,
   description,
   action,
+  responseLimitations,
 }: {
   gsc: GscSummary | GscPerformance
   copy: SeoCopy
@@ -62,6 +64,8 @@ export function GscPanel({
   connectionsHref: string
   description?: string
   action?: React.ReactNode
+  /** Keywords API top-level limitations (property attribution, snapshot scope). */
+  responseLimitations?: string[]
 }) {
   const g = copy.gsc
   if (gsc.dataState === 'NOT_CONNECTED') {
@@ -80,7 +84,7 @@ export function GscPanel({
   const notice = gscNotice(gsc, g)
   const metric = (text: string, value: number | null) => (value === null ? g.unavailable : text)
   const details = 'completeness' in gsc ? gsc : null
-  const limitations = details?.completeness?.limitations ?? []
+  const limitations = mergeGscLimitationMessages(details ?? undefined, responseLimitations)
 
   return (
     <Section
