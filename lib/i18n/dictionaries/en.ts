@@ -242,6 +242,7 @@ export const en = {
       domains: 'Domains',
       email: 'Business email',
       crm: 'CRM',
+      communications: 'Communications',
       marketingStudio: 'Marketing Studio',
       billing: 'Billing',
       seo: 'Local SEO',

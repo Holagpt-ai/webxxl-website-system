@@ -242,6 +242,7 @@ export const es: Dictionary = {
       domains: 'Dominios',
       email: 'Correo empresarial',
       crm: 'CRM',
+      communications: 'Comunicaciones',
       marketingStudio: 'Estudio de marketing',
       billing: 'Facturación',
       seo: 'SEO local',
