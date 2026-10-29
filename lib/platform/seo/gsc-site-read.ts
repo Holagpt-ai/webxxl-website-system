@@ -35,7 +35,7 @@ function mapKeywordRow(k: {
   date: Date
   dataState: string
   observedAt: Date
-}): PersistedKeywordRow & { observedAt: Date } {
+}): PersistedKeywordRow {
   return {
     idempotencyKey: k.idempotencyKey,
     query: k.query,
@@ -47,6 +47,28 @@ function mapKeywordRow(k: {
     date: k.date,
     dataState: k.dataState,
     observedAt: k.observedAt,
+  }
+}
+
+function emptyBundle(input: {
+  propertyRef: string
+  connectionDataState: string
+  limitations: string[]
+  requireSnapshot?: boolean
+}): GscStoredSiteBundle {
+  const performance = buildGscPerformanceFromObservations({
+    connectionDataState: input.connectionDataState,
+    propertyRef: input.propertyRef,
+    rows: [],
+    requireVerifiedSnapshotWindow: input.requireSnapshot ?? true,
+  })
+  return {
+    propertyRef: input.propertyRef,
+    connectionDataState: input.connectionDataState,
+    snapshot: null,
+    rows: [],
+    performance,
+    limitations: input.limitations,
   }
 }
 
@@ -65,32 +87,57 @@ export async function loadGscStoredSiteBundle(input: {
   })
   if (!site.ok) return site
 
-  const connection = await prisma.siteAnalyticsConnection.findFirst({
+  const gscConnections = await prisma.siteAnalyticsConnection.findMany({
     where: {
       managedSiteId: site.value.id,
       customerAccountId: input.customerAccountId,
       provider: 'GSC',
     },
+    orderBy: [{ lastVerifiedAt: 'desc' }, { updatedAt: 'desc' }],
   })
 
-  if (!connection || connection.dataState === 'NOT_CONNECTED') {
-    const performance = buildGscPerformanceFromObservations({
-      connectionDataState: 'NOT_CONNECTED',
-      propertyRef: '',
-      rows: [],
-    })
+  const activeConnections = gscConnections.filter(
+    (c) => c.revokedAt == null && c.dataState !== 'NOT_CONNECTED',
+  )
+
+  if (activeConnections.length === 0) {
     return {
       ok: true,
-      value: {
+      value: emptyBundle({
         propertyRef: '',
         connectionDataState: 'NOT_CONNECTED',
-        snapshot: null,
-        rows: [],
-        performance,
         limitations: ['GSC connection not configured for this site'],
-      },
+        requireSnapshot: false,
+      }),
     }
   }
+
+  const verifiedConnections = activeConnections.filter((c) => c.verificationState === 'VERIFIED')
+  if (verifiedConnections.length === 0) {
+    return {
+      ok: true,
+      value: emptyBundle({
+        propertyRef: activeConnections[0]!.propertyRef,
+        connectionDataState: 'PARTIAL',
+        limitations: ['GSC connection is not verified; stored metrics are unavailable'],
+      }),
+    }
+  }
+
+  if (verifiedConnections.length > 1) {
+    return {
+      ok: true,
+      value: emptyBundle({
+        propertyRef: verifiedConnections[0]!.propertyRef,
+        connectionDataState: 'PARTIAL',
+        limitations: [
+          'Multiple verified GSC properties are connected for this site; stored metrics are unavailable until a single property is selected',
+        ],
+      }),
+    }
+  }
+
+  const connection = verifiedConnections[0]!
 
   const propertyMatch = matchGscPropertyToSite({
     propertyRef: connection.propertyRef,
@@ -100,22 +147,13 @@ export async function loadGscStoredSiteBundle(input: {
   const limitations: string[] = []
   if (!propertyMatch.ok) {
     limitations.push(propertyMatch.message)
-    const performance = buildGscPerformanceFromObservations({
-      connectionDataState: 'PARTIAL',
-      propertyRef: connection.propertyRef,
-      rows: [],
-      requireVerifiedSnapshotWindow: true,
-    })
     return {
       ok: true,
-      value: {
+      value: emptyBundle({
         propertyRef: connection.propertyRef,
-        connectionDataState: connection.dataState,
-        snapshot: null,
-        rows: [],
-        performance,
+        connectionDataState: 'PARTIAL',
         limitations,
-      },
+      }),
     }
   }
 
@@ -130,21 +168,114 @@ export async function loadGscStoredSiteBundle(input: {
   })
 
   if (!snapshot) {
-    const performance = buildGscPerformanceFromObservations({
-      connectionDataState: connection.dataState,
-      propertyRef: connection.propertyRef,
-      rows: [],
-      requireVerifiedSnapshotWindow: true,
-    })
+    return {
+      ok: true,
+      value: emptyBundle({
+        propertyRef: connection.propertyRef,
+        connectionDataState: connection.dataState,
+        limitations: ['No verified GSC snapshot window for this property'],
+      }),
+    }
+  }
+
+  if (snapshot.propertyRef !== connection.propertyRef) {
+    limitations.push('Latest GSC snapshot property does not match the active connection')
+    return {
+      ok: true,
+      value: emptyBundle({
+        propertyRef: connection.propertyRef,
+        connectionDataState: 'PARTIAL',
+        limitations,
+      }),
+    }
+  }
+
+  const overlappingOtherPropertySnapshots = await prisma.seoSnapshot.count({
+    where: {
+      managedSiteId: site.value.id,
+      customerAccountId: input.customerAccountId,
+      provider: 'GSC',
+      propertyRef: { not: connection.propertyRef },
+      dateRangeStart: { lte: snapshot.dateRangeEnd },
+      dateRangeEnd: { gte: snapshot.dateRangeStart },
+    },
+  })
+  if (overlappingOtherPropertySnapshots > 0) {
+    limitations.push(
+      'Overlapping GSC snapshot metadata exists for another property in this date window; keyword rows cannot be verified for the current property',
+    )
     return {
       ok: true,
       value: {
         propertyRef: connection.propertyRef,
-        connectionDataState: connection.dataState,
-        snapshot: null,
+        connectionDataState: 'PARTIAL',
+        snapshot: {
+          start: snapshot.dateRangeStart.toISOString().slice(0, 10),
+          end: snapshot.dateRangeEnd.toISOString().slice(0, 10),
+          observedAt: snapshot.observedAt.toISOString(),
+          methodologyVersion: snapshot.methodologyVersion,
+          propertyRef: snapshot.propertyRef,
+        },
         rows: [],
-        performance,
-        limitations: ['No verified GSC snapshot window for this property'],
+        performance: buildGscPerformanceFromObservations({
+          connectionDataState: 'PARTIAL',
+          propertyRef: connection.propertyRef,
+          rows: [],
+          snapshot: {
+            start: snapshot.dateRangeStart.toISOString().slice(0, 10),
+            end: snapshot.dateRangeEnd.toISOString().slice(0, 10),
+            observedAt: snapshot.observedAt.toISOString(),
+            methodologyVersion: snapshot.methodologyVersion,
+          },
+        }),
+        limitations,
+      },
+    }
+  }
+
+  const metricSourceRefs = await prisma.seoMetricObservation.findMany({
+    where: {
+      managedSiteId: site.value.id,
+      customerAccountId: input.customerAccountId,
+      provider: 'GSC',
+      date: { gte: snapshot.dateRangeStart, lte: snapshot.dateRangeEnd },
+    },
+    select: { sourceRef: true },
+    distinct: ['sourceRef'],
+  })
+  const distinctMetricRefs = new Set(metricSourceRefs.map((m) => m.sourceRef))
+  if (
+    distinctMetricRefs.size > 1 ||
+    (distinctMetricRefs.size === 1 && !distinctMetricRefs.has(connection.propertyRef))
+  ) {
+    limitations.push(
+      'Stored GSC metric observations in this window reference multiple or mismatched property refs; aggregates are withheld',
+    )
+    return {
+      ok: true,
+      value: {
+        propertyRef: connection.propertyRef,
+        connectionDataState: 'PARTIAL',
+        snapshot: {
+          start: snapshot.dateRangeStart.toISOString().slice(0, 10),
+          end: snapshot.dateRangeEnd.toISOString().slice(0, 10),
+          observedAt: snapshot.observedAt.toISOString(),
+          methodologyVersion: snapshot.methodologyVersion,
+          propertyRef: snapshot.propertyRef,
+        },
+        rows: [],
+        performance: buildGscPerformanceFromObservations({
+          connectionDataState: 'PARTIAL',
+          propertyRef: connection.propertyRef,
+          rows: [],
+          snapshot: {
+            start: snapshot.dateRangeStart.toISOString().slice(0, 10),
+            end: snapshot.dateRangeEnd.toISOString().slice(0, 10),
+            observedAt: snapshot.observedAt.toISOString(),
+            methodologyVersion: snapshot.methodologyVersion,
+          },
+        }),
+        limitations,
       },
     }
   }
@@ -174,7 +305,7 @@ export async function loadGscStoredSiteBundle(input: {
   })
 
   limitations.push(
-    'Keyword rows are associated with the managed site and snapshot window; per-row GSC property refs are not stored',
+    'SeoKeywordObservation rows do not store GSC propertyRef; metrics are scoped to the verified connection property and matching snapshot window only',
   )
 
   return {

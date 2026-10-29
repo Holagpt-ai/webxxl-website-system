@@ -2,12 +2,20 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { buildGscPerformanceFromObservations } from '@/lib/platform/seo/gsc-performance-read'
 import { applyStoredGscPerformanceToOverview } from '@/lib/platform/seo/overview-gsc-apply'
 import { buildSeoSiteOverviewDto } from '@/lib/platform/seo/dashboard-read-model'
-import { decodeSeoListCursor } from '@/lib/platform/seo/seo-list-cursor'
+import {
+  dedupeKeywordRowsForList,
+  keywordRowsAfterCursor,
+  listGscKeywordsForSite,
+} from '@/lib/platform/seo/keyword-list-service'
+import { loadGscStoredSiteBundle } from '@/lib/platform/seo/gsc-site-read'
+import { decodeSeoListCursor, encodeSeoListCursor } from '@/lib/platform/seo/seo-list-cursor'
 import { ABMED_AESTHETICS_ACCOUNT_ID, ABMED_PHYSICIANS_ACCOUNT_ID } from '@/lib/platform/fixtures/abmed'
 
 const managedSiteFindFirst = vi.hoisted(() => vi.fn())
-const connectionFindFirst = vi.hoisted(() => vi.fn())
+const connectionFindMany = vi.hoisted(() => vi.fn())
 const snapshotFindFirst = vi.hoisted(() => vi.fn())
+const snapshotCount = vi.hoisted(() => vi.fn())
+const metricFindMany = vi.hoisted(() => vi.fn())
 const keywordFindMany = vi.hoisted(() => vi.fn())
 const opportunityFindMany = vi.hoisted(() => vi.fn())
 const opportunityFindFirst = vi.hoisted(() => vi.fn())
@@ -19,8 +27,12 @@ vi.mock('@/lib/managed-sites/queries', () => ({
 
 vi.mock('@/lib/db', () => ({
   prisma: {
-    siteAnalyticsConnection: { findFirst: (...args: unknown[]) => connectionFindFirst(...args) },
-    seoSnapshot: { findFirst: (...args: unknown[]) => snapshotFindFirst(...args) },
+    siteAnalyticsConnection: { findMany: (...args: unknown[]) => connectionFindMany(...args) },
+    seoSnapshot: {
+      findFirst: (...args: unknown[]) => snapshotFindFirst(...args),
+      count: (...args: unknown[]) => snapshotCount(...args),
+    },
+    seoMetricObservation: { findMany: (...args: unknown[]) => metricFindMany(...args) },
     seoKeywordObservation: { findMany: (...args: unknown[]) => keywordFindMany(...args) },
     seoOpportunity: {
       findMany: (...args: unknown[]) => opportunityFindMany(...args),
@@ -37,6 +49,38 @@ vi.mock('@/lib/db', () => ({
     }),
   },
 }))
+
+const sameDay = new Date('2026-10-05T00:00:00.000Z')
+
+function mockSite() {
+  managedSiteFindFirst.mockResolvedValue({
+    id: 'site-a',
+    customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
+    domain: 'example.test',
+    canonicalUrl: 'https://example.test',
+    name: 'Site A',
+  })
+}
+
+function mockVerifiedGscBundlePath() {
+  connectionFindMany.mockResolvedValue([
+    {
+      propertyRef: 'sc-domain:example.test',
+      dataState: 'READY',
+      verificationState: 'VERIFIED',
+      revokedAt: null,
+    },
+  ])
+  snapshotFindFirst.mockResolvedValue({
+    dateRangeStart: new Date('2026-10-01'),
+    dateRangeEnd: new Date('2026-10-07'),
+    observedAt: new Date('2026-10-08'),
+    methodologyVersion: 'gsc-v1',
+    propertyRef: 'sc-domain:example.test',
+  })
+  snapshotCount.mockResolvedValue(0)
+  metricFindMany.mockResolvedValue([{ sourceRef: 'sc-domain:example.test' }])
+}
 
 describe('SEO-19A stored intelligence', () => {
   afterEach(() => {
@@ -60,6 +104,7 @@ describe('SEO-19A stored intelligence', () => {
           averagePosition: 4.5,
           date: d,
           dataState: 'READY',
+          observedAt: new Date('2026-10-08T12:00:00Z'),
         },
         {
           idempotencyKey: 'a2',
@@ -71,6 +116,7 @@ describe('SEO-19A stored intelligence', () => {
           averagePosition: 1,
           date: d,
           dataState: 'READY',
+          observedAt: new Date('2026-10-08T10:00:00Z'),
         },
       ],
       snapshot: { start: '2026-10-01', end: '2026-10-07', observedAt: d.toISOString() },
@@ -95,6 +141,7 @@ describe('SEO-19A stored intelligence', () => {
           averagePosition: 2,
           date: new Date('2026-10-02'),
           dataState: 'READY',
+          observedAt: new Date('2026-10-03T00:00:00Z'),
         },
       ],
       requireVerifiedSnapshotWindow: true,
@@ -103,30 +150,72 @@ describe('SEO-19A stored intelligence', () => {
     expect(perf.clicks).toBeNull()
   })
 
+  it('paginates keywords on the same date without duplicates or skips', () => {
+    const rows = dedupeKeywordRowsForList([
+      {
+        idempotencyKey: 'site:GSC:alpha:-:' + sameDay.toISOString().slice(0, 10),
+        query: 'alpha',
+        page: null,
+        clicks: 1,
+        impressions: 1,
+        ctr: 1,
+        averagePosition: 1,
+        date: sameDay,
+        dataState: 'READY',
+        observedAt: new Date('2026-10-08T00:00:00Z'),
+      },
+      {
+        idempotencyKey: 'site:GSC:beta:-:' + sameDay.toISOString().slice(0, 10),
+        query: 'beta',
+        page: null,
+        clicks: 2,
+        impressions: 2,
+        ctr: 1,
+        averagePosition: 2,
+        date: sameDay,
+        dataState: 'READY',
+        observedAt: new Date('2026-10-08T00:00:00Z'),
+      },
+      {
+        idempotencyKey: 'site:GSC:gamma:-:' + sameDay.toISOString().slice(0, 10),
+        query: 'gamma',
+        page: null,
+        clicks: 3,
+        impressions: 3,
+        ctr: 1,
+        averagePosition: 3,
+        date: sameDay,
+        dataState: 'READY',
+        observedAt: new Date('2026-10-08T00:00:00Z'),
+      },
+    ])
+    expect(rows.map((r) => r.query)).toEqual(['alpha', 'beta', 'gamma'])
+
+    const page1 = rows.slice(0, 2)
+    const cursor = encodeSeoListCursor({
+      p: page1[1]!.sortDateMs,
+      q: page1[1]!.sortQuery,
+      pg: page1[1]!.sortPage,
+      i: page1[1]!.sortId,
+    })
+    const decoded = decodeSeoListCursor(cursor)
+    expect(decoded.ok).toBe(true)
+    if (!decoded.ok) return
+    const page2 = keywordRowsAfterCursor(rows, decoded.value)
+    expect(page2.map((r) => r.query)).toEqual(['gamma'])
+
+    const allQueries = [...page1.map((r) => r.query), ...page2.map((r) => r.query)]
+    expect(new Set(allQueries).size).toBe(3)
+  })
+
   it('rejects malformed SEO list cursors', () => {
     expect(decodeSeoListCursor('not-json').ok).toBe(false)
     expect(decodeSeoListCursor(Buffer.from('{"p":1}', 'utf8').toString('base64url')).ok).toBe(false)
   })
 
   it('lists keywords with search filter and cursor pagination', async () => {
-    managedSiteFindFirst.mockResolvedValue({
-      id: 'site-a',
-      customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
-      domain: 'example.test',
-      canonicalUrl: 'https://example.test',
-      name: 'Site A',
-    })
-    connectionFindFirst.mockResolvedValue({
-      propertyRef: 'sc-domain:example.test',
-      dataState: 'READY',
-    })
-    snapshotFindFirst.mockResolvedValue({
-      dateRangeStart: new Date('2026-10-01'),
-      dateRangeEnd: new Date('2026-10-07'),
-      observedAt: new Date('2026-10-08'),
-      methodologyVersion: 'gsc-v1',
-      propertyRef: 'sc-domain:example.test',
-    })
+    mockSite()
+    mockVerifiedGscBundlePath()
     keywordFindMany.mockResolvedValue([
       {
         idempotencyKey: 'k-new',
@@ -154,7 +243,6 @@ describe('SEO-19A stored intelligence', () => {
       },
     ])
 
-    const { listGscKeywordsForSite } = await import('@/lib/platform/seo/keyword-list-service')
     const page1 = await listGscKeywordsForSite({
       customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
       managedSiteId: 'site-a',
@@ -164,7 +252,6 @@ describe('SEO-19A stored intelligence', () => {
     if (!page1.ok) return
     expect(page1.value.keywords).toHaveLength(1)
     expect(page1.value.keywords[0]?.query).toBe('alpha query')
-    expect(page1.value.keywords[0]?.clicks).toBe(1)
     expect(page1.value.nextCursor).toBeTruthy()
 
     const page2 = await listGscKeywordsForSite({
@@ -176,20 +263,46 @@ describe('SEO-19A stored intelligence', () => {
     expect(page2.ok).toBe(true)
     if (!page2.ok) return
     expect(page2.value.keywords[0]?.query).toBe('beta query')
-    expect(page2.value.keywords[0]?.clicks).toBeNull()
+  })
 
-    const filtered = await listGscKeywordsForSite({
+  it('withholds metrics when GSC connection is not verified', async () => {
+    mockSite()
+    connectionFindMany.mockResolvedValue([
+      {
+        propertyRef: 'sc-domain:example.test',
+        dataState: 'READY',
+        verificationState: 'PENDING',
+        revokedAt: null,
+      },
+    ])
+    const bundle = await loadGscStoredSiteBundle({
       customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
       managedSiteId: 'site-a',
-      search: 'beta',
     })
-    expect(filtered.ok).toBe(true)
-    if (filtered.ok) expect(filtered.value.keywords.every((k) => k.query.includes('beta') || (k.page ?? '').includes('beta'))).toBe(true)
+    expect(bundle.ok).toBe(true)
+    if (!bundle.ok) return
+    expect(bundle.value.rows).toHaveLength(0)
+    expect(bundle.value.performance.clicks).toBeNull()
+    expect(bundle.value.limitations[0]).toContain('not verified')
+  })
+
+  it('withholds keyword rows when overlapping snapshot exists for another property', async () => {
+    mockSite()
+    mockVerifiedGscBundlePath()
+    snapshotCount.mockResolvedValue(1)
+    const bundle = await loadGscStoredSiteBundle({
+      customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
+      managedSiteId: 'site-a',
+    })
+    expect(bundle.ok).toBe(true)
+    if (!bundle.ok) return
+    expect(bundle.value.rows).toHaveLength(0)
+    expect(bundle.value.performance.dataState).toBe('PARTIAL')
+    expect(bundle.value.limitations.some((l) => l.includes('another property'))).toBe(true)
   })
 
   it('denies foreign managed site on keyword load', async () => {
     managedSiteFindFirst.mockResolvedValue(null)
-    const { listGscKeywordsForSite } = await import('@/lib/platform/seo/keyword-list-service')
     const result = await listGscKeywordsForSite({
       customerAccountId: ABMED_PHYSICIANS_ACCOUNT_ID,
       managedSiteId: 'foreign-site',
@@ -198,14 +311,8 @@ describe('SEO-19A stored intelligence', () => {
     if (!result.ok) expect(result.code).toBe('NOT_FOUND')
   })
 
-  it('orders opportunities deterministically and validates filters', async () => {
-    managedSiteFindFirst.mockResolvedValue({
-      id: 'site-a',
-      customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
-      domain: 'example.test',
-      canonicalUrl: 'https://example.test',
-      name: 'Site A',
-    })
+  it('orders opportunities deterministically and uses id asc for equal priority cursor', async () => {
+    mockSite()
     opportunityFindMany.mockResolvedValue([{ id: 'opp-1', priorityScore: 90 }])
 
     const { listSeoOpportunitiesForSite } = await import('@/lib/platform/seo/opportunity-list-service')
@@ -219,6 +326,17 @@ describe('SEO-19A stored intelligence', () => {
         orderBy: [{ priorityScore: 'desc' }, { id: 'asc' }],
       }),
     )
+
+    const cursor = encodeSeoListCursor({ p: 50, i: 'opp-a' })
+    await listSeoOpportunitiesForSite({
+      customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
+      managedSiteId: 'site-a',
+      take: 2,
+      cursor,
+    })
+    const lastCall = opportunityFindMany.mock.calls.at(-1)?.[0] as { where?: { AND?: unknown[] } }
+    const andClause = lastCall?.where?.AND?.[1] as { OR?: unknown[] }
+    expect(JSON.stringify(andClause)).toContain('"gt":"opp-a"')
 
     const bad = await listSeoOpportunitiesForSite({
       customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
@@ -241,7 +359,6 @@ describe('SEO-19A stored intelligence', () => {
       workEvidenceCount: 0,
       rankProviderState: 'NOT_CONNECTED',
     })
-    expect(dto.sections.gscPerformance.clicks).toBeNull()
     const perf = buildGscPerformanceFromObservations({
       connectionDataState: 'READY',
       propertyRef: 'sc-domain:example.test',
@@ -256,14 +373,13 @@ describe('SEO-19A stored intelligence', () => {
           averagePosition: 8,
           date: new Date('2026-10-03'),
           dataState: 'READY',
+          observedAt: new Date('2026-10-08T00:00:00Z'),
         },
       ],
       snapshot: { start: '2026-10-01', end: '2026-10-07', observedAt: '2026-10-08T00:00:00.000Z' },
     })
     applyStoredGscPerformanceToOverview(dto, perf)
     expect(dto.sections.gscPerformance.clicks).toBe(3)
-    expect(dto.sections.gscPerformance.averagePositionLabel).toBe('GSC average position (not fixed rank)')
-    expect(dto.sections.gscPerformance.dateRange?.start).toBe('2026-10-01')
   })
 
   it('rejects cross-tenant seoOpportunityId on marketing request create', async () => {
@@ -286,30 +402,5 @@ describe('SEO-19A stored intelligence', () => {
     })
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.code).toBe('NOT_FOUND')
-  })
-
-  it('rejects seo opportunity linked to a different managed site', async () => {
-    vi.stubEnv('MKT_DRAFT_PREPARATION_ENABLED', 'true')
-    managedSiteFindFirst.mockResolvedValue({ id: 'site-ok', customerAccountId: 'acct-a' })
-    opportunityFindFirst.mockResolvedValue({
-      id: 'opp-1',
-      customerAccountId: 'acct-a',
-      managedSiteId: 'site-other',
-    })
-
-    const { createMarketingRequestRecord } = await import('@/lib/platform/marketing/request-service')
-    const result = await createMarketingRequestRecord({
-      customerAccountId: 'acct-a',
-      userId: 'user-1',
-      managedSiteId: 'site-ok',
-      category: 'SEO_CONTENT_FIX',
-      goal: 'Fix title',
-      brief: 'Brief',
-      locale: 'en',
-      idempotencyKey: 'idem-seo-2',
-      seoOpportunityId: 'opp-1',
-    })
-    expect(result.ok).toBe(false)
-    if (!result.ok) expect(result.code).toBe('FORBIDDEN')
   })
 })

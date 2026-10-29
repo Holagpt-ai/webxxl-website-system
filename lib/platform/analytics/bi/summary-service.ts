@@ -148,6 +148,7 @@ export async function buildAnalyticsOverview(
       averagePosition: k.averagePosition,
       date: k.date,
       dataState: k.dataState,
+      observedAt: k.observedAt,
     })),
   })
 

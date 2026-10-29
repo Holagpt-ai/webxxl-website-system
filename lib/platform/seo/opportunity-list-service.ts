@@ -36,7 +36,7 @@ function cursorWhere(
     AND: [
       base,
       {
-        OR: [{ priorityScore: { lt: cursor.p } }, { priorityScore: cursor.p, id: { lt: cursor.i } }],
+        OR: [{ priorityScore: { lt: cursor.p } }, { priorityScore: cursor.p, id: { gt: cursor.i } }],
       },
     ],
   }

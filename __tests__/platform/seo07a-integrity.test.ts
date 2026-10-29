@@ -181,6 +181,7 @@ describe('SEO-07A integrity', () => {
         averagePosition: 5,
         date: new Date('2026-10-01'),
         dataState: 'READY',
+        observedAt: new Date('2026-10-02T00:00:00Z'),
       },
       {
         idempotencyKey: 'a2',
@@ -192,6 +193,7 @@ describe('SEO-07A integrity', () => {
         averagePosition: 5,
         date: new Date('2026-10-01'),
         dataState: 'READY',
+        observedAt: new Date('2026-10-01T00:00:00Z'),
       },
     ]
     expect(countOverlappingMetricKeys(rows)).toBeGreaterThan(0)

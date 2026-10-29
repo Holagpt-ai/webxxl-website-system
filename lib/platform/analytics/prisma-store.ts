@@ -94,6 +94,7 @@ export const prismaAnalyticsStore: AnalyticsStore = {
         date: true,
         dataState: true,
         idempotencyKey: true,
+        observedAt: true,
       },
     })
   },
