@@ -243,7 +243,7 @@ describe('FOUND-01 entitlements and existing catalog prices', () => {
         'future.ai-employee',
       ]),
     )
-    expect(evaluateEntitlementAccess(getServiceEntitlement('core.crm')!).access).toBe('POLICY_UNRESOLVED')
+    expect(evaluateEntitlementAccess(getServiceEntitlement('core.crm')!).access).toBe('INCLUDED')
     expect(evaluateEntitlementAccess(getServiceEntitlement('paid.sms-usage')!).classification).toBe('METERED_EXTERNAL')
     expect(isEnabled('purchasableAiEmployees')).toBe(false)
     expect(evaluateEntitlementAccess(getServiceEntitlement('future.ai-employee')!).access).toBe('DISABLED')

@@ -28,6 +28,7 @@ import {
 } from '@/config/wallet-backend'
 import { isWorkflowWorkerEnabled } from '@/config/workflow-backend'
 import { evaluateEntitlementAccess, getServiceEntitlement } from '@/lib/platform/entitlements'
+import { getOpen001FreeSoftwareCohort, isOpen001PolicyResolved } from '@/lib/platform/open001/policy'
 import {
   analyzeMigrationCoverage,
   formatMigrationCoverageDetail,
@@ -59,15 +60,23 @@ function entitlementCheck(entitlementKey: string, moduleLabel: string): PilotChe
       'Entitlement definition missing in source',
     )
   }
+  if (!isOpen001PolicyResolved()) {
+    return check(
+      `entitlement.${entitlementKey}`,
+      `${moduleLabel} OPEN-001`,
+      'ENTITLEMENT_POLICY',
+      'UNVERIFIED',
+      'OPEN-001 cohort UNRESOLVED in this environment',
+    )
+  }
   const access = evaluateEntitlementAccess(ent)
   if (access.access === 'POLICY_UNRESOLVED') {
     return check(
       `entitlement.${entitlementKey}`,
       `${moduleLabel} OPEN-001`,
       'ENTITLEMENT_POLICY',
-      'UNVERIFIED',
-      'POLICY_UNRESOLVED — owner must resolve OPEN-001 before activation',
-      'Included-free cohort remains UNRESOLVED; APIs may return 503 even when backend flags are enabled.',
+      'FAIL',
+      'Policy source inconsistent — cohort configured but entitlement unresolved',
     )
   }
   return check(
@@ -75,7 +84,7 @@ function entitlementCheck(entitlementKey: string, moduleLabel: string): PilotChe
     `${moduleLabel} OPEN-001`,
     'ENTITLEMENT_POLICY',
     'PASS',
-    `Entitlement access: ${access.access}`,
+    `OPEN-001 resolved — cohort ${getOpen001FreeSoftwareCohort()}; account-level website subscription proof required at API gates`,
   )
 }
 
@@ -294,7 +303,7 @@ export function buildPilotReadinessReport(input: {
   )
 
   const ownerDecisionsRequired = [
-    'Resolve OPEN-001 included-free eligibility cohort for core.crm, core.marketing-studio, core.local-seo, core.communications (no silent enrollment change).',
+    'OPEN-001 recorded (SUBSCRIBER_ONLY). Provision qualifying website subscription evidence per pilot CustomerAccount before expecting INCLUDED API access.',
     'Authorize target-environment `prisma migrate deploy` for the full repository migration chain (see `prisma/migrations` and PILOT-21A module table) — production apply is separate owner action.',
     'Explicitly enable per-module backend flags (CRM, MKT, SEO, COMMS, ANALYTICS) only after migrations and OPEN-001 decisions.',
     'Do not enable Chatwoot, Twilio, Resend, Postiz live publish, Google live ingestion, workflow workers, wallet settlement, or outbound comms without separate owner authorization.',

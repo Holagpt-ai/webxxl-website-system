@@ -1,0 +1,11 @@
+{
+  "recordedAt": "2026-10-29",
+  "repository": "Holagpt-ai/webxxl-website-system",
+  "environment": "production",
+  "gitSha": "603a601f42728cf758bd632507e0bdd2c8fdcc6b",
+  "pullRequest": 63,
+  "vercelDeploymentId": "dpl_Rf71rKnvwjngSRntTCjfFc7fHXGP",
+  "vercelState": "READY",
+  "scope": "SHA deploy evidence only",
+  "excludes": ["migrations", "feature_flags", "provider_activation", "authenticated_smoke"]
+}

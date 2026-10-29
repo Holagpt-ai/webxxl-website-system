@@ -15,7 +15,11 @@ export function mktResultHttpStatus(code: MktErrorCode): number {
     case 'NOT_CONFIGURED':
     case 'MKT_DISABLED':
     case 'POLICY_UNRESOLVED':
+    case 'SUBSCRIPTION_EVIDENCE_UNAVAILABLE':
+    case 'LEGACY_EVIDENCE_AMBIGUOUS':
       return 503
+    case 'FREE_SOFTWARE_NOT_ELIGIBLE':
+      return 403
     case 'BLOCKED':
       return 422
     default:

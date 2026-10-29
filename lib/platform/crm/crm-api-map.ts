@@ -14,8 +14,12 @@ export function crmResultHttpStatus(code: string): number {
       return 403
     case 'CRM_DISABLED':
     case 'POLICY_UNRESOLVED':
+    case 'SUBSCRIPTION_EVIDENCE_UNAVAILABLE':
+    case 'LEGACY_EVIDENCE_AMBIGUOUS':
     case 'PROVIDER_UNAVAILABLE':
       return 503
+    case 'FREE_SOFTWARE_NOT_ELIGIBLE':
+      return 403
     default:
       return 422
   }

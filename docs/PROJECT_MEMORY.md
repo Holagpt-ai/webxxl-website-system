@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-29 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `16861d9c796dd5b808c4186bc4611e10f0a434a2` (PR #62)
+**Evidence review:** 2026-10-29 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `603a601f42728cf758bd632507e0bdd2c8fdcc6b` (PR #63)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -26,7 +26,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 - WebXXL owns identity, audit, approvals, entitlements, wallet, and customer lifecycle. External products are adapters.
 - English and Spanish stay in scope. The current customer portal, version-bound approval, and separate DNS cutover stay in place.
 - Cursor owns non-visual engineering. v0.app owns UI/UX. Vercel hosts the WebXXL app. GitHub is the source.
-- Approved free CRM, Marketing Studio, local SEO, and social capabilities are not silently repriced. Spend and provider use stay separately gated. Exact eligibility is still OPEN-001.
+- Approved free CRM, Marketing Studio, local SEO, and social capabilities are not silently repriced. Spend and provider use stay separately gated. **OPEN-001 resolved:** included FREE software for **website subscribers** (`SUBSCRIBER_ONLY`); account-level proof at API gates (`lib/platform/open001/`).
 - Live billing, SMS, social publishing, Google ingestion, AI execution, and production migrations need their own authorization.
 
 ## Checkpoint
@@ -64,7 +64,9 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 20B Communications UI (v0) | DELIVERED | `v0/communications-ui-20b` @ `efa206760ae076118a9c4c7c4fb7b6a716166f66` |
 | Vercel production SHA (2026-10-29, PR #62) | DEPLOYED | Owner-reported Vercel deployment `dpl_6yeBmge7TwyYmeTKZaSGFKABoms9`, state **READY**, SHA `16861d9c796dd5b808c4186bc4611e10f0a434a2`. SHA only. Not migration or activation |
 | Batch 20C Communications UI integration | MERGED | [PR #62](https://github.com/Holagpt-ai/webxxl-website-system/pull/62), `16861d9c796dd5b808c4186bc4611e10f0a434a2`. v0 @ `efa20676` |
-| Batch 21A Controlled customer pilot readiness | IN PR | `pnpm pilot:readiness`, [`PILOT-21A-CONTROLLED-CUSTOMER-READINESS.md`](PILOT-21A-CONTROLLED-CUSTOMER-READINESS.md); no activation |
+| Vercel production SHA (2026-10-29, PR #63) | DEPLOYED | Owner-reported Vercel deployment `dpl_Rf71rKnvwjngSRntTCjfFc7fHXGP`, state **READY**, SHA `603a601f42728cf758bd632507e0bdd2c8fdcc6b`. SHA only |
+| Batch 21A Controlled customer pilot readiness | MERGED | [PR #63](https://github.com/Holagpt-ai/webxxl-website-system/pull/63), `603a601f42728cf758bd632507e0bdd2c8fdcc6b`. `pnpm pilot:readiness`; no activation |
+| Batch 21B OPEN-001 policy + staging prep | IN PR | Subscriber eligibility resolver + staging execution plan; no provisioning |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.

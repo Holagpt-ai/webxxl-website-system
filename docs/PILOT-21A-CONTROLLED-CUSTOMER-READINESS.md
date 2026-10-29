@@ -48,7 +48,7 @@ Production migration apply state remains **BLOCKED** or **UNVERIFIED** until the
 
 ## OPEN-001 / entitlements
 
-`core.crm`, `core.marketing-studio`, `core.local-seo`, and `core.communications` evaluate to **POLICY_UNRESOLVED** at source defaults. Enabling backend flags alone does not grant customer API access. Owner must resolve OPEN-001 with explicit evidence — no silent price or eligibility change.
+**RESOLVED (2026-10-29):** cohort **`SUBSCRIBER_ONLY`**. Policy source allows included FREE software; **account-level** qualifying website subscription (or reconciled legacy `paid.website-subscription` service) is required at CRM/MKT/SEO/COMMS API gates. Non-subscribers receive **403 `FREE_SOFTWARE_NOT_ELIGIBLE`**. See Batch **21B** and [`PILOT-21B-STAGING-EXECUTION-PLAN.md`](PILOT-21B-STAGING-EXECUTION-PLAN.md).
 
 ## Provider isolation (must stay OFF for controlled pilot)
 
@@ -71,7 +71,7 @@ Unavailable capabilities must surface honest **503** / disabled UI states.
 
 ## Owner authorization checklist (before real activation)
 
-1. Resolve OPEN-001 cohort decisions and record in canonical decision log.
+1. OPEN-001 recorded — provision qualifying subscription evidence per pilot account on staging.
 2. Authorize migration apply on the **pilot environment** only (not production without separate gate).
 3. Enable module backend flags in that environment with evidence.
 4. Provision two real internal CustomerAccounts + memberships (not ABMED synthetic fixtures).

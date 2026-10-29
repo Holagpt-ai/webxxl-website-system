@@ -13,7 +13,11 @@ export function seoResultHttpStatus(code: SeoErrorCode): number {
     case 'NOT_CONFIGURED':
     case 'SEO_DISABLED':
     case 'POLICY_UNRESOLVED':
+    case 'SUBSCRIPTION_EVIDENCE_UNAVAILABLE':
+    case 'LEGACY_EVIDENCE_AMBIGUOUS':
       return 503
+    case 'FREE_SOFTWARE_NOT_ELIGIBLE':
+      return 403
     case 'CRAWL_BLOCKED':
       return 422
     default:

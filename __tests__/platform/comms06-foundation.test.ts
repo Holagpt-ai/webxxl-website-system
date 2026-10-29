@@ -159,10 +159,10 @@ describe('COMMS-06 foundation', () => {
     expect(createWebxxlNativeCrmProvider().describeCapabilities().contacts).toBe(true)
   })
 
-  it('OPEN-001 communications entitlement unresolved', () => {
+  it('OPEN-001 communications entitlement resolved at policy (SUBSCRIBER_ONLY)', () => {
     const entitlement = getServiceEntitlement('core.communications')
     expect(entitlement).toBeDefined()
-    expect(evaluateEntitlementAccess(entitlement!).access).toBe('POLICY_UNRESOLVED')
+    expect(evaluateEntitlementAccess(entitlement!).access).toBe('INCLUDED')
   })
 
   it('Chatwoot adapter mocked contract: list inboxes via transport', async () => {
