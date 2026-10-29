@@ -1,5 +1,8 @@
 import { isSocialMarketingEnabled } from '@/config/social-marketing'
-import { requireCustomerMembership } from '@/lib/portal/authz'
+import {
+  requireIncludedFreeSoftwareMembershipKeys,
+  SOCIAL_INCLUDED_FREE_ENTITLEMENT_KEYS,
+} from '@/lib/platform/open001/module-api-gate'
 import { resolveTrustedSocialApprover } from '@/lib/platform/social/operator-auth'
 import type { SocialStore } from '@/lib/platform/social/in-memory-store'
 
@@ -18,7 +21,10 @@ export async function requireSocialApiActor() {
   if (!isSocialMarketingEnabled()) {
     throw new SocialApiError(403, 'Social Marketing Studio backend is disabled', 'SOCIAL_MARKETING_DISABLED')
   }
-  const portal = await requireCustomerMembership()
+  const portal = await requireIncludedFreeSoftwareMembershipKeys(
+    SOCIAL_INCLUDED_FREE_ENTITLEMENT_KEYS,
+    SocialApiError,
+  )
   return {
     userId: portal.id,
     customerAccountId: portal.customerAccount.id,

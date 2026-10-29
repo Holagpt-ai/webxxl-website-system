@@ -4,7 +4,9 @@ import { evaluateIncludedFreeAccessForAccount } from '@/lib/platform/open001/inc
 import {
   getOpen001FreeSoftwareCohort,
   isOpen001PolicyResolved,
+  isUnauthorizedOpen001CohortEnvironmentOverride,
   OPEN001_DECISION,
+  OPEN001_POLICY_VERSION,
 } from '@/lib/platform/open001/policy'
 import {
   emptySubscriberEvidence,
@@ -171,9 +173,42 @@ describe('OPEN-001 policy (Batch 21B)', () => {
     if (!decision.allowed) expect(decision.code).toBe('SUBSCRIPTION_EVIDENCE_UNAVAILABLE')
   })
 
-  it('supports future ALL_SIGNUPS cohort when explicitly configured', () => {
+  it('ignores unauthorized ALL_SIGNUPS environment override (Batch 22A)', () => {
     vi.stubEnv('OPEN001_FREE_SOFTWARE_COHORT', 'ALL_SIGNUPS')
+    expect(isUnauthorizedOpen001CohortEnvironmentOverride()).toBe(true)
+    expect(getOpen001FreeSoftwareCohort()).toBe('SUBSCRIBER_ONLY')
+    const evidence = emptySubscriberEvidence(ACCOUNT_B)
+    const decision = evaluateIncludedFreeAccessForAccount({
+      entitlementKey: 'core.crm',
+      customerAccountId: ACCOUNT_B,
+      evidence,
+    })
+    expect(decision.allowed).toBe(false)
+  })
+
+  it('ignores unauthorized HYBRID environment override without policy version authorization', () => {
+    vi.stubEnv('OPEN001_FREE_SOFTWARE_COHORT', 'HYBRID')
+    expect(getOpen001FreeSoftwareCohort()).toBe('SUBSCRIBER_ONLY')
+  })
+
+  it('supports ALL_SIGNUPS only when resolver cohort is explicitly passed (future policy tests)', () => {
     const evidence = emptySubscriberEvidence(ACCOUNT_B)
     expect(resolveSubscriberEligibility(ACCOUNT_B, evidence, 'ALL_SIGNUPS').outcome).toBe('QUALIFIED')
+  })
+
+  it('does not authorize ALL_SIGNUPS via env even when policy version env matches current version', () => {
+    vi.stubEnv('OPEN001_FREE_SOFTWARE_COHORT', 'ALL_SIGNUPS')
+    vi.stubEnv('OPEN001_POLICY_VERSION', OPEN001_POLICY_VERSION)
+    expect(getOpen001FreeSoftwareCohort()).toBe('SUBSCRIBER_ONLY')
+  })
+
+  it('CRM route auth source still invokes OPEN-001 module gate (static contract)', () => {
+    const { readFileSync } = require('node:fs')
+    const { join } = require('node:path')
+    const crmRouteAuth = readFileSync(
+      join(process.cwd(), 'lib/platform/crm/route-auth.ts'),
+      'utf8',
+    )
+    expect(crmRouteAuth).toContain('requireIncludedFreeSoftwareMembership')
   })
 })

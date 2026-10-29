@@ -1,5 +1,7 @@
 import { isSocialMarketingEnabled, marketingStudioDefaultPeriodKey } from '@/config/social-marketing'
-import { evaluateIncludedFreeAccessForAccountFromDatabase } from '@/lib/platform/open001/included-free-access'
+import { evaluateIncludedFreeAccessForAccount } from '@/lib/platform/open001/included-free-access'
+import { loadSubscriberEvidenceForAccount } from '@/lib/platform/open001/load-subscriber-evidence'
+import { SOCIAL_INCLUDED_FREE_ENTITLEMENT_KEYS } from '@/lib/platform/open001/module-api-gate'
 import { prisma } from '@/lib/db'
 import { assertValidQuotaPolicy } from '@/lib/platform/social/quota-policy'
 import { assertValidTargetPlatforms } from '@/lib/platform/social/revision-content'
@@ -23,12 +25,16 @@ export async function createSocialCampaignWithQuota(
   if (!isSocialMarketingEnabled()) {
     return { ok: false, code: 'SOCIAL_MARKETING_DISABLED', message: 'Marketing Studio backend is disabled' }
   }
-  const access = await evaluateIncludedFreeAccessForAccountFromDatabase({
-    entitlementKey: 'core.marketing-studio',
-    customerAccountId: input.customerAccountId,
-  })
-  if (!access.allowed) {
-    return { ok: false, code: access.code, message: access.message }
+  const evidence = await loadSubscriberEvidenceForAccount(input.customerAccountId)
+  for (const entitlementKey of SOCIAL_INCLUDED_FREE_ENTITLEMENT_KEYS) {
+    const access = evaluateIncludedFreeAccessForAccount({
+      entitlementKey,
+      customerAccountId: input.customerAccountId,
+      evidence,
+    })
+    if (!access.allowed) {
+      return { ok: false, code: access.code, message: access.message }
+    }
   }
 
   const policyCheck = assertValidQuotaPolicy()

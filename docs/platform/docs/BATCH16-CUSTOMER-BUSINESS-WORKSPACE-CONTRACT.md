@@ -109,7 +109,7 @@ Entitlement keys and the OPEN-001 result:
 | CRM | `core.crm` | `503` `POLICY_UNRESOLVED` |
 | Marketing | `core.marketing-studio` | `503` `POLICY_UNRESOLVED` |
 | SEO | `core.local-seo` | `503` `POLICY_UNRESOLVED` |
-| Social | not checked on read routes | Flag off is `403` `SOCIAL_MARKETING_DISABLED`. Create checks `core.marketing-studio` only for a missing or `DISABLED` entitlement. It does not return `POLICY_UNRESOLVED`. The UI must still treat social as unavailable while the flag is off. `core.social-automation` is not consulted by these routes. |
+| Social | OPEN-001 on all customer Social HTTP routes (Batch 22A+) | Flag off is `403` `SOCIAL_MARKETING_DISABLED`. When on, `requireSocialApiActor()` requires **`core.social-automation`** and **`core.marketing-studio`** subscriber proof (`FREE_SOFTWARE_NOT_ELIGIBLE` when denied). Campaign create checks both entitlements. Publishing/providers remain disabled by flags. |
 
 ### Membership permissions
 
