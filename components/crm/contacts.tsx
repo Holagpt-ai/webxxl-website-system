@@ -2,12 +2,14 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import type { CrmWorkspaceCopy } from '@/lib/i18n/dictionaries/crm-workspace-en'
 import { useAction, useWorkspace } from '@/lib/crm-ui/use-workspace'
-import { DASH, formatDate, isGateError, newIdempotencyKey, splitList, workspaceSend } from '@/lib/crm-ui/workspace'
-import { CRM_API, contactName, primaryIdentity, type CrmContact } from '@/lib/crm-ui/types'
+import { useDebouncedValue } from '@/lib/crm-ui/use-debounced-value'
+import { DASH, fill, formatDate, isGateError, newIdempotencyKey, splitList, withQuery, workspaceSend } from '@/lib/crm-ui/workspace'
+import { CRM_API, CRM_SEARCH_MAX, contactName, primaryIdentity, type CrmContact, type CrmContactPage } from '@/lib/crm-ui/types'
 import {
   EmptyNote,
   FormActions,
@@ -25,7 +27,18 @@ import {
 type Props = { accountId: string; locale: string; copy: CrmWorkspaceCopy; base: string }
 
 export function CrmContacts({ accountId, locale, copy, base }: Props) {
-  const list = useWorkspace<{ contacts: CrmContact[] }>(CRM_API.contacts, accountId)
+  const [query, setQuery] = useState('')
+  const debounced = useDebouncedValue(query.trim(), 300)
+  const tooLong = debounced.length > CRM_SEARCH_MAX
+  // Cursors belong to one search term; a new term starts again at page one.
+  const [paging, setPaging] = useState<{ q: string; cursors: string[] }>({ q: '', cursors: [] })
+  const cursors = paging.q === debounced ? paging.cursors : []
+  const setCursors = (next: string[]) => setPaging({ q: debounced, cursors: next })
+  const resetPaging = () => setPaging({ q: debounced, cursors: [] })
+  const cursor = cursors.at(-1)
+  const url = tooLong ? null : withQuery(CRM_API.contacts, { take: 50, q: debounced || undefined, cursor })
+  const list = useWorkspace<CrmContactPage>(url, accountId)
+  const staleCursor = Boolean(cursor) && list.error?.kind === 'VALIDATION'
   const [formOpen, setFormOpen] = useState(false)
   const [createdNote, setCreatedNote] = useState(false)
   const t = copy.contacts
@@ -72,13 +85,52 @@ export function CrmContacts({ accountId, locale, copy, base }: Props) {
       )}
 
       <Section title={t.listLabel}>
-        <GapNotice title={kit.notAvailable} body={t.noSearch} />
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="crm-contact-search" className="text-sm font-medium text-foreground">
+            {t.searchLabel}
+          </label>
+          <div className="relative max-w-md">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Input
+              id="crm-contact-search"
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t.searchPlaceholder}
+              maxLength={CRM_SEARCH_MAX}
+              autoComplete="off"
+              className="pl-9 pr-9"
+              aria-describedby="crm-contact-search-status"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                className="absolute right-2 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded text-muted-foreground hover:text-foreground"
+              >
+                <X className="size-4" aria-hidden="true" />
+                <span className="sr-only">{t.clearSearch}</span>
+              </button>
+            )}
+          </div>
+          <p id="crm-contact-search-status" className="min-h-4 text-xs text-muted-foreground" aria-live="polite">
+            {tooLong ? fill(t.searchTooLong, { max: CRM_SEARCH_MAX }) : query.trim() !== debounced || list.isValidating ? t.searching : ''}
+          </p>
+        </div>
+
         {list.isLoading ? (
           <LoadingRows label={kit.loading} rows={5} />
+        ) : staleCursor ? (
+          <div className="flex flex-col items-start gap-3">
+            <GapNotice title={t.staleCursor.title} body={t.staleCursor.body} />
+            <Button variant="outline" size="sm" onClick={resetPaging}>
+              {t.first}
+            </Button>
+          </div>
         ) : list.error ? (
           <WorkspaceState error={list.error} kit={kit} workspace={copy.name} compact onRetry={() => list.mutate()} />
         ) : !list.data?.contacts.length ? (
-          <EmptyNote>{t.empty}</EmptyNote>
+          <EmptyNote>{debounced ? fill(t.noResults, { query: debounced }) : t.empty}</EmptyNote>
         ) : (
           <PlainTable
             label={t.listLabel}
@@ -98,6 +150,32 @@ export function CrmContacts({ accountId, locale, copy, base }: Props) {
               </tr>
             ))}
           </PlainTable>
+        )}
+
+        {!staleCursor && (cursors.length > 0 || list.data?.nextCursor) && (
+          <nav aria-label={t.paginationLabel} className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-sm tabular-nums text-muted-foreground">{fill(t.pageLabel, { page: cursors.length + 1 })}</span>
+            <div className="flex gap-2">
+              {cursors.length > 1 && (
+                <Button variant="ghost" size="sm" onClick={resetPaging}>
+                  {t.first}
+                </Button>
+              )}
+              <Button variant="outline" size="sm" disabled={cursors.length === 0} onClick={() => setCursors(cursors.slice(0, -1))}>
+                <ChevronLeft className="size-4" aria-hidden="true" />
+                {t.previous}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!list.data?.nextCursor || list.isValidating}
+                onClick={() => list.data?.nextCursor && setCursors([...cursors, list.data.nextCursor])}
+              >
+                {t.next}
+                <ChevronRight className="size-4" aria-hidden="true" />
+              </Button>
+            </div>
+          </nav>
         )}
       </Section>
     </div>

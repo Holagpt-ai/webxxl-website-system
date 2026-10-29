@@ -12,7 +12,6 @@ import {
   EmptyNote,
   Facts,
   FormActions,
-  GapNotice,
   LoadingRows,
   Section,
   SectionHeading,
@@ -21,10 +20,11 @@ import {
   TextField,
   WorkspaceState,
 } from './workspace-kit'
+import { ContactConsentPanel } from './contact-consent'
 
-type Props = { accountId: string; locale: string; copy: CrmWorkspaceCopy; base: string; contactId: string }
+type Props = { accountId: string; locale: string; copy: CrmWorkspaceCopy; base: string; contactId: string; canManage?: boolean }
 
-export function CrmContactDetail({ accountId, locale, copy, base, contactId }: Props) {
+export function CrmContactDetail({ accountId, locale, copy, base, contactId, canManage = false }: Props) {
   const contact = useWorkspace<{ contact: CrmContact }>(CRM_API.contact(contactId), accountId)
   const timeline = useWorkspace<{ events: CrmTimelineEvent[] }>(CRM_API.timeline(contactId), accountId)
   const t = copy.contact
@@ -165,9 +165,14 @@ export function CrmContactDetail({ accountId, locale, copy, base, contactId }: P
             </p>
           </Section>
 
-          <Section title={t.consentTitle}>
-            <GapNotice title={copy.kit.notAvailable} body={t.consentBody} />
-          </Section>
+          <ContactConsentPanel
+            accountId={accountId}
+            contactId={contactId}
+            locale={locale}
+            copy={copy}
+            base={base}
+            canManage={canManage}
+          />
         </div>
       </div>
     </div>
