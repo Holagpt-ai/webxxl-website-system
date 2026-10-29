@@ -30,7 +30,7 @@ Numbering note: the table row **ANALYTICS-13** was implemented as **ANALYTICS-14
 
 ## Batch 18 — Marketing deliverables & approvals
 
-**Batch 18A (Cursor):** account-wide `GET /api/v1/marketing/artifacts` and `GET /api/v1/marketing/reviews`; submit-review atomicity — open PR for owner review. **Batch 18B (v0.app):** UI per `BATCH18B-MARKETING-UI-INTEGRATION-CONTRACT.md` after 18A merge. No Postiz live publish, migrations, or flag activation in 18A.
+**Batch 18A (Cursor):** **MERGED** (PR #57, `5e2759d9cca6b1461492cff59172c84693123f2c`). **Batch 18B (v0.app):** UI on `v0/marketing-ui-18b` @ `11b4ec2`. **Batch 18C (Cursor):** integration PR (ff-merge + narrow fixes). No Postiz live publish, migrations, or flag activation in 18C.
 
 - v0.app owns the complete CRM, Marketing Studio, and Local SEO customer dashboard UI/UX.
 - Cursor owns backend, APIs, Prisma, integration engineering, tests, Git, and deployment engineering.

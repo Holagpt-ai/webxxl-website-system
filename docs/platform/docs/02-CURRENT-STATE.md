@@ -1,6 +1,6 @@
 # 02 — Verified Repository Baseline and Honest Status
 
-**Source checkpoint 2026-10-29:** GitHub `main` is `b6b8f5f88b65f27a606a5e2df0e9e35051ce05f4` (PR #56, Batch 17B+17C CRM UI merged). Batch 17A CRM backend (`2ef9a90`, PR #55) and Batch 16 workspace UI remain on `main`. Later rows in `docs/DEPLOYMENT_STATUS.md` do not prove migrations or flag activation. Production migration application and live flag values remain **UNVERIFIED**. Batch 18A Marketing deliverables and approval inbox APIs are on an open owner-review pull request. Vercel production SHA for PR #56 is `dpl_3BZVPBZzFH1AJ4KjpbTTReS9N285` (READY, SHA only). CRM/Marketing runtime activation in production remains UNVERIFIED.
+**Source checkpoint 2026-10-29:** GitHub `main` is `5e2759d9cca6b1461492cff59172c84693123f2c` (PR #57, Batch 18A Marketing backend merged). Batch 17 CRM UI/API and Batch 16 workspace UI remain on `main`. Later rows in `docs/DEPLOYMENT_STATUS.md` do not prove migrations or flag activation. Production migration application and live flag values remain **UNVERIFIED**. Batch 18B Marketing UI (v0) and Batch 18C Cursor integration are on an open owner-review pull request. Vercel production SHA for PR #57 is `dpl_7CngvEWJTDWmYGGGYFWRZdLPXyyn` (READY, SHA only). Marketing/CRM runtime activation in production remains UNVERIFIED.
 
 Older module sections that describe open pull requests are historical notes from the October 18 batches, not the current merge state. Operational summary: `docs/PROJECT_MEMORY.md` and `docs/DEPLOYMENT_STATUS.md`.
 
