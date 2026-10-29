@@ -26,7 +26,11 @@ Numbering note: the table row **ANALYTICS-13** was implemented as **ANALYTICS-14
 
 ## Batch 17 — CRM core workflows and UI
 
-**Batch 17A (Cursor):** **MERGED** (PR #55, `2ef9a90cd10222466faf0c6070995130456b7363`) — contact search/cursor pagination, deal stage PATCH, task PATCH, consent/suppression HTTP on native CRM-05. **Batch 17B (v0.app):** UI delivered on `v0/crm-ui-17b` @ `b1b4270`. **Batch 17C (Cursor):** integration PR (ff-merge + tests/continuity). No vendor replacement, migrations, or flag activation in 17A/17C.
+**Batch 17A (Cursor):** **MERGED** (PR #55). **Batch 17B+17C:** **MERGED** (PR #56, `b6b8f5f88b65f27a606a5e2df0e9e35051ce05f4`) — CRM UI wired to 17A APIs.
+
+## Batch 18 — Marketing deliverables & approvals
+
+**Batch 18A (Cursor):** account-wide `GET /api/v1/marketing/artifacts` and `GET /api/v1/marketing/reviews`; submit-review atomicity — open PR for owner review. **Batch 18B (v0.app):** UI per `BATCH18B-MARKETING-UI-INTEGRATION-CONTRACT.md` after 18A merge. No Postiz live publish, migrations, or flag activation in 18A.
 
 - v0.app owns the complete CRM, Marketing Studio, and Local SEO customer dashboard UI/UX.
 - Cursor owns backend, APIs, Prisma, integration engineering, tests, Git, and deployment engineering.

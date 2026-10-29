@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-29 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `2ef9a90cd10222466faf0c6070995130456b7363` (PR #55)
+**Evidence review:** 2026-10-29 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `b6b8f5f88b65f27a606a5e2df0e9e35051ce05f4` (PR #56)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -49,8 +49,10 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 16B+16C customer workspace | MERGED | [PR #54](https://github.com/Holagpt-ai/webxxl-website-system/pull/54), `7fc7e264fb6044d6f3984f9fe69ada3787ddb3da`. UI on `main`; CRM APIs remain flag-disabled at source defaults |
 | Vercel production SHA (2026-10-29, PR #55) | DEPLOYED | Owner-reported Vercel deployment `dpl_Gg2dKg34vncTJ1GMpVyC8mpYRFXv`, READY, SHA `2ef9a90cd10222466faf0c6070995130456b7363`. SHA only. Not migration or activation |
 | Batch 17A CRM core workflows | MERGED | [PR #55](https://github.com/Holagpt-ai/webxxl-website-system/pull/55), `2ef9a90cd10222466faf0c6070995130456b7363`. Search/pagination, deal stage, task update, consent HTTP |
-| Batch 17B CRM UI (v0) | IN PR | v0 branch `v0/crm-ui-17b` @ `b1b4270294406a4f8f9dc00655f6b1f37e734f17`; integrated in Batch 17C PR. [`BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md) |
-| Batch 17C CRM UI integration | IN PR | Cursor ff-merge + narrow integration fixes, tests, continuity |
+| Vercel production SHA (2026-10-29, PR #56) | DEPLOYED | Owner-reported Vercel deployment `dpl_3BZVPBZzFH1AJ4KjpbTTReS9N285`, READY, SHA `b6b8f5f88b65f27a606a5e2df0e9e35051ce05f4`. SHA only. Not migration or activation |
+| Batch 17B CRM UI (v0) + Batch 17C integration | MERGED | [PR #56](https://github.com/Holagpt-ai/webxxl-website-system/pull/56), `b6b8f5f88b65f27a606a5e2df0e9e35051ce05f4`. [`BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md) |
+| Batch 18A Marketing deliverables & approvals backend | IN PR | Account-wide artifact and review list APIs; submit-review atomicity. [`BATCH18B-MARKETING-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH18B-MARKETING-UI-INTEGRATION-CONTRACT.md) for v0.app |
+| Batch 18B Marketing UI (v0) | PLANNED | After 18A merge |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.

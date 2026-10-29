@@ -2,12 +2,19 @@ import { isMktApprovalWorkflowEnabled } from '@/config/mkt-backend'
 import { prisma } from '@/lib/db'
 import type { Prisma } from '@prisma/client'
 import {
+  ARTIFACT_REVIEW_STATUS_OPEN_FOR_SUBMIT,
+  buildActivePendingReviewWhere,
+  MKT_APPROVAL_POLICY_VERSION,
+} from '@/lib/platform/marketing/approval-pending'
+import {
   ApprovalArtifactCasRollbackError,
   ApprovalReviewConcurrentDecisionError,
+  ApprovalSubmitArtifactUpdateError,
+  ApprovalSubmitDuplicatePendingError,
 } from '@/lib/platform/marketing/approval-errors'
 import type { MktResult } from '@/lib/platform/marketing/types'
 
-export const MKT_APPROVAL_POLICY_VERSION = 'mkt-08-v1'
+export { MKT_APPROVAL_POLICY_VERSION } from '@/lib/platform/marketing/approval-pending'
 
 export async function submitMarketingArtifactReview(input: {
   customerAccountId: string
@@ -34,26 +41,89 @@ export async function submitMarketingArtifactReview(input: {
   if (!latestRevision) return { ok: false, code: 'VALIDATION', message: 'Unknown revision hash' }
   if (!artifact.marketingRequestId) return { ok: false, code: 'VALIDATION', message: 'Artifact missing request link' }
 
-  const review = await prisma.marketingArtifactReview.create({
-    data: {
-      customerAccountId: input.customerAccountId,
-      managedSiteId: artifact.managedSiteId,
-      marketingRequestId: artifact.marketingRequestId,
-      marketingArtifactId: artifact.id,
-      revisionHash: input.revisionHash,
-      intendedAction: input.intendedAction,
-      allowedChannel: input.allowedChannel,
-      allowedTarget: input.allowedTarget,
-      status: 'SUBMITTED',
-      policyVersion: MKT_APPROVAL_POLICY_VERSION,
-      expiresAt: new Date(Date.now() + 7 * 86400000),
-    },
-  })
-  await prisma.marketingArtifact.update({
-    where: { id: artifact.id },
-    data: { reviewStatus: 'SUBMITTED' },
-  })
-  return { ok: true, value: { reviewId: review.id } }
+  try {
+    const reviewId = await prisma.$transaction(async (tx) => {
+      const head = await tx.marketingArtifact.findFirst({
+        where: { id: input.artifactId, customerAccountId: input.customerAccountId },
+      })
+      if (!head) throw new ApprovalSubmitArtifactUpdateError('Artifact not found')
+      if (head.revisionHash !== input.revisionHash) {
+        throw new ApprovalSubmitArtifactUpdateError('Revision hash mismatch — submit the current revision')
+      }
+      const revision = await tx.marketingArtifactRevision.findFirst({
+        where: { marketingArtifactId: head.id, revisionHash: input.revisionHash },
+      })
+      if (!revision) throw new ApprovalSubmitArtifactUpdateError('Unknown revision hash')
+      if (!head.marketingRequestId) throw new ApprovalSubmitArtifactUpdateError('Artifact missing request link')
+
+      const now = new Date()
+      const activePendingWhere = buildActivePendingReviewWhere({
+        customerAccountId: input.customerAccountId,
+        marketingArtifactId: head.id,
+        revisionHash: input.revisionHash,
+        now,
+      })
+
+      const artifactOpened = await tx.marketingArtifact.updateMany({
+        where: {
+          id: head.id,
+          customerAccountId: input.customerAccountId,
+          revisionHash: input.revisionHash,
+          reviewStatus: { in: ARTIFACT_REVIEW_STATUS_OPEN_FOR_SUBMIT },
+        },
+        data: { reviewStatus: 'SUBMITTED' },
+      })
+
+      if (artifactOpened.count !== 1) {
+        const active = await tx.marketingArtifactReview.findFirst({ where: activePendingWhere })
+        if (active) throw new ApprovalSubmitDuplicatePendingError()
+        const fresh = await tx.marketingArtifact.findFirst({
+          where: { id: head.id, customerAccountId: input.customerAccountId },
+        })
+        if (!fresh || fresh.revisionHash !== input.revisionHash) {
+          throw new ApprovalSubmitArtifactUpdateError('Revision hash mismatch — submit the current revision')
+        }
+        if (fresh.reviewStatus === 'SUBMITTED') {
+          throw new ApprovalSubmitDuplicatePendingError()
+        }
+        throw new ApprovalSubmitArtifactUpdateError()
+      }
+
+      const review = await tx.marketingArtifactReview.create({
+        data: {
+          customerAccountId: input.customerAccountId,
+          managedSiteId: head.managedSiteId,
+          marketingRequestId: head.marketingRequestId,
+          marketingArtifactId: head.id,
+          revisionHash: input.revisionHash,
+          intendedAction: input.intendedAction,
+          allowedChannel: input.allowedChannel,
+          allowedTarget: input.allowedTarget,
+          status: 'SUBMITTED',
+          policyVersion: MKT_APPROVAL_POLICY_VERSION,
+          expiresAt: new Date(now.getTime() + 7 * 86400000),
+        },
+      })
+      return review.id
+    })
+    return { ok: true, value: { reviewId } }
+  } catch (error) {
+    if (error instanceof ApprovalSubmitDuplicatePendingError) {
+      return { ok: false, code: 'CONFLICT', message: error.message }
+    }
+    if (error instanceof ApprovalSubmitArtifactUpdateError) {
+      const msg = error.message
+      if (msg.includes('not found')) return { ok: false, code: 'NOT_FOUND', message: msg }
+      if (msg.includes('missing request') || msg.includes('Unknown revision')) {
+        return { ok: false, code: 'VALIDATION', message: msg }
+      }
+      if (msg.includes('mismatch')) {
+        return { ok: false, code: 'CONFLICT', message: msg }
+      }
+      return { ok: false, code: 'CONFLICT', message: msg }
+    }
+    throw error
+  }
 }
 
 export async function decideMarketingArtifactReview(input: {

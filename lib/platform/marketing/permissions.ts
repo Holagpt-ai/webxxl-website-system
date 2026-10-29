@@ -39,3 +39,15 @@ export function assertMarketingPermission(
   if (actor.isStaff) allowed.add('marketing.read')
   if (!allowed.has(required)) throw new Error(`Missing permission ${required}`)
 }
+
+export function hasMarketingPermission(
+  actor: { membershipRole: MembershipRole; isStaff: boolean },
+  required: MarketingPermission,
+): boolean {
+  try {
+    assertMarketingPermission(actor, required)
+    return true
+  } catch {
+    return false
+  }
+}

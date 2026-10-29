@@ -57,6 +57,21 @@ Session-scoped `CustomerAccount`; gates via `requireCrmApiActor` (`CRM_BACKEND_E
 
 UI binding contract: [`platform/docs/BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md).
 
+## Marketing customer HTTP (MKT-08 + Batch 18A)
+
+Session-scoped `CustomerAccount`; gates via `requireMktApiActor` (`MKT_BACKEND_ENABLED` + entitlement + permission).
+
+| Method | Path | Permission | Notes |
+|---|---|---|---|
+| GET | `/api/v1/marketing/artifacts` | `marketing.read` | Account-wide list; optional filters; cursor pagination; list omits `payload` |
+| GET | `/api/v1/marketing/reviews` | `marketing.read` | Approval inbox; `effectiveStatus` and `allowedActions`; cursor pagination |
+| GET | `/api/v1/marketing/requests/[id]/artifacts` | `marketing.read` | Request-scoped list (unchanged) |
+| GET | `/api/v1/marketing/artifacts/[id]` | `marketing.read` | Detail + revisions (unchanged) |
+| POST | `/api/v1/marketing/artifacts/[id]/submit-review` | `marketing.artifact.review` | Requires `MKT_APPROVAL_WORKFLOW_ENABLED`; atomic with artifact status |
+| POST | `/api/v1/marketing/reviews/[id]/decide` | `marketing.artifact.review` | Human-only; transactional CAS |
+
+UI binding contract: [`platform/docs/BATCH18B-MARKETING-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH18B-MARKETING-UI-INTEGRATION-CONTRACT.md).
+
 Batch 15 (merged as PR #51) adds signed capture (`POST /api/v1/analytics/capture/events`), authenticated sync worker (`x-automation-worker-secret`), PostgreSQL capture rate windows, and honest provider sync states (no fabricated `COMPLETED`). Live GSC HTTP requires SEO flags plus `ANALYTICS_PROVIDER_FETCH_ENABLED`, `WORKFLOW_EXTERNAL_EFFECTS_ENABLED`, and `ANALYTICS_GSC_LIVE_TRANSPORT_ENABLED`. Those flags stay off in source. The merge does not show a production migration or a connected provider.
 
 ## Migrations in the repository

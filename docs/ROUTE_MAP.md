@@ -52,6 +52,8 @@ Route handlers under `app/api`, MERGED, not indexed:
 | Commerce and wallet | `/api/v1/commerce/*`, `/api/v1/admin/commerce/*`, `/api/v1/billing-groups/*`, `/api/v1/wallet/*` |
 | CRM, marketing, social, SEO | `/api/v1/crm/*`, `/api/v1/marketing/*`, `/api/v1/social/*`, `/api/v1/seo/*` |
 
+Batch 18A Marketing extensions (backend; UI in Batch 18B): `GET /api/v1/marketing/artifacts` (account-wide list, cursor pagination), `GET /api/v1/marketing/reviews` (approval inbox). Existing per-request artifact and decide routes unchanged.
+
 Batch 17A CRM extensions (backend merged; UI wired in Batch 17B/17C integration PR): `GET /api/v1/crm/contacts` (`q`, `cursor`, `take`), `PATCH /api/v1/crm/deals/[id]/stage`, `PATCH /api/v1/crm/tasks/[id]`, `GET|POST /api/v1/crm/contacts/[id]/consent`, `POST /api/v1/crm/contacts/[id]/suppression`.
 | Communications and workflows | `/api/v1/communications/*`, `/api/v1/workflows/*` |
 | Customer AI | `/api/v1/customer-ai/accounts/[accountId]/*` |
