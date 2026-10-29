@@ -79,7 +79,7 @@ export async function listCommsConnections(input: {
 }): Promise<
   CommsResult<{
     chatwoot: ReturnType<typeof chatwootConnectionState>
-    outbound: { enabled: boolean; dataState: 'DISABLED' }
+    outbound: { enabled: boolean; dataState: 'DISABLED' | 'ENABLED' }
   }>
 > {
   void input.actorUserId
