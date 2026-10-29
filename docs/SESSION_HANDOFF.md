@@ -27,3 +27,18 @@ Batch 17A: native CRM backend workflows — contact search/cursor pagination, de
 ## PENDING REPOSITORY SYNC
 
 None once Batch 17A PR is pushed with continuity updates.
+
+## Handoff template
+
+```
+Date / scope / owner: 2026-10-29 / BATCH-17A CRM core workflows / Cursor
+Repo / main SHA at session start: Holagpt-ai/webxxl-website-system / 7fc7e264fb6044d6f3984f9fe69ada3787ddb3da
+Branch / head SHA / PR: feature/batch-17a-crm-core-workflows / see latest push / #55 open (unmerged)
+Merged state / production deployed SHA: Batch 17A awaits owner merge / production SHA-only record 7fc7e26 (PR #54) in DEPLOYMENT_STATUS.md
+Migration applied? IDs + evidence or UNVERIFIED: UNVERIFIED
+Flag activation / providers: CRM source defaults OFF; production values UNVERIFIED
+Completed / deferred: Batch 17A backend IN PR; Batch 17B UI contract written for v0.app
+Next exact assignment / owning tool: Owner review PR #55; then v0.app Batch 17B UI per contract
+Repository synchronization: committed on PR #55 branch
+Do NOT touch: production migrations, CRM flag activation, Batch 16 CRM UI files, provider connections
+```
