@@ -10,10 +10,34 @@ export const SEO_API = {
   competitors: (id: string) => `${site(id)}/competitors`,
   markets: (id: string) => `${site(id)}/markets`,
   opportunities: (id: string) => `${site(id)}/opportunities`,
+  keywords: (id: string) => `${site(id)}/keywords`,
   connections: (id: string) => `${site(id)}/connections`,
 }
 
 export type SeoDataState = 'NOT_CONNECTED' | 'FETCHING' | 'READY' | 'PARTIAL' | 'STALE' | 'ERROR' | 'NOT_SUPPORTED'
+
+/** Filter values the opportunities API accepts; anything else returns 400 VALIDATION. */
+export const OPPORTUNITY_STATES = [
+  'OBSERVED_FINDING',
+  'RECOMMENDED_ACTION',
+  'DRAFT_PREPARED',
+  'AWAITING_APPROVAL',
+  'APPROVED',
+  'PUBLISHED',
+  'VERIFIED_OUTCOME',
+] as const
+export const OPPORTUNITY_LEVELS = ['HIGH', 'MEDIUM', 'LOW'] as const
+
+/** Stored GSC aggregate. Every metric stays null when the evidence is insufficient. */
+export type GscSummary = {
+  dataState: SeoDataState
+  clicks: number | null
+  impressions: number | null
+  ctr: number | null
+  averagePosition: number | null
+  averagePositionLabel?: string
+  dateRange?: { start: string; end: string }
+}
 
 export type SeoOpportunityDraft = {
   ruleId: string
@@ -56,7 +80,7 @@ export type SeoOverview = {
       publishedOnlyWhenVerified: number
       dataState: SeoDataState
     }
-    gscPerformance: { dataState: SeoDataState }
+    gscPerformance: GscSummary
     technicalFindings: { count: number; dataState: SeoDataState }
     competitorMarket: { competitors: RankedCompetitor[]; dataState: SeoDataState }
     priorityOpportunities: SeoOpportunityDraft[]
@@ -66,23 +90,38 @@ export type SeoOverview = {
   }
 }
 
-export type GscPerformance = {
-  dataState: SeoDataState
+export type GscPerformance = GscSummary & {
   propertyRef?: string
-  dateRange?: { start: string; end: string }
   asOf?: string
-  clicks: number | null
-  impressions: number | null
-  ctr: number | null
-  averagePosition: number | null
-  averagePositionLabel: string
-  completeness: {
+  completeness?: {
     rowCount: number
     dedupedRowCount: number
     distinctDates: number
     aggregationMethod: string
     limitations: string[]
   }
+}
+
+export type GscKeyword = {
+  query: string
+  page: string | null
+  clicks: number | null
+  impressions: number | null
+  ctr: number | null
+  averagePosition: number | null
+  averagePositionLabel: string
+  /** Calendar day the metrics describe (YYYY-MM-DD). */
+  date: string
+  dataState: string
+  /** When the row was last observed from the source. */
+  observedAt: string
+}
+
+export type GscKeywordsResponse = {
+  gsc: GscPerformance
+  keywords: GscKeyword[]
+  limitations: string[]
+  nextCursor?: string
 }
 
 export type SitePage = {
@@ -130,6 +169,8 @@ export type CreateMarketResult = { marketId: string; competitors: RankedCompetit
 export type SeoOpportunity = {
   id: string
   ruleId: string
+  ruleVersion?: string
+  evidenceRef?: string
   state: string
   severity: string
   confidence: string
@@ -141,6 +182,8 @@ export type SeoOpportunity = {
   observedAt: string
   priorityScore: number
 }
+
+export type SeoOpportunitiesResponse = { opportunities: SeoOpportunity[]; nextCursor?: string }
 
 export type SeoConnection = {
   id: string

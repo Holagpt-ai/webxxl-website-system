@@ -1,0 +1,21 @@
+From https://github.com/Holagpt-ai/webxxl-website-system
+ * branch            main       -> FETCH_HEAD
+2ef9a90cd10222466faf0c6070995130456b7363
+?? .v0tmp/
+Switched to a new branch 'v0/local-seo-ui-19b'
+6ff105cf2334a9039d1d57d2dc0a3df878ad1730
+components/local-seo:
+connections.tsx
+keywords.tsx
+local-market.tsx
+opportunities.tsx
+overview.tsx
+pages.tsx
+shared.tsx
+
+lib/local-seo-ui:
+server.ts
+types.ts
+local-seo-workspace-en.ts
+local-seo-workspace-es.ts
+BATCH19B-LOCAL-SEO-UI-INTEGRATION-CONTRACT.md
