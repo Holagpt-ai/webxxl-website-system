@@ -45,8 +45,8 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 15 ingestion pipeline (PR #51) | MERGED | [PR #51](https://github.com/Holagpt-ai/webxxl-website-system/pull/51), `f315e897218a48bfac44a0d50724c91d32b6c9c9`. Flags default off. Production migration UNVERIFIED |
 | PR #52 continuity correction | MERGED | [PR #52](https://github.com/Holagpt-ai/webxxl-website-system/pull/52), `2b7ec7be2aeadccfb595a2ab7edf59b775876efe`. Documentation only |
 | Batch 16A workspace contract | MERGED | [PR #53](https://github.com/Holagpt-ai/webxxl-website-system/pull/53), `69981c4c9576e8cc43ebe83aa2b486f27db5a6f3`. [`BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md`](platform/docs/BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md) |
-| Batch 16B customer workspace UI | IN PR | v0.app delivery (commits on integration branch). Combined with 16C on [PR #54](https://github.com/Holagpt-ai/webxxl-website-system/pull/54), head `dd9428f890b1c765c6e40a55c2b54752f5e735ab`. Not production-activated |
-| Batch 16C dashboard integration | IN PR | [PR #54](https://github.com/Holagpt-ai/webxxl-website-system/pull/54): nav wiring, Local SEO path reconciliation, continuity. Not merged |
+| Batch 16B customer workspace UI | IN PR | v0.app delivery (commits on integration branch). Combined with 16C on [PR #54](https://github.com/Holagpt-ai/webxxl-website-system/pull/54), head see latest push on PR #54. Not production-activated |
+| Batch 16C dashboard integration | IN PR | [PR #54](https://github.com/Holagpt-ai/webxxl-website-system/pull/54): nav wiring, Local SEO path reconciliation, continuity. Awaiting owner merge |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.
