@@ -1,8 +1,8 @@
 # Batch 21A — Controlled customer pilot readiness
 
-**Status:** Tooling and documentation on owner-review PR #63 (Batch 21A + 21A.1). **Not** production activation.  
-**Baseline `main`:** `16861d9c796dd5b808c4186bc4611e10f0a434a2` (PR #62).  
-**Production deploy (SHA only):** `dpl_6yeBmge7TwyYmeTKZaSGFKABoms9` — READY.
+**Status:** **MERGED** on `main` as PR #63 (Batch 21A + 21A.1). **Not** production activation.  
+**Baseline `main`:** `603a601f42728cf758bd632507e0bdd2c8fdcc6b` (PR #63).  
+**Production deploy (SHA only):** `dpl_Rf71rKnvwjngSRntTCjfFc7fHXGP` — READY.
 
 ## Command
 
@@ -48,7 +48,7 @@ Production migration apply state remains **BLOCKED** or **UNVERIFIED** until the
 
 ## OPEN-001 / entitlements
 
-**RESOLVED (2026-10-29):** cohort **`SUBSCRIBER_ONLY`**. Policy source allows included FREE software; **account-level** qualifying website subscription (or reconciled legacy `paid.website-subscription` service) is required at CRM/MKT/SEO/COMMS API gates. Non-subscribers receive **403 `FREE_SOFTWARE_NOT_ELIGIBLE`**. See Batch **21B** and [`PILOT-21B-STAGING-EXECUTION-PLAN.md`](PILOT-21B-STAGING-EXECUTION-PLAN.md).
+**RESOLVED (2026-10-29):** cohort **`SUBSCRIBER_ONLY`**. On `main` @ `c6d122`, **account-level** qualifying website subscription (or reconciled legacy `paid.website-subscription` service) is required at CRM/MKT/SEO/COMMS API gates. Non-subscribers receive **403 `FREE_SOFTWARE_NOT_ELIGIBLE`**. See Batch **21B** ([PR #64](https://github.com/Holagpt-ai/webxxl-website-system/pull/64) **MERGED**) and [`PILOT-21B-STAGING-EXECUTION-PLAN.md`](PILOT-21B-STAGING-EXECUTION-PLAN.md).
 
 ## Provider isolation (must stay OFF for controlled pilot)
 
@@ -71,7 +71,7 @@ Unavailable capabilities must surface honest **503** / disabled UI states.
 
 ## Owner authorization checklist (before real activation)
 
-1. OPEN-001 recorded — provision qualifying subscription evidence per pilot account on staging.
+1. OPEN-001 enforcement on `main` — provision qualifying subscription evidence per pilot account on staging.
 2. Authorize migration apply on the **pilot environment** only (not production without separate gate).
 3. Enable module backend flags in that environment with evidence.
 4. Provision two real internal CustomerAccounts + memberships (not ABMED synthetic fixtures).

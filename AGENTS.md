@@ -8,6 +8,15 @@ Read `README.md`, `docs/PROJECT_MEMORY.md`, `docs/SESSION_HANDOFF.md`, `docs/pla
 
 Start with a compact status: current source SHA, active batch, known production evidence or UNVERIFIED, changed ownership surfaces, explicit exclusions. A successful Vercel production deployment records that SHA only. It does not prove migrations, flags, or provider activation.
 
+## Evidence hierarchy (CONTINUITY-02)
+
+1. **GitHub** — source code, commits, pull requests, and versioned documentation in the repository.
+2. **Vercel** — deployed application SHA and deployment records (SHA only unless separately verified).
+3. **Repository documentation** — must align with verified GitHub/Vercel facts; never silently reconciled from chat memory.
+4. **ChatGPT / v0.app** — coordination and handoff only; not proof of merge, deploy, migration, or activation.
+
+Cursor performs repository documentation and Git edits. v0.app does not edit backend or continuity files. Correct documentation drift before unrelated development. `docs/PROJECT_MEMORY.md` and `docs/SESSION_HANDOFF.md` share one **canonical checkpoint** block (six fields: checkpoint, GitHub SHA + active PR, production deployment, last updated, next task/platform, open blockers). Update both together in the same commit when checkpoint facts change.
+
 ## Binding constraints
 
 1. Cursor owns backend, schema/Prisma/Supabase, workers, APIs, integration logic, tests, documentation/CI, Git and deployment automation. v0.app owns UI/UX for public, customer and admin experiences. No overlapping file edits.
