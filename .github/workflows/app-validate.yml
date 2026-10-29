@@ -57,6 +57,7 @@ jobs:
       - run: pnpm exec prisma validate
       - run: pnpm exec prisma generate
       - run: pnpm typecheck
+      - run: npx vitest run __tests__/platform/pilot21a-readiness.test.ts
       - run: pnpm build
 
   app-validate-gate:
