@@ -7,9 +7,9 @@ Specifications: [`03-DATA-MODEL`](platform/docs/03-DATA-MODEL.md), [`04-API-INTE
 | Identity and tenancy | Auth.js, Prisma `CustomerAccount`, `lib/platform/account-isolation.ts` | Supabase/PostgreSQL | MERGED | Production schema level UNVERIFIED |
 | Preview and review | Projects, immutable versions, owner approvals | GitHub, Vercel deployment ids | MERGED | Per-site approval is data, not a code flag |
 | CRM | `lib/platform/crm/**`, `/api/v1/crm/*`, `lib/crm-ui/**`, `components/crm/**` | Twenty adapter returns not configured until flags and mapping exist. Batch 17A HTTP and 17B/17C UI merged on `main` | MERGED | `CRM_BACKEND_ENABLED` off; external sync not inferred |
-| Communications | `lib/platform/comms/**`, `lib/comms-ui/**`, `components/communications/**` | Chatwoot mapping read APIs + customer inbox UI (Batch 20C IN PR) | MERGED 20A backend; 20C UI integration IN PR | No live send; nav ≠ activation; transcript not exposed |
+| Communications | `lib/platform/comms/**`, `lib/comms-ui/**`, `components/communications/**` | Chatwoot mapping read APIs + customer inbox UI (Batch 20C) | MERGED 20A backend + 20C UI integration (PR #62) | No live send; nav ≠ activation; transcript not exposed |
 | Marketing and social | `lib/platform/marketing/**`, `lib/marketing-studio-ui/**`, `components/marketing-studio/**`, `/api/v1/marketing/*`, `/api/v1/social/*` | Postiz adapter. Batch 18A list APIs + Batch 18B/18C Marketing Studio UI merged (PR #58) | MERGED | Publishing off until authorized |
-| SEO and analytics | `lib/platform/seo/**`, `lib/platform/analytics/**`, `lib/local-seo-ui/**`, `components/local-seo/**` | GSC, GA4, GBP, rank vendor | MERGED (19A backend); Local SEO UI IN PR (19B+19C) | See flags below |
+| SEO and analytics | `lib/platform/seo/**`, `lib/platform/analytics/**`, `lib/local-seo-ui/**`, `components/local-seo/**` | GSC, GA4, GBP, rank vendor | MERGED 19A backend + 19B+19C Local SEO UI (PR #60) | See flags below |
 | Wallet and commerce | `lib/platform/wallet/**`, `lib/platform/commerce/**` | No processor selected as the system of record | MERGED | No live charge inferred |
 | Workflow | `lib/platform/workflow/**`, legacy notification worker | AUTO-10 is Prisma-first; Hatchet is not provisioned | MERGED | `WORKFLOW_*` default off in the AUTO-10 contract |
 | AI workforce | `lib/platform/workforce/**`, `lib/platform/customer-ai-workforce/**` | Paperclip is a candidate adapter | MERGED | Live execution not inferred |
@@ -40,7 +40,7 @@ Read from `config/crm-backend.ts`, `config/mkt-backend.ts`, `config/social-marke
 | `SOCIAL_MARKETING_ENABLED`, `POSTIZ_API_ENABLED`, `POSTIZ_LIVE_PUBLISHING_ENABLED`, `SOCIAL_AUTOMATED_APPROVAL_ENABLED` | off |
 | `SEO_BACKEND_ENABLED`, `SEO_CRAWLER_ENABLED`, `SEO_GSC_API_ENABLED`, `SEO_GOOGLE_OAUTH_ENABLED`, `SEO_GA4_API_ENABLED`, `SEO_GBP_API_ENABLED`, `SEO_PLACES_API_ENABLED`, `SEO_RANK_PROVIDER_ENABLED`, `SEO_AI_EXECUTION_ENABLED` | off |
 
-OPEN-001 resolved (**SUBSCRIBER_ONLY**). Module APIs require qualifying website subscription evidence per `CustomerAccount` even when backend flags are on. This table does not enable any flag.
+OPEN-001 **RESOLVED** (**SUBSCRIBER_ONLY** on `main` @ `c6d122` via `lib/platform/open001/`). Module APIs require qualifying website subscription evidence per `CustomerAccount` even when backend flags are on. **`ALL_SIGNUPS`** / **`HYBRID`** remain inactive future options. This table does not enable any flag.
 
 ## CRM customer HTTP (Batch 17A)
 

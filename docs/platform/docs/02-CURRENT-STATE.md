@@ -1,8 +1,8 @@
 # 02 — Verified Repository Baseline and Honest Status
 
-**Source checkpoint 2026-10-29:** GitHub `main` is `5e2759d9cca6b1461492cff59172c84693123f2c` (PR #57, Batch 18A Marketing backend merged). Batch 17 CRM UI/API and Batch 16 workspace UI remain on `main`. Later rows in `docs/DEPLOYMENT_STATUS.md` do not prove migrations or flag activation. Production migration application and live flag values remain **UNVERIFIED**. Batch 18B Marketing UI (v0) and Batch 18C Cursor integration are on an open owner-review pull request. Vercel production SHA for PR #57 is `dpl_7CngvEWJTDWmYGGGYFWRZdLPXyyn` (READY, SHA only). Marketing/CRM runtime activation in production remains UNVERIFIED.
+**Operational checkpoint 2026-10-29:** GitHub `main` is `c6d12217e8457780f18bffb6ff61fa1bb117090f` (PR #64, Batch **21B** OPEN-001 **MERGED**). Owner-reported Vercel production deployment `dpl_EG54QzowAtcvrGibB3xWzpVxXYhE` is **READY** for that SHA (deployment evidence only). Batches 17A–21A.1 are **MERGED** on `main`. OPEN-001 cohort **SUBSCRIBER_ONLY** is enforced in source via `lib/platform/open001/`. **[PR #65](https://github.com/Holagpt-ai/webxxl-website-system/pull/65)** (CONTINUITY-02 documentation) is **OPEN**. Production migrations, flags, and provider activation remain **UNVERIFIED**. Authenticated staging/customer acceptance is **NOT VERIFIED**.
 
-Older module sections that describe open pull requests are historical notes from the October 18 batches, not the current merge state. Operational summary: `docs/PROJECT_MEMORY.md` and `docs/DEPLOYMENT_STATUS.md`.
+Older module sections below may describe earlier October pull-request states as **historical notes**. Current index: `docs/PROJECT_MEMORY.md`, `docs/SESSION_HANDOFF.md`, and `docs/DEPLOYMENT_STATUS.md`.
 
 **Inspection (historical):** GitHub `main` on 2026-10-18. **DOC-00 merged:** `9b0886afc4b312450a589a6fa6768612312a2ef8` (PR #32). **FOUND-01 merged:** `68c5fde5345813899e2db34ac422a90cb5956f52` (PR #33). **INFRA-02 merged:** `7277f94bdceb064600315a702f77d3d29d66eaed` (PR #34). Production Vercel deployment and Supabase migration application remain separate gates.
 
@@ -138,7 +138,7 @@ Older module sections that describe open pull requests are historical notes from
 | Billing group identity | `prisma/schema.prisma` models `BillingGroup`, `BillingGroupMembership`, `BillingGroupRole`, `BillingProfile`, `SiteSpendingPolicy` | **Implemented in source** on `feature/webxxl-found-01`. Additive migration `20261017220000_found01_platform_identity` is **not applied** to production |
 | Shared wallet contracts | `lib/platform/wallet/*` plus Prisma `CreditWallet`, `WalletLedgerEntry`, `CreditReservation`, `MessageUsage` | **Contract + synthetic engine implemented and unit-tested**. FOUND-01A corrected partial holds, amount validation, actor authorization, funding uniqueness, and restrictive financial FK deletes. FOUND-01B rejects caller-forged `SERVICE` actors (server registry only), validates membership activation before mutate, and blocks expired reservation create/settle paths. No live top-up, Twilio send, or payment execution |
 | Authorization split | `lib/platform/billing-authz.ts`, `lib/platform/account-isolation.ts` | Group billing rights are independent of `CustomerMembership` / CRM access. Existing Auth.js and `lib/portal/authz.ts` unchanged |
-| Entitlements | `lib/platform/entitlements.ts`; `lib/platform/open001/` | FREE vs PAID classifications exist. Marketplace quotes unchanged. OPEN-001 **SUBSCRIBER_ONLY** (2026-10-29) |
+| Entitlements | `lib/platform/entitlements.ts`; `lib/platform/open001/`; catalog types in `lib/marketplace/catalog.ts` | FREE vs PAID classifications exist. Marketplace quotes unchanged. OPEN-001 **SUBSCRIBER_ONLY** (2026-10-29) on `main` @ `c6d122` |
 | Provider registry | `lib/platform/providers/*` | Typed replaceable interfaces. Existing Postiz stub, Resend email, worker, and billing identifiers are wrapped. Twenty, Chatwoot, Paperclip, Twilio, and payment processors are **not installed** |
 | AI tool registry | `lib/platform/ai-tools/*` | Deny-by-default contracts only. No autonomous agents activated. `purchasableAiEmployees` flag is `false` |
 | ABMED data | `lib/platform/fixtures/abmed.ts` | Synthetic test identities only. Live `abmed-account` memberships, projects, and approvals were **not migrated** |
@@ -165,7 +165,7 @@ Older module sections that describe open pull requests are historical notes from
 
 ## Known source/policy mismatch — resolve without deleting orders
 
-`lib/marketplace/catalog.ts` still advertises **SEO & local visibility as quoted monthly/project service**, **CRM & follow-up automation as custom quote**, and **Marketing & ad campaigns as quote per campaign**. FOUND-01 did **not** change those production-facing prices. A parallel entitlement catalog now classifies the approved FREE core services and paid website/SMS/hosting/domain/email offerings. Historical `ServiceOrder` quotes remain intact. OPEN-001 (free prospect eligibility) is **resolved** as **SUBSCRIBER_ONLY**; `ALL_SIGNUPS` / `HYBRID` remain inactive future options.
+`lib/marketplace/catalog.ts` still advertises **SEO & local visibility as quoted monthly/project service**, **CRM & follow-up automation as custom quote**, and **Marketing & ad campaigns as quote per campaign**. FOUND-01 did **not** change those production-facing prices. A parallel entitlement catalog now classifies the approved FREE core services and paid website/SMS/hosting/domain/email offerings. Historical `ServiceOrder` quotes remain intact. OPEN-001 (free prospect eligibility) is **resolved** as **SUBSCRIBER_ONLY** on `main` @ `c6d122`; `ALL_SIGNUPS` / `HYBRID` remain inactive future options.
 
 ## Existing role nuance
 

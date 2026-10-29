@@ -34,7 +34,7 @@ All of these exist as `app/[locale]/dashboard/**/page.tsx`. They are authenticat
 
 **Batch 16 customer workspaces (MERGED on `main`, PR #54):** 25 locked routes under `/dashboard/crm/**` (9 pages), `/dashboard/marketing/**` (10 pages), and `/dashboard/seo/**` (6 pages). English unprefixed and Spanish `/es/dashboard/...` variants resolve via `app/[locale]/dashboard/`. Dynamic segments: `/dashboard/crm/contacts/[contactId]`, `/dashboard/marketing/requests/[requestId]`, `/dashboard/marketing/deliverables/[artifactId]`, `/dashboard/marketing/campaigns/[campaignId]`. `/dashboard/social` and `/dashboard/crm/leads` are not part of Batch 16.
 
-**Batch 20C communications workspace (IN PR):** `/dashboard/communications`, `/dashboard/communications/conversations/[id]`, `/dashboard/communications/connections` (v0 Batch 20B UI + Cursor nav). Project messaging remains `/dashboard/messages`.
+**Batch 20C communications workspace (MERGED PR #62):** `/dashboard/communications`, `/dashboard/communications/conversations/[id]`, `/dashboard/communications/connections` (v0 Batch 20B UI + Cursor nav). Project messaging remains `/dashboard/messages`.
 
 `getDashboardNavModules()` includes CRM → `/dashboard/crm`, **Communications** → `/dashboard/communications`, Marketing Studio → `/dashboard/marketing`, and Local SEO → `/dashboard/seo`, plus the overview, project, core portal, marketplace, billing, analytics, and AI employees routes. Infrastructure and notification links are present in source because `infrastructureManagement` and `automationNotifications` are `true` in `config/features.ts`. Registry keys such as `scheduler` have no `route` and are not pages. Nav visibility is not authorization; CRM, Marketing, and SEO APIs remain flag-disabled at source defaults.
 
@@ -58,7 +58,7 @@ Batch 18A Marketing extensions (backend; UI in Batch 18B): `GET /api/v1/marketin
 
 Batch 19A SEO extensions (backend MERGED PR #59): `GET /api/v1/seo/sites/[siteId]/keywords` (stored GSC per-query rows, cursor + search); overview and performance reuse `loadGscStoredSiteBundle`; opportunities list adds cursor and optional `state`/`severity`/`confidence` filters.
 
-Batch 19B+19C Local SEO UI (IN PR): `/dashboard/seo`, `/dashboard/seo/keywords`, `/dashboard/seo/opportunities` wired to 19A APIs via `lib/local-seo-ui/**` and `components/local-seo/**` (v0 commit `59315094`).
+Batch 19B+19C Local SEO UI (MERGED PR #60): `/dashboard/seo`, `/dashboard/seo/keywords`, `/dashboard/seo/opportunities` wired to 19A APIs via `lib/local-seo-ui/**` and `components/local-seo/**` (v0 commit `59315094`).
 
 Batch 17A CRM extensions (backend merged; UI wired in Batch 17B/17C integration PR): `GET /api/v1/crm/contacts` (`q`, `cursor`, `take`), `PATCH /api/v1/crm/deals/[id]/stage`, `PATCH /api/v1/crm/tasks/[id]`, `GET|POST /api/v1/crm/contacts/[id]/consent`, `POST /api/v1/crm/contacts/[id]/suppression`.
 | Communications and workflows | `/api/v1/communications/*`, `/api/v1/workflows/*` |
