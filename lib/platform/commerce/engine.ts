@@ -1015,25 +1015,47 @@ export async function ingestPaymentWebhook(
       await store.saveWebhook(webhook)
       return { ok: false, error: 'PRICE_MISMATCH' }
     }
+    const lateCaptureAfterCancel = order.status === 'CANCELLED'
     const applied = await applyPayment('CAPTURED', null)
     if (!applied) return { ok: false, error: 'FORBIDDEN_TRANSITION' }
-    const lateCaptureAfterCancel = order.status === 'CANCELLED'
     if (canTransitionOrder(order.status, 'PAID')) {
       order.status = 'PAID'
       order.failureCode = lateCaptureAfterCancel ? 'LATE_CAPTURE_AFTER_CANCEL' : null
       order.updatedAt = now
       await store.saveOrder(order)
     }
+    const items = await store.listItems(order.id)
+
     if (lateCaptureAfterCancel) {
+      await ensureInvoice(store, order, payment, event.externalInvoiceRef ?? null, null)
+      webhook.processingStatus = 'PROCESSED'
+      webhook.processedAt = now
+      await store.saveWebhook(webhook)
       await audit(store, {
         billingGroupId: order.billingGroupId,
         action: 'LATE_CAPTURE_AFTER_CANCEL',
         entityType: 'CommerceOrder',
         entityId: order.id,
-        metadata: { paymentId: payment.id, externalEventId: event.externalEventId, retainedForReconciliation: true },
+        metadata: {
+          paymentId: payment.id,
+          externalEventId: event.externalEventId,
+          retainedForReconciliation: true,
+          fulfillmentSkipped: true,
+          subscriptionSkipped: true,
+          workflowSkipped: true,
+        },
       })
+      await audit(store, {
+        billingGroupId: order.billingGroupId,
+        action: 'PAYMENT_CAPTURED',
+        entityType: 'CommercePayment',
+        entityId: payment.id,
+        metadata: { source: 'webhook', browserRedirect: false, lateCaptureAfterCancel: true },
+      })
+      const fresh = await store.findOrder(order.id)
+      return { ok: true, value: { processingStatus: 'PROCESSED', orderStatus: fresh?.status ?? order.status } }
     }
-    const items = await store.listItems(order.id)
+
     const subscription = items[0] ? await ensureSubscription(store, order, payment, items[0]) : null
     await ensureInvoice(store, order, payment, event.externalInvoiceRef ?? null, subscription?.id ?? null)
     webhook.processingStatus = 'PROCESSED'

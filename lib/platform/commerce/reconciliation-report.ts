@@ -20,6 +20,7 @@ export type CommerceReconciliationFinding = {
     | 'WEBHOOK_REVIEW'
     | 'SUBSCRIPTION_ORDER_MISMATCH'
     | 'COMPENSATING_REFUND_REVIEW'
+    | 'LATE_CAPTURE_AFTER_CANCEL'
   orderId?: string
   subscriptionId?: string
   fundingId?: string
@@ -107,6 +108,20 @@ export async function buildCommerceReconciliationReport(
   const orderPage = await store.listReconciliationOrderContexts(billingGroupId, 0, orderScanLimit)
   for (const { order, payment, fulfillment, subscription } of orderPage.contexts) {
     if (findingsTruncated) break
+    if (order.failureCode === 'LATE_CAPTURE_AFTER_CANCEL' && payment?.status === 'CAPTURED') {
+      findingsTruncated =
+        pushFinding(
+          findings,
+          {
+            code: 'LATE_CAPTURE_AFTER_CANCEL',
+            orderId: order.id,
+            detail:
+              'Verified payment captured after payer cancellation; fulfillment and workflow intentionally deferred pending operator review.',
+          },
+          findingsLimit,
+        ) || findingsTruncated
+      continue
+    }
     const paidLike = ['PAID', 'FULFILLMENT_PENDING', 'FULFILLMENT_BLOCKED'].includes(order.status)
     if (paidLike && (!fulfillment || fulfillment.status !== 'COMPLETED')) {
       findingsTruncated =

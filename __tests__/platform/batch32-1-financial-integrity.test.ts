@@ -129,34 +129,10 @@ describe('Batch 32.1 — financial integrity corrections', () => {
     if (again.ok) expect(again.value.idempotent).toBe(true)
   })
 
-  it('F1: retains late verified capture after local cancel for reconciliation', async () => {
+  it('F1-safety: late capture preserves payment evidence without fulfillment, mint, subscription, or workflow', async () => {
     const db = store()
     const price = await creditPrice(db)
     enableMock()
-    const created = await createPurchaseOrder(db, {
-      actor: payer,
-      billingGroupId: ABMED_GROUP_ID,
-      customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
-      productPriceId: price.id,
-      quantity: 1,
-      expectedTotalMinor: 2500,
-      currency: 'USD',
-      idempotencyKey: 'b321-late-cap',
-    })
-    if (!created.ok) throw new Error(created.error)
-    await createCheckout(db, {
-      actor: payer,
-      orderId: created.value.order.id,
-      idempotencyKey: 'b321-chk-late',
-      providerKey: 'mock',
-    })
-    const cancelled = await db.atomicCancelUnpaidOrder({
-      orderId: created.value.order.id,
-      reason: 'test_simulated_cancel',
-      now: new Date(),
-    })
-    expect(cancelled.kind).toBe('provider_checkout_unconfirmed')
-
     const plain = await createPurchaseOrder(db, {
       actor: payer,
       billingGroupId: ABMED_GROUP_ID,
@@ -177,7 +153,11 @@ describe('Batch 32.1 — financial integrity corrections', () => {
     const cancelPlain = await cancelUnpaidOrder(db, { actor: payer, orderId: plain.value.order.id })
     expect(cancelPlain.ok).toBe(true)
 
-    const mint: CreditMintPort = async () => ({ ok: false, error: 'UNAUTHORIZED_SETTLE' })
+    let mintCalls = 0
+    const mint: CreditMintPort = async () => {
+      mintCalls += 1
+      return { ok: false, error: 'UNAUTHORIZED_SETTLE' }
+    }
     const body = JSON.stringify({
       id: 'b321_late_evt',
       eventType: 'payment.captured',
@@ -186,6 +166,7 @@ describe('Batch 32.1 — financial integrity corrections', () => {
       amountMinor: 2500,
       currency: 'USD',
       externalPaymentRef: 'b321_late_pay',
+      externalInvoiceRef: 'b321_late_inv',
     })
     const captured = await ingestPaymentWebhook(
       db,
@@ -194,11 +175,84 @@ describe('Batch 32.1 — financial integrity corrections', () => {
     )
     expect(captured.ok).toBe(true)
     const order = await db.findOrder(plain.value.order.id)
-    expect(order?.status).not.toBe('CANCELLED')
+    expect(order?.status).toBe('PAID')
+    expect(order?.failureCode).toBe('LATE_CAPTURE_AFTER_CANCEL')
     const payment = await db.findPaymentByOrder(plain.value.order.id)
     expect(payment?.status).toBe('CAPTURED')
-    const audits = await db.listAudit('CommerceOrder', plain.value.order.id)
-    expect(audits.some((row) => row.action === 'LATE_CAPTURE_AFTER_CANCEL')).toBe(true)
+    expect(payment?.externalPaymentRef).toBe('b321_late_pay')
+    expect(mintCalls).toBe(0)
+    expect(db.fulfillments.filter((row) => row.orderId === plain.value.order.id)).toHaveLength(0)
+    expect(db.funding).toHaveLength(0)
+    expect(await db.findSubscriptionByOrder(plain.value.order.id)).toBeNull()
+    const orderAudits = await db.listAudit('CommerceOrder', plain.value.order.id)
+    expect(orderAudits.some((row) => row.action === 'LATE_CAPTURE_AFTER_CANCEL')).toBe(true)
+    expect(orderAudits.some((row) => row.action === 'WORKFLOW_PREPARE')).toBe(false)
+    const invoices = await db.listInvoicesByOrder(plain.value.order.id)
+    expect(invoices.length).toBe(1)
+
+    const report = await buildCommerceReconciliationReport(db, ABMED_GROUP_ID, 10)
+    expect(report.ok).toBe(true)
+    if (report.ok) {
+      expect(report.value.findings.some((f) => f.code === 'LATE_CAPTURE_AFTER_CANCEL' && f.orderId === plain.value.order.id)).toBe(
+        true,
+      )
+      expect(
+        report.value.findings.some(
+          (f) => f.code === 'PAID_WITHOUT_FULFILLMENT' && f.orderId === plain.value.order.id,
+        ),
+      ).toBe(false)
+    }
+  })
+
+  it('F1-safety: normal verified capture still runs fulfillment and workflow audit path', async () => {
+    const db = store()
+    const price = await creditPrice(db)
+    enableMock()
+    const created = await createPurchaseOrder(db, {
+      actor: payer,
+      billingGroupId: ABMED_GROUP_ID,
+      customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
+      productPriceId: price.id,
+      quantity: 1,
+      expectedTotalMinor: 2500,
+      currency: 'USD',
+      idempotencyKey: 'b321-normal-cap',
+    })
+    if (!created.ok) throw new Error(created.error)
+    await createCheckout(db, {
+      actor: payer,
+      orderId: created.value.order.id,
+      idempotencyKey: 'b321-chk-normal',
+      providerKey: 'mock',
+    })
+    let mintCalls = 0
+    const body = JSON.stringify({
+      id: 'b321_normal_evt',
+      eventType: 'payment.captured',
+      sequence: 1,
+      orderId: created.value.order.id,
+      amountMinor: 2500,
+      currency: 'USD',
+      externalPaymentRef: 'b321_normal_pay',
+    })
+    const captured = await ingestPaymentWebhook(
+      db,
+      { providerKey: 'mock', rawBody: body, signature: signCommerceWebhook(body, 'test-only-mock-secret') },
+      {
+        mint: async () => {
+          mintCalls += 1
+          return { ok: false, error: 'UNAUTHORIZED_SETTLE' }
+        },
+      },
+    )
+    expect(captured.ok).toBe(true)
+    const order = await db.findOrder(created.value.order.id)
+    expect(order?.failureCode).not.toBe('LATE_CAPTURE_AFTER_CANCEL')
+    expect(db.fulfillments.some((row) => row.orderId === created.value.order.id)).toBe(true)
+    expect(mintCalls).toBe(1)
+    const orderAudits = await db.listAudit('CommerceOrder', created.value.order.id)
+    expect(orderAudits.some((row) => row.action === 'WORKFLOW_PREPARE')).toBe(true)
+    expect(orderAudits.some((row) => row.action === 'LATE_CAPTURE_AFTER_CANCEL')).toBe(false)
   })
 
   it('F1: refuses cancel when payment already captured', async () => {
