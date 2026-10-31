@@ -43,7 +43,7 @@ export function siteLeadStatusCountBundleFromStatusMap(
 ): SiteLeadStatusCountBundle {
   const read = (status: ManagedSiteLeadStatus): number => {
     if (statusMap instanceof Map) return statusMap.get(status) ?? 0
-    return statusMap[status] ?? 0
+    return (statusMap as Record<ManagedSiteLeadStatus, number>)[status] ?? 0
   }
   const duplicateReview = read('DUPLICATE_REVIEW')
   const awaitingFromStatuses =

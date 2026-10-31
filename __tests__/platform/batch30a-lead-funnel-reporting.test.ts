@@ -240,7 +240,11 @@ describe('Batch 30A lead funnel reporting', () => {
     expect(crm.summary?.openTasks).toEqual({ value: 0, scope: 'account_total' })
     expect(crm.websiteLeadReporting?.readiness.state).toBe('unavailable')
     expect(crm.summary?.websiteLeadsReceived).toBeUndefined()
-    expect(crm.websiteLeadReporting?.readiness.message).not.toMatch(/P2021/)
+    const leadReadiness = crm.websiteLeadReporting?.readiness
+    expect(leadReadiness?.state).toBe('unavailable')
+    if (leadReadiness && leadReadiness.state !== 'available') {
+      expect(leadReadiness.message).not.toMatch(/P2021/)
+    }
   })
 
   it('keeps CRM module available when lead reporting throws an unexpected database error', async () => {
@@ -249,7 +253,10 @@ describe('Batch 30A lead funnel reporting', () => {
     const crm = overview.modules.find((m) => m.module === 'crm')!
     expect(crm.readiness.state).toBe('available')
     expect(crm.websiteLeadReporting?.readiness.state).toBe('unavailable')
-    expect(crm.websiteLeadReporting?.readiness.message).toContain('temporarily unavailable')
+    const leadReadiness = crm.websiteLeadReporting?.readiness
+    if (leadReadiness && leadReadiness.state !== 'available') {
+      expect(leadReadiness.message).toContain('temporarily unavailable')
+    }
   })
 
   it('routes Business Command Center lead actions to the Lead Inbox with recordRef id', async () => {
@@ -268,7 +275,10 @@ describe('Batch 30A lead funnel reporting', () => {
     })
     expect(attachment.summaryMetrics).toEqual({})
     expect(attachment.reporting.readiness.state).toBe('unavailable')
-    expect(attachment.reporting.readiness.message).not.toMatch(/P2021/)
+    const readiness = attachment.reporting.readiness
+    if (readiness.state !== 'available') {
+      expect(readiness.message).not.toMatch(/P2021/)
+    }
   })
 
   it('exposes funnel-report route with reporting auth separate from intake activation flag', () => {
