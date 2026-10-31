@@ -114,6 +114,16 @@ OPEN-001 protected products (`INCLUDED_FREE`, `UNRESOLVED` cohort, AI workforce)
 
 Does not enable `COMMERCE_CHECKOUT_ENABLED` or any payment processor.
 
+## Admin — reconciliation report (read-only)
+
+`GET /api/v1/admin/commerce/reconciliation-report?billingGroupId={id}&limit=50`
+
+**Auth:** Staff, or `GROUP_OWNER` / `BILLING_ADMIN` on the billing group (not `BILLING_VIEWER` alone).
+
+**Response:** Bounded report (`findings` capped at `limit`, default 50) covering paid orders without completed fulfillment, fulfillment without captured payment, wallet funding evidence without ledger entries, webhook events needing review, subscription/order mismatches, and compensating refund review hints. `activation.correctiveMutationsEnabled` is always `false`. `ownerPolicyUnresolved` lists grace/tax/chargeback gaps not decided in source.
+
+Does not enable webhooks, minting, checkout, or wallet corrective mutations.
+
 ## Error codes
 
 | Code | HTTP | Meaning |

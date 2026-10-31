@@ -235,6 +235,33 @@ export const prismaCommerceStore: CommerceStore = {
   async saveWebhook(event: WebhookRecord) {
     await prisma.commerceWebhookEvent.upsert({ where: { id: event.id }, create: event, update: event })
   },
+  async listWebhooksByBillingGroup(billingGroupId, limit) {
+    return prisma.commerceWebhookEvent.findMany({
+      where: { order: { billingGroupId } },
+      orderBy: { receivedAt: 'desc' },
+      take: limit,
+    })
+  },
+  async listFundingByBillingGroup(billingGroupId, limit) {
+    const rows = await prisma.walletFundingEvidence.findMany({
+      where: { billingGroupId },
+      orderBy: { verifiedAt: 'desc' },
+      take: limit,
+    })
+    return rows.map((row) => ({
+      id: row.id,
+      billingGroupId: row.billingGroupId,
+      walletId: row.walletId,
+      providerKey: row.providerKey,
+      externalPaymentRef: row.externalPaymentRef,
+      creditAmount: row.creditAmount,
+      commerceOrderId: row.commerceOrderId ?? '',
+      commercePaymentId: row.commercePaymentId ?? '',
+      priceVersion: row.priceVersion ?? '',
+      verifiedAt: row.verifiedAt,
+      ledgerEntryId: row.ledgerEntryId,
+    }))
+  },
   async findFulfillmentByOrder(orderId) {
     const row = await prisma.commerceFulfillment.findUnique({ where: { orderId } })
     return row ? { ...row, kind: row.kind === 'CREDIT' ? 'CREDIT' : 'SERVICE' } : null

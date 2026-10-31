@@ -234,6 +234,16 @@ export function createMemoryCommerceStore(seed: CommerceMemorySeed): CommerceSto
     async saveWebhook(event) {
       upsert(webhooks, event)
     },
+    async listWebhooksByBillingGroup(billingGroupId, limit) {
+      const orderIds = new Set(orders.filter((row) => row.billingGroupId === billingGroupId).map((row) => row.id))
+      return webhooks
+        .filter((event) => event.orderId && orderIds.has(event.orderId))
+        .sort((a, b) => b.receivedAt.getTime() - a.receivedAt.getTime())
+        .slice(0, limit)
+    },
+    async listFundingByBillingGroup(billingGroupId, limit) {
+      return funding.filter((row) => row.billingGroupId === billingGroupId).slice(0, limit)
+    },
     async findFulfillmentByOrder(orderId) {
       return fulfillments.find((row) => row.orderId === orderId) ?? null
     },

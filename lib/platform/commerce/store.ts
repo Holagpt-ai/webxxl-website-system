@@ -99,6 +99,8 @@ export interface CommerceStore {
 
   findWebhook(providerKey: string, externalEventId: string): Promise<WebhookRecord | null>
   saveWebhook(event: WebhookRecord): Promise<void>
+  listWebhooksByBillingGroup(billingGroupId: string, limit: number): Promise<WebhookRecord[]>
+  listFundingByBillingGroup(billingGroupId: string, limit: number): Promise<FundingRecord[]>
 
   findFulfillmentByOrder(orderId: string): Promise<FulfillmentRecord | null>
   findFulfillmentByPaymentRef(externalPaymentRef: string): Promise<FulfillmentRecord | null>

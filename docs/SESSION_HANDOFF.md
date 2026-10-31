@@ -1,39 +1,39 @@
 # Session Handoff
 
-**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 31)
+**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 32)
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **30C** **MERGED** on `main`; **Batch 31** staging/pilot readiness **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `3a7d011466aeabcf4c2d3bdfe8a669d42e448957` on `main`; **PR #82** head `be67ce2…` on `feature/batch-31-staging-pilot-readiness` (open) |
-| 3 | Production deployment | Vercel **`dpl_A6Lx8wv62nsXeGY7mUFcshLhDP89` READY** @ `3a7d011` |
+| 1 | Last verified checkpoint | **31 + 31.1** **MERGED** on `main`; **Batch 32** commerce/wallet integrity **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `93e3010d097b3e08fa47be9492c57ed3999d2f03` on `main`; **Batch 32** on `feature/batch-32-commerce-wallet-fulfillment` (open PR pending) |
+| 3 | Production deployment | Vercel **`dpl_4Xwi3GRLzY3KTB9yicg9ef1iheW9` READY** @ `93e3010` |
 | 4 | Last updated | 2026-10-31 |
-| 5 | Next task / responsible platform | **Owner** merge **31** — **Cursor**; staging DB + migrate deploy — **Owner** |
-| 6 | Open blocker / gate IDs | Staging DB not identified; 28A migrations unverified; intake flag OFF |
+| 5 | Next task / responsible platform | **Owner** merge **Batch 32** — **Cursor**; staging DB + migrate deploy — **Owner** |
+| 6 | Open blocker / gate IDs | Staging DB not identified; commerce/wallet live flags OFF; verified payment ops UNVERIFIED |
 
 ## This session
 
-Batch **31:** staging assessment (21C reaffirmed), migration dependency matrix + rehearsal CLI, synthetic pilot workflow, feature readiness matrix, `batch31` tests, continuity reset for PR #81 @ `3a7d011`.
+Batch **32:** financial boundaries, lifecycle cancel + subscription capture activation, bounded commerce reconciliation report + admin route, wallet reservation review helper, `batch32` integrity tests, continuity for PR #82 @ `93e3010`.
 
 ## PENDING REPOSITORY SYNC
 
-None after Batch 31 PR is opened.
+None after Batch 32 PR is opened.
 
 ## Handoff template
 
 ```
-Date / scope / owner: 2026-10-31 / BATCH-31 controlled staging + pilot foundation / Cursor
-Repo / main SHA: Holagpt-ai/webxxl-website-system / 3a7d011466aeabcf4c2d3bdfe8a669d42e448957
-Branch / PR / head: feature/batch-31-staging-pilot-readiness / PR #82 open / be67ce2eb79ebf65ea52c32b58dba19fd64a16f7
-Merged / deployed: PR #81 @ 3a7d011; Vercel dpl_A6Lx8wv62nsXeGY7mUFcshLhDP89 READY @ 3a7d011
-Migration / flags / activation: NOT applied production; staging migrate BLOCKED pending owner DB
-Next exact assignment / owning tool: Owner merge Batch 31 PR — Owner + Cursor; then staging DB authorization
-Do NOT touch: production migrations, production flags, live customer data, paid infra provisioning
+Date / scope / owner: 2026-10-31 / BATCH-32 commerce wallet fulfillment integrity / Cursor
+Repo / main SHA: Holagpt-ai/webxxl-website-system / 93e3010d097b3e08fa47be9492c57ed3999d2f03
+Branch / PR / head: feature/batch-32-commerce-wallet-fulfillment / PR pending / (see GitHub after push)
+Merged / deployed: PR #82 @ 93e3010; Vercel dpl_4Xwi3GRLzY3KTB9yicg9ef1iheW9 READY @ 93e3010
+Migration / flags / activation: NOT applied production; COMMERCE_* and WALLET_* live execution OFF
+Next exact assignment / owning tool: Owner merge Batch 32 PR — Owner + Cursor
+Do NOT touch: production migrations, production flags, live checkout, wallet mint activation, ABMED financial mutations
 ```
 
 ## Next assignment
 
-- **Owner + Cursor:** merge Batch **31** PR.
-- **Owner:** authorize isolated staging database + `prisma migrate deploy` + staged flag plan per [`BATCH31-CONTROLLED-STAGING-PILOT.md`](BATCH31-CONTROLLED-STAGING-PILOT.md).
+- **Owner + Cursor:** merge Batch **32** PR.
+- **Owner:** authorize isolated staging database + `prisma migrate deploy` per Batch 31 docs when ready.

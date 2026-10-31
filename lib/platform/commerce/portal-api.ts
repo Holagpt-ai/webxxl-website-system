@@ -12,7 +12,8 @@ import type {
   PurchaseHistoryOrderDto,
   WalletSummaryDto,
 } from '@/lib/platform/commerce/dto'
-import { toFinancialOrderDto } from '@/lib/platform/commerce/engine'
+import { buildCommerceReconciliationReport, toFinancialOrderDto } from '@/lib/platform/commerce/engine'
+import type { CommerceReconciliationReport } from '@/lib/platform/commerce/reconciliation-report'
 import type { PageParams, PageResult } from '@/lib/platform/commerce/pagination'
 import { pageResult } from '@/lib/platform/commerce/pagination'
 import type { CommerceStore } from '@/lib/platform/commerce/store'
@@ -403,6 +404,19 @@ export async function listMarketplaceRequestHistory(
   })
 
   return { ok: true, value: pageResult(items, total, input.page) }
+}
+
+export async function getAdminCommerceReconciliationReport(
+  store: CommerceStore,
+  actor: CommerceActor,
+  billingGroupId: string,
+  limit?: number,
+): Promise<CommerceResult<CommerceReconciliationReport>> {
+  if (!isStaff(actor)) {
+    const role = await store.findBillingRole(billingGroupId, actor.userId)
+    if (!role || role.role === 'BILLING_VIEWER') return { ok: false, error: 'FORBIDDEN' }
+  }
+  return buildCommerceReconciliationReport(store, billingGroupId, limit)
 }
 
 export function commerceFeatureFlagsForClient() {
