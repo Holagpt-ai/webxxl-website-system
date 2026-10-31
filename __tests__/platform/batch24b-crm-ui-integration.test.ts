@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { CRM_API, type ImportCommitOutcome, type ImportPreview } from '@/lib/crm-ui/types'
+import { CRM_API, type ImportPreview } from '@/lib/crm-ui/types'
+import type { CrmImportCommitOutcome } from '@/lib/platform/crm/import-export-service'
 import { classifyWorkspaceError } from '@/lib/crm-ui/workspace'
 import {
   effectiveMarketingConsentGranted,
@@ -100,7 +101,14 @@ describe('Batch 24B CRM UI integration contracts', () => {
       consentGranted: false,
     }
     expect(previewCrmImportResponseShape(preview)).toBe(true)
-    const commit: ImportCommitOutcome = { importedCount: 3, jobId: 'job_1', committed: 3, skipped: 1, duplicates: 0 }
+    const commit: CrmImportCommitOutcome = {
+      importedCount: 3,
+      jobId: 'job_1',
+      committed: 3,
+      skipped: 1,
+      rejected: 0,
+      duplicates: 0,
+    }
     expect(commitCrmImportResponseShape(commit)).toBe(true)
   })
 
