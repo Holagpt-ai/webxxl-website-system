@@ -35,8 +35,8 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **31 + 31.1** **MERGED** (PR #82 @ `93e3010…`); **Batch 32** commerce/wallet integrity **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `93e3010d097b3e08fa47be9492c57ed3999d2f03` on `main`; **PR #83** head `d2faa16…` on `feature/batch-32-commerce-wallet-fulfillment` (open) |
+| 1 | Last verified checkpoint | **31 + 31.1** **MERGED** (PR #82 @ `93e3010…`); **Batch 32 + 32.1** (late-capture safety) commerce/wallet integrity **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `93e3010d097b3e08fa47be9492c57ed3999d2f03` on `main`; **PR #83** head `e454b41…` on `feature/batch-32-commerce-wallet-fulfillment` (open) |
 | 3 | Production deployment | Vercel **`dpl_4Xwi3GRLzY3KTB9yicg9ef1iheW9` READY** @ `93e3010`. SHA only — not migration, commerce activation, or verified payments |
 | 4 | Last updated | 2026-10-31 |
 | 5 | Next task / responsible platform | **Owner** review/merge **Batch 32** PR (**Cursor**); staging DB + migrate deploy remains **Owner** after 31 merge |
