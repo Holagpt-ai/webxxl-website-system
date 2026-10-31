@@ -81,6 +81,7 @@ export const crmWorkspaceEs: CrmWorkspaceCopy = {
   nav: {
     overview: 'Resumen',
     contacts: 'Contactos',
+    leads: 'Prospectos del sitio web',
     companies: 'Empresas',
     pipeline: 'Embudo',
     tasks: 'Tareas',

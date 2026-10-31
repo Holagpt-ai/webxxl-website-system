@@ -20,6 +20,7 @@ export default async function CrmLayout({ children, params }: { children: React.
           items={[
             { href: base, label: n.overview, exact: true },
             { href: `${base}/contacts`, label: n.contacts },
+            { href: `${base}/leads`, label: n.leads },
             { href: `${base}/companies`, label: n.companies },
             { href: `${base}/pipeline`, label: n.pipeline },
             { href: `${base}/tasks`, label: n.tasks },

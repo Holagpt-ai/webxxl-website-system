@@ -81,6 +81,7 @@ export const crmWorkspaceEn = {
   nav: {
     overview: 'Overview',
     contacts: 'Contacts',
+    leads: 'Website Leads',
     companies: 'Companies',
     pipeline: 'Pipeline',
     tasks: 'Tasks',
