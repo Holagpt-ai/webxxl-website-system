@@ -300,6 +300,7 @@ describe('Batch 32 — commerce, wallet & fulfillment integrity', () => {
   it('prevents concurrent wallet reservations from overspending shared balance', async () => {
     enableWalletDurableTestExecution()
     process.env.WALLET_BACKEND_ENABLED = 'true'
+    process.env.WALLET_SYNTHETIC_FUNDING_ENABLED = 'true'
     const { prisma } = createMemoryWalletPrisma({
       billingGroupId: ABMED_GROUP_ID,
       walletId: ABMED_WALLET_ID,
@@ -322,12 +323,13 @@ describe('Batch 32 — commerce, wallet & fulfillment integrity', () => {
         },
       ],
     })
-    await seedSyntheticWalletTopUpForTests(prisma, {
+    const funded = await seedSyntheticWalletTopUpForTests(prisma, {
       billingGroupId: ABMED_GROUP_ID,
       amount: 100,
       idempotencyKey: 'b32_fund',
       principal: { kind: 'SERVICE', serviceId: 'wallet-settlement' },
     })
+    expect(funded.ok).toBe(true)
     const base = {
       principal: { kind: 'SERVICE' as const, serviceId: 'wallet-reservation' as const },
       billingGroupId: ABMED_GROUP_ID,
