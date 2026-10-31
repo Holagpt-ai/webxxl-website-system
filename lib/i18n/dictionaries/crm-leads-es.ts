@@ -1,7 +1,7 @@
 import type { CrmLeadsCopy } from './crm-leads-en'
 
 export const crmLeadsEs: CrmLeadsCopy = {
-  navLabel: 'Prospectos',
+  navLabel: 'Prospectos del sitio web',
   title: 'Bandeja de prospectos',
   description:
     'Consultas enviadas desde los formularios de tus sitios web administrados. Revisa cada una y decide tú si la calificas, la rechazas o la conviertes en contacto del CRM.',
@@ -107,6 +107,16 @@ export const crmLeadsEs: CrmLeadsCopy = {
       reason: 'Motivo',
       reasonHint: 'Opcional, hasta 500 caracteres. Solo lo ve tu equipo.',
       confirm: 'Rechazar prospecto',
+    },
+    pendingReviewDialog: {
+      title: '¿Marcar este prospecto para revisión?',
+      body: 'El prospecto permanece en la bandeja con estado pendiente de revisión para que tu equipo decida los siguientes pasos.',
+      confirm: 'Marcar para revisión',
+    },
+    qualifyDialog: {
+      title: '¿Calificar este prospecto?',
+      body: 'Los prospectos calificados pueden convertirse en contactos del CRM cuando estés listo. No se envía ningún mensaje.',
+      confirm: 'Calificar prospecto',
     },
     convertDialog: {
       title: '¿Convertir este prospecto en contacto del CRM?',

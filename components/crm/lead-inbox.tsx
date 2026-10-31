@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useSWRConfig } from 'swr'
 import { ChevronLeft, ChevronRight, Inbox } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -18,6 +18,7 @@ import {
   dayEndIso,
   dayStartIso,
   leadIssue,
+  shouldRefreshSiteLeadCache,
   type LeadListResponse,
   type LeadSummaryResponse,
   type SiteLead,
@@ -54,8 +55,12 @@ export function CrmLeadInbox({ accountId, locale, copy, base, leadsCopy: lc, sit
   )
 
   const { mutate } = useSWRConfig()
-  const refreshLeads = () =>
-    mutate((key) => Array.isArray(key) && typeof key[0] === 'string' && key[0].startsWith(LEADS_API.list))
+  const refreshSurfaces = useCallback(
+    async (leadId?: string | null) => {
+      await mutate((key) => shouldRefreshSiteLeadCache(key, accountId, leadId ?? selectedId))
+    },
+    [mutate, accountId, selectedId],
+  )
 
   const siteNames = useMemo(() => new Map(sites.map((s) => [s.id, s.name])), [sites])
   const siteLabel = (id: string) => siteNames.get(id) ?? id
@@ -202,7 +207,7 @@ export function CrmLeadInbox({ accountId, locale, copy, base, leadsCopy: lc, sit
               lc={lc}
               base={base}
               siteLabel={siteLabel}
-              onChanged={refreshLeads}
+              onChanged={refreshSurfaces}
               onClose={() => setSelected(null)}
             />
           ) : (

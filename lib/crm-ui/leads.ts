@@ -167,3 +167,14 @@ export function dayEndIso(day: string): string | null {
   const date = new Date(`${day}T23:59:59.999`)
   return Number.isNaN(date.getTime()) ? null : date.toISOString()
 }
+
+/** Account-scoped SWR keys for list, summary, and optional lead detail. */
+export function shouldRefreshSiteLeadCache(key: unknown, accountId: string, leadId?: string | null): boolean {
+  if (!Array.isArray(key) || key[1] !== accountId) return false
+  const path = key[0]
+  if (typeof path !== 'string') return false
+  if (path.startsWith(LEADS_API.summary)) return true
+  if (path.startsWith(LEADS_API.list)) return true
+  if (leadId && path === LEADS_API.lead(leadId)) return true
+  return false
+}

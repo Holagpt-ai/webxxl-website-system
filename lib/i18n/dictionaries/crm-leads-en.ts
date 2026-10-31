@@ -79,6 +79,16 @@ export type CrmLeadsCopy = {
       reasonHint: string
       confirm: string
     }
+    pendingReviewDialog: {
+      title: string
+      body: string
+      confirm: string
+    }
+    qualifyDialog: {
+      title: string
+      body: string
+      confirm: string
+    }
     convertDialog: {
       title: string
       body: string
@@ -100,7 +110,7 @@ export type CrmLeadsCopy = {
 }
 
 export const crmLeadsEn: CrmLeadsCopy = {
-  navLabel: 'Leads',
+  navLabel: 'Website Leads',
   title: 'Lead inbox',
   description:
     'Inquiries sent through the forms on your managed websites. Review each one, then qualify, reject, or convert it into a CRM contact yourself.',
@@ -206,6 +216,16 @@ export const crmLeadsEn: CrmLeadsCopy = {
       reason: 'Reason',
       reasonHint: 'Optional, up to 500 characters. Only visible to your team.',
       confirm: 'Reject lead',
+    },
+    pendingReviewDialog: {
+      title: 'Mark this lead for review?',
+      body: 'The lead stays in your inbox with a pending-review status so your team can decide next steps.',
+      confirm: 'Mark for review',
+    },
+    qualifyDialog: {
+      title: 'Qualify this lead?',
+      body: 'Qualified leads can be converted into CRM contacts when you are ready. No message is sent.',
+      confirm: 'Qualify lead',
     },
     convertDialog: {
       title: 'Convert this lead into a CRM contact?',

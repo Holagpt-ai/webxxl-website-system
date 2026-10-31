@@ -44,11 +44,15 @@ export function LeadDetail({
   lc: CrmLeadsCopy
   base: string
   siteLabel: (id: string) => string
-  onChanged: () => void
+  onChanged: (leadId: string) => Promise<void>
   onClose: () => void
 }) {
   const detail = useWorkspace<LeadDetailResponse>(LEADS_API.lead(leadId), accountId)
   const d = lc.detail
+
+  const handleChanged = async () => {
+    await onChanged(leadId)
+  }
 
   return (
     <div className="flex flex-col gap-5 rounded-xl border bg-card p-5 shadow-sm">
@@ -70,7 +74,7 @@ export function LeadDetail({
           base={base}
           siteLabel={siteLabel}
           cancelLabel={copy.kit.cancel}
-          onChanged={onChanged}
+          onChanged={handleChanged}
         />
       )}
     </div>
@@ -92,7 +96,7 @@ function LeadReview({
   base: string
   siteLabel: (id: string) => string
   cancelLabel: string
-  onChanged: () => void
+  onChanged: () => Promise<void>
 }) {
   const d = lc.detail
   const f = d.fields
@@ -100,6 +104,8 @@ function LeadReview({
   const action = useAction<TransitionResult | ConvertResult>()
   const [outcome, setOutcome] = useState<Outcome>(null)
   const [rejectOpen, setRejectOpen] = useState(false)
+  const [pendingOpen, setPendingOpen] = useState(false)
+  const [qualifyOpen, setQualifyOpen] = useState(false)
   const [reason, setReason] = useState('')
   const [convertOpen, setConvertOpen] = useState(false)
   const [convertFailed, setConvertFailed] = useState(false)
@@ -114,7 +120,7 @@ function LeadReview({
     const result = await action.run(request as () => Promise<MutationResult<TransitionResult | ConvertResult>>)
     inFlight.current = false
     // Refresh on failure too, so a status conflict shows the lead's real current status.
-    onChanged()
+    await onChanged()
     return result
   }
 
@@ -127,10 +133,20 @@ function LeadReview({
   async function confirmReject() {
     const trimmed = reason.trim()
     const result = await transition('reject', trimmed ? { reason: trimmed } : {})
-    if (result) {
+    if (result?.ok) {
       setRejectOpen(false)
       setReason('')
     }
+  }
+
+  async function confirmPendingReview() {
+    const result = await transition('pendingReview')
+    if (result?.ok) setPendingOpen(false)
+  }
+
+  async function confirmQualify() {
+    const result = await transition('qualify')
+    if (result?.ok) setQualifyOpen(false)
   }
 
   async function confirmConvert() {
@@ -249,13 +265,29 @@ function LeadReview({
         ) : (
           <div className="flex flex-wrap gap-2">
             {available.includes('pendingReview') && (
-              <Button variant="outline" size="sm" disabled={pending} onClick={() => transition('pendingReview')}>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={pending}
+                onClick={() => {
+                  action.reset()
+                  setPendingOpen(true)
+                }}
+              >
                 <ClipboardList className="size-4" aria-hidden="true" />
                 {a.pendingReview}
               </Button>
             )}
             {available.includes('qualify') && (
-              <Button variant="outline" size="sm" disabled={pending} onClick={() => transition('qualify')}>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={pending}
+                onClick={() => {
+                  action.reset()
+                  setQualifyOpen(true)
+                }}
+              >
                 <Check className="size-4" aria-hidden="true" />
                 {a.qualify}
               </Button>
@@ -301,7 +333,51 @@ function LeadReview({
         )}
       </section>
 
-      <Dialog open={rejectOpen} onOpenChange={(open) => !pending && setRejectOpen(open)}>
+      <Dialog open={pendingOpen} onOpenChange={(open) => !pending && setPendingOpen(open)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{a.pendingReviewDialog.title}</DialogTitle>
+            <DialogDescription>{a.pendingReviewDialog.body}</DialogDescription>
+          </DialogHeader>
+          {action.error && <LeadIssueState error={action.error} lc={lc} compact />}
+          <DialogFooter>
+            <Button variant="outline" disabled={pending} onClick={() => setPendingOpen(false)}>
+              {cancelLabel}
+            </Button>
+            <Button disabled={pending} onClick={confirmPendingReview}>
+              {pending ? a.working : a.pendingReviewDialog.confirm}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={qualifyOpen} onOpenChange={(open) => !pending && setQualifyOpen(open)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{a.qualifyDialog.title}</DialogTitle>
+            <DialogDescription>{a.qualifyDialog.body}</DialogDescription>
+          </DialogHeader>
+          {action.error && <LeadIssueState error={action.error} lc={lc} compact />}
+          <DialogFooter>
+            <Button variant="outline" disabled={pending} onClick={() => setQualifyOpen(false)}>
+              {cancelLabel}
+            </Button>
+            <Button disabled={pending} onClick={confirmQualify}>
+              {pending ? a.working : a.qualifyDialog.confirm}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={rejectOpen}
+        onOpenChange={(open) => {
+          if (pending) return
+          if (!open && action.error) return
+          setRejectOpen(open)
+          if (!open) action.reset()
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{a.rejectDialog.title}</DialogTitle>
