@@ -4,6 +4,7 @@ type StateCopy = { title: string; body: string }
 
 export type CrmLeadsCopy = {
   navLabel: string
+  funnelLink: string
   title: string
   description: string
   summary: {
@@ -111,6 +112,7 @@ export type CrmLeadsCopy = {
 
 export const crmLeadsEn: CrmLeadsCopy = {
   navLabel: 'Website Leads',
+  funnelLink: 'Lead Funnel',
   title: 'Lead inbox',
   description:
     'Inquiries sent through the forms on your managed websites. Review each one, then qualify, reject, or convert it into a CRM contact yourself.',

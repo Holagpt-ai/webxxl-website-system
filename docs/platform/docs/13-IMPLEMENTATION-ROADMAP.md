@@ -121,6 +121,31 @@ AGENT-03A: operator-auth hardening, budget integrity, ON DELETE RESTRICT history
 Next: owner-approved Paperclip staging pilot + Cursor/GitHub scoped integration (not in this batch)
 ```
 
+## Batch 30 — lead funnel reporting and CRM UI (2026-10-31)
+
+| Slice | Status | Evidence |
+|---|---|---|
+| **30A + 30A.1** (Cursor) | **MERGED** | [PR #80](https://github.com/Holagpt-ai/webxxl-website-system/pull/80) @ `cb8d785…`; `GET /api/v1/site-leads/funnel-report`; Business Command Center website-lead summary |
+| **30B** (v0.app) | **DELIVERED** | `v0/lead-funnel-30b` @ `e4e85b2af0db01fb76bf23854dbe834bdb3af1a0` |
+| **30C** (Cursor integration) | **IN PR** | `/dashboard/crm/leads/funnel`, CRM subnav, Lead Inbox handoff, `batch30c` tests |
+
+Reporting merge is not intake activation, migration apply, or live customer form wiring.
+
+## Proposed Batches 31–38 (consolidated remaining work)
+
+**Not approved implementation.** Owner selects sequencing. Full table: `docs/PROJECT_MEMORY.md` § Proposed remaining work (Batches 31–38).
+
+| Batch | Focus |
+|---|---|
+| 31 | Controlled staging pilot execution |
+| 32 | Commerce & wallet fulfillment |
+| 33 | SEO & analytics activation prep |
+| 34 | Marketing Studio execution gates |
+| 35 | Communications live pilot |
+| 36 | Customer AI workforce pilot |
+| 37 | Infrastructure & durable execution fulfillment |
+| 38 | Release stabilization & customer acceptance |
+
 ## Effort expectations — directional only
 
 Docs/design and current-state reconciliation: several focused working days. Working isolated internal worker & Postiz/Chatwoot staging: days to weeks depending on VPS/social OAuth. Integrated CRM, SEO, wallet and AI marketing: multiple substantial backend/UI batches across weeks/months, not guaranteed 2-day plug-and-play. Carrier and Google/social app approvals may take independent external time. This is **not** a costed project schedule until infrastructure and provider accounts are inventoried.

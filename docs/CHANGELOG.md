@@ -62,6 +62,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-10-31 | Batch 28C Lead Inbox UI integration | [PR #77](https://github.com/Holagpt-ai/webxxl-website-system/pull/77), `0135a8b7d0a40bf7830624e22b57319753921aec` | MERGED. v0 @ `f9e21907`. Not activation |
 | 2026-10-31 | Batch 29A Managed-site form connector V1 | [PR #78](https://github.com/Holagpt-ai/webxxl-website-system/pull/78), `fc702c696fe0a35ef3b61f4dc3eb6dc896a06442` | MERGED. Server-side connector only. Not activation |
 | 2026-10-31 | Batch 29A.1 Connector submission identity | [PR #79](https://github.com/Holagpt-ai/webxxl-website-system/pull/79), `3905994ebbb8c4b423481c961a65e938dfc76a59` | MERGED. Not activation |
-| 2026-10-31 | Batch 30A Lead funnel reporting & Business Command Center | [PR #80](https://github.com/Holagpt-ai/webxxl-website-system/pull/80), head `40d37e3…` | IN PR. Read-only APIs + 30A.1 integrity. Not activation |
+| 2026-10-31 | Batch 30A + 30A.1 Lead funnel reporting & Business Command Center | [PR #80](https://github.com/Holagpt-ai/webxxl-website-system/pull/80), `cb8d785d7ca4eb4ac26972a7db69b4a0e65b0b2f` | MERGED. Read-only APIs. Not activation |
+| 2026-10-31 | Batch 30B Lead Funnel dashboard UI (v0) | `v0/lead-funnel-30b` @ `e4e85b2af0db01fb76bf23854dbe834bdb3af1a0` | DELIVERED to v0 branch |
+| 2026-10-31 | Batch 30C Lead Funnel UI integration | Branch `feature/batch-30c-lead-funnel-ui-integration` | IN PR. CRM nav + inbox handoff. Not activation |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

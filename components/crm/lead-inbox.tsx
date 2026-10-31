@@ -1,6 +1,8 @@
 'use client'
 
+import Link from 'next/link'
 import { useCallback, useMemo, useRef, useState } from 'react'
+import { LineChart } from 'lucide-react'
 import { useSWRConfig } from 'swr'
 import { ChevronLeft, ChevronRight, Inbox } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -85,7 +87,16 @@ export function CrmLeadInbox({ accountId, locale, copy, base, leadsCopy: lc, sit
   if (gate) {
     return (
       <div className="flex flex-col gap-6">
-        <SectionHeading title={lc.title} description={lc.description} />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <SectionHeading title={lc.title} description={lc.description} />
+          <Link
+            href={`${base}/leads/funnel`}
+            className="inline-flex w-fit shrink-0 items-center gap-2 rounded-lg border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <LineChart className="size-4 text-muted-foreground" aria-hidden="true" />
+            {lc.funnelLink}
+          </Link>
+        </div>
         <LeadIssueState error={gate} lc={lc} />
       </div>
     )
@@ -96,7 +107,16 @@ export function CrmLeadInbox({ accountId, locale, copy, base, leadsCopy: lc, sit
 
   return (
     <div className="flex flex-col gap-8">
-      <SectionHeading title={lc.title} description={lc.description} />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <SectionHeading title={lc.title} description={lc.description} />
+        <Link
+          href={`${base}/leads/funnel`}
+          className="inline-flex w-fit shrink-0 items-center gap-2 rounded-lg border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <LineChart className="size-4 text-muted-foreground" aria-hidden="true" />
+          {lc.funnelLink}
+        </Link>
+      </div>
 
       <LeadSummary
         data={summary.data}

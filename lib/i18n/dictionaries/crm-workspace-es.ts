@@ -82,6 +82,7 @@ export const crmWorkspaceEs: CrmWorkspaceCopy = {
     overview: 'Resumen',
     contacts: 'Contactos',
     leads: 'Prospectos del sitio web',
+    leadFunnel: 'Embudo de prospectos',
     companies: 'Empresas',
     pipeline: 'Embudo',
     tasks: 'Tareas',

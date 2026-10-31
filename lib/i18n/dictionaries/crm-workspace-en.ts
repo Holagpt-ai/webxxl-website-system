@@ -82,6 +82,7 @@ export const crmWorkspaceEn = {
     overview: 'Overview',
     contacts: 'Contacts',
     leads: 'Website Leads',
+    leadFunnel: 'Lead Funnel',
     companies: 'Companies',
     pipeline: 'Pipeline',
     tasks: 'Tasks',
