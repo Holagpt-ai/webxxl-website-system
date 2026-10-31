@@ -80,13 +80,18 @@ export async function workspaceGet<T>(url: string): Promise<T> {
 
 export type MutationResult<T> = { ok: true; status: number; data: T } | { ok: false; error: WorkspaceError }
 
-export async function workspaceSend<T>(url: string, body?: unknown, method: 'POST' | 'PATCH' | 'DELETE' = 'POST'): Promise<MutationResult<T>> {
+export async function workspaceSend<T>(
+  url: string,
+  body?: unknown,
+  method: 'POST' | 'PATCH' | 'DELETE' = 'POST',
+  headers?: Record<string, string>,
+): Promise<MutationResult<T>> {
   let res: Response
   try {
     res = await fetch(url, {
       method,
       credentials: 'same-origin',
-      headers: { 'content-type': 'application/json', accept: 'application/json' },
+      headers: { 'content-type': 'application/json', accept: 'application/json', ...headers },
       body: JSON.stringify(body ?? {}),
     })
   } catch {
