@@ -168,6 +168,12 @@ describe('Batch 32.1 — financial integrity corrections', () => {
       idempotencyKey: 'b321-late-plain',
     })
     if (!plain.ok) throw new Error(plain.error)
+    await createCheckout(db, {
+      actor: payer,
+      orderId: plain.value.order.id,
+      idempotencyKey: 'b321-chk-plain',
+      providerKey: 'stripe',
+    })
     const cancelPlain = await cancelUnpaidOrder(db, { actor: payer, orderId: plain.value.order.id })
     expect(cancelPlain.ok).toBe(true)
 
