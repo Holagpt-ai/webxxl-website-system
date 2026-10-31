@@ -61,6 +61,8 @@ Batch 19A SEO extensions (backend MERGED PR #59): `GET /api/v1/seo/sites/[siteId
 Batch 19B+19C Local SEO UI (MERGED PR #60): `/dashboard/seo`, `/dashboard/seo/keywords`, `/dashboard/seo/opportunities` wired to 19A APIs via `lib/local-seo-ui/**` and `components/local-seo/**` (v0 commit `59315094`).
 
 Batch 17A CRM extensions (backend merged; UI wired in Batch 17B/17C integration PR): `GET /api/v1/crm/contacts` (`q`, `cursor`, `take`), `PATCH /api/v1/crm/deals/[id]/stage`, `PATCH /api/v1/crm/tasks/[id]`, `GET|POST /api/v1/crm/contacts/[id]/consent`, `POST /api/v1/crm/contacts/[id]/suppression`.
+
+Batch 23 CRM data operations (backend; open PR): enriched `POST /api/v1/crm/imports/preview` and `POST /api/v1/crm/imports/commit` outcomes; stable `POST /api/v1/crm/exports` cursor pages; `GET|PATCH|DELETE /api/v1/crm/segments/[id]`; `GET|POST /api/v1/crm/merge-proposals` and `POST /api/v1/crm/merge-proposals/[id]` (`approve`/`reject`).
 | Communications and workflows | `/api/v1/communications/*`, `/api/v1/workflows/*` |
 | Customer AI | `/api/v1/customer-ai/accounts/[accountId]/*` |
 | Files | `/api/files/[fileId]` |

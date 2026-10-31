@@ -49,6 +49,14 @@ const ALLOWED_FIELDS = new Set<SegmentFilterField>([
   'notSuppressed',
 ])
 
+const DATE_FILTER_FIELDS = new Set<SegmentFilterField>(['createdAfter', 'createdBefore', 'lastActivityBefore'])
+
+export function parseSegmentFilterDate(value: string): Date | null {
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return null
+  return parsed
+}
+
 export function validateSegmentFilterGroup(group: SegmentFilterGroup): { ok: true } | { ok: false; message: string } {
   if (group.logic !== 'AND' && group.logic !== 'OR') return { ok: false, message: 'Invalid filter logic' }
   if (group.rules.length > CRM_SEGMENT_MAX_RULES) {
@@ -68,6 +76,14 @@ export function validateSegmentFilterGroup(group: SegmentFilterGroup): { ok: tru
     if (valueLength > CRM_SEGMENT_MAX_VALUE_LENGTH) {
       return { ok: false, message: 'Segment filter value too long' }
     }
+    if (DATE_FILTER_FIELDS.has(rule.field) && typeof rule.value === 'string') {
+      if (!parseSegmentFilterDate(rule.value)) {
+        return { ok: false, message: `Invalid date for filter field: ${rule.field}` }
+      }
+    }
+    if (rule.field === 'followUpCoverage' && typeof rule.value === 'string' && !rule.value.trim()) {
+      return { ok: false, message: 'followUpCoverage filter requires a value' }
+    }
   }
   return { ok: true }
 }
@@ -85,12 +101,18 @@ function ruleMatches(contact: SegmentContactView, rule: SegmentFilterRule): bool
       return contact.tagLabels.includes(String(rule.value))
     case 'leadSource':
       return contact.leadSource === rule.value
-    case 'createdAfter':
-      return contact.createdAt >= new Date(String(rule.value))
-    case 'createdBefore':
-      return contact.createdAt <= new Date(String(rule.value))
-    case 'lastActivityBefore':
-      return !contact.lastActivityAt || contact.lastActivityAt <= new Date(String(rule.value))
+    case 'createdAfter': {
+      const date = parseSegmentFilterDate(String(rule.value))
+      return date ? contact.createdAt >= date : false
+    }
+    case 'createdBefore': {
+      const date = parseSegmentFilterDate(String(rule.value))
+      return date ? contact.createdAt <= date : false
+    }
+    case 'lastActivityBefore': {
+      const date = parseSegmentFilterDate(String(rule.value))
+      return date ? !contact.lastActivityAt || contact.lastActivityAt <= date : false
+    }
     case 'hasOpenDeal':
       return Boolean(contact.hasOpenDeal) === Boolean(rule.value)
     case 'followUpCoverage':
@@ -122,6 +144,7 @@ export function summarizeSegmentPopulation(contacts: SegmentContactView[]) {
   }
   return {
     totalContacts: contacts.length,
+    matchedContacts: contacts.length,
     eligibleContacts: eligible,
     suppressedContacts: suppressed,
     unknownConsentContacts: unknownConsent,
