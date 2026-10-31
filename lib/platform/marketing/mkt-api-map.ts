@@ -20,6 +20,8 @@ export function mktResultHttpStatus(code: MktErrorCode): number {
       return 503
     case 'FREE_SOFTWARE_NOT_ELIGIBLE':
       return 403
+    case 'QUOTA_EXCEEDED':
+      return 429
     case 'BLOCKED':
       return 422
     default:

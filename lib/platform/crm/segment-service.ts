@@ -1,3 +1,4 @@
+import type { CrmSegmentKind } from '@prisma/client'
 import { CRM_SEGMENT_EVAL_MAX_CONTACTS } from '@/config/crm-backend'
 import { prisma } from '@/lib/db'
 import {
@@ -8,6 +9,19 @@ import {
   type SegmentFilterGroup,
 } from '@/lib/platform/crm/segment-engine'
 import type { CrmResult } from '@/lib/platform/crm/types'
+
+export type SegmentEvaluationContactRow = Awaited<ReturnType<typeof loadSegmentEvaluationContacts>>[number]
+
+export function contactHasUsableEmailIdentity(row: {
+  channelIdentities: readonly { identityType: string; normalizedValue: string }[]
+}): boolean {
+  return row.channelIdentities.some(
+    (identity) =>
+      identity.identityType === 'EMAIL' &&
+      identity.normalizedValue.trim().length > 0 &&
+      identity.normalizedValue.includes('@'),
+  )
+}
 
 function mapContactToSegmentView(
   c: Awaited<ReturnType<typeof loadSegmentEvaluationContacts>>[number],
@@ -40,6 +54,7 @@ async function loadSegmentEvaluationContacts(customerAccountId: string) {
     where: { customerAccountId, status: 'ACTIVE' },
     include: {
       contactTags: { include: { tag: true } },
+      channelIdentities: { where: { identityType: 'EMAIL' } },
       consents: true,
       suppressions: true,
       deals: { where: { status: 'OPEN' }, take: 1 },
@@ -49,6 +64,82 @@ async function loadSegmentEvaluationContacts(customerAccountId: string) {
       },
     },
   })
+}
+
+async function assertSegmentEvaluationWithinLimit(customerAccountId: string): Promise<CrmResult<number>> {
+  const total = await prisma.crmContact.count({ where: { customerAccountId, status: 'ACTIVE' } })
+  if (total > CRM_SEGMENT_EVAL_MAX_CONTACTS) {
+    return {
+      ok: false,
+      code: 'QUOTA_EXCEEDED',
+      message: 'Segment evaluation contact population exceeds synchronous limit',
+    }
+  }
+  return { ok: true, value: total }
+}
+
+async function matchSavedSegmentContacts(input: {
+  customerAccountId: string
+  segment: { id: string; kind: CrmSegmentKind; filterDefinition: unknown }
+  views: SegmentContactView[]
+}): Promise<CrmResult<SegmentContactView[]>> {
+  if (input.segment.kind === 'STATIC') {
+    const members = await prisma.crmSegmentMember.findMany({
+      where: { segmentId: input.segment.id, customerAccountId: input.customerAccountId },
+      select: { contactId: true },
+    })
+    const memberIds = new Set(members.map((row) => row.contactId))
+    return { ok: true, value: input.views.filter((view) => memberIds.has(view.id)) }
+  }
+  if (!input.segment.filterDefinition) {
+    return { ok: false, code: 'VALIDATION_ERROR', message: 'Segment has no filter definition' }
+  }
+  const filterDefinition = input.segment.filterDefinition as SegmentFilterGroup
+  const valid = validateSegmentFilterGroup(filterDefinition)
+  if (!valid.ok) return { ok: false, code: 'VALIDATION_ERROR', message: valid.message }
+  return {
+    ok: true,
+    value: input.views.filter((view) => evaluateSegmentGroup(view, filterDefinition)),
+  }
+}
+
+export async function resolveSavedSegmentMatches(
+  customerAccountId: string,
+  segmentId: string,
+): Promise<
+  CrmResult<{
+    segment: { id: string; name: string; kind: CrmSegmentKind; updatedAt: Date }
+    matchedViews: SegmentContactView[]
+    allViews: SegmentContactView[]
+    contactRowsById: Map<string, SegmentEvaluationContactRow>
+    accountContactCount: number
+  }>
+> {
+  const segment = await prisma.crmSegment.findFirst({
+    where: { id: segmentId, customerAccountId },
+  })
+  if (!segment) return { ok: false, code: 'NOT_FOUND', message: 'Segment not found' }
+  const withinLimit = await assertSegmentEvaluationWithinLimit(customerAccountId)
+  if (!withinLimit.ok) return withinLimit
+  const contacts = await loadSegmentEvaluationContacts(customerAccountId)
+  const views = contacts.map(mapContactToSegmentView)
+  const matched = await matchSavedSegmentContacts({
+    customerAccountId,
+    segment,
+    views,
+  })
+  if (!matched.ok) return matched
+  const contactRowsById = new Map(contacts.map((row) => [row.id, row]))
+  return {
+    ok: true,
+    value: {
+      segment: { id: segment.id, name: segment.name, kind: segment.kind, updatedAt: segment.updatedAt },
+      matchedViews: matched.value,
+      allViews: views,
+      contactRowsById,
+      accountContactCount: views.length,
+    },
+  }
 }
 
 export async function createDynamicSegment(input: {
@@ -119,14 +210,8 @@ export async function evaluateSegmentForAccount(
 > {
   const valid = validateSegmentFilterGroup(filterDefinition)
   if (!valid.ok) return { ok: false, code: 'VALIDATION_ERROR', message: valid.message }
-  const total = await prisma.crmContact.count({ where: { customerAccountId, status: 'ACTIVE' } })
-  if (total > CRM_SEGMENT_EVAL_MAX_CONTACTS) {
-    return {
-      ok: false,
-      code: 'QUOTA_EXCEEDED',
-      message: 'Segment evaluation contact population exceeds synchronous limit',
-    }
-  }
+  const withinLimit = await assertSegmentEvaluationWithinLimit(customerAccountId)
+  if (!withinLimit.ok) return withinLimit
   const contacts = await loadSegmentEvaluationContacts(customerAccountId)
   const views = contacts.map(mapContactToSegmentView)
   const matched = views.filter((view) => evaluateSegmentGroup(view, filterDefinition))
@@ -155,14 +240,18 @@ export async function evaluateSavedSegment(
     accountSummary: ReturnType<typeof summarizeSegmentPopulation>
   }>
 > {
-  const segment = await prisma.crmSegment.findFirst({
-    where: { id: segmentId, customerAccountId },
-  })
-  if (!segment) return { ok: false, code: 'NOT_FOUND', message: 'Segment not found' }
-  if (!segment.filterDefinition) {
-    return { ok: false, code: 'VALIDATION_ERROR', message: 'Segment has no filter definition' }
+  const resolved = await resolveSavedSegmentMatches(customerAccountId, segmentId)
+  if (!resolved.ok) return resolved
+  const { matchedViews, allViews, accountContactCount } = resolved.value
+  return {
+    ok: true,
+    value: {
+      segmentId,
+      contactIds: matchedViews.map((view) => view.id),
+      matchedContacts: matchedViews.length,
+      accountContactCount,
+      summary: summarizeSegmentPopulation(matchedViews),
+      accountSummary: summarizeSegmentPopulation(allViews),
+    },
   }
-  const evaluated = await evaluateSegmentForAccount(customerAccountId, segment.filterDefinition as SegmentFilterGroup)
-  if (!evaluated.ok) return evaluated
-  return { ok: true, value: { segmentId, ...evaluated.value } }
 }

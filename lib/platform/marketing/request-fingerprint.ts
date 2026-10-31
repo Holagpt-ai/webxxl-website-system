@@ -11,6 +11,7 @@ export type MarketingRequestFingerprintInput = {
   audience?: string | null
   sourceRefs: string[]
   seoOpportunityId?: string | null
+  crmSegmentId?: string | null
   assignedWorkflow: string
 }
 
@@ -33,6 +34,7 @@ export function computeMarketingRequestFingerprint(input: MarketingRequestFinger
     audience: input.audience?.trim() ?? null,
     sourceRefs: [...input.sourceRefs].sort(),
     seoOpportunityId: input.seoOpportunityId ?? null,
+    crmSegmentId: input.crmSegmentId ?? null,
     assignedWorkflow: input.assignedWorkflow,
   })
   return createHash('sha256').update(canonical, 'utf8').digest('hex')

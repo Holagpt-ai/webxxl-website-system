@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { MKT_LIST_DEFAULT_TAKE, MKT_LIST_MAX_TAKE } from '@/config/mkt-backend'
 import { prisma } from '@/lib/db'
 import { mktRouteError, mktServiceResponse } from '@/lib/platform/marketing/api-response'
+import { requireMktCrmAudienceActor } from '@/lib/platform/marketing/crm-audience-route-auth'
+import { createCampaignPreparationFromCrmSegment } from '@/lib/platform/marketing/crm-audience-request-service'
 import { createMarketingRequestRecord } from '@/lib/platform/marketing/request-service'
 import { requireMktApiActor } from '@/lib/platform/marketing/route-auth'
 import type { MarketingRequestCategory } from '@/lib/platform/marketing/types'
@@ -35,9 +37,32 @@ export async function POST(request: Request) {
       sourceRefs?: string[]
       idempotencyKey?: string
       seoOpportunityId?: string
+      crmSegmentId?: string
+      audienceLabel?: string
     }
     if (!body.category || !body.goal || !body.brief || !body.idempotencyKey) {
       return NextResponse.json({ code: 'VALIDATION', message: 'category, goal, brief, idempotencyKey required' }, { status: 400 })
+    }
+    if (body.crmSegmentId) {
+      if (body.category !== 'CAMPAIGN_PREPARATION') {
+        return NextResponse.json(
+          { code: 'VALIDATION', message: 'crmSegmentId requires category CAMPAIGN_PREPARATION' },
+          { status: 400 },
+        )
+      }
+      const audienceActor = await requireMktCrmAudienceActor('marketing.request.create')
+      const created = await createCampaignPreparationFromCrmSegment({
+        customerAccountId: audienceActor.customerAccountId,
+        userId: audienceActor.userId,
+        crmSegmentId: body.crmSegmentId,
+        goal: body.goal,
+        brief: body.brief,
+        locale: body.locale ?? 'en',
+        idempotencyKey: body.idempotencyKey,
+        managedSiteId: body.managedSiteId,
+        audienceLabel: body.audienceLabel ?? body.audience,
+      })
+      return mktServiceResponse(created, 201)
     }
     const created = await createMarketingRequestRecord({
       customerAccountId: actor.customerAccountId,

@@ -2331,6 +2331,9 @@ model MarketingRequest {
   idempotencyKey     String?                @unique
   requestFingerprint String?
   seoOpportunityId   String?
+  crmSegmentId       String?
+  audienceEvaluatedAt DateTime?
+  audiencePlanningSummary Json?
   assignedWorkflow   String?
   createdByUserId    String
   createdAt          DateTime               @default(now())
@@ -2338,6 +2341,7 @@ model MarketingRequest {
 
   customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
   managedSite     ManagedSite?    @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  crmSegment      CrmSegment?     @relation(fields: [crmSegmentId], references: [id], onDelete: SetNull)
   createdBy       User            @relation("MarketingRequestCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
   artifacts       MarketingArtifact[]
   revisions       MarketingArtifactRevision[]
@@ -2347,6 +2351,7 @@ model MarketingRequest {
 
   @@index([customerAccountId, status])
   @@index([customerAccountId, managedSiteId])
+  @@index([customerAccountId, crmSegmentId])
 }
 
 model MarketingRequestStatusEvent {
@@ -3059,6 +3064,7 @@ model CrmSegment {
 
   customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
   members         CrmSegmentMember[]
+  marketingRequests MarketingRequest[]
 
   @@unique([customerAccountId, name])
 }

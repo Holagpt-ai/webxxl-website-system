@@ -12,6 +12,11 @@ export function isMktDraftPreparationEnabled(): boolean {
   return envFlag('MKT_DRAFT_PREPARATION_ENABLED', false)
 }
 
+/** CRM segment audience preview + campaign-preparation handoff (planning only; not outreach). */
+export function isMktCrmAudiencePlanningEnabled(): boolean {
+  return envFlag('MKT_CRM_AUDIENCE_PLANNING_ENABLED', false)
+}
+
 export function isMktApprovalWorkflowEnabled(): boolean {
   return envFlag('MKT_APPROVAL_WORKFLOW_ENABLED', false)
 }
