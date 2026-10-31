@@ -36,7 +36,9 @@ All of these exist as `app/[locale]/dashboard/**/page.tsx`. They are authenticat
 
 **Batch 24B CRM workflow UI (MERGED PR #68):** `/dashboard/crm/merges` (merge review); Contacts links to merges. Import and Segments pages extended for Batch 23 API contracts (v0 @ `bc531bb`).
 
-**Batch 25 CRM audience planning APIs (IN PR, backend only):** `GET /api/v1/marketing/crm-segments`, `POST /api/v1/marketing/crm-segments/[segmentId]/audience-preview`; `POST /api/v1/marketing/requests` accepts `crmSegmentId` with `CAMPAIGN_PREPARATION`. Contract: [`docs/platform/docs/MKT-25-CRM-AUDIENCE-PLANNING-API-CONTRACT.md`](platform/docs/MKT-25-CRM-AUDIENCE-PLANNING-API-CONTRACT.md).
+**Batch 25 + 25.1 CRM audience planning APIs (MERGED PR #69, PR #70):** `GET /api/v1/marketing/crm-segments`, `POST /api/v1/marketing/crm-segments/[segmentId]/audience-preview`; `POST /api/v1/marketing/requests` accepts `crmSegmentId` with `CAMPAIGN_PREPARATION`. Contract: [`docs/platform/docs/MKT-25-CRM-AUDIENCE-PLANNING-API-CONTRACT.md`](platform/docs/MKT-25-CRM-AUDIENCE-PLANNING-API-CONTRACT.md).
+
+**Batch 26B CRM audience planning UI (ON BRANCH, PR #71):** Marketing Studio **Requests** and **Request detail** wire segment list, audience preview, and segment-linked `CAMPAIGN_PREPARATION` drafts (v0 Batch 26A @ `110c071c05912f5eb6237ebecea23dc4fd9a4520`). Manual description and SEO opportunity flows unchanged.
 
 **Batch 20C communications workspace (MERGED PR #62):** `/dashboard/communications`, `/dashboard/communications/conversations/[id]`, `/dashboard/communications/connections` (v0 Batch 20B UI + Cursor nav). Project messaging remains `/dashboard/messages`.
 

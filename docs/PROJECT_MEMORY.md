@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `4fbcc4e22f2d44d3bb68237fc43d5ac4c61ae0ab` (PR #69)
+**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `cd6ec31421fee97fdf2ba924ad2fe6dd34095299` (PR #70)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,12 +35,12 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **PR #69** Batch **25** CRM → Marketing audience planning **MERGED** on `main`; Batch **25.1** integrity **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `4fbcc4e22f2d44d3bb68237fc43d5ac4c61ae0ab` on `main`; active **Batch 25.1** on `feature/batch-25-1-audience-planning-integrity` (unmerged) |
-| 3 | Production deployment | GitHub Production **success** @ `c3e599f` (`7458519029`, 2026-10-31T12:21:59Z). **`4fbcc4e` production deploy UNVERIFIED** in-repo (see [`DEPLOYMENT_STATUS.md`](DEPLOYMENT_STATUS.md)) |
+| 1 | Last verified checkpoint | Batch **26B** CRM audience planning UI awaiting owner merge; latest merge on `main` is Batch **25.1** (`cd6ec314…`) |
+| 2 | GitHub SHA, branch, active PR | `cd6ec31421fee97fdf2ba924ad2fe6dd34095299` on `main`; `feature/batch-26b-crm-audience-ui-integration` pending merge |
+| 3 | Production deployment | Owner-reported Vercel production **`dpl_45iEUe5hmadGgYjG8iTT5qcm5AsC`**, state **READY**, SHA `cd6ec31421fee97fdf2ba924ad2fe6dd34095299` (PR #70). SHA only — not migration or activation |
 | 4 | Last updated | 2026-10-31 |
-| 5 | Next task / responsible platform | **Owner** review/merge **Batch 25.1** PR (**Cursor**) |
-| 6 | Open blocker / gate IDs | `RELEASE-001` (DEFERRED); `POLICY-SUB-001` (REPORTED) |
+| 5 | Next task / responsible platform | **Owner** review/merge **Batch 26B** PR (**Cursor**) |
+| 6 | Open blocker / gate IDs | `RELEASE-001` (DEFERRED); MKT-25 migration apply (DEFERRED); CRM/MKT audience planning activation (DEFERRED) |
 
 ### Evidence table
 
@@ -86,7 +86,12 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 21C isolated staging preflight | COMPLETE (read-only) | [`PILOT-21C-STAGING-PREFLIGHT.md`](PILOT-21C-STAGING-PREFLIGHT.md); no staging DB identified; no duplicate infra provisioned |
 | Batch 22A OPEN-001 authorization hardening | MERGED | [PR #66](https://github.com/Holagpt-ai/webxxl-website-system/pull/66), `c0ff8fed77f71adefbebc13fc44f9f9443c76a53`. Policy env lock + Social API subscriber gates |
 | Batch 23 CRM data operations V1 | MERGED | [PR #67](https://github.com/Holagpt-ai/webxxl-website-system/pull/67), `99f644e1c310d6a8311150162f792fccc841de71`. Import/export/segment/dedup APIs + merge preflight |
-| Batch 24B CRM workflow UI integration | IN PR | v0 @ `bc531bb451b3a67db40aba16341ed8d48abc2562`; branch `feature/batch-24b-crm-workflow-ui-integration` |
+| Batch 24B CRM workflow UI integration | MERGED | [PR #68](https://github.com/Holagpt-ai/webxxl-website-system/pull/68), `c3e599fe45ec913689a211d3cc5de3943c9ac388`, v0 @ `bc531bb` |
+| Batch 25 CRM → Marketing audience planning | MERGED | [PR #69](https://github.com/Holagpt-ai/webxxl-website-system/pull/69), `4fbcc4e22f2d44d3bb68237fc43d5ac4c61ae0ab` |
+| Batch 25.1 audience planning integrity | MERGED | [PR #70](https://github.com/Holagpt-ai/webxxl-website-system/pull/70), `cd6ec31421fee97fdf2ba924ad2fe6dd34095299` |
+| Vercel production SHA (2026-10-31, PR #70) | DEPLOYED | Owner-reported Vercel deployment `dpl_45iEUe5hmadGgYjG8iTT5qcm5AsC`, state **READY**, SHA `cd6ec31421fee97fdf2ba924ad2fe6dd34095299`. SHA only |
+| Batch 26A CRM audience planning UI (v0) | DELIVERED | `v0/crm-audience-26a` @ `110c071c05912f5eb6237ebecea23dc4fd9a4520` |
+| Batch 26B CRM audience planning UI integration | ON BRANCH | Branch `feature/batch-26b-crm-audience-ui-integration`; cherry-pick of v0 26A @ `110c071c` onto post-25.1 `main` |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.
