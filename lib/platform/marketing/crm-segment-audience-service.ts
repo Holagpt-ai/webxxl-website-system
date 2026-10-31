@@ -49,7 +49,10 @@ export function summarizeCrmSegmentAudiencePlanning(input: {
     consents: Parameters<typeof resolveEffectiveMarketingConsent>[0]
     suppressions: Parameters<typeof resolveEffectiveMarketingConsent>[1]
   }[]
-  contactRowsById: Map<string, { channelIdentities: { identityType: string; normalizedValue: string }[] }>
+  contactRowsById: Map<
+    string,
+    { channelIdentities: readonly { identityType: string; normalizedValue: string }[] }
+  >
 }): CrmSegmentAudiencePlanningSummary {
   let marketingConsentGrantedContacts = 0
   let revokedExpiredOrSuppressedContacts = 0

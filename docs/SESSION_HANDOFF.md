@@ -25,8 +25,13 @@ Connect CRM saved segments to Marketing Studio **campaign preparation** (plannin
 
 ### 4. Next Steps
 
-1. **Owner:** review/merge Batch **25** PR.
-2. **v0.app:** implement UI from [`docs/platform/docs/MKT-25-CRM-AUDIENCE-PLANNING-API-CONTRACT.md`](platform/docs/MKT-25-CRM-AUDIENCE-PLANNING-API-CONTRACT.md).
+1. **Owner:** review/merge Batch **25** PR (**Cursor** completed backend).
+2. **v0.app:** implement audience planning UI from [`docs/platform/docs/MKT-25-CRM-AUDIENCE-PLANNING-API-CONTRACT.md`](platform/docs/MKT-25-CRM-AUDIENCE-PLANNING-API-CONTRACT.md).
+
+## Next assignment
+
+- **Owner + Cursor:** merge Batch **25** PR after review.
+- **v0.app:** CRM audience planning UI per MKT-25 contract (EN/ES).
 
 ## Canonical checkpoint (six-field)
 
@@ -59,6 +64,6 @@ Repo / main SHA: Holagpt-ai/webxxl-website-system / c3e599fe45ec913689a211d3cc5d
 Branch / PR: feature/batch-25-crm-marketing-audience-planning / open (unmerged)
 Merged / deployed: PR #68 merged; production GitHub deploy success @ c3e599f (SHA only)
 Migration / flags / activation: MKT-25 migration NOT applied; planning flags OFF — not activation
-Next: Owner merge Batch 25 — Owner + Cursor; v0 UI — v0.app
-Do NOT: production migrations, flag activation, outbound sends, merge without owner
+Next exact assignment / owning tool: Owner merge Batch 25 — Owner + Cursor; v0 UI — v0.app
+Do NOT touch: production migrations, CRM/MKT flag activation, outbound sends/providers, merge without owner
 ```
