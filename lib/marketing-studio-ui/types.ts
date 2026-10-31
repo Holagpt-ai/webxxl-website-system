@@ -22,7 +22,64 @@ export const MKT_API = {
   calendar: '/api/v1/social/calendar',
   publications: '/api/v1/social/publications',
   connections: '/api/v1/social/connections',
+  crmSegments: '/api/v1/marketing/crm-segments',
+  audiencePreview: (segmentId: string) => `/api/v1/marketing/crm-segments/${enc(segmentId)}/audience-preview`,
 } as const
+
+/** `GET /api/v1/marketing/crm-segments` (MKT-25 §1). */
+export type CrmSegmentOption = {
+  id: string
+  name: string
+  kind: string
+  updatedAt: string
+  audiencePlanningEligible: boolean
+}
+
+/** Independent, possibly overlapping buckets. They never add up to the total by design. */
+export type AudienceBuckets = {
+  totalMatchedContacts: number
+  marketingConsentGrantedContacts: number
+  revokedExpiredOrSuppressedContacts: number
+  unknownMarketingConsentContacts: number
+  missingUsableEmailContacts: number
+}
+
+/** `POST /api/v1/marketing/crm-segments/{id}/audience-preview` (MKT-25 §2); also the stored request snapshot. */
+export type AudiencePreview = {
+  segmentId: string
+  segmentName: string
+  segmentKind: string
+  segmentUpdatedAt: string
+  evaluatedAt: string
+  planningOnly: true
+  notSendAuthorization: true
+  accountContactCount: number
+  audience: AudienceBuckets
+  disclosures?: {
+    synchronousEvaluationLimit?: number
+    limitAppliesToActiveContactsInAccount?: boolean
+    consentStatesArePointInTime?: boolean
+    outboundExecutionRequiresFreshEvaluation?: boolean
+  }
+}
+
+/** `POST /api/v1/marketing/requests` with `crmSegmentId` (MKT-25 §3). */
+export type CampaignPreparationCreated = {
+  requestId: string
+  status: string
+  crmSegmentId: string
+  audiencePreview: AudiencePreview
+}
+
+/** Mirrors the backend's stored-snapshot guard so a malformed row is never rendered as evidence. */
+export function parseAudienceSnapshot(value: unknown): AudiencePreview | null {
+  if (!value || typeof value !== 'object') return null
+  const c = value as Partial<AudiencePreview>
+  if (typeof c.segmentId !== 'string' || typeof c.evaluatedAt !== 'string') return null
+  if (c.planningOnly !== true || c.notSendAuthorization !== true) return null
+  if (!c.audience || typeof c.audience !== 'object') return null
+  return c as AudiencePreview
+}
 
 export const REQUEST_CATEGORIES = [
   'LANDING_PAGE',
@@ -45,6 +102,10 @@ export type MarketingRequest = {
   audience: string | null
   goal: string | null
   seoOpportunityId: string | null
+  /** Present after the Batch 25 migration; absent on older rows and environments. */
+  crmSegmentId?: string | null
+  audienceEvaluatedAt?: string | null
+  audiencePlanningSummary?: unknown
   createdAt: string
   updatedAt: string
 }

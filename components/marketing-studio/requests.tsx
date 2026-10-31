@@ -28,6 +28,7 @@ import {
 } from '@/lib/crm-ui/workspace'
 import { MKT_API, REQUEST_CATEGORIES, type MarketingRequest } from '@/lib/marketing-studio-ui/types'
 import type { MarketingViewProps } from '@/lib/marketing-studio-ui/server'
+import { AudiencePlanningFlow } from './audience-planning'
 import { BrandContextSection } from './brand-context'
 import { REQUEST_TONE, flagBody, siteLabel } from './shared'
 
@@ -37,7 +38,7 @@ export function MarketingRequests(props: MarketingViewProps) {
   const opportunityId = search.get('seoOpportunityId')
   const list = useWorkspace<{ requests: MarketingRequest[] }>(MKT_API.requests, accountId)
   const [formOpen, setFormOpen] = useState(Boolean(opportunityId))
-  const [created, setCreated] = useState(false)
+  const [created, setCreated] = useState<string | boolean>(false)
   const r = copy.requests
   const kit = copy.kit
 
@@ -67,7 +68,20 @@ export function MarketingRequests(props: MarketingViewProps) {
         )}
       </div>
 
-      {created && <SuccessNote>{r.created}</SuccessNote>}
+      {created && (
+        <SuccessNote>
+          {created === true ? (
+            r.created
+          ) : (
+            <>
+              {copy.audience.created}{' '}
+              <Link href={`${base}/requests/${created}`} className="font-medium underline underline-offset-4">
+                {copy.audience.viewRequest}
+              </Link>
+            </>
+          )}
+        </SuccessNote>
+      )}
 
       {formOpen && (
         <CreateRequestForm
@@ -75,9 +89,9 @@ export function MarketingRequests(props: MarketingViewProps) {
           opportunityId={opportunityId}
           initialSiteId={search.get('site')}
           onCancel={() => setFormOpen(false)}
-          onCreated={() => {
+          onCreated={(requestId) => {
             setFormOpen(false)
-            setCreated(true)
+            setCreated(requestId ?? true)
             list.mutate()
           }}
         />
@@ -116,20 +130,15 @@ export function MarketingRequests(props: MarketingViewProps) {
   )
 }
 
-function CreateRequestForm({
-  copy,
-  sites,
-  locale,
-  opportunityId,
-  initialSiteId,
-  onCancel,
-  onCreated,
-}: MarketingViewProps & {
-  opportunityId: string | null
-  initialSiteId: string | null
-  onCancel: () => void
-  onCreated: () => void
-}) {
+function CreateRequestForm(
+  props: MarketingViewProps & {
+    opportunityId: string | null
+    initialSiteId: string | null
+    onCancel: () => void
+    onCreated: (requestId?: string) => void
+  },
+) {
+  const { copy, sites, locale, opportunityId, initialSiteId, onCancel, onCreated } = props
   const r = copy.requests
   const [category, setCategory] = useState<string>(opportunityId ? 'SEO_CONTENT_FIX' : REQUEST_CATEGORIES[0])
   const [goal, setGoal] = useState('')
@@ -139,6 +148,56 @@ function CreateRequestForm({
   const [draftLocale, setDraftLocale] = useState(locale === 'es' ? 'es' : 'en')
   const [key] = useState(newIdempotencyKey)
   const action = useAction<unknown>()
+  const [source, setSource] = useState<'manual' | 'crm'>('manual')
+  // SEO handoffs keep their own category, so segment linking is only offered for campaign preparation.
+  const segmentCapable = category === 'CAMPAIGN_PREPARATION' && !opportunityId
+  const a = copy.audience
+
+  const categorySelect = (
+    <SelectField
+      label={r.category}
+      value={category}
+      onChange={setCategory}
+      options={REQUEST_CATEGORIES.map((c) => ({ value: c, label: enumLabel(copy.enums.category, c) }))}
+    />
+  )
+  const sourcePicker = segmentCapable && (
+    <fieldset className="flex flex-col gap-2">
+      <legend className="mb-1 text-sm font-medium text-foreground">{a.sourceLabel}</legend>
+      <div className="flex flex-col gap-2 sm:flex-row sm:gap-6">
+        {(['manual', 'crm'] as const).map((value) => (
+          <label key={value} className="flex items-center gap-2 text-sm text-foreground">
+            <input
+              type="radio"
+              name="audience-source"
+              value={value}
+              checked={source === value}
+              onChange={() => setSource(value)}
+              className="accent-primary"
+            />
+            {value === 'crm' ? a.sourceCrm : a.sourceManual}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  )
+
+  if (segmentCapable && source === 'crm') {
+    return (
+      <AudiencePlanningFlow
+        {...props}
+        initialSiteId={initialSiteId}
+        onCancel={onCancel}
+        onCreated={onCreated}
+        controls={
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{categorySelect}</div>
+            {sourcePicker}
+          </div>
+        }
+      />
+    )
+  }
 
   return (
     <Section title={r.new}>
@@ -163,12 +222,7 @@ function CreateRequestForm({
       >
         {opportunityId && <GapNotice title={r.category} body={fill(r.fromOpportunity, { id: opportunityId })} />}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <SelectField
-            label={r.category}
-            value={category}
-            onChange={setCategory}
-            options={REQUEST_CATEGORIES.map((c) => ({ value: c, label: enumLabel(copy.enums.category, c) }))}
-          />
+          {categorySelect}
           <SelectField
             label={r.site}
             value={siteId}
@@ -184,6 +238,7 @@ function CreateRequestForm({
             options={['en', 'es'].map((l) => ({ value: l, label: enumLabel(copy.enums.locale, l) }))}
           />
         </div>
+        {sourcePicker}
         <TextAreaField label={r.brief} hint={r.briefHint} value={brief} onChange={setBrief} required rows={5} />
         {action.error && (
           <WorkspaceState
