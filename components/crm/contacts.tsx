@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight, Plus, Search, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, GitMerge, Plus, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { CrmWorkspaceCopy } from '@/lib/i18n/dictionaries/crm-workspace-en'
@@ -57,17 +57,26 @@ export function CrmContacts({ accountId, locale, copy, base }: Props) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <SectionHeading title={t.title} description={t.description} />
-        {!formOpen && (
-          <Button
-            onClick={() => {
-              setFormOpen(true)
-              setCreatedNote(false)
-            }}
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`${base}/merges`}
+            className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-4 text-sm font-medium text-foreground shadow-xs hover:bg-muted"
           >
-            <Plus className="size-4" aria-hidden="true" />
-            {t.add}
-          </Button>
-        )}
+            <GitMerge className="size-4" aria-hidden="true" />
+            {t.mergeLink}
+          </Link>
+          {!formOpen && (
+            <Button
+              onClick={() => {
+                setFormOpen(true)
+                setCreatedNote(false)
+              }}
+            >
+              <Plus className="size-4" aria-hidden="true" />
+              {t.add}
+            </Button>
+          )}
+        </div>
       </div>
 
       {createdNote && <SuccessNote>{t.created}</SuccessNote>}

@@ -113,7 +113,15 @@ export type CrmContactPage = { contacts: CrmContact[]; nextCursor?: string }
 /** Backend bound for `q`. */
 export const CRM_SEARCH_MAX = 120
 
-export type CrmSegment = { id: string; name: string; kind: string; createdAt: string; updatedAt: string }
+export type CrmSegment = {
+  id: string
+  name: string
+  kind: string
+  createdAt: string
+  updatedAt: string
+  /** Present on dynamic segments. Treated as untrusted until parsed by the builder. */
+  filterDefinition?: unknown
+}
 
 export type CrmTimelineEvent = {
   id: string
@@ -142,15 +150,91 @@ export type SegmentRule = { field: SegmentRuleField; operator: SegmentOperator; 
 
 export type SegmentFilterDefinition = { logic: 'AND' | 'OR'; rules: SegmentRule[] }
 
-export type SegmentEvaluation = {
-  contactIds: string[]
-  summary: { totalContacts: number; eligibleContacts: number; suppressedContacts: number; unknownConsentContacts: number }
+export type SegmentPopulationSummary = {
+  totalContacts: number
+  eligibleContacts: number
+  suppressedContacts: number
+  unknownConsentContacts: number
 }
 
+/** `matchedContacts`, `accountContactCount`, and `accountSummary` arrived in Batch 23; older responses omit them. */
+export type SegmentEvaluation = {
+  segmentId?: string
+  contactIds: string[]
+  matchedContacts?: number
+  accountContactCount?: number
+  summary: SegmentPopulationSummary
+  accountSummary?: SegmentPopulationSummary
+}
+
+export type ImportRowDisposition =
+  | { kind: 'ready' }
+  | { kind: 'duplicate_existing'; contactId: string; normalizedEmail?: string; normalizedPhone?: string }
+  | { kind: 'duplicate_in_file'; firstRowNumber: number; normalizedEmail?: string; normalizedPhone?: string }
+  | { kind: 'rejected'; errors: string[] }
+  | { kind: 'skipped'; reason: string }
+
+export type ImportDispositionKind = ImportRowDisposition['kind']
+
+export type ImportPreviewRow = {
+  rowNumber: number
+  disposition: ImportRowDisposition
+  normalized: {
+    email?: string
+    emailNormalized?: string
+    givenName?: string
+    familyName?: string
+    phoneNormalized?: string
+    leadSource?: string
+  }
+}
+
+export type ImportPreviewSummary = {
+  ready: number
+  duplicateExisting: number
+  duplicateInFile: number
+  rejected: number
+  skipped: number
+  rowCount: number
+}
+
+/** `summary` and `rows` arrived in Batch 23; the legacy keys stay so older jobs still render. */
 export type ImportPreview = {
   jobId: string
-  previewReport: { duplicates: { rowNumber: number; email: string }[]; rowCount: number; consentGranted: false }
+  previewReport: {
+    duplicates: { rowNumber: number; email: string }[]
+    rowCount: number
+    consentGranted: false
+    summary?: ImportPreviewSummary
+    rows?: ImportPreviewRow[]
+  }
 }
+
+export type ImportCommitOutcome = {
+  importedCount: number
+  jobId: string
+  committed?: number
+  skipped?: number
+  rejected?: number
+  duplicates?: number
+}
+
+/** Backend mapping targets. The UI sends `{ target: column }`; the server also accepts the inverse. */
+export const IMPORT_TARGETS = ['email', 'phone', 'givenName', 'familyName', 'leadSource'] as const
+export type ImportTarget = (typeof IMPORT_TARGETS)[number]
+
+export type CrmMergeProposal = {
+  id: string
+  primaryContactId: string
+  duplicateContactId: string
+  confidenceBps: number
+  status: string
+  createdAt: string
+}
+
+export const MERGE_STATUSES = ['PENDING', 'APPROVED', 'REJECTED'] as const
+
+export type MergeApproval = { survivorContactId: string; mergedContactId: string }
 
 export type ExportPage = { csv: string; nextCursor?: string }
 
@@ -166,6 +250,9 @@ export const CRM_API = {
   tasks: '/api/v1/crm/tasks',
   task: (id: string) => `/api/v1/crm/tasks/${encodeURIComponent(id)}`,
   segments: '/api/v1/crm/segments',
+  segment: (id: string) => `/api/v1/crm/segments/${encodeURIComponent(id)}`,
+  mergeProposals: '/api/v1/crm/merge-proposals',
+  mergeProposal: (id: string) => `/api/v1/crm/merge-proposals/${encodeURIComponent(id)}`,
   importPreview: '/api/v1/crm/imports/preview',
   importCommit: '/api/v1/crm/imports/commit',
   exports: '/api/v1/crm/exports',
