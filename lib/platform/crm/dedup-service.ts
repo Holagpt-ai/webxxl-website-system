@@ -1,5 +1,9 @@
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
+import {
+  evaluateMergeChatwootCompatibility,
+  evaluateMergeConsentCompatibility,
+} from '@/lib/platform/crm/merge-preflight'
 import type { CrmResult } from '@/lib/platform/crm/types'
 
 type DbTx = Omit<typeof prisma, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>
@@ -72,14 +76,70 @@ export async function rejectMergeProposal(input: {
   return { ok: true, value: true }
 }
 
-export async function applyConsentMergePreservation(
-  customerAccountId: string,
-  fromContactId: string,
-  toContactId: string,
-): Promise<void> {
-  await prisma.$transaction(async (tx) => {
-    await mergeConsentsPreservingProvenance(tx, customerAccountId, fromContactId, toContactId)
+async function loadMergePreflightData(tx: DbTx, customerAccountId: string, survivorContactId: string, duplicateContactId: string) {
+  const [survivorConsents, duplicateConsents, survivorSuppressions, duplicateSuppressions, survivorMapping, duplicateMapping] =
+    await Promise.all([
+      tx.contactConsent.findMany({ where: { customerAccountId, contactId: survivorContactId }, include: { evidence: true } }),
+      tx.contactConsent.findMany({ where: { customerAccountId, contactId: duplicateContactId }, include: { evidence: true } }),
+      tx.contactSuppression.findMany({ where: { customerAccountId, contactId: survivorContactId } }),
+      tx.contactSuppression.findMany({ where: { customerAccountId, contactId: duplicateContactId } }),
+      tx.chatwootContactMapping.findFirst({ where: { customerAccountId, crmContactId: survivorContactId } }),
+      tx.chatwootContactMapping.findFirst({ where: { customerAccountId, crmContactId: duplicateContactId } }),
+    ])
+  return {
+    survivorConsents,
+    duplicateConsents,
+    survivorSuppressions,
+    duplicateSuppressions,
+    survivorMapping,
+    duplicateMapping,
+  }
+}
+
+function assertMergePreflight(input: Awaited<ReturnType<typeof loadMergePreflightData>>) {
+  const consentConflict = evaluateMergeConsentCompatibility({
+    survivorConsents: input.survivorConsents.map((row) => ({
+      channel: row.channel,
+      purpose: row.purpose,
+      status: row.status,
+      capturedAt: row.capturedAt,
+      source: row.source,
+      termsVersion: row.termsVersion,
+    })),
+    duplicateConsents: input.duplicateConsents.map((row) => ({
+      channel: row.channel,
+      purpose: row.purpose,
+      status: row.status,
+      capturedAt: row.capturedAt,
+      source: row.source,
+      termsVersion: row.termsVersion,
+    })),
+    survivorSuppressions: input.survivorSuppressions.map((row) => ({
+      channel: row.channel,
+      purpose: row.purpose,
+      active: row.active,
+      source: row.source,
+      reason: row.reason,
+    })),
+    duplicateSuppressions: input.duplicateSuppressions.map((row) => ({
+      channel: row.channel,
+      purpose: row.purpose,
+      active: row.active,
+      source: row.source,
+      reason: row.reason,
+    })),
   })
+  if (consentConflict) throw new Error(`MERGE_CONSENT_CONFLICT:${consentConflict.message}`)
+
+  const chatwootConflict = evaluateMergeChatwootCompatibility({
+    survivorMapping: input.survivorMapping
+      ? { chatwootContactId: input.survivorMapping.chatwootContactId, chatwootAccountId: input.survivorMapping.chatwootAccountId }
+      : null,
+    duplicateMapping: input.duplicateMapping
+      ? { chatwootContactId: input.duplicateMapping.chatwootContactId, chatwootAccountId: input.duplicateMapping.chatwootAccountId }
+      : null,
+  })
+  if (chatwootConflict) throw new Error(`MERGE_CHATWOOT_CONFLICT:${chatwootConflict.message}`)
 }
 
 async function mergeConsentsPreservingProvenance(
@@ -92,49 +152,13 @@ async function mergeConsentsPreservingProvenance(
     where: { customerAccountId, contactId: fromContactId },
   })
   for (const consent of duplicateConsents) {
-    const primaryMatch = await tx.contactConsent.findFirst({
-      where: {
-        customerAccountId,
-        contactId: toContactId,
-        channel: consent.channel,
-        purpose: consent.purpose,
-      },
-      orderBy: { capturedAt: 'desc' },
-    })
-    if (!primaryMatch) {
-      await tx.contactConsent.update({ where: { id: consent.id }, data: { contactId: toContactId } })
-      continue
-    }
-    if (primaryMatch.status === consent.status) {
-      await tx.contactConsent.delete({ where: { id: consent.id } })
-      continue
-    }
-    if (primaryMatch.status !== 'GRANTED' && consent.status === 'GRANTED') {
-      await tx.contactConsent.delete({ where: { id: consent.id } })
-      continue
-    }
-    await tx.contactConsent.delete({ where: { id: consent.id } })
+    await tx.contactConsent.update({ where: { id: consent.id }, data: { contactId: toContactId } })
   }
 
   const duplicateSuppressions = await tx.contactSuppression.findMany({
     where: { customerAccountId, contactId: fromContactId },
   })
   for (const suppression of duplicateSuppressions) {
-    if (suppression.active) {
-      const primaryActive = await tx.contactSuppression.findFirst({
-        where: {
-          customerAccountId,
-          contactId: toContactId,
-          channel: suppression.channel,
-          purpose: suppression.purpose,
-          active: true,
-        },
-      })
-      if (primaryActive) {
-        await tx.contactSuppression.delete({ where: { id: suppression.id } })
-        continue
-      }
-    }
     await tx.contactSuppression.update({ where: { id: suppression.id }, data: { contactId: toContactId } })
   }
 }
@@ -143,15 +167,23 @@ async function reassignChatwootMappings(tx: DbTx, customerAccountId: string, fro
   const survivorMapping = await tx.chatwootContactMapping.findFirst({
     where: { customerAccountId, crmContactId: toContactId },
   })
-  const duplicateMappings = await tx.chatwootContactMapping.findMany({
+  const duplicateMapping = await tx.chatwootContactMapping.findFirst({
     where: { customerAccountId, crmContactId: fromContactId },
   })
-  for (const mapping of duplicateMappings) {
-    if (survivorMapping) {
-      await tx.chatwootContactMapping.delete({ where: { id: mapping.id } })
-    } else {
-      await tx.chatwootContactMapping.update({ where: { id: mapping.id }, data: { crmContactId: toContactId } })
-    }
+  if (!duplicateMapping) {
+    await tx.chatwootConversationMapping.updateMany({
+      where: { customerAccountId, crmContactId: fromContactId },
+      data: { crmContactId: toContactId },
+    })
+    return
+  }
+  if (!survivorMapping) {
+    await tx.chatwootContactMapping.update({
+      where: { id: duplicateMapping.id },
+      data: { crmContactId: toContactId },
+    })
+  } else if (survivorMapping.chatwootContactId === duplicateMapping.chatwootContactId) {
+    await tx.chatwootContactMapping.delete({ where: { id: duplicateMapping.id } })
   }
   await tx.chatwootConversationMapping.updateMany({
     where: { customerAccountId, crmContactId: fromContactId },
@@ -286,6 +318,9 @@ export async function approveMergeProposal(input: {
       if (!primary || !duplicate) throw new Error('MERGE_CONTACTS_INVALID')
       if (primary.customerAccountId !== duplicate.customerAccountId) throw new Error('MERGE_CROSS_ACCOUNT')
 
+      const preflight = await loadMergePreflightData(tx, input.customerAccountId, primary.id, duplicate.id)
+      assertMergePreflight(preflight)
+
       await reassignContactChildren(tx, input.customerAccountId, duplicate.id, primary.id)
       await tx.crmContact.update({
         where: { id: duplicate.id },
@@ -320,6 +355,12 @@ export async function approveMergeProposal(input: {
     if (error instanceof Error && error.message === 'MERGE_CROSS_ACCOUNT') {
       return { ok: false, code: 'CROSS_ACCOUNT_DENIED', message: 'Cross-account merge denied' }
     }
+    if (error instanceof Error && error.message.startsWith('MERGE_CONSENT_CONFLICT:')) {
+      return { ok: false, code: 'CONFLICT', message: error.message.replace('MERGE_CONSENT_CONFLICT:', '') }
+    }
+    if (error instanceof Error && error.message.startsWith('MERGE_CHATWOOT_CONFLICT:')) {
+      return { ok: false, code: 'CONFLICT', message: error.message.replace('MERGE_CHATWOOT_CONFLICT:', '') }
+    }
     throw error
   }
 }
@@ -332,4 +373,25 @@ export async function rejectCrossAccountMerge(
     return { ok: false, code: 'CROSS_ACCOUNT_DENIED', message: 'Cross-account merge denied' }
   }
   return { ok: true, value: true }
+}
+
+/** Test helper: runs consent/suppression reassignment inside a transaction after preflight. */
+export async function applyConsentMergePreservation(
+  customerAccountId: string,
+  fromContactId: string,
+  toContactId: string,
+): Promise<CrmResult<true>> {
+  try {
+    await prisma.$transaction(async (tx) => {
+      const preflight = await loadMergePreflightData(tx, customerAccountId, toContactId, fromContactId)
+      assertMergePreflight(preflight)
+      await mergeConsentsPreservingProvenance(tx, customerAccountId, fromContactId, toContactId)
+    })
+    return { ok: true, value: true }
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('MERGE_CONSENT_CONFLICT:')) {
+      return { ok: false, code: 'CONFLICT', message: error.message.replace('MERGE_CONSENT_CONFLICT:', '') }
+    }
+    throw error
+  }
 }

@@ -240,48 +240,52 @@ describe('Batch 23.1 CRM corrections', () => {
     if (!second.ok) expect(second.code).toBe('CONFLICT')
   })
 
-  it('F4: consent conflicts do not manufacture marketing GRANTED on survivor', async () => {
-    const moved: string[] = []
-    const deleted: string[] = []
+  it('F4: consent conflicts fail closed instead of deleting duplicate consent', async () => {
     vi.doMock('@/lib/db', () => ({
       prisma: {
         $transaction: async (fn: (tx: unknown) => Promise<void>) =>
           fn({
             contactConsent: {
-              findMany: async () => [
-                {
-                  id: 'dup_consent',
-                  customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
-                  contactId: 'duplicate',
-                  channel: 'EMAIL',
-                  purpose: 'MARKETING',
-                  status: 'GRANTED',
-                },
-              ],
-              findFirst: async () => ({
-                id: 'primary_consent',
-                customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
-                contactId: 'primary',
-                channel: 'EMAIL',
-                purpose: 'MARKETING',
-                status: 'REVOKED',
-              }),
-              update: async ({ where }: { where: { id: string } }) => {
-                moved.push(where.id)
-                return {}
+              findMany: async ({ where }: { where: { contactId: string } }) => {
+                if (where.contactId === 'primary') {
+                  return [
+                    {
+                      id: 'primary_consent',
+                      channel: 'EMAIL',
+                      purpose: 'MARKETING',
+                      status: 'REVOKED',
+                      capturedAt: new Date('2026-10-02T00:00:00Z'),
+                      source: 'form',
+                      termsVersion: 'v1',
+                      evidence: [{ id: 'ev_primary', evidenceRef: 'ref-primary' }],
+                    },
+                  ]
+                }
+                return [
+                  {
+                    id: 'dup_consent',
+                    channel: 'EMAIL',
+                    purpose: 'MARKETING',
+                    status: 'GRANTED',
+                    capturedAt: new Date('2026-10-03T00:00:00Z'),
+                    source: 'import',
+                    termsVersion: 'v1',
+                    evidence: [{ id: 'ev_dup', evidenceRef: 'ref-dup' }],
+                  },
+                ]
               },
-              delete: async ({ where }: { where: { id: string } }) => {
-                deleted.push(where.id)
-                return {}
+              update: async () => {
+                throw new Error('should not mutate consent on conflict')
               },
             },
             contactSuppression: { findMany: async () => [] },
+            chatwootContactMapping: { findFirst: async () => null },
           }),
       },
     }))
     const { applyConsentMergePreservation } = await import('@/lib/platform/crm/dedup-service')
-    await applyConsentMergePreservation(ABMED_AESTHETICS_ACCOUNT_ID, 'duplicate', 'primary')
-    expect(moved).toHaveLength(0)
-    expect(deleted).toContain('dup_consent')
+    const result = await applyConsentMergePreservation(ABMED_AESTHETICS_ACCOUNT_ID, 'duplicate', 'primary')
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.code).toBe('CONFLICT')
   })
 })
