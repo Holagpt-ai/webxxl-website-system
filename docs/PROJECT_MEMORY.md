@@ -36,7 +36,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | Batch **28A** + **28A.1** integrity on **PR #75** (managed-site leads); **27C** merged on `main` |
-| 2 | GitHub SHA, branch, active PR | `828ac12e9968f84bd8e1bc42f44ba941c9551194` on `main`; `feature/batch-28a-managed-site-leads` — **PR #75** (28A.1 push pending owner merge) |
+| 2 | GitHub SHA, branch, active PR | `828ac12e9968f84bd8e1bc42f44ba941c9551194` on `main`; **PR #75** head `c62258f82847b88071880451f24d0752090b12db` (open) |
 | 3 | Production deployment | Vercel **`dpl_5AuKd2RyiUqAgoNGr4XLSBS6rtj5` READY** @ `828ac12`. SHA only — not migration or activation |
 | 4 | Last updated | 2026-10-31 |
 | 5 | Next task / responsible platform | **Owner** review/merge **Batch 28A** PR (**Cursor**); then **v0.app** Lead Inbox UI |
