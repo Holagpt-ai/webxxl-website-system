@@ -47,7 +47,16 @@ Uses the same active-account cookie as other customer portal APIs (`pickActiveMe
 |---|---|---|
 | `module` | `"crm" \| "marketing" \| "local_seo" \| "communications" \| "website_projects"` | Stable module key for UI tabs |
 | `readiness` | object | See readiness states below |
-| `summary` | object (optional) | Numeric counts **only** when `readiness.state === "available"` |
+| `summary` | object (optional) | Metric map **only** when `readiness.state === "available"` (see below) |
+
+Each summary entry is `{ "value": number, "scope": "account_total" | "bounded_sample" }`:
+
+- **`account_total`** — full account-scoped count query (use for headline totals).
+- **`bounded_sample`** — rows returned for action construction, capped by overview limits (may be lower than the total).
+
+Example CRM keys: `openTasks` / `openDeals` / `pendingMerges` (totals); `openTasksSample` / `openDealsSample` / `pendingMergesSample` (samples). Marketing and communications follow the same pattern.
+
+`readiness.evidenceCount` (when `available`) sums **`account_total`** metrics only.
 
 #### Readiness states (honest availability)
 
@@ -85,7 +94,7 @@ Actions are sorted by priority then timestamp, capped by `limits`.
 
 | Module | Existing sources |
 |---|---|
-| CRM | `CrmTask`, `CrmDeal`, `listMergeProposals` |
+| CRM | Bounded `CrmTask` / `CrmDeal` / `CrmMergeProposal` reads + matching `count` queries |
 | Marketing | `MarketingRequest`, `listMarketingReviews`, `listMarketingArtifacts` |
 | Local SEO | `SeoOpportunity` (actionable states) |
 | Communications | `listAccountInboxes`, `listAccountConversations` (`needs_attention`) |
@@ -100,6 +109,8 @@ Actions are sorted by priority then timestamp, capped by `limits`.
 | 500 | `ERROR` | Unexpected failure |
 
 Module-specific gate codes appear only inside `modules[].readiness`, not as top-level HTTP errors.
+
+When an underlying Marketing or Communications list service returns `{ ok: false }`, that module’s readiness becomes **`unavailable`** (generic customer message, no internal DB detail). Other modules still report independently.
 
 ### Bilingual UI (27B)
 

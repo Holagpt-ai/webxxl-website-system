@@ -40,7 +40,7 @@ All of these exist as `app/[locale]/dashboard/**/page.tsx`. They are authenticat
 
 **Batch 26B CRM audience planning UI (MERGED PR #71):** Marketing Studio **Requests** and **Request detail** wire segment list, audience preview, and segment-linked `CAMPAIGN_PREPARATION` drafts (v0 Batch 26A @ `110c071c`).
 
-**Batch 27A Business Command Center backend (ON BRANCH):** `GET /api/v1/business/overview` — read-only cross-module action summary. Contract: [`docs/platform/docs/BATCH27A-BUSINESS-COMMAND-CENTER-API-CONTRACT.md`](platform/docs/BATCH27A-BUSINESS-COMMAND-CENTER-API-CONTRACT.md). Does not replace `/dashboard` project Action Center.
+**Batch 27A Business Command Center backend (MERGED on `main`):** `GET /api/v1/business/overview` — read-only cross-module action summary. Contract: [`docs/platform/docs/BATCH27A-BUSINESS-COMMAND-CENTER-API-CONTRACT.md`](platform/docs/BATCH27A-BUSINESS-COMMAND-CENTER-API-CONTRACT.md). Batch **27A.1** integrity recovery in flight (27A.2 PR). Does not replace `/dashboard` project Action Center.
 
 **Batch 20C communications workspace (MERGED PR #62):** `/dashboard/communications`, `/dashboard/communications/conversations/[id]`, `/dashboard/communications/connections` (v0 Batch 20B UI + Cursor nav). Project messaging remains `/dashboard/messages`.
 

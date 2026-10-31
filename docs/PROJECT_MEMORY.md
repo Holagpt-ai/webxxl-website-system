@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `6a889b3221fe2149446669a2016d14fe6f67e82a` (PR #71)
+**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `aea38692a07dba356fdd3b6d54d95b6a9a562a57` (PR #72)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,11 +35,11 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | Batch **27A** Business Command Center backend awaiting owner merge; latest merge on `main` is Batch **26B** (`6a889b3…`) |
-| 2 | GitHub SHA, branch, active PR | `6a889b3221fe2149446669a2016d14fe6f67e82a` on `main`; `feature/batch-27a-business-command-center-backend` pending merge |
-| 3 | Production deployment | GitHub Production **success** @ `6a889b3` (deployment `7459563378`, 2026-10-31T14:00:53Z). SHA only — not migration or activation |
+| 1 | Last verified checkpoint | Batch **27A** **MERGED** on `main` (`aea3869…`); Batch **27A.1** integrity recovery **IN PR** (cherry-pick of `edc21fd…`) |
+| 2 | GitHub SHA, branch, active PR | `aea38692a07dba356fdd3b6d54d95b6a9a562a57` on `main`; recovery branch `feature/batch-27a-2-recover-27a1` — open PR pending |
+| 3 | Production deployment | GitHub Production **success** @ `aea3869` (deployment `7460419502`, 2026-10-31T15:17:13Z). SHA only — not migration or activation |
 | 4 | Last updated | 2026-10-31 |
-| 5 | Next task / responsible platform | **Owner** review/merge **Batch 27A** PR (**Cursor**); then **v0.app** Batch **27B** UI |
+| 5 | Next task / responsible platform | **Owner** review/merge **27A.2** recovery PR (**Cursor**); then **v0.app** Batch **27B** UI |
 | 6 | Open blocker / gate IDs | Module backend flags OFF (DEFERRED); live command center UNVERIFIED; MKT-25 migration apply (DEFERRED) |
 
 ### Evidence table
@@ -93,7 +93,9 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 26A CRM audience planning UI (v0) | DELIVERED | `v0/crm-audience-26a` @ `110c071c05912f5eb6237ebecea23dc4fd9a4520` |
 | Batch 26B CRM audience planning UI integration | MERGED | [PR #71](https://github.com/Holagpt-ai/webxxl-website-system/pull/71), `6a889b3221fe2149446669a2016d14fe6f67e82a`, v0 26A @ `110c071c` |
 | Vercel production SHA (2026-10-31, PR #71) | DEPLOYED | GitHub deployment `7459563378` by `vercel[bot]`, Production **success**, 2026-10-31T14:00:53Z, SHA `6a889b3221fe2149446669a2016d14fe6f67e82a`. SHA only |
-| Batch 27A Business Command Center backend | ON BRANCH | `GET /api/v1/business/overview`; [`BATCH27A-BUSINESS-COMMAND-CENTER-API-CONTRACT.md`](platform/docs/BATCH27A-BUSINESS-COMMAND-CENTER-API-CONTRACT.md) |
+| Batch 27A Business Command Center backend | MERGED | [PR #72](https://github.com/Holagpt-ai/webxxl-website-system/pull/72) squash `aea38692a07dba356fdd3b6d54d95b6a9a562a57` (branch head had been `63398e18…` pre-merge). [`BATCH27A-BUSINESS-COMMAND-CENTER-API-CONTRACT.md`](platform/docs/BATCH27A-BUSINESS-COMMAND-CENTER-API-CONTRACT.md) |
+| Vercel production SHA (2026-10-31, PR #72) | DEPLOYED | GitHub deployment `7460419502`, Production **success**, 2026-10-31T15:17:13Z, SHA `aea38692a07dba356fdd3b6d54d95b6a9a562a57`. SHA only |
+| Batch 27A.1 overview integrity | IN PR (27A.2 recovery) | Cherry-pick of `edc21fd6fcb9131869550cfa532bc570f77db090` onto `main`; bounded counts, `BusinessSummaryMetric`, marketing/comms source failures |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.
