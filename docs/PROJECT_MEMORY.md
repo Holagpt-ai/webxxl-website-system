@@ -36,7 +36,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | **30C** **MERGED** (PR #81 @ `3a7d011…`); **Batch 31** staging/pilot readiness **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `3a7d011466aeabcf4c2d3bdfe8a669d42e448957` on `main`; **Batch 31** on `feature/batch-31-staging-pilot-readiness` (open PR) |
+| 2 | GitHub SHA, branch, active PR | `3a7d011466aeabcf4c2d3bdfe8a669d42e448957` on `main`; **PR #82** head `be67ce2…` on `feature/batch-31-staging-pilot-readiness` (open) |
 | 3 | Production deployment | Vercel **`dpl_A6Lx8wv62nsXeGY7mUFcshLhDP89` READY** @ `3a7d011`. SHA only — not migration or activation |
 | 4 | Last updated | 2026-10-31 |
 | 5 | Next task / responsible platform | **Owner** review/merge **31** PR; then authorize **staging DB + migrate deploy** (**Owner**) |
