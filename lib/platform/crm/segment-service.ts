@@ -13,7 +13,7 @@ import type { CrmResult } from '@/lib/platform/crm/types'
 export type SegmentEvaluationContactRow = Awaited<ReturnType<typeof loadSegmentEvaluationContacts>>[number]
 
 export function contactHasUsableEmailIdentity(row: {
-  channelIdentities: { identityType: string; normalizedValue: string }[]
+  channelIdentities: readonly { identityType: string; normalizedValue: string }[]
 }): boolean {
   return row.channelIdentities.some(
     (identity) =>
