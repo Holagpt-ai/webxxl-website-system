@@ -82,6 +82,7 @@ export async function createMarketingRequestRecord(input: {
     audience: input.audience,
     sourceRefs,
     seoOpportunityId: input.seoOpportunityId,
+    crmSegmentId: null,
     assignedWorkflow: DEFAULT_WORKFLOW,
   })
 

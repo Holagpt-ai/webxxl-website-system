@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `99f644e1c310d6a8311150162f792fccc841de71` (PR #67)
+**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `c3e599fe45ec913689a211d3cc5de3943c9ac388` (PR #68)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,11 +35,11 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **PR #67** Batch **23** CRM data operations **MERGED** on `main`; Batch **24B** CRM workflow UI integration **open on branch** |
-| 2 | GitHub SHA, branch, active PR | `99f644e1c310d6a8311150162f792fccc841de71` on `main`; **PR #68** Batch **24B** on `feature/batch-24b-crm-workflow-ui-integration` @ `540b9d85b7a3e428f5fd46fa520bb4da850b6ba3` (unmerged) |
-| 3 | Production deployment | Vercel `dpl_AJeLf2CvYP3BwvPKvWiCrbMp3yUk` — **READY** — SHA `99f644e1c310d6a8311150162f792fccc841de71` (SHA only; see [`DEPLOYMENT_STATUS.md`](DEPLOYMENT_STATUS.md)) |
+| 1 | Last verified checkpoint | **PR #68** Batch **24B** CRM workflow UI **MERGED** on `main`; Batch **25** CRM → Marketing audience planning **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `c3e599fe45ec913689a211d3cc5de3943c9ac388` on `main`; active **Batch 25** on `feature/batch-25-crm-marketing-audience-planning` (unmerged) |
+| 3 | Production deployment | GitHub Production deployment **success** @ `c3e599fe45ec913689a211d3cc5de3943c9ac388` (2026-10-31T12:21:59Z, id `7458519029`; SHA only; see [`DEPLOYMENT_STATUS.md`](DEPLOYMENT_STATUS.md)) |
 | 4 | Last updated | 2026-10-31 |
-| 5 | Next task / responsible platform | **Owner** review/merge **Batch 24B** PR (**Cursor**); staging gates unchanged per [`PILOT-21B-STAGING-EXECUTION-PLAN.md`](PILOT-21B-STAGING-EXECUTION-PLAN.md) |
+| 5 | Next task / responsible platform | **Owner** review/merge **Batch 25** PR (**Cursor**); v0.app UI for audience planning per MKT-25 contract |
 | 6 | Open blocker / gate IDs | `RELEASE-001` (DEFERRED); `POLICY-SUB-001` (REPORTED) |
 
 ### Evidence table
