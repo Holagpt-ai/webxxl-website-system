@@ -13,6 +13,7 @@ Specifications: [`03-DATA-MODEL`](platform/docs/03-DATA-MODEL.md), [`04-API-INTE
 | Wallet and commerce | `lib/platform/wallet/**`, `lib/platform/commerce/**` | No processor selected as the system of record | MERGED | No live charge inferred |
 | Workflow | `lib/platform/workflow/**`, legacy notification worker | AUTO-10 is Prisma-first; Hatchet is not provisioned | MERGED | `WORKFLOW_*` default off in the AUTO-10 contract |
 | AI workforce | `lib/platform/workforce/**`, `lib/platform/customer-ai-workforce/**` | Paperclip is a candidate adapter | MERGED | Live execution not inferred |
+| Business command center overview | `lib/platform/business-overview/**`, `GET /api/v1/business/overview` | Aggregates existing CRM/MKT/SEO/comms/project read paths | ON BRANCH Batch 27A | Read-only; per-module flags and OPEN-001 gates preserved |
 
 ## Analytics flags on this source tree
 

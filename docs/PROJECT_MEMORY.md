@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `cd6ec31421fee97fdf2ba924ad2fe6dd34095299` (PR #70)
+**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `6a889b3221fe2149446669a2016d14fe6f67e82a` (PR #71)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,12 +35,12 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | Batch **26B** CRM audience planning UI awaiting owner merge; latest merge on `main` is Batch **25.1** (`cd6ec314…`) |
-| 2 | GitHub SHA, branch, active PR | `cd6ec31421fee97fdf2ba924ad2fe6dd34095299` on `main`; `feature/batch-26b-crm-audience-ui-integration` pending merge |
-| 3 | Production deployment | Owner-reported Vercel production **`dpl_45iEUe5hmadGgYjG8iTT5qcm5AsC`**, state **READY**, SHA `cd6ec31421fee97fdf2ba924ad2fe6dd34095299` (PR #70). SHA only — not migration or activation |
+| 1 | Last verified checkpoint | Batch **27A** Business Command Center backend awaiting owner merge; latest merge on `main` is Batch **26B** (`6a889b3…`) |
+| 2 | GitHub SHA, branch, active PR | `6a889b3221fe2149446669a2016d14fe6f67e82a` on `main`; `feature/batch-27a-business-command-center-backend` pending merge |
+| 3 | Production deployment | GitHub Production **success** @ `6a889b3` (deployment `7459563378`, 2026-10-31T14:00:53Z). SHA only — not migration or activation |
 | 4 | Last updated | 2026-10-31 |
-| 5 | Next task / responsible platform | **Owner** review/merge **Batch 26B** PR (**Cursor**) |
-| 6 | Open blocker / gate IDs | `RELEASE-001` (DEFERRED); MKT-25 migration apply (DEFERRED); CRM/MKT audience planning activation (DEFERRED) |
+| 5 | Next task / responsible platform | **Owner** review/merge **Batch 27A** PR (**Cursor**); then **v0.app** Batch **27B** UI |
+| 6 | Open blocker / gate IDs | Module backend flags OFF (DEFERRED); live command center UNVERIFIED; MKT-25 migration apply (DEFERRED) |
 
 ### Evidence table
 
@@ -91,7 +91,9 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 25.1 audience planning integrity | MERGED | [PR #70](https://github.com/Holagpt-ai/webxxl-website-system/pull/70), `cd6ec31421fee97fdf2ba924ad2fe6dd34095299` |
 | Vercel production SHA (2026-10-31, PR #70) | DEPLOYED | Owner-reported Vercel deployment `dpl_45iEUe5hmadGgYjG8iTT5qcm5AsC`, state **READY**, SHA `cd6ec31421fee97fdf2ba924ad2fe6dd34095299`. SHA only |
 | Batch 26A CRM audience planning UI (v0) | DELIVERED | `v0/crm-audience-26a` @ `110c071c05912f5eb6237ebecea23dc4fd9a4520` |
-| Batch 26B CRM audience planning UI integration | ON BRANCH | Branch `feature/batch-26b-crm-audience-ui-integration`; cherry-pick of v0 26A @ `110c071c` onto post-25.1 `main` |
+| Batch 26B CRM audience planning UI integration | MERGED | [PR #71](https://github.com/Holagpt-ai/webxxl-website-system/pull/71), `6a889b3221fe2149446669a2016d14fe6f67e82a`, v0 26A @ `110c071c` |
+| Vercel production SHA (2026-10-31, PR #71) | DEPLOYED | GitHub deployment `7459563378` by `vercel[bot]`, Production **success**, 2026-10-31T14:00:53Z, SHA `6a889b3221fe2149446669a2016d14fe6f67e82a`. SHA only |
+| Batch 27A Business Command Center backend | ON BRANCH | `GET /api/v1/business/overview`; [`BATCH27A-BUSINESS-COMMAND-CENTER-API-CONTRACT.md`](platform/docs/BATCH27A-BUSINESS-COMMAND-CENTER-API-CONTRACT.md) |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.
