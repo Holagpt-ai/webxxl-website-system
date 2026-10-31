@@ -57,7 +57,7 @@ jobs:
       - run: pnpm exec prisma validate
       - run: pnpm exec prisma generate
       - run: pnpm typecheck
-      - run: npx vitest run __tests__/platform/pilot21a-readiness.test.ts __tests__/platform/open001-subscriber-eligibility.test.ts __tests__/platform/batch27a-business-overview.test.ts __tests__/platform/batch27a-1-business-overview-integrity.test.ts __tests__/platform/batch27c-business-ui-integration.test.ts __tests__/platform/batch28a-managed-site-leads.test.ts __tests__/platform/batch28a-1-managed-site-leads-integrity.test.ts __tests__/platform/batch28a-2-intake-payload-idempotency.test.ts __tests__/platform/batch28c-crm-lead-inbox-ui-integration.test.ts __tests__/platform/batch29a-site-lead-form-connector.test.ts __tests__/platform/batch29a-1-submission-identity.test.ts __tests__/platform/batch30a-lead-funnel-reporting.test.ts
+      - run: npx vitest run __tests__/platform/pilot21a-readiness.test.ts __tests__/platform/open001-subscriber-eligibility.test.ts __tests__/platform/batch27a-business-overview.test.ts __tests__/platform/batch27a-1-business-overview-integrity.test.ts __tests__/platform/batch27c-business-ui-integration.test.ts __tests__/platform/batch28a-managed-site-leads.test.ts __tests__/platform/batch28a-1-managed-site-leads-integrity.test.ts __tests__/platform/batch28a-2-intake-payload-idempotency.test.ts __tests__/platform/batch28c-crm-lead-inbox-ui-integration.test.ts __tests__/platform/batch29a-site-lead-form-connector.test.ts __tests__/platform/batch29a-1-submission-identity.test.ts __tests__/platform/batch30a-lead-funnel-reporting.test.ts __tests__/platform/batch30c-lead-funnel-ui-integration.test.ts
       - run: pnpm build
 
   app-validate-gate:

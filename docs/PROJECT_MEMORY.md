@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `3905994ebbb8c4b423481c961a65e938dfc76a59` (PR #79)
+**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `cb8d785d7ca4eb4ac26972a7db69b4a0e65b0b2f` (PR #80)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,11 +35,11 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **29A.1** **MERGED** (PR #79 @ `3905994…`); **30A** + **30A.1** integrity corrections **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `3905994ebbb8c4b423481c961a65e938dfc76a59` on `main`; **PR #80** head `40d37e3…` on `feature/batch-30a-lead-funnel-reporting` (open) |
-| 3 | Production deployment | Vercel **`dpl_AQ2v84aWrtDkogkczTeuMM24CHc9` READY** @ `3905994`. SHA only — not migration or activation |
+| 1 | Last verified checkpoint | **30A/30A.1** **MERGED** (PR #80 @ `cb8d785…`); **30B** v0 **DELIVERED**; **30C** Lead Funnel UI integration **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `cb8d785d7ca4eb4ac26972a7db69b4a0e65b0b2f` on `main`; active **Batch 30C** on `feature/batch-30c-lead-funnel-ui-integration` (open PR) |
+| 3 | Production deployment | Vercel **`dpl_Fev1t4X7U9EFvzXA7wCZHVUAjiLC` READY** @ `cb8d785`. SHA only — not migration or activation |
 | 4 | Last updated | 2026-10-31 |
-| 5 | Next task / responsible platform | **Owner** merge **30A** PR (**Cursor**) |
+| 5 | Next task / responsible platform | **Owner** review/merge **30C** PR (**Cursor**) |
 | 6 | Open blocker / gate IDs | `SITE_LEAD_INTAKE_ENABLED` OFF; batch28a migrations UNVERIFIED/unapplied; live customer forms DEFERRED |
 
 ### Evidence table
@@ -107,8 +107,11 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 28C Lead Inbox UI integration | MERGED | [PR #77](https://github.com/Holagpt-ai/webxxl-website-system/pull/77), `0135a8b7d0a40bf7830624e22b57319753921aec`, v0 @ `f9e21907` |
 | Batch 29A Managed-site form connector V1 | MERGED | [PR #78](https://github.com/Holagpt-ai/webxxl-website-system/pull/78), `fc702c696fe0a35ef3b61f4dc3eb6dc896a06442`. [`BATCH29A-MANAGED-SITE-FORM-CONNECTOR.md`](platform/docs/BATCH29A-MANAGED-SITE-FORM-CONNECTOR.md) |
 | Batch 29A.1 Connector submission identity & retry integrity | MERGED | [PR #79](https://github.com/Holagpt-ai/webxxl-website-system/pull/79), `3905994ebbb8c4b423481c961a65e938dfc76a59` |
-| Batch 30A Lead funnel reporting & Business Command Center integration | IN PR | [`BATCH30A-LEAD-FUNNEL-REPORTING-API-CONTRACT.md`](platform/docs/BATCH30A-LEAD-FUNNEL-REPORTING-API-CONTRACT.md) |
-| Vercel production SHA (2026-10-31, PR #79) | DEPLOYED | Vercel `dpl_AQ2v84aWrtDkogkczTeuMM24CHc9` **READY** @ `3905994ebbb8c4b423481c961a65e938dfc76a59`. SHA only |
+| Batch 30A + 30A.1 Lead funnel reporting & Business Command Center integration | MERGED | [PR #80](https://github.com/Holagpt-ai/webxxl-website-system/pull/80), `cb8d785d7ca4eb4ac26972a7db69b4a0e65b0b2f`. [`BATCH30A-LEAD-FUNNEL-REPORTING-API-CONTRACT.md`](platform/docs/BATCH30A-LEAD-FUNNEL-REPORTING-API-CONTRACT.md) |
+| Vercel production SHA (2026-10-31, PR #80) | DEPLOYED | Vercel `dpl_Fev1t4X7U9EFvzXA7wCZHVUAjiLC` **READY** @ `cb8d785d7ca4eb4ac26972a7db69b4a0e65b0b2f`. SHA only |
+| Batch 30B Lead Funnel dashboard UI (v0) | DELIVERED | `v0/lead-funnel-30b` @ `e4e85b2af0db01fb76bf23854dbe834bdb3af1a0` |
+| Batch 30C Lead Funnel UI integration | IN PR | Cherry-pick `e4e85b2…` + CRM nav + Lead Inbox handoff + regression tests |
+| Vercel production SHA (2026-10-31, PR #79) | DEPLOYED | Vercel `dpl_AQ2v84aWrtDkogkczTeuMM24CHc9` **READY** @ `3905994ebbb8c4b423481c961a65e938dfc76a59`. Superseded by PR #80 row |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.
@@ -129,6 +132,21 @@ Batch 16 customer workspace UI is **MERGED** (PR #54). Batch 17A extends native 
 - ADR-001 through ADR-017: the decision changelog only. Do not recreate those files.
 - ADR-018+: [`docs/adr/`](adr/README.md). PROPOSED until the owner approves and the decision changelog records it.
 - AUTO-10 stays Prisma-first. See [`docs/platform/docs/AUTO10-PROVIDER-DECISION.md`](platform/docs/AUTO10-PROVIDER-DECISION.md). Hatchet is not provisioned.
+
+## Proposed remaining work (Batches 31–38) — not approved implementation
+
+Consolidated **directional** roadmap for owner planning. These batches are **PROPOSED** unless a separate merge record exists above. They do not override Master TAD or ADR-001..017. No production migration, flag activation, or provider connection is implied.
+
+| Batch | Theme | Primary owner | Depends on | Status |
+|---|---|---|---|---|
+| **31** | Controlled staging pilot execution (OPEN-001 cohort, read-only → gated writes) | Cursor + Owner | 21B/21C, INFRA-02 gate | PROPOSED |
+| **32** | Commerce & wallet fulfillment (group checkout, reservations, reconciliation hardening) | Cursor | WALLET-09/COMMERCE-11 source on `main` | PROPOSED |
+| **33** | SEO & analytics activation prep (ingestion flags, GSC/GA4 connection UX, conversion integrity) | Cursor + v0 | ANALYTICS-14/15 merged source | PROPOSED |
+| **34** | Marketing Studio execution gates (draft → approval → guarded publish/send boundaries) | Cursor + v0 | MKT-08, SOCIAL-04 | PROPOSED |
+| **35** | Communications live pilot (Chatwoot relay, consent-aware inbox, no broadcast bypass) | Cursor + v0 | COMMS-06, Batch 20C UI | PROPOSED |
+| **36** | Customer AI workforce pilot (scoped tools, human approval, no autonomous outreach) | Cursor + v0 | AI-CUSTOMER-13, AGENT-03 | PROPOSED |
+| **37** | Infrastructure & durable execution fulfillment (worker cron, outbox, AUTO-10 provider decision) | Cursor | AUTO-10, owner VPS/worker approval | PROPOSED |
+| **38** | Release stabilization & customer acceptance (staging e2e, migration rehearsal, signoff gate) | Owner + Cursor | Prior batches owner-selected for pilot | PROPOSED |
 
 ## Update protocol
 

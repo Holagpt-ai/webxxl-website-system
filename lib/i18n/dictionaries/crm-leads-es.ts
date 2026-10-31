@@ -2,6 +2,7 @@ import type { CrmLeadsCopy } from './crm-leads-en'
 
 export const crmLeadsEs: CrmLeadsCopy = {
   navLabel: 'Prospectos del sitio web',
+  funnelLink: 'Embudo de prospectos',
   title: 'Bandeja de prospectos',
   description:
     'Consultas enviadas desde los formularios de tus sitios web administrados. Revisa cada una y decide tú si la calificas, la rechazas o la conviertes en contacto del CRM.',

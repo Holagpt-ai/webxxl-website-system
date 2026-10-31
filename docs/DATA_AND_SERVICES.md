@@ -15,9 +15,10 @@ Specifications: [`03-DATA-MODEL`](platform/docs/03-DATA-MODEL.md), [`04-API-INTE
 | AI workforce | `lib/platform/workforce/**`, `lib/platform/customer-ai-workforce/**` | Paperclip is a candidate adapter | MERGED | Live execution not inferred |
 | Business command center overview | `lib/platform/business-overview/**`, `GET /api/v1/business/overview` | Aggregates existing CRM/MKT/SEO/comms/project read paths | MERGED 27A/27A.2 on `main` @ `ccbca6b` | Read-only; per-module flags and OPEN-001 gates preserved |
 | Business command center UI | `app/[locale]/dashboard/business/**`, `components/business/**`, `lib/business-ui/**` | Client overview via session-scoped API | MERGED Batch 27C @ `828ac12` | — |
-| Managed-site lead intake | `lib/platform/site-leads/**`, `/api/v1/site-leads/**` | Signed site intake + CRM qualification inbox + funnel report (30A **IN PR**) | MERGED 28A–29A.1 @ `3905994` | `SITE_LEAD_INTAKE_ENABLED` default OFF; migrations in Git only |
+| Managed-site lead intake | `lib/platform/site-leads/**`, `/api/v1/site-leads/**` | Signed site intake + CRM qualification inbox + funnel report | MERGED 28A–30A.1 @ `cb8d785` | `SITE_LEAD_INTAKE_ENABLED` default OFF; migrations in Git only |
 | Managed-site form connector | `lib/platform/site-leads/connector/**` | Server-side HMAC submit to intake | MERGED 29A/29A.1 @ `3905994` | No customer site wiring |
-| Lead funnel reporting (30A) | `lib/platform/site-leads/funnel-*`, `GET /api/v1/site-leads/funnel-report`, CRM slice in business overview | Read-only `ManagedSiteLead` aggregates | IN PR Batch 30A | Reporting does not require intake activation |
+| Lead funnel reporting (30A) | `lib/platform/site-leads/funnel-*`, `GET /api/v1/site-leads/funnel-report`, CRM slice in business overview | Read-only `ManagedSiteLead` aggregates | MERGED Batch 30A @ `cb8d785` | Reporting does not require intake activation |
+| Lead funnel dashboard UI (30C) | `components/crm/lead-funnel-*`, `lib/crm-ui/lead-funnel.ts`, `/dashboard/crm/leads/funnel` | Customer CRM funnel charts wired to 30A API | IN PR Batch 30C | UI only; not production acceptance |
 
 ## Analytics flags on this source tree
 
