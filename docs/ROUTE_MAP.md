@@ -42,7 +42,7 @@ All of these exist as `app/[locale]/dashboard/**/page.tsx`. They are authenticat
 
 **Batch 27A/27A.2 Business Command Center backend (MERGED on `main`):** `GET /api/v1/business/overview` — read-only cross-module action summary. Contract: [`docs/platform/docs/BATCH27A-BUSINESS-COMMAND-CENTER-API-CONTRACT.md`](platform/docs/BATCH27A-BUSINESS-COMMAND-CENTER-API-CONTRACT.md). Does not replace `/dashboard` project Action Center.
 
-**Batch 27B/27C Business Command Center UI (27C IN PR):** `/dashboard/business` (EN), `/es/dashboard/business` (ES) — v0 @ `25220431`; uses overview API and `{ value, scope }` summary metrics. Project overview remains `/dashboard`.
+**Batch 27B/27C Business Command Center UI (MERGED PR #74):** `/dashboard/business` (EN), `/es/dashboard/business` (ES) — v0 @ `25220431`; uses overview API and `{ value, scope }` summary metrics. Project overview remains `/dashboard`.
 
 **Batch 20C communications workspace (MERGED PR #62):** `/dashboard/communications`, `/dashboard/communications/conversations/[id]`, `/dashboard/communications/connections` (v0 Batch 20B UI + Cursor nav). Project messaging remains `/dashboard/messages`.
 
@@ -65,6 +65,8 @@ Route handlers under `app/api`, MERGED, not indexed:
 | CRM, marketing, social, SEO | `/api/v1/crm/*`, `/api/v1/marketing/*`, `/api/v1/social/*`, `/api/v1/seo/*` |
 | Business overview (Batch 27A) | `/api/v1/business/overview` |
 | Business Command Center UI (Batch 27C) | `/dashboard/business` |
+| Managed-site lead intake (Batch 28A) | `POST /api/v1/site-leads/intake` |
+| Managed-site lead inbox (Batch 28A) | `/api/v1/site-leads`, `/api/v1/site-leads/summary`, `/api/v1/site-leads/[id]/*` |
 
 Batch 18A Marketing extensions (backend; UI in Batch 18B): `GET /api/v1/marketing/artifacts` (account-wide list, cursor pagination), `GET /api/v1/marketing/reviews` (approval inbox). Existing per-request artifact and decide routes unchanged.
 
