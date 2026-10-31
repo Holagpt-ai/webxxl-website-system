@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto'
 import { hashCaptureSecret, verifyCaptureRequestSignature } from '@/lib/platform/analytics/capture/signature-auth'
 import { SITE_LEAD_INTAKE_SIGNATURE_TOLERANCE_SECONDS } from '@/config/site-lead-intake'
 
@@ -25,6 +26,19 @@ export function resolveSiteLeadIntakeSecretMaterial(input: {
     }
   }
   return { ok: false, code: 'NOT_CONFIGURED', message: 'Lead intake secret not configured for site key' }
+}
+
+/** Client-side (trusted server) signing — must match `verifySiteLeadIntakeSignature`. */
+export function signSiteLeadIntakeRequest(input: {
+  rawBody: string
+  secret: string
+  timestampSeconds?: number
+}): { timestampHeader: string; signatureHeader: string } {
+  const timestampSeconds = input.timestampSeconds ?? Math.floor(Date.now() / 1000)
+  const signatureHeader = createHmac('sha256', input.secret)
+    .update(`${timestampSeconds}.${input.rawBody}`)
+    .digest('hex')
+  return { timestampHeader: String(timestampSeconds), signatureHeader }
 }
 
 export function verifySiteLeadIntakeSignature(input: {
