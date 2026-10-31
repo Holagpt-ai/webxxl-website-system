@@ -75,6 +75,7 @@ describe('Batch 28A managed-site leads', () => {
   it('denies intake when credential site binding does not match account', async () => {
     vi.mocked(prisma.managedSiteLead.findUnique).mockResolvedValue(null)
     vi.mocked(prisma.managedSiteLeadIntakeCredential.findUnique).mockResolvedValue({
+      id: 'cred_1',
       publicKeyId: 'site_key_1',
       secretRef: null,
       secretHash: hashSiteLeadIntakeSecret('test-secret'),
@@ -82,6 +83,8 @@ describe('Batch 28A managed-site leads', () => {
       revokedAt: null,
       customerAccountId: 'acct_a',
       managedSiteId: 'site_a',
+      createdAt: new Date(),
+      updatedAt: new Date(),
     })
     vi.mocked(prisma.managedSite.findFirst).mockResolvedValue(null)
     vi.mocked(prisma.$queryRaw).mockResolvedValue([{ requestCount: 1 }])

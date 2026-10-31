@@ -9,7 +9,7 @@ async function loadLead(leadId: string, customerAccountId: string) {
   })
 }
 
-function assertMutable(status: ManagedSiteLeadStatus): SiteLeadResult<null> | null {
+function assertMutable(status: ManagedSiteLeadStatus): Extract<SiteLeadResult<{ id: string; status: ManagedSiteLeadStatus }>, { ok: false }> | null {
   if (SITE_LEAD_TERMINAL_STATUSES.has(status) || status === 'CONVERTED') {
     return { ok: false, code: 'CONFLICT', message: 'Lead is in a terminal state' }
   }

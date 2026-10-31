@@ -21,6 +21,18 @@ Batch **28A:** Prisma models + migration source, signed `POST /api/v1/site-leads
 
 None after 28A PR is pushed.
 
+## Handoff template
+
+```
+Date / scope / owner: 2026-10-31 / BATCH-28A managed-site leads / Cursor
+Repo / main SHA: Holagpt-ai/webxxl-website-system / 828ac12e9968f84bd8e1bc42f44ba941c9551194
+Branch / PR: feature/batch-28a-managed-site-leads / open (unmerged)
+Merged / deployed: PR #74 merged @ 828ac12; production dpl_5AuKd2RyiUqAgoNGr4XLSBS6rtj5 READY @ 828ac12
+Migration / flags / activation: batch28a migration NOT applied; SITE_LEAD_INTAKE_ENABLED OFF
+Next exact assignment / owning tool: Owner merge 28A PR — Owner + Cursor; v0 Lead Inbox UI
+Do NOT touch: production migrations, flag activation, live form activation, outbound sends, merge without owner
+```
+
 ## Next assignment
 
 - **Owner + Cursor:** merge Batch **28A** PR after review.
