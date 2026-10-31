@@ -52,6 +52,7 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-10-31 | Batch 26A CRM audience planning UI (v0) | `v0/crm-audience-26a` @ `110c071c05912f5eb6237ebecea23dc4fd9a4520` | DELIVERED. v0-only; not on `main` until 26B |
 | 2026-10-31 | Batch 26B CRM audience planning UI integration | [PR #71](https://github.com/Holagpt-ai/webxxl-website-system/pull/71), `6a889b3221fe2149446669a2016d14fe6f67e82a` | MERGED. v0 26A + MKT-25 audience APIs. Not activation |
 | 2026-10-31 | Vercel production deployment of `6a889b3` (PR #71) | GitHub deployment `7459563378`, Production success | DEPLOYED SHA only |
-| 2026-10-31 | Batch 27A Business Command Center backend | Branch `feature/batch-27a-business-command-center-backend` | Awaiting owner merge. Read-only overview API. Not activation |
+| 2026-10-31 | Batch 27A Business Command Center backend | [PR #72](https://github.com/Holagpt-ai/webxxl-website-system/pull/72), `aea38692a07dba356fdd3b6d54d95b6a9a562a57` | MERGED. Read-only `GET /api/v1/business/overview`. Not activation |
+| 2026-10-31 | Batch 27A.1 overview integrity (recovery) | Cherry-pick `edc21fd6…` onto `main` via 27A.2 PR | IN PR. Bounded counts, module source failures, contract `{ value, scope }`. Not merged |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
