@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-30 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `c0ff8fed77f71adefbebc13fc44f9f9443c76a53` (PR #66)
+**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `99f644e1c310d6a8311150162f792fccc841de71` (PR #67)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,11 +35,11 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **PR #66** Batch **22A** OPEN-001 hardening **MERGED** on `main`; Batch **23** CRM data operations **open on branch** |
-| 2 | GitHub SHA, branch, active PR | `c0ff8fed77f71adefbebc13fc44f9f9443c76a53` on `main`; active **Batch 23** on `feature/batch-23-crm-data-ops` (unmerged) |
-| 3 | Production deployment | Owner-reported Vercel production **READY** for SHA `c0ff8fed77f71adefbebc13fc44f9f9443c76a53` (PR #66). Deployment ID **UNVERIFIED** in repo; prior record `dpl_Es1UxLoXgEHThHwNm2phiQN1icsb` @ `2de0f7f` preserved in [`DEPLOYMENT_STATUS.md`](DEPLOYMENT_STATUS.md) |
-| 4 | Last updated | 2026-10-30 |
-| 5 | Next task / responsible platform | **Owner** review/merge **Batch 23** PR (**Cursor**); staging gates unchanged per [`PILOT-21B-STAGING-EXECUTION-PLAN.md`](PILOT-21B-STAGING-EXECUTION-PLAN.md) |
+| 1 | Last verified checkpoint | **PR #67** Batch **23** CRM data operations **MERGED** on `main`; Batch **24B** CRM workflow UI integration **open on branch** |
+| 2 | GitHub SHA, branch, active PR | `99f644e1c310d6a8311150162f792fccc841de71` on `main`; **PR #68** Batch **24B** on `feature/batch-24b-crm-workflow-ui-integration` @ `540b9d85b7a3e428f5fd46fa520bb4da850b6ba3` (unmerged) |
+| 3 | Production deployment | Vercel `dpl_AJeLf2CvYP3BwvPKvWiCrbMp3yUk` — **READY** — SHA `99f644e1c310d6a8311150162f792fccc841de71` (SHA only; see [`DEPLOYMENT_STATUS.md`](DEPLOYMENT_STATUS.md)) |
+| 4 | Last updated | 2026-10-31 |
+| 5 | Next task / responsible platform | **Owner** review/merge **Batch 24B** PR (**Cursor**); staging gates unchanged per [`PILOT-21B-STAGING-EXECUTION-PLAN.md`](PILOT-21B-STAGING-EXECUTION-PLAN.md) |
 | 6 | Open blocker / gate IDs | `RELEASE-001` (DEFERRED); `POLICY-SUB-001` (REPORTED) |
 
 ### Evidence table
@@ -85,7 +85,8 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | WEBXXL-CONTINUITY-02 living blueprint sync | MERGED | [PR #65](https://github.com/Holagpt-ai/webxxl-website-system/pull/65), `2de0f7f3b7f8f80b7006d7f7b7b13c7866b3822b` |
 | Batch 21C isolated staging preflight | COMPLETE (read-only) | [`PILOT-21C-STAGING-PREFLIGHT.md`](PILOT-21C-STAGING-PREFLIGHT.md); no staging DB identified; no duplicate infra provisioned |
 | Batch 22A OPEN-001 authorization hardening | MERGED | [PR #66](https://github.com/Holagpt-ai/webxxl-website-system/pull/66), `c0ff8fed77f71adefbebc13fc44f9f9443c76a53`. Policy env lock + Social API subscriber gates |
-| Batch 23 CRM data operations V1 | IN PR | Import/export/segment/dedup hardening; branch `feature/batch-23-crm-data-ops` |
+| Batch 23 CRM data operations V1 | MERGED | [PR #67](https://github.com/Holagpt-ai/webxxl-website-system/pull/67), `99f644e1c310d6a8311150162f792fccc841de71`. Import/export/segment/dedup APIs + merge preflight |
+| Batch 24B CRM workflow UI integration | IN PR | v0 @ `bc531bb451b3a67db40aba16341ed8d48abc2562`; branch `feature/batch-24b-crm-workflow-ui-integration` |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.

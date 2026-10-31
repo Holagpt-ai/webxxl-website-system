@@ -23,7 +23,14 @@ function mapContactToSegmentView(
     tagLabels: c.contactTags.map((t) => t.tag.label),
     hasOpenDeal: c.deals.length > 0,
     followUpCoverage: latestFollowUp?.coverageState,
-    consents: c.consents.map((row) => ({ channel: row.channel, purpose: row.purpose, status: row.status })),
+    consents: c.consents.map((row) => ({
+      channel: row.channel,
+      purpose: row.purpose,
+      status: row.status,
+      capturedAt: row.capturedAt,
+      revokedAt: row.revokedAt,
+      expiresAt: row.expiresAt,
+    })),
     suppressions: c.suppressions.map((row) => ({ channel: row.channel, purpose: row.purpose, active: row.active })),
   }
 }

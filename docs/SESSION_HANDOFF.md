@@ -1,68 +1,64 @@
 # Session Handoff
 
-**Compiled:** 2026-10-30 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 23)
+**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 24B)
 
 ## Part A — Context summary
 
 ### 1. Core Objective
 
-Harden CRM import, export, segmentation, and duplicate-merge lifecycles on the existing CRM-05 stack without new CRM services or production activation.
+Integrate v0 Batch **24A** CRM workflow UI (import review, saved segments, merge review) on top of merged Batch **23** backend APIs; correct segment evaluation endpoint and engine semantics.
 
 ### 2. Decisions Made
 
-- Import preview/commit remain **consent-neutral**; no marketing consent manufactured on CSV commit.
-- Merge execution requires **`crm.admin`** approval on an account-scoped proposal; cross-account merge stays denied.
-- Segment evaluation returns **matched-population** summary plus account coverage fields for UI clarity.
-- **ADR not required:** extends CRM-05 / Batch 17A patterns only.
+- Segment preview uses existing `POST /api/v1/crm/segments` with **`evaluateOnly: true`** (no new evaluate route).
+- Segment engine enforces field-specific operators and chronological consent/suppression for marketing eligibility.
+- **ADR not required** — UI integration + evaluator corrections only.
 
 ### 3. Current Status
 
-- **GitHub `main`:** `c0ff8fed77f71adefbebc13fc44f9f9443c76a53` (**PR #66** merged).
-- **Batch 23:** open pull request on `feature/batch-23-crm-data-ops` (unmerged).
-- **Production:** owner-reported **READY** for `c0ff8fe` (SHA only; deployment ID UNVERIFIED in repo).
-- Staging pilot: **BLOCKED** on owner authorization gates (`RELEASE-001`).
+- **GitHub `main`:** `99f644e1c310d6a8311150162f792fccc841de71` (**PR #67** Batch 23 merged).
+- **Production:** Vercel `dpl_AJeLf2CvYP3BwvPKvWiCrbMp3yUk` — **READY** @ `99f644e` (SHA only).
+- **Batch 24B:** [**PR #68**](https://github.com/Holagpt-ai/webxxl-website-system/pull/68) on `feature/batch-24b-crm-workflow-ui-integration` @ `540b9d85b7a3e428f5fd46fa520bb4da850b6ba3` (unmerged; CI green).
+- **v0 source:** `v0/crm-workflows-24a` @ `bc531bb451b3a67db40aba16341ed8d48abc2562` (cherry-picked).
+- CRM flags / migrations / provider activation: **UNVERIFIED** in production — not activated by this batch.
 
 ### 4. Next Steps
 
-1. **Owner:** review/merge Batch **23** PR.
-2. **Owner:** staging authorization when ready — no duplicate infra without approval.
-3. **v0.app:** optional UI for merge review and enriched import preview (backend contracts ready).
+1. **Owner:** review/merge Batch **24B** PR.
+2. **v0.app:** no further UI changes unless owner requests contract adjustments.
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **PR #66** Batch **22A** **MERGED** on `main`; Batch **23** CRM data operations **open on branch** |
-| 2 | GitHub SHA, branch, active PR | `c0ff8fed77f71adefbebc13fc44f9f9443c76a53` on `main`; active **Batch 23** on `feature/batch-23-crm-data-ops` (unmerged) |
-| 3 | Production deployment | Owner-reported Vercel production **READY** for SHA `c0ff8fed77f71adefbebc13fc44f9f9443c76a53` (PR #66). Deployment ID **UNVERIFIED** in repo |
-| 4 | Last updated | 2026-10-30 |
-| 5 | Next task / responsible platform | **Owner** review/merge **Batch 23** PR (**Cursor**) |
+| 1 | Last verified checkpoint | **PR #67** Batch **23** CRM data operations **MERGED** on `main`; Batch **24B** CRM workflow UI integration **open on branch** |
+| 2 | GitHub SHA, branch, active PR | `99f644e1c310d6a8311150162f792fccc841de71` on `main`; **PR #68** Batch **24B** @ `540b9d85b7a3e428f5fd46fa520bb4da850b6ba3` (unmerged) |
+| 3 | Production deployment | Vercel `dpl_AJeLf2CvYP3BwvPKvWiCrbMp3yUk` — **READY** — SHA `99f644e1c310d6a8311150162f792fccc841de71` (SHA only) |
+| 4 | Last updated | 2026-10-31 |
+| 5 | Next task / responsible platform | **Owner** review/merge **Batch 24B** PR (**Cursor**) |
 | 6 | Open blocker / gate IDs | `RELEASE-001` (DEFERRED); `POLICY-SUB-001` (REPORTED) |
 
 ## Latest completed batch on main
 
-- **PR #66** Batch **22A** **MERGED** at `c0ff8fed77f71adefbebc13fc44f9f9443c76a53`
+- **PR #67** Batch **23** (+ 23.1 / 23.2) **MERGED** at `99f644e1c310d6a8311150162f792fccc841de71`
 
 ## This session
 
-Batch **23 / 23.1:** import analysis + commit outcomes; legacy UI mapping/response compatibility; empty-row skip persistence; phone identity conflict handling; export `id` cursor pagination; segment lifecycle/evaluation fixes; merge integrity (Chatwoot/follow-up/consent); focused regressions.
-
-## Next assignment
-
-**Owner** review and merge the open **Batch 23** pull request.
+Batch **24B:** v0 cherry-pick (9 files); segment evaluate contract fix; segment engine operator/consent corrections; integration contract tests; continuity sync.
 
 ## PENDING REPOSITORY SYNC
 
-None after Batch 23 PR is pushed.
+None after Batch 24B PR is pushed.
 
 ## Handoff template
 
 ```
-Date / scope / owner: 2026-10-30 / BATCH-23 CRM data operations / Cursor
-Repo / main SHA: Holagpt-ai/webxxl-website-system / c0ff8fed77f71adefbebc13fc44f9f9443c76a53
-Branch / PR: feature/batch-23-crm-data-ops / open (unmerged)
-Merged / deployed: PR #66 merged; production READY @ c0ff8fe reported (SHA only; deploy ID unverified in repo)
-Migration / flags / staging: UNVERIFIED; no production migration or flag activation
-Next exact assignment / owning tool: Owner merge Batch 23 — Owner + Cursor
-Do NOT touch: production migrations, staging provision, provider activation, merge without owner
+Date / scope / owner: 2026-10-31 / BATCH-24B CRM workflow UI integration / Cursor
+Repo / main SHA: Holagpt-ai/webxxl-website-system / 99f644e1c310d6a8311150162f792fccc841de71
+v0 source: v0/crm-workflows-24a @ bc531bb451b3a67db40aba16341ed8d48abc2562
+Branch / PR: feature/batch-24b-crm-workflow-ui-integration / PR #68 open (unmerged) head 540b9d8
+Merged / deployed: PR #67 merged; Vercel dpl_AJeLf2CvYP3BwvPKvWiCrbMp3yUk READY @ 99f644e (SHA only)
+Migration / flags / activation: UNVERIFIED — not activated by Batch 24B
+Next exact assignment / owning tool: Owner merge Batch 24B — Owner + Cursor
+Do NOT touch: production migrations, CRM flag activation, provider connections, merge without owner
 ```

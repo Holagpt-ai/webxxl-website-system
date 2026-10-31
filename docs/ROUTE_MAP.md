@@ -34,6 +34,8 @@ All of these exist as `app/[locale]/dashboard/**/page.tsx`. They are authenticat
 
 **Batch 16 customer workspaces (MERGED on `main`, PR #54):** 25 locked routes under `/dashboard/crm/**` (9 pages), `/dashboard/marketing/**` (10 pages), and `/dashboard/seo/**` (6 pages). English unprefixed and Spanish `/es/dashboard/...` variants resolve via `app/[locale]/dashboard/`. Dynamic segments: `/dashboard/crm/contacts/[contactId]`, `/dashboard/marketing/requests/[requestId]`, `/dashboard/marketing/deliverables/[artifactId]`, `/dashboard/marketing/campaigns/[campaignId]`. `/dashboard/social` and `/dashboard/crm/leads` are not part of Batch 16.
 
+**Batch 24B CRM workflow UI (IN PR):** `/dashboard/crm/merges` (merge review); Contacts links to merges. Import and Segments pages extended for Batch 23 API contracts (v0 @ `bc531bb`).
+
 **Batch 20C communications workspace (MERGED PR #62):** `/dashboard/communications`, `/dashboard/communications/conversations/[id]`, `/dashboard/communications/connections` (v0 Batch 20B UI + Cursor nav). Project messaging remains `/dashboard/messages`.
 
 `getDashboardNavModules()` includes CRM → `/dashboard/crm`, **Communications** → `/dashboard/communications`, Marketing Studio → `/dashboard/marketing`, and Local SEO → `/dashboard/seo`, plus the overview, project, core portal, marketplace, billing, analytics, and AI employees routes. Infrastructure and notification links are present in source because `infrastructureManagement` and `automationNotifications` are `true` in `config/features.ts`. Registry keys such as `scheduler` have no `route` and are not pages. Nav visibility is not authorization; CRM, Marketing, and SEO APIs remain flag-disabled at source defaults.
