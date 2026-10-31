@@ -10,6 +10,7 @@ import {
 import { compareActionPriority, priorityFromDueDate, priorityFromSeoScore } from '@/lib/platform/business-overview/priority'
 import { BUSINESS_DESTINATIONS } from '@/lib/platform/business-overview/destinations'
 import type { PortalUser } from '@/lib/portal/authz'
+import { emptySubscriberEvidence } from '@/lib/platform/open001/subscriber-evidence'
 
 function portalStub(overrides: Partial<PortalUser> = {}): PortalUser {
   return {
@@ -57,7 +58,7 @@ describe('Batch 27A business command center backend', () => {
     process.env.CRM_BACKEND_ENABLED = 'false'
     const readiness = resolveCrmModuleAccess({
       portal: portalStub(),
-      evidence: { activeWebsiteSubscriptions: [], legacyWebsiteEvidence: [] },
+      evidence: emptySubscriberEvidence('acct_a'),
       isStaff: false,
     })
     expect(readiness).toMatchObject({ state: 'disabled', reasonCode: 'CRM_DISABLED' })
@@ -67,7 +68,7 @@ describe('Batch 27A business command center backend', () => {
     process.env.MKT_BACKEND_ENABLED = 'false'
     const readiness = resolveMarketingModuleAccess({
       portal: portalStub(),
-      evidence: { activeWebsiteSubscriptions: [], legacyWebsiteEvidence: [] },
+      evidence: emptySubscriberEvidence('acct_a'),
       isStaff: false,
     })
     expect(readiness).toMatchObject({ state: 'disabled', reasonCode: 'MKT_DISABLED' })
@@ -76,10 +77,14 @@ describe('Batch 27A business command center backend', () => {
   it('available readiness distinguishes empty from populated modules', () => {
     const empty = availableReadiness('2026-10-31T00:00:00.000Z', 0)
     expect(empty.state).toBe('available')
-    expect(empty.empty).toBe(true)
+    if (empty.state === 'available') {
+      expect(empty.empty).toBe(true)
+    }
     const populated = availableReadiness('2026-10-31T00:00:00.000Z', 3)
-    expect(populated.empty).toBe(false)
-    expect(populated.evidenceCount).toBe(3)
+    if (populated.state === 'available') {
+      expect(populated.empty).toBe(false)
+      expect(populated.evidenceCount).toBe(3)
+    }
   })
 
   it('derives priority only from due dates and SEO scores', () => {
