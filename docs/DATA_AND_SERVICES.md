@@ -19,7 +19,8 @@ Specifications: [`03-DATA-MODEL`](platform/docs/03-DATA-MODEL.md), [`04-API-INTE
 | Managed-site form connector | `lib/platform/site-leads/connector/**` | Server-side HMAC submit to intake | MERGED 29A/29A.1 @ `3905994` | No customer site wiring |
 | Lead funnel reporting (30A) | `lib/platform/site-leads/funnel-*`, `GET /api/v1/site-leads/funnel-report`, CRM slice in business overview | Read-only `ManagedSiteLead` aggregates | MERGED Batch 30A @ `cb8d785` | Reporting does not require intake activation |
 | Lead funnel dashboard UI (30C) | `components/crm/lead-funnel-*`, `lib/crm-ui/lead-funnel.ts`, `/dashboard/crm/leads/funnel` | Customer CRM funnel charts wired to 30A API | MERGED Batch 30C @ `3a7d011` | UI only; not production acceptance |
-| Controlled staging / pilot readiness (31) | `lib/platform/pilot/*`, `scripts/migration-rehearsal.ts`, `scripts/synthetic-customer-pilot-report.ts` | Migration matrix, staging assess, synthetic workflow | IN PR Batch 31 | No staging DB provisioned |
+| Controlled staging / pilot readiness (31) | `lib/platform/pilot/*`, `scripts/migration-rehearsal.ts`, `scripts/synthetic-customer-pilot-report.ts` | Migration matrix, staging assess, synthetic workflow | MERGED Batch 31 + 31.1 @ `93e3010` | No staging DB provisioned |
+| Commerce wallet fulfillment integrity (32) | `lib/platform/commerce/reconciliation-report.ts`, `lib/platform/commerce/financial-boundaries.ts`, admin reconciliation route | Bounded reconciliation read model; no live checkout | IN PR Batch 32 | Corrective wallet/commerce mutations remain gated |
 
 ## Analytics flags on this source tree
 

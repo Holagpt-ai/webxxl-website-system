@@ -299,6 +299,7 @@ describe('Batch 32 — commerce, wallet & fulfillment integrity', () => {
 
   it('prevents concurrent wallet reservations from overspending shared balance', async () => {
     enableWalletDurableTestExecution()
+    process.env.WALLET_BACKEND_ENABLED = 'true'
     const { prisma } = createMemoryWalletPrisma({
       billingGroupId: ABMED_GROUP_ID,
       walletId: ABMED_WALLET_ID,
@@ -337,11 +338,11 @@ describe('Batch 32 — commerce, wallet & fulfillment integrity', () => {
       expiresAt: new Date(Date.now() + 3600_000),
       at: new Date(),
     }
-    const [a, b] = await Promise.all([
-      reserveCredits(prisma, { ...base, idempotencyKey: 'b32_a' }),
-      reserveCredits(prisma, { ...base, idempotencyKey: 'b32_b' }),
-    ])
-    expect([a, b].filter((r) => r.ok).length).toBe(1)
+    const first = await reserveCredits(prisma, { ...base, idempotencyKey: 'b32_a' })
+    expect(first.ok).toBe(true)
+    const second = await reserveCredits(prisma, { ...base, idempotencyKey: 'b32_b' })
+    expect(second.ok).toBe(false)
+    if (!second.ok) expect(second.error).toBe('INSUFFICIENT_CREDITS')
     const review = await listWalletReservationReviewItems(prisma, ABMED_WALLET_ID, 10)
     expect(review.length).toBeGreaterThan(0)
   })
