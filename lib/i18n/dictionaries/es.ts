@@ -229,6 +229,7 @@ export const es: Dictionary = {
     openNav: 'Abrir navegación',
     nav: {
       overview: 'Resumen',
+      businessCenter: 'Centro de negocios',
       project: 'Proyecto',
       sites: 'Sitios',
       files: 'Archivos',

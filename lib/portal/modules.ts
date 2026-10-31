@@ -2,6 +2,7 @@ import type { IconName } from '@/lib/icons'
 import { isEnabled } from '@/config/features'
 
 export type PortalModuleKey =
+  | 'business'
   | 'project'
   | 'sites'
   | 'files'
@@ -82,6 +83,7 @@ export function getDashboardNavModules(): PortalModule[] {
     : []
   return [
     { key: 'project', navLabel: 'overview', route: '/dashboard', icon: 'dashboard', enabled: true },
+    { key: 'business', navLabel: 'businessCenter', route: '/dashboard/business', icon: 'activity', enabled: true },
     { key: 'project', navLabel: 'project', route: '/dashboard/project', icon: 'kanban', enabled: true },
     ...core,
     { key: 'ecommerce', navLabel: 'marketplace', route: '/dashboard/marketplace', icon: 'cart', enabled: true },

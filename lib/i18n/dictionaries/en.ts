@@ -229,6 +229,7 @@ export const en = {
     openNav: 'Open navigation',
     nav: {
       overview: 'Overview',
+      businessCenter: 'Business Center',
       project: 'Project',
       sites: 'Sites',
       files: 'Files',

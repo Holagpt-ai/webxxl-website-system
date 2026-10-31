@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `aea38692a07dba356fdd3b6d54d95b6a9a562a57` (PR #72)
+**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `ccbca6b0eef330d75a77cc9ae3af6adadb806309` (PR #73)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,11 +35,11 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | Batch **27A** **MERGED** on `main` (`aea3869…`); Batch **27A.1** integrity recovery **IN PR** (cherry-pick of `edc21fd…`) |
-| 2 | GitHub SHA, branch, active PR | `aea38692a07dba356fdd3b6d54d95b6a9a562a57` on `main`; recovery branch `feature/batch-27a-2-recover-27a1` — open PR pending |
-| 3 | Production deployment | GitHub Production **success** @ `aea3869` (deployment `7460419502`, 2026-10-31T15:17:13Z). SHA only — not migration or activation |
+| 1 | Last verified checkpoint | Batch **27A.2** **MERGED** on `main` (`ccbca6b…`); Batch **27C** Business Command Center UI integration **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `ccbca6b0eef330d75a77cc9ae3af6adadb806309` on `main`; `feature/batch-27c-business-command-center-ui` — open PR pending |
+| 3 | Production deployment | Vercel **`dpl_Dz8ULG7kiAdZr499mZ6W7wnX1YyA` READY** @ `ccbca6b`; GitHub Production `7460984353` success (2026-10-31T16:06:26Z). SHA only |
 | 4 | Last updated | 2026-10-31 |
-| 5 | Next task / responsible platform | **Owner** review/merge **27A.2** recovery PR (**Cursor**); then **v0.app** Batch **27B** UI |
+| 5 | Next task / responsible platform | **Owner** review/merge **Batch 27C** PR (**Cursor**) |
 | 6 | Open blocker / gate IDs | Module backend flags OFF (DEFERRED); live command center UNVERIFIED; MKT-25 migration apply (DEFERRED) |
 
 ### Evidence table
@@ -95,7 +95,10 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Vercel production SHA (2026-10-31, PR #71) | DEPLOYED | GitHub deployment `7459563378` by `vercel[bot]`, Production **success**, 2026-10-31T14:00:53Z, SHA `6a889b3221fe2149446669a2016d14fe6f67e82a`. SHA only |
 | Batch 27A Business Command Center backend | MERGED | [PR #72](https://github.com/Holagpt-ai/webxxl-website-system/pull/72) squash `aea38692a07dba356fdd3b6d54d95b6a9a562a57` (branch head had been `63398e18…` pre-merge). [`BATCH27A-BUSINESS-COMMAND-CENTER-API-CONTRACT.md`](platform/docs/BATCH27A-BUSINESS-COMMAND-CENTER-API-CONTRACT.md) |
 | Vercel production SHA (2026-10-31, PR #72) | DEPLOYED | GitHub deployment `7460419502`, Production **success**, 2026-10-31T15:17:13Z, SHA `aea38692a07dba356fdd3b6d54d95b6a9a562a57`. SHA only |
-| Batch 27A.1 overview integrity | IN PR (27A.2 recovery) | Cherry-pick of `edc21fd6fcb9131869550cfa532bc570f77db090` onto `main`; bounded counts, `BusinessSummaryMetric`, marketing/comms source failures |
+| Batch 27A.2 overview integrity recovery | MERGED | [PR #73](https://github.com/Holagpt-ai/webxxl-website-system/pull/73), `ccbca6b0eef330d75a77cc9ae3af6adadb806309`. Cherry-pick of `edc21fd6…` |
+| Vercel production SHA (2026-10-31, PR #73) | DEPLOYED | Vercel `dpl_Dz8ULG7kiAdZr499mZ6W7wnX1YyA` **READY**; GitHub deployment `7460984353`, Production **success**, SHA `ccbca6b0eef330d75a77cc9ae3af6adadb806309`. SHA only |
+| Batch 27B Business Command Center UI (v0) | DELIVERED | `v0/business-command-center-27b` @ `25220431bf713ccd1bf10dfc3b5260b466c412bd` |
+| Batch 27C Business Command Center UI integration | IN PR | v0 cherry-pick + nav `/dashboard/business` + integration tests |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.
