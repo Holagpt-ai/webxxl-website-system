@@ -254,6 +254,20 @@ describe('Batch 32 — commerce, wallet & fulfillment integrity', () => {
       { providerKey: 'mock', rawBody: subBody, signature: signCommerceWebhook(subBody, 'test-only-mock-secret') },
       { mint },
     )
+    const incomplete = await db.findSubscriptionByOrder(subOrder.value.order.id)
+    expect(incomplete?.status).toBe('INCOMPLETE')
+    const subActivated = JSON.stringify({
+      id: 'b32_evt_sub_active',
+      eventType: 'subscription.activated',
+      sequence: 2,
+      orderId: subOrder.value.order.id,
+      externalSubscriptionRef: 'b32_sub_ref',
+    })
+    await ingestPaymentWebhook(
+      db,
+      { providerKey: 'mock', rawBody: subActivated, signature: signCommerceWebhook(subActivated, 'test-only-mock-secret') },
+      { mint },
+    )
     const subscription = await db.findSubscriptionByOrder(subOrder.value.order.id)
     expect(subscription?.status).toBe('ACTIVE')
   })

@@ -7,7 +7,6 @@ import {
 } from '@/config/commerce-backend'
 import { COMMERCE_CATALOG_SKELETON } from '@/lib/platform/commerce/catalog'
 import { assertFulfillmentDoesNotDebitWallet, assertPurchaseInstrumentAllowed } from '@/lib/platform/commerce/financial-boundaries'
-import { activateSubscriptionOnInitialCapture } from '@/lib/platform/commerce/lifecycle'
 import { getBillingProvider } from '@/lib/platform/commerce/providers'
 import { canTransitionOrder, canTransitionPayment, canTransitionSubscription } from '@/lib/platform/commerce/state'
 import type { CommerceStore } from '@/lib/platform/commerce/store'
@@ -1036,7 +1035,6 @@ export async function ingestPaymentWebhook(
     }
     const items = await store.listItems(order.id)
     const subscription = items[0] ? await ensureSubscription(store, order, payment, items[0]) : null
-    await activateSubscriptionOnInitialCapture(store, order.id, now)
     await ensureInvoice(store, order, payment, event.externalInvoiceRef ?? null, subscription?.id ?? null)
     webhook.processingStatus = 'PROCESSED'
     webhook.processedAt = now
