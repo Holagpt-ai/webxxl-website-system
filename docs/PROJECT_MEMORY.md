@@ -36,7 +36,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | **29A** **MERGED** (PR #78 @ `fc702c6…`); **29A.1** submission identity **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `fc702c696fe0a35ef3b61f4dc3eb6dc896a06442` on `main`; **PR #79** head `7667ba0151b71dbf5ea8e66de08a7926a8a68ae4` (open) |
+| 2 | GitHub SHA, branch, active PR | `fc702c696fe0a35ef3b61f4dc3eb6dc896a06442` on `main`; **PR #79** head `6bab20d…` on `feature/batch-29a-1-submission-identity` (open) |
 | 3 | Production deployment | Vercel **`dpl_CUrcig1btP6LQy2CePa6DXmF87c9` READY** @ `fc702c6`. SHA only — not migration or activation |
 | 4 | Last updated | 2026-10-31 |
 | 5 | Next task / responsible platform | **Owner** merge **29A.1** PR (**Cursor**) |
