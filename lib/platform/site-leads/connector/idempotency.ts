@@ -36,14 +36,20 @@ export function newSiteLeadSubmissionId(): string {
   return randomUUID()
 }
 
+function isSubmissionIdArgProvided(value: string | null | undefined): value is string {
+  return value !== undefined && value !== null
+}
+
 export function resolveSiteLeadSubmissionId(input: {
   submissionId?: string | null
   /** Legacy alias — same semantics as `submissionId`. */
   legacyIdempotencyKey?: string | null
 }): string {
-  const explicit = input.submissionId ?? input.legacyIdempotencyKey
-  if (explicit != null && String(explicit).trim() !== '') {
-    return validateExplicitSiteLeadSubmissionId(String(explicit))
+  if (isSubmissionIdArgProvided(input.submissionId)) {
+    return validateExplicitSiteLeadSubmissionId(String(input.submissionId))
+  }
+  if (isSubmissionIdArgProvided(input.legacyIdempotencyKey)) {
+    return validateExplicitSiteLeadSubmissionId(String(input.legacyIdempotencyKey))
   }
   return newSiteLeadSubmissionId()
 }

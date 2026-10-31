@@ -6,18 +6,21 @@
  * - `WEBXXL_SITE_LEAD_INTAKE_BASE_URL`, `WEBXXL_SITE_LEAD_INTAKE_PUBLIC_KEY_ID`
  * - `SITE_LEAD_INTAKE_SECRET_{publicKeyId}` on the server only
  * - Browser posts to YOUR route; YOUR server signs and forwards to WebXXL intake.
+ * - Browser generates a stable `x-webxxl-submission-id` (UUID) before the first POST and sends the
+ *   same header plus the same JSON body (including `submittedAt`) on every retry attempt.
  */
 import { NextResponse } from 'next/server'
 import {
-  newSiteLeadSubmissionId,
   resolveSiteLeadConnectorConfigFromEnv,
   submitManagedSiteLead,
   validateExplicitSiteLeadSubmissionId,
   type SiteLeadConnectorPayload,
 } from '@/lib/platform/site-leads/connector'
 
+export const SITE_LEAD_SUBMISSION_ID_HEADER = 'x-webxxl-submission-id'
+
 function readSubmissionIdHeader(request: Request): string | null {
-  return request.headers.get('x-webxxl-submission-id') ?? request.headers.get('x-idempotency-key')
+  return request.headers.get(SITE_LEAD_SUBMISSION_ID_HEADER) ?? request.headers.get('x-idempotency-key')
 }
 
 export async function POST(request: Request) {
@@ -39,28 +42,30 @@ export async function POST(request: Request) {
   }
 
   const headerSubmission = readSubmissionIdHeader(request)
-  let submissionId: string
-  try {
-    submissionId =
-      headerSubmission != null && headerSubmission.trim() !== ''
-        ? validateExplicitSiteLeadSubmissionId(headerSubmission)
-        : newSiteLeadSubmissionId()
-  } catch (error) {
+  if (headerSubmission === null) {
     return NextResponse.json(
-      { ok: false, message: error instanceof Error ? error.message : 'Invalid submission id' },
+      {
+        ok: false,
+        code: 'VALIDATION',
+        message: `${SITE_LEAD_SUBMISSION_ID_HEADER} is required — generate a stable UUID in the browser before the first submit`,
+      },
       { status: 400 },
     )
   }
 
-  const isRetry = headerSubmission != null && headerSubmission.trim() !== ''
-  const payload: SiteLeadConnectorPayload = {
-    ...form,
-    submittedAt: form.submittedAt ?? (isRetry ? undefined : new Date().toISOString()),
+  let submissionId: string
+  try {
+    submissionId = validateExplicitSiteLeadSubmissionId(headerSubmission)
+  } catch (error) {
+    return NextResponse.json(
+      { ok: false, code: 'VALIDATION', message: error instanceof Error ? error.message : 'Invalid submission id' },
+      { status: 400 },
+    )
   }
 
   const result = await submitManagedSiteLead({
     config,
-    payload,
+    payload: form,
     submissionId,
   })
 
@@ -86,7 +91,7 @@ export async function POST(request: Request) {
     },
     {
       status: result.duplicate ? 200 : 201,
-      headers: { 'x-webxxl-submission-id': submissionId },
+      headers: { [SITE_LEAD_SUBMISSION_ID_HEADER]: submissionId },
     },
   )
 }

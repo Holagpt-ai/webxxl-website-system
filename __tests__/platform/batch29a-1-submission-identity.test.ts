@@ -4,10 +4,14 @@ import {
   buildSiteLeadIntakeIdempotencyKey,
   newSiteLeadSubmissionId,
   resolveSiteLeadSubmissionId,
+  serializeSiteLeadIntakeBody,
   SITE_LEAD_SUBMISSION_ID_MAX_LENGTH,
+  SiteLeadSubmissionIdError,
   submitManagedSiteLead,
   validateExplicitSiteLeadSubmissionId,
 } from '@/lib/platform/site-leads/connector'
+import * as siteLeadConnector from '@/lib/platform/site-leads/connector'
+import { POST } from '@/lib/platform/site-leads/connector/reference/nextjs-server-handler.example'
 
 const secret = 'connector-test-secret'
 const publicKeyId = 'site_key_demo'
@@ -121,5 +125,111 @@ describe('Batch 29A.1 submission identity & retry integrity', () => {
     expect(newSiteLeadSubmissionId()).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
     )
+  })
+
+  it('rejects explicitly supplied empty or whitespace submission ids', () => {
+    for (const empty of ['', '   ', '\t']) {
+      expect(() => resolveSiteLeadSubmissionId({ submissionId: empty })).toThrow(SiteLeadSubmissionIdError)
+      expect(() => resolveSiteLeadSubmissionId({ legacyIdempotencyKey: empty })).toThrow(SiteLeadSubmissionIdError)
+    }
+    expect(() => resolveSiteLeadSubmissionId({ submissionId: undefined })).not.toThrow()
+    expect(() => resolveSiteLeadSubmissionId({ submissionId: null })).not.toThrow()
+  })
+
+  it('returns VALIDATION for empty submissionId on submit without calling intake', async () => {
+    const fetchImpl = vi.fn()
+    const result = await submitManagedSiteLead({
+      config: { intakeBaseUrl: 'https://app.test', publicKeyId, signingSecret: secret },
+      payload: { contactEmail: 'a@b.com' },
+      submissionId: '   ',
+      fetchImpl,
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.code).toBe('VALIDATION')
+    expect(fetchImpl).not.toHaveBeenCalled()
+  })
+})
+
+describe('Batch 29A.1 reference Next.js handler', () => {
+  beforeEach(() => {
+    vi.stubEnv('WEBXXL_SITE_LEAD_INTAKE_BASE_URL', 'https://app.test')
+    vi.stubEnv('WEBXXL_SITE_LEAD_INTAKE_PUBLIC_KEY_ID', publicKeyId)
+    vi.stubEnv('SITE_LEAD_INTAKE_SECRET_site_key_demo', secret)
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.restoreAllMocks()
+  })
+
+  it('requires a browser submission id on the first request', async () => {
+    const submitSpy = vi.spyOn(siteLeadConnector, 'submitManagedSiteLead')
+    const res = await POST(
+      new Request('https://site.test/api/leads', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ contactEmail: 'a@b.com', submittedAt: '2026-01-01T00:00:00.000Z' }),
+      }),
+    )
+    expect(res.status).toBe(400)
+    const body = (await res.json()) as { code?: string }
+    expect(body.code).toBe('VALIDATION')
+    expect(submitSpy).not.toHaveBeenCalled()
+  })
+
+  it('rejects whitespace submission id headers', async () => {
+    const submitSpy = vi.spyOn(siteLeadConnector, 'submitManagedSiteLead')
+    const res = await POST(
+      new Request('https://site.test/api/leads', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-webxxl-submission-id': '   ',
+        },
+        body: JSON.stringify({ contactEmail: 'a@b.com' }),
+      }),
+    )
+    expect(res.status).toBe(400)
+    expect(submitSpy).not.toHaveBeenCalled()
+  })
+
+  it('forwards identical payload bytes on first submit and retry with the same submission id', async () => {
+    const submissionId = 'browser-uuid-0001'
+    const form = {
+      contactEmail: 'retry@example.com',
+      message: 'Hi',
+      submittedAt: '2026-06-15T12:00:00.000Z',
+    }
+    const expectedRaw = serializeSiteLeadIntakeBody(form)
+
+    const submitSpy = vi.spyOn(siteLeadConnector, 'submitManagedSiteLead').mockResolvedValue({
+      ok: true,
+      leadId: 'lead_ref',
+      status: 'RECEIVED',
+      duplicate: false,
+      httpStatus: 201,
+    })
+
+    const makeRequest = () =>
+      new Request('https://site.test/api/leads', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-webxxl-submission-id': submissionId,
+        },
+        body: JSON.stringify(form),
+      })
+
+    await POST(makeRequest())
+    await POST(makeRequest())
+
+    expect(submitSpy).toHaveBeenCalledTimes(2)
+    const firstPayload = submitSpy.mock.calls[0]?.[0]?.payload
+    const secondPayload = submitSpy.mock.calls[1]?.[0]?.payload
+    expect(serializeSiteLeadIntakeBody(firstPayload!)).toBe(expectedRaw)
+    expect(serializeSiteLeadIntakeBody(secondPayload!)).toBe(expectedRaw)
+    expect(firstPayload).toEqual(secondPayload)
+    expect(submitSpy.mock.calls[0]?.[0]?.submissionId).toBe(submissionId)
+    expect(submitSpy.mock.calls[1]?.[0]?.submissionId).toBe(submissionId)
   })
 })
