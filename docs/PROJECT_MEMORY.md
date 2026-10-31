@@ -36,7 +36,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | **30A/30A.1** **MERGED** (PR #80 @ `cb8d785…`); **30B** v0 **DELIVERED**; **30C** Lead Funnel UI integration **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `cb8d785d7ca4eb4ac26972a7db69b4a0e65b0b2f` on `main`; active **Batch 30C** on `feature/batch-30c-lead-funnel-ui-integration` (open PR) |
+| 2 | GitHub SHA, branch, active PR | `cb8d785d7ca4eb4ac26972a7db69b4a0e65b0b2f` on `main`; **PR #81** head `291ea32…` on `feature/batch-30c-lead-funnel-ui-integration` (open) |
 | 3 | Production deployment | Vercel **`dpl_Fev1t4X7U9EFvzXA7wCZHVUAjiLC` READY** @ `cb8d785`. SHA only — not migration or activation |
 | 4 | Last updated | 2026-10-31 |
 | 5 | Next task / responsible platform | **Owner** review/merge **30C** PR (**Cursor**) |
