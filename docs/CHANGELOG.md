@@ -39,5 +39,7 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-10-29 | Vercel production deployment of `603a601` (PR #63) | Owner deployment `dpl_Rf71rKnvwjngSRntTCjfFc7fHXGP`, READY | DEPLOYED SHA only |
 | 2026-10-29 | Batch 21B OPEN-001 policy + staging preparation | [PR #64](https://github.com/Holagpt-ai/webxxl-website-system/pull/64), `c6d12217e8457780f18bffb6ff61fa1bb117090f` | MERGED. SUBSCRIBER_ONLY enforcement. Not provisioning |
 | 2026-10-29 | Vercel production deployment of `c6d122` (PR #64) | Owner deployment `dpl_EG54QzowAtcvrGibB3xWzpVxXYhE`, READY | DEPLOYED SHA only |
+| 2026-10-29 | WEBXXL-CONTINUITY-02 living blueprint sync | [PR #65](https://github.com/Holagpt-ai/webxxl-website-system/pull/65), `2de0f7f3b7f8f80b7006d7f7b7b13c7866b3822b` | MERGED. Documentation only |
+| 2026-10-29 | Vercel production deployment of `2de0f7f` (PR #65) | Owner deployment `dpl_Es1UxLoXgEHThHwNm2phiQN1icsb`, READY | DEPLOYED SHA only |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

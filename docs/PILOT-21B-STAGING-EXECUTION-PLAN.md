@@ -1,8 +1,8 @@
 # Batch 21B — Isolated staging pilot execution plan (preparation only)
 
-**Status:** Documentation and enforcement in owner-review PR. **No accounts, migrations, flags, or providers activated by this batch.**
+**Status:** **MERGED** on `main` (PR #64) + continuity on PR #65. **No accounts, migrations, flags, or providers activated.**
 
-**Baseline `main`:** `603a601f42728cf758bd632507e0bdd2c8fdcc6b` (PR #63 merged).
+**Baseline `main`:** `2de0f7f3b7f8f80b7006d7f7b7b13c7866b3822b` (PR #65). Preflight: [`PILOT-21C-STAGING-PREFLIGHT.md`](PILOT-21C-STAGING-PREFLIGHT.md).
 
 ## OPEN-001 (recorded)
 

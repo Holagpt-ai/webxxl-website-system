@@ -32,7 +32,7 @@ New records are files under `docs/adr/`. ADR-018, ADR-019, and ADR-020 were adde
 
 | Open ID | Decision | Recorded |
 |---|---|---|
-| OPEN-001 | **Website subscribers** receive WebXXL included FREE business software (CRM, Marketing Studio, Local SEO, Communications inbox software). **Non-subscribers do not automatically qualify.** Active cohort: **`SUBSCRIBER_ONLY`**. Future **`ALL_SIGNUPS`** and **`HYBRID`** remain in schema/env but inactive until separate owner authorization. Included FREE software stays included for qualifying subscribers; external provider charges remain separately governed. Policy implementation: `lib/platform/open001/` on `main` @ `c6d122` ([PR #64](https://github.com/Holagpt-ai/webxxl-website-system/pull/64) **MERGED**). | **2026-10-29 — RESOLVED OWNER APPROVED** |
+| OPEN-001 | **Website subscribers** receive WebXXL included FREE business software (CRM, Marketing Studio, Local SEO, Communications inbox software). **Non-subscribers do not automatically qualify.** Active cohort: **`SUBSCRIBER_ONLY`**. Future **`ALL_SIGNUPS`** and **`HYBRID`** remain in schema/env but inactive until separate owner authorization and a new **`OPEN001_AUTHORIZED_COHORTS_BY_POLICY_VERSION`** entry. Env `OPEN001_FREE_SOFTWARE_COHORT` alone cannot broaden eligibility (Batch **22A**). Included FREE software stays included for qualifying subscribers; external provider charges remain separately governed. Policy implementation: `lib/platform/open001/` on `main` @ `2de0f7f` ([PR #64](https://github.com/Holagpt-ai/webxxl-website-system/pull/64) **MERGED**). | **2026-10-29 — RESOLVED OWNER APPROVED** |
 
 ## Open decisions (must be resolved at the specified gate, not guessed)
 
@@ -52,6 +52,7 @@ New records are files under `docs/adr/`. ADR-018, ADR-019, and ADR-020 were adde
 | OPEN-013 | How existing `abmed-account` projects move to three operational siblings safely | Preserve current objects and IDs until owner-approved migration |
 | OPEN-014 | Exact canonical WebXXL production domain and future service subdomains | Preserve currently observed `www.webbxxl.com`; no DNS assumptions |
 | OPEN-015 | Specific per-customer AI employee paid offerings if ever activated | Structurally ready, **disabled**, base marketing agents free |
+| OPEN-016 | Whether `PAST_DUE` / `CANCEL_SCHEDULED` subscriptions grant included-free access beyond current code defaults | Code treats them as qualifying until owner decides otherwise; see **POLICY-SUB-001** in [`ISSUE_REGISTER.md`](../../ISSUE_REGISTER.md) | Fail-closed subscriber proof; no new grace period without owner approval |
 
 ## Semver and change request policy
 

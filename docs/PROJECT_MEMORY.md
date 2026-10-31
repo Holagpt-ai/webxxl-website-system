@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-29 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `c6d12217e8457780f18bffb6ff61fa1bb117090f` (PR #64)
+**Evidence review:** 2026-10-29 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `2de0f7f3b7f8f80b7006d7f7b7b13c7866b3822b` (PR #65)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,12 +35,12 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | Batch **21B** / **PR #64** **MERGED** on GitHub `main`; WEBXXL-CONTINUITY-02 **[PR #65](https://github.com/Holagpt-ai/webxxl-website-system/pull/65)** **OPEN** (documentation) |
-| 2 | GitHub SHA, branch, active PR | `c6d12217e8457780f18bffb6ff61fa1bb117090f` on `main`; active **[PR #65](https://github.com/Holagpt-ai/webxxl-website-system/pull/65)** on `docs/webxxl-continuity-02` (documentation reconciliation — unmerged) |
-| 3 | Production deployment | Vercel `dpl_EG54QzowAtcvrGibB3xWzpVxXYhE` — **READY** — SHA `c6d12217e8457780f18bffb6ff61fa1bb117090f` (SHA only; see [`DEPLOYMENT_STATUS.md`](DEPLOYMENT_STATUS.md)) |
+| 1 | Last verified checkpoint | **PR #65** / CONTINUITY-02 **MERGED** on `main`; Batch **21C** read-only preflight **complete**; Batch **22A** OPEN-001 hardening **open on branch** |
+| 2 | GitHub SHA, branch, active PR | `2de0f7f3b7f8f80b7006d7f7b7b13c7866b3822b` on `main`; active **Batch 22A** on `feature/batch-22a-open001-hardening` (unmerged) |
+| 3 | Production deployment | Vercel `dpl_Es1UxLoXgEHThHwNm2phiQN1icsb` — **READY** — SHA `2de0f7f3b7f8f80b7006d7f7b7b13c7866b3822b` (SHA only; see [`DEPLOYMENT_STATUS.md`](DEPLOYMENT_STATUS.md)) |
 | 4 | Last updated | 2026-10-29 |
-| 5 | Next task / responsible platform | **Owner** review/merge **PR #65**; then authorization-gated isolated staging pilot preparation (**Cursor**) |
-| 6 | Open blocker / gate IDs | `RELEASE-001` (DEFERRED) |
+| 5 | Next task / responsible platform | **Owner** review/merge **Batch 22A** PR; then staging authorization gates per [`PILOT-21B-STAGING-EXECUTION-PLAN.md`](PILOT-21B-STAGING-EXECUTION-PLAN.md) (**Cursor**, no duplicate infra without owner) |
+| 6 | Open blocker / gate IDs | `RELEASE-001` (DEFERRED); `POLICY-SUB-001` (REPORTED) |
 
 ### Evidence table
 
@@ -81,7 +81,10 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 21A + 21A.1 Controlled customer pilot readiness | MERGED | [PR #63](https://github.com/Holagpt-ai/webxxl-website-system/pull/63), `603a601f42728cf758bd632507e0bdd2c8fdcc6b`. `pnpm pilot:readiness`; [`PILOT-21A-CONTROLLED-CUSTOMER-READINESS.md`](PILOT-21A-CONTROLLED-CUSTOMER-READINESS.md); no activation |
 | Vercel production SHA (2026-10-29, PR #64) | DEPLOYED | Owner-reported Vercel deployment `dpl_EG54QzowAtcvrGibB3xWzpVxXYhE`, state **READY**, SHA `c6d12217e8457780f18bffb6ff61fa1bb117090f`. SHA only. Not migration or activation |
 | Batch 21B OPEN-001 policy + staging prep | MERGED | [PR #64](https://github.com/Holagpt-ai/webxxl-website-system/pull/64), `c6d12217e8457780f18bffb6ff61fa1bb117090f`. `lib/platform/open001/`; [`PILOT-21B-STAGING-EXECUTION-PLAN.md`](PILOT-21B-STAGING-EXECUTION-PLAN.md); no provisioning |
-| WEBXXL-CONTINUITY-02 living blueprint sync | IN PR | [PR #65](https://github.com/Holagpt-ai/webxxl-website-system/pull/65) on `docs/webxxl-continuity-02`; documentation only |
+| Vercel production SHA (2026-10-29, PR #65) | DEPLOYED | Owner-reported Vercel deployment `dpl_Es1UxLoXgEHThHwNm2phiQN1icsb`, state **READY**, SHA `2de0f7f3b7f8f80b7006d7f7b7b13c7866b3822b`. SHA only |
+| WEBXXL-CONTINUITY-02 living blueprint sync | MERGED | [PR #65](https://github.com/Holagpt-ai/webxxl-website-system/pull/65), `2de0f7f3b7f8f80b7006d7f7b7b13c7866b3822b` |
+| Batch 21C isolated staging preflight | COMPLETE (read-only) | [`PILOT-21C-STAGING-PREFLIGHT.md`](PILOT-21C-STAGING-PREFLIGHT.md); no staging DB identified; no duplicate infra provisioned |
+| Batch 22A OPEN-001 authorization hardening | OPEN | Policy env lock + Social API subscriber gates; branch `feature/batch-22a-open001-hardening` |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.
