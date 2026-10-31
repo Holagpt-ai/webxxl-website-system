@@ -18,7 +18,7 @@ Integrate v0 Batch **24A** CRM workflow UI (import review, saved segments, merge
 
 - **GitHub `main`:** `99f644e1c310d6a8311150162f792fccc841de71` (**PR #67** Batch 23 merged).
 - **Production:** Vercel `dpl_AJeLf2CvYP3BwvPKvWiCrbMp3yUk` — **READY** @ `99f644e` (SHA only).
-- **Batch 24B:** open PR on `feature/batch-24b-crm-workflow-ui-integration` (unmerged).
+- **Batch 24B:** [**PR #68**](https://github.com/Holagpt-ai/webxxl-website-system/pull/68) on `feature/batch-24b-crm-workflow-ui-integration` @ `540b9d85b7a3e428f5fd46fa520bb4da850b6ba3` (unmerged; CI green).
 - **v0 source:** `v0/crm-workflows-24a` @ `bc531bb451b3a67db40aba16341ed8d48abc2562` (cherry-picked).
 - CRM flags / migrations / provider activation: **UNVERIFIED** in production — not activated by this batch.
 
@@ -32,7 +32,7 @@ Integrate v0 Batch **24A** CRM workflow UI (import review, saved segments, merge
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | **PR #67** Batch **23** CRM data operations **MERGED** on `main`; Batch **24B** CRM workflow UI integration **open on branch** |
-| 2 | GitHub SHA, branch, active PR | `99f644e1c310d6a8311150162f792fccc841de71` on `main`; active **Batch 24B** on `feature/batch-24b-crm-workflow-ui-integration` (unmerged) |
+| 2 | GitHub SHA, branch, active PR | `99f644e1c310d6a8311150162f792fccc841de71` on `main`; **PR #68** Batch **24B** @ `540b9d85b7a3e428f5fd46fa520bb4da850b6ba3` (unmerged) |
 | 3 | Production deployment | Vercel `dpl_AJeLf2CvYP3BwvPKvWiCrbMp3yUk` — **READY** — SHA `99f644e1c310d6a8311150162f792fccc841de71` (SHA only) |
 | 4 | Last updated | 2026-10-31 |
 | 5 | Next task / responsible platform | **Owner** review/merge **Batch 24B** PR (**Cursor**) |
@@ -56,7 +56,7 @@ None after Batch 24B PR is pushed.
 Date / scope / owner: 2026-10-31 / BATCH-24B CRM workflow UI integration / Cursor
 Repo / main SHA: Holagpt-ai/webxxl-website-system / 99f644e1c310d6a8311150162f792fccc841de71
 v0 source: v0/crm-workflows-24a @ bc531bb451b3a67db40aba16341ed8d48abc2562
-Branch / PR: feature/batch-24b-crm-workflow-ui-integration / open (unmerged)
+Branch / PR: feature/batch-24b-crm-workflow-ui-integration / PR #68 open (unmerged) head 540b9d8
 Merged / deployed: PR #67 merged; Vercel dpl_AJeLf2CvYP3BwvPKvWiCrbMp3yUk READY @ 99f644e (SHA only)
 Migration / flags / activation: UNVERIFIED — not activated by Batch 24B
 Next exact assignment / owning tool: Owner merge Batch 24B — Owner + Cursor
