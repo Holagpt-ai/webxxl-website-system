@@ -1,10 +1,11 @@
-import type { Prisma } from '@prisma/client'
+import type { ManagedSiteLeadStatus, Prisma } from '@prisma/client'
 import { Prisma as PrismaNamespace } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { SITE_LEAD_FUNNEL_MAX_GROUP_ROWS } from '@/config/site-lead-intake'
 import { parseSiteLeadFunnelDateRange, type SiteLeadFunnelDateRange } from '@/lib/platform/site-leads/funnel-date-range'
 import {
   countManagedSiteLeadStatusBundle,
+  siteLeadStatusCountBundleFromStatusMap,
   siteLeadSummaryMetricsFromCounts,
   type SiteLeadStatusCountBundle,
 } from '@/lib/platform/site-leads/funnel-metrics'
@@ -55,12 +56,14 @@ export type SiteLeadFunnelReport = {
   attribution: SiteLeadFunnelAttributionCoverage
 }
 
-function cohortWhere(input: {
+export type SiteLeadFunnelFilterSet = {
   customerAccountId: string
   managedSiteId?: string | null
   formReference?: string | null
   range: SiteLeadFunnelDateRange
-}): Prisma.ManagedSiteLeadWhereInput {
+}
+
+export function cohortWhere(input: SiteLeadFunnelFilterSet): Prisma.ManagedSiteLeadWhereInput {
   return {
     customerAccountId: input.customerAccountId,
     ...(input.managedSiteId ? { managedSiteId: input.managedSiteId } : {}),
@@ -94,24 +97,19 @@ async function countEventInPeriod(
   })
 }
 
-async function loadCreationTrend(
-  customerAccountId: string,
-  range: SiteLeadFunnelDateRange,
-  managedSiteId?: string | null,
-  formReference?: string | null,
-): Promise<SiteLeadFunnelTrendPoint[]> {
-  const siteFilter = managedSiteId
-    ? PrismaNamespace.sql`AND "managedSiteId" = ${managedSiteId}`
+async function loadCreationTrend(filters: SiteLeadFunnelFilterSet): Promise<SiteLeadFunnelTrendPoint[]> {
+  const siteFilter = filters.managedSiteId
+    ? PrismaNamespace.sql`AND "managedSiteId" = ${filters.managedSiteId}`
     : PrismaNamespace.sql``
-  const formFilter = formReference
-    ? PrismaNamespace.sql`AND "formReference" = ${formReference}`
+  const formFilter = filters.formReference
+    ? PrismaNamespace.sql`AND "formReference" = ${filters.formReference}`
     : PrismaNamespace.sql``
   const rows = await prisma.$queryRaw<{ day: Date; count: bigint }[]>(PrismaNamespace.sql`
     SELECT DATE("createdAt") AS day, COUNT(*)::bigint AS count
     FROM "ManagedSiteLead"
-    WHERE "customerAccountId" = ${customerAccountId}
-      AND "createdAt" >= ${range.createdFrom}
-      AND "createdAt" < ${range.createdToExclusive}
+    WHERE "customerAccountId" = ${filters.customerAccountId}
+      AND "createdAt" >= ${filters.range.createdFrom}
+      AND "createdAt" < ${filters.range.createdToExclusive}
       ${siteFilter}
       ${formFilter}
     GROUP BY day
@@ -124,36 +122,45 @@ async function loadCreationTrend(
   }))
 }
 
-async function loadGroupCounts(
-  customerAccountId: string,
-  range: SiteLeadFunnelDateRange,
-  field: 'managedSiteId' | 'formReference',
-): Promise<SiteLeadFunnelGroupRow[]> {
-  const cohort = cohortWhere({ customerAccountId, range })
+/** Bounded status breakdown via one groupBy per dimension (no per-group count loops). */
+export async function loadSiteLeadFunnelGroupBreakdown(input: {
+  filters: SiteLeadFunnelFilterSet
+  groupField: 'managedSiteId' | 'formReference'
+}): Promise<SiteLeadFunnelGroupRow[]> {
+  const cohort = cohortWhere(input.filters)
   const grouped = await prisma.managedSiteLead.groupBy({
-    by: [field],
+    by: [input.groupField, 'status'],
     where: {
       ...cohort,
-      ...(field === 'formReference' ? { formReference: { not: null } } : {}),
+      ...(input.groupField === 'formReference' ? { formReference: { not: null } } : {}),
     },
     _count: { _all: true },
-    orderBy: { _count: { id: 'desc' } },
-    take: SITE_LEAD_FUNNEL_MAX_GROUP_ROWS,
   })
-  const rows: SiteLeadFunnelGroupRow[] = []
+
+  const byKey = new Map<string, Map<ManagedSiteLeadStatus, number>>()
   for (const row of grouped) {
-    const key = String(row[field] ?? '')
+    const key = String(row[input.groupField] ?? '')
     if (!key) continue
-    const counts = await countManagedSiteLeadStatusBundle(
-      cohortWhere({
-        customerAccountId,
-        range,
-        ...(field === 'managedSiteId' ? { managedSiteId: key } : { formReference: key }),
-      }),
-    )
-    rows.push({ key, counts })
+    let statusMap = byKey.get(key)
+    if (!statusMap) {
+      statusMap = new Map()
+      byKey.set(key, statusMap)
+    }
+    statusMap.set(row.status, row._count._all)
   }
-  return rows
+
+  const rows: SiteLeadFunnelGroupRow[] = [...byKey.entries()].map(([key, statusMap]) => ({
+    key,
+    counts: siteLeadStatusCountBundleFromStatusMap(statusMap),
+  }))
+
+  rows.sort((a, b) => {
+    const byTotal = b.counts.leadsReceived - a.counts.leadsReceived
+    if (byTotal !== 0) return byTotal
+    return a.key.localeCompare(b.key)
+  })
+
+  return rows.slice(0, SITE_LEAD_FUNNEL_MAX_GROUP_ROWS)
 }
 
 async function loadAttributionCoverage(
@@ -214,12 +221,13 @@ export async function getManagedSiteLeadFunnelReport(input: {
     return { ok: false, code: 'VALIDATION', message: parsedRange.message }
   }
   const range = parsedRange.value
-  const cohort = cohortWhere({
+  const filterSet: SiteLeadFunnelFilterSet = {
     customerAccountId: input.customerAccountId,
     managedSiteId: input.managedSiteId,
     formReference: input.formReference,
     range,
-  })
+  }
+  const cohort = cohortWhere(filterSet)
   const scope = scopeWhere({
     customerAccountId: input.customerAccountId,
     managedSiteId: input.managedSiteId,
@@ -232,9 +240,13 @@ export async function getManagedSiteLeadFunnelReport(input: {
       countEventInPeriod(scope, 'convertedAt', range),
       countEventInPeriod(scope, 'qualifiedAt', range),
       countEventInPeriod(scope, 'rejectedAt', range),
-      input.managedSiteId ? Promise.resolve([]) : loadGroupCounts(input.customerAccountId, range, 'managedSiteId'),
-      input.formReference ? Promise.resolve([]) : loadGroupCounts(input.customerAccountId, range, 'formReference'),
-      loadCreationTrend(input.customerAccountId, range, input.managedSiteId, input.formReference),
+      input.managedSiteId
+        ? Promise.resolve([])
+        : loadSiteLeadFunnelGroupBreakdown({ filters: filterSet, groupField: 'managedSiteId' }),
+      input.formReference
+        ? Promise.resolve([])
+        : loadSiteLeadFunnelGroupBreakdown({ filters: filterSet, groupField: 'formReference' }),
+      loadCreationTrend(filterSet),
       loadAttributionCoverage(cohort),
     ])
 

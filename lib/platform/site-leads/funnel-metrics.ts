@@ -38,6 +38,28 @@ export function websiteLeadBusinessSummaryMetrics(counts: SiteLeadStatusCountBun
   }
 }
 
+export function siteLeadStatusCountBundleFromStatusMap(
+  statusMap: ReadonlyMap<ManagedSiteLeadStatus, number> | Record<string, number>,
+): SiteLeadStatusCountBundle {
+  const read = (status: ManagedSiteLeadStatus): number => {
+    if (statusMap instanceof Map) return statusMap.get(status) ?? 0
+    return statusMap[status] ?? 0
+  }
+  const duplicateReview = read('DUPLICATE_REVIEW')
+  const awaitingFromStatuses =
+    read('RECEIVED') + read('PENDING_REVIEW') + duplicateReview
+  return {
+    leadsReceived: Array.from(
+      statusMap instanceof Map ? statusMap.entries() : Object.entries(statusMap),
+    ).reduce((sum, [, n]) => sum + n, 0),
+    awaitingReview: awaitingFromStatuses,
+    qualified: read('QUALIFIED'),
+    converted: read('CONVERTED'),
+    rejected: read('REJECTED'),
+    duplicateReview,
+  }
+}
+
 export async function countManagedSiteLeadStatusBundle(
   where: Prisma.ManagedSiteLeadWhereInput,
 ): Promise<SiteLeadStatusCountBundle> {

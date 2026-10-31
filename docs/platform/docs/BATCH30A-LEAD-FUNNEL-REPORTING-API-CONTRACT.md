@@ -57,7 +57,7 @@ Max range: `SITE_LEAD_FUNNEL_MAX_RANGE_DAYS` (default 366).
 
 - Summary keys: `websiteLeadsReceived`, `websiteLeadsAwaitingReview`, `websiteLeadsQualified`, `websiteLeadsConverted`, `websiteLeadsDuplicateReview` (`account_total` only).
 - `websiteLeadReporting.readiness` — independent from core CRM readiness (lead tables missing or source errors do **not** disable tasks/deals).
-- Actions: `crm.website_lead.awaiting_review`, `crm.website_lead.duplicate_review` → `/dashboard/crm/leads/{id}`.
+- Actions: `crm.website_lead.awaiting_review`, `crm.website_lead.duplicate_review` → `/dashboard/crm/leads` (Lead Inbox). `recordRef.id` carries the lead id for future UI selection (30A.1).
 
 ## Non-goals (30A)
 

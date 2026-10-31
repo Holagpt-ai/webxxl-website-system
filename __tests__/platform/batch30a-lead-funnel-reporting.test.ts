@@ -4,8 +4,17 @@ import { emptySubscriberEvidence } from '@/lib/platform/open001/subscriber-evide
 import { getBusinessOverview } from '@/lib/platform/business-overview/service'
 import type { BusinessOverviewDataAccess } from '@/lib/platform/business-overview/data-access'
 import { parseSiteLeadFunnelDateRange } from '@/lib/platform/site-leads/funnel-date-range'
-import { countManagedSiteLeadStatusBundle } from '@/lib/platform/site-leads/funnel-metrics'
-import { getManagedSiteLeadFunnelReport } from '@/lib/platform/site-leads/funnel-report-service'
+import {
+  countManagedSiteLeadStatusBundle,
+  siteLeadStatusCountBundleFromStatusMap,
+} from '@/lib/platform/site-leads/funnel-metrics'
+import {
+  cohortWhere,
+  getManagedSiteLeadFunnelReport,
+  loadSiteLeadFunnelGroupBreakdown,
+} from '@/lib/platform/site-leads/funnel-report-service'
+import { loadWebsiteLeadOverviewAttachment } from '@/lib/platform/site-leads/overview-leads'
+import { BUSINESS_DESTINATIONS } from '@/lib/platform/business-overview/destinations'
 
 vi.mock('@/lib/db', () => ({
   prisma: {
@@ -78,14 +87,23 @@ function baseDataAccess(overrides: Partial<BusinessOverviewDataAccess> = {}): Bu
   return { ...noop, ...overrides } as BusinessOverviewDataAccess
 }
 
+const defaultRange = {
+  createdFrom: new Date('2026-10-01T00:00:00.000Z'),
+  createdToExclusive: new Date('2026-11-01T00:00:00.000Z'),
+  createdFromIso: '2026-10-01',
+  createdToInclusiveIso: '2026-10-31',
+}
+
 describe('Batch 30A lead funnel reporting', () => {
   let countMock: ReturnType<typeof vi.fn>
+  let groupByMock: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.CRM_BACKEND_ENABLED = 'true'
     process.env.SITE_LEAD_INTAKE_ENABLED = 'false'
     countMock = vi.mocked(prisma.managedSiteLead.count) as unknown as ReturnType<typeof vi.fn>
+    groupByMock = vi.mocked(prisma.managedSiteLead.groupBy) as unknown as ReturnType<typeof vi.fn>
     countMock.mockImplementation(async (args: { where?: { status?: string | { in: string[] }; customerAccountId?: string } }) => {
       const where = args?.where
       if (where?.status === 'CONVERTED') return 2
@@ -97,17 +115,18 @@ describe('Batch 30A lead funnel reporting', () => {
       if (where?.customerAccountId === 'acct_b') return 99
       return 0
     })
+    groupByMock.mockResolvedValue([
+      { managedSiteId: 'site_a', status: 'RECEIVED', _count: { _all: 3 } },
+      { managedSiteId: 'site_a', status: 'QUALIFIED', _count: { _all: 2 } },
+      { formReference: 'hero-form', status: 'RECEIVED', _count: { _all: 4 } },
+    ] as never)
     vi.mocked(prisma.managedSiteLead.findMany).mockResolvedValue([
       {
         id: 'lead_1',
         status: 'RECEIVED',
         formReference: 'contact',
         createdAt: new Date('2026-10-01T00:00:00.000Z'),
-        submittedAt: new Date('2026-10-01T00:00:00.000Z'),
       },
-    ] as never)
-    vi.mocked(prisma.managedSiteLead.groupBy).mockResolvedValue([
-      { managedSiteId: 'site_a', _count: { _all: 5 } },
     ] as never)
     vi.mocked(prisma.$queryRaw).mockResolvedValue([
       { day: new Date('2026-10-01T00:00:00.000Z'), count: BigInt(5) },
@@ -129,23 +148,19 @@ describe('Batch 30A lead funnel reporting', () => {
     expect(fail.ok).toBe(false)
   })
 
-  it('computes exact account-wide status counts without double-counting duplicate review separately from totals', async () => {
-    const counts = await countManagedSiteLeadStatusBundle({ customerAccountId: 'acct_a' })
-    expect(counts.leadsReceived).toBe(10)
-    expect(counts.duplicateReview).toBe(1)
-    expect(counts.awaitingReview).toBe(4)
+  it('builds lifecycle bundles from grouped status rows without extra count queries', () => {
+    const bundle = siteLeadStatusCountBundleFromStatusMap({
+      RECEIVED: 3,
+      QUALIFIED: 2,
+      DUPLICATE_REVIEW: 1,
+    })
+    expect(bundle.leadsReceived).toBe(6)
+    expect(bundle.qualified).toBe(2)
+    expect(bundle.awaitingReview).toBe(4)
+    expect(bundle.duplicateReview).toBe(1)
   })
 
-  it('scopes funnel report queries to the customer account and optional managed site', async () => {
-    const denied = await getManagedSiteLeadFunnelReport({
-      customerAccountId: 'acct_a',
-      managedSiteId: 'site_other',
-      createdFromRaw: '2026-10-01',
-      createdToRaw: '2026-10-31',
-    })
-    expect(denied.ok).toBe(false)
-    if (!denied.ok) expect(denied.code).toBe('FORBIDDEN')
-
+  it('applies site and form filters together on cohort queries', async () => {
     const ok = await getManagedSiteLeadFunnelReport({
       customerAccountId: 'acct_a',
       managedSiteId: 'site_a',
@@ -154,13 +169,60 @@ describe('Batch 30A lead funnel reporting', () => {
       createdToRaw: '2026-10-31',
     })
     expect(ok.ok).toBe(true)
-    expect(prisma.managedSiteLead.count).toHaveBeenCalled()
-    const firstCall = vi.mocked(prisma.managedSiteLead.count).mock.calls[0]?.[0]
-    expect(firstCall?.where).toMatchObject({
+    expect(cohortWhere({ customerAccountId: 'acct_a', managedSiteId: 'site_a', formReference: 'hero-form', range: defaultRange })).toMatchObject({
       customerAccountId: 'acct_a',
       managedSiteId: 'site_a',
       formReference: 'hero-form',
     })
+  })
+
+  it('constrains form breakdowns to the selected managed site', async () => {
+    await getManagedSiteLeadFunnelReport({
+      customerAccountId: 'acct_a',
+      managedSiteId: 'site_a',
+      createdFromRaw: '2026-10-01',
+      createdToRaw: '2026-10-31',
+    })
+    const formBreakdownCall = groupByMock.mock.calls.find(
+      (call) => (call[0] as { by?: string[] }).by?.includes('formReference'),
+    )?.[0] as { where?: Record<string, unknown> }
+    expect(formBreakdownCall?.where).toMatchObject({
+      customerAccountId: 'acct_a',
+      managedSiteId: 'site_a',
+    })
+  })
+
+  it('constrains site breakdowns to the selected form reference', async () => {
+    await getManagedSiteLeadFunnelReport({
+      customerAccountId: 'acct_a',
+      formReference: 'hero-form',
+      createdFromRaw: '2026-10-01',
+      createdToRaw: '2026-10-31',
+    })
+    const siteBreakdownCall = groupByMock.mock.calls.find(
+      (call) => (call[0] as { by?: string[] }).by?.includes('managedSiteId'),
+    )?.[0] as { where?: Record<string, unknown> }
+    expect(siteBreakdownCall?.where).toMatchObject({
+      customerAccountId: 'acct_a',
+      formReference: 'hero-form',
+    })
+  })
+
+  it('uses one groupBy per breakdown dimension instead of per-group count loops', async () => {
+    groupByMock.mockResolvedValueOnce([
+      { formReference: 'contact', status: 'RECEIVED', _count: { _all: 5 } },
+      { formReference: 'contact', status: 'CONVERTED', _count: { _all: 1 } },
+    ] as never)
+    const rows = await loadSiteLeadFunnelGroupBreakdown({
+      filters: { customerAccountId: 'acct_a', managedSiteId: 'site_a', range: defaultRange },
+      groupField: 'formReference',
+    })
+    expect(groupByMock).toHaveBeenCalledTimes(1)
+    expect(rows).toHaveLength(1)
+    expect(rows[0]?.key).toBe('contact')
+    expect(rows[0]?.counts.leadsReceived).toBe(6)
+    expect(rows[0]?.counts.converted).toBe(1)
+    expect(countMock).not.toHaveBeenCalled()
   })
 
   it('does not leak counts across customer accounts in count helpers', async () => {
@@ -178,17 +240,35 @@ describe('Batch 30A lead funnel reporting', () => {
     expect(crm.summary?.openTasks).toEqual({ value: 0, scope: 'account_total' })
     expect(crm.websiteLeadReporting?.readiness.state).toBe('unavailable')
     expect(crm.summary?.websiteLeadsReceived).toBeUndefined()
+    expect(crm.websiteLeadReporting?.readiness.message).not.toMatch(/P2021/)
   })
 
-  it('attaches website lead metrics and bounded actions when lead reporting succeeds', async () => {
+  it('keeps CRM module available when lead reporting throws an unexpected database error', async () => {
+    countMock.mockRejectedValueOnce(new Error('connection reset'))
     const overview = await getBusinessOverview(portal, baseDataAccess())
     const crm = overview.modules.find((m) => m.module === 'crm')!
-    expect(crm.websiteLeadReporting?.readiness.state).toBe('available')
-    expect(crm.summary?.websiteLeadsReceived).toEqual({ value: 10, scope: 'account_total' })
-    expect(crm.summary?.websiteLeadsAwaitingReview).toEqual({ value: 4, scope: 'account_total' })
+    expect(crm.readiness.state).toBe('available')
+    expect(crm.websiteLeadReporting?.readiness.state).toBe('unavailable')
+    expect(crm.websiteLeadReporting?.readiness.message).toContain('temporarily unavailable')
+  })
+
+  it('routes Business Command Center lead actions to the Lead Inbox with recordRef id', async () => {
+    const overview = await getBusinessOverview(portal, baseDataAccess())
     const leadActions = overview.actions.filter((a) => a.actionType.startsWith('crm.website_lead'))
     expect(leadActions.length).toBeGreaterThan(0)
-    expect(leadActions[0]?.destination.path).toContain('/dashboard/crm/leads/')
+    expect(leadActions[0]?.destination.path).toBe(BUSINESS_DESTINATIONS.crmLeads)
+    expect(leadActions[0]?.recordRef).toEqual({ kind: 'managed_site_lead', id: 'lead_1' })
+  })
+
+  it('sanitizes overview attachment failures without internal database errors', async () => {
+    countMock.mockRejectedValueOnce({ code: 'P2021' })
+    const attachment = await loadWebsiteLeadOverviewAttachment({
+      customerAccountId: 'acct_a',
+      checkedAt: new Date().toISOString(),
+    })
+    expect(attachment.summaryMetrics).toEqual({})
+    expect(attachment.reporting.readiness.state).toBe('unavailable')
+    expect(attachment.reporting.readiness.message).not.toMatch(/P2021/)
   })
 
   it('exposes funnel-report route with reporting auth separate from intake activation flag', () => {
