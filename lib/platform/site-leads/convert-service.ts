@@ -61,8 +61,13 @@ export async function convertManagedSiteLeadToCrmContact(input: {
     normalizedPhone: lead.normalizedPhone,
   })
   if (identityConflict) {
-    await prisma.managedSiteLead.update({
-      where: { id: lead.id },
+    await prisma.managedSiteLead.updateMany({
+      where: {
+        id: lead.id,
+        customerAccountId: input.customerAccountId,
+        status: { in: ['QUALIFIED', 'PENDING_REVIEW'] },
+        crmContactId: null,
+      },
       data: { status: 'DUPLICATE_REVIEW' },
     })
     return {
@@ -81,6 +86,7 @@ export async function convertManagedSiteLeadToCrmContact(input: {
           customerAccountId: input.customerAccountId,
           status: { in: ['QUALIFIED', 'PENDING_REVIEW'] },
           crmContactId: null,
+          rejectedAt: null,
         },
         data: { convertIdempotencyKey: idempotencyKey },
       })

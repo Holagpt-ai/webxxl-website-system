@@ -35,8 +35,8 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | Batch **27C** **MERGED** on `main` (`828ac12…`); Batch **28A** managed-site leads backend **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `828ac12e9968f84bd8e1bc42f44ba941c9551194` on `main`; `feature/batch-28a-managed-site-leads` — open PR pending |
+| 1 | Last verified checkpoint | Batch **28A** + **28A.1** integrity on **PR #75** (managed-site leads); **27C** merged on `main` |
+| 2 | GitHub SHA, branch, active PR | `828ac12e9968f84bd8e1bc42f44ba941c9551194` on `main`; `feature/batch-28a-managed-site-leads` — **PR #75** (28A.1 push pending owner merge) |
 | 3 | Production deployment | Vercel **`dpl_5AuKd2RyiUqAgoNGr4XLSBS6rtj5` READY** @ `828ac12`. SHA only — not migration or activation |
 | 4 | Last updated | 2026-10-31 |
 | 5 | Next task / responsible platform | **Owner** review/merge **Batch 28A** PR (**Cursor**); then **v0.app** Lead Inbox UI |
@@ -100,7 +100,8 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 27B Business Command Center UI (v0) | DELIVERED | `v0/business-command-center-27b` @ `25220431bf713ccd1bf10dfc3b5260b466c412bd` |
 | Batch 27C Business Command Center UI integration | MERGED | [PR #74](https://github.com/Holagpt-ai/webxxl-website-system/pull/74), `828ac12e9968f84bd8e1bc42f44ba941c9551194`, v0 @ `25220431` |
 | Vercel production SHA (2026-10-31, PR #74) | DEPLOYED | Vercel `dpl_5AuKd2RyiUqAgoNGr4XLSBS6rtj5` **READY** @ `828ac12e9968f84bd8e1bc42f44ba941c9551194`. SHA only |
-| Batch 28A Managed-site lead intake & CRM qualification | IN PR | Signed intake + inbox APIs; migration `20261031120000_batch28a_managed_site_leads` in Git only |
+| Batch 28A Managed-site lead intake & CRM qualification | IN PR | [PR #75](https://github.com/Holagpt-ai/webxxl-website-system/pull/75); migration `20261031120000_batch28a_managed_site_leads` in Git only |
+| Batch 28A.1 Intake integrity (auth, pagination, lifecycle, dedupe) | IN PR | Same PR #75; composite cursors, auth-before-replay, conditional workflow updates |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.

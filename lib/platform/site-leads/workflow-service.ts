@@ -1,57 +1,56 @@
+import type { ManagedSiteLeadStatus, Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
-import type { ManagedSiteLeadStatus } from '@prisma/client'
 import type { SiteLeadResult } from '@/lib/platform/site-leads/types'
-import { SITE_LEAD_TERMINAL_STATUSES } from '@/lib/platform/site-leads/types'
 
-async function loadLead(leadId: string, customerAccountId: string) {
-  return prisma.managedSiteLead.findFirst({
-    where: { id: leadId, customerAccountId },
+async function transitionLeadStatus(input: {
+  leadId: string
+  customerAccountId: string
+  allowedFrom: ManagedSiteLeadStatus[]
+  to: ManagedSiteLeadStatus
+  data?: Prisma.ManagedSiteLeadUpdateManyMutationInput
+}): Promise<SiteLeadResult<{ id: string; status: ManagedSiteLeadStatus }>> {
+  const updated = await prisma.managedSiteLead.updateMany({
+    where: {
+      id: input.leadId,
+      customerAccountId: input.customerAccountId,
+      status: { in: input.allowedFrom },
+    },
+    data: { status: input.to, ...input.data },
   })
-}
-
-function assertMutable(status: ManagedSiteLeadStatus): Extract<SiteLeadResult<{ id: string; status: ManagedSiteLeadStatus }>, { ok: false }> | null {
-  if (SITE_LEAD_TERMINAL_STATUSES.has(status) || status === 'CONVERTED') {
-    return { ok: false, code: 'CONFLICT', message: 'Lead is in a terminal state' }
+  if (updated.count === 1) {
+    return { ok: true, value: { id: input.leadId, status: input.to } }
   }
-  return null
+  const current = await prisma.managedSiteLead.findFirst({
+    where: { id: input.leadId, customerAccountId: input.customerAccountId },
+    select: { status: true },
+  })
+  if (!current) return { ok: false, code: 'NOT_FOUND', message: 'Lead not found' }
+  return { ok: false, code: 'CONFLICT', message: 'Lead status transition conflict' }
 }
 
 export async function markSiteLeadPendingReview(
   leadId: string,
   customerAccountId: string,
 ): Promise<SiteLeadResult<{ id: string; status: ManagedSiteLeadStatus }>> {
-  const lead = await loadLead(leadId, customerAccountId)
-  if (!lead) return { ok: false, code: 'NOT_FOUND', message: 'Lead not found' }
-  const blocked = assertMutable(lead.status)
-  if (blocked) return blocked
-  if (lead.status !== 'RECEIVED' && lead.status !== 'DUPLICATE_REVIEW') {
-    return { ok: false, code: 'CONFLICT', message: 'Lead cannot move to pending review from current state' }
-  }
-  const updated = await prisma.managedSiteLead.update({
-    where: { id: lead.id },
-    data: { status: 'PENDING_REVIEW' },
-    select: { id: true, status: true },
+  return transitionLeadStatus({
+    leadId,
+    customerAccountId,
+    allowedFrom: ['RECEIVED', 'DUPLICATE_REVIEW'],
+    to: 'PENDING_REVIEW',
   })
-  return { ok: true, value: updated }
 }
 
 export async function qualifySiteLead(
   leadId: string,
   customerAccountId: string,
 ): Promise<SiteLeadResult<{ id: string; status: ManagedSiteLeadStatus }>> {
-  const lead = await loadLead(leadId, customerAccountId)
-  if (!lead) return { ok: false, code: 'NOT_FOUND', message: 'Lead not found' }
-  const blocked = assertMutable(lead.status)
-  if (blocked) return blocked
-  if (!['RECEIVED', 'PENDING_REVIEW', 'DUPLICATE_REVIEW'].includes(lead.status)) {
-    return { ok: false, code: 'CONFLICT', message: 'Lead cannot be qualified from current state' }
-  }
-  const updated = await prisma.managedSiteLead.update({
-    where: { id: lead.id },
-    data: { status: 'QUALIFIED', qualifiedAt: new Date() },
-    select: { id: true, status: true },
+  return transitionLeadStatus({
+    leadId,
+    customerAccountId,
+    allowedFrom: ['RECEIVED', 'PENDING_REVIEW', 'DUPLICATE_REVIEW'],
+    to: 'QUALIFIED',
+    data: { qualifiedAt: new Date() },
   })
-  return { ok: true, value: updated }
 }
 
 export async function rejectSiteLead(
@@ -59,21 +58,14 @@ export async function rejectSiteLead(
   customerAccountId: string,
   reason?: string,
 ): Promise<SiteLeadResult<{ id: string; status: ManagedSiteLeadStatus }>> {
-  const lead = await loadLead(leadId, customerAccountId)
-  if (!lead) return { ok: false, code: 'NOT_FOUND', message: 'Lead not found' }
-  const blocked = assertMutable(lead.status)
-  if (blocked) return blocked
-  if (lead.status === 'CONVERTED') {
-    return { ok: false, code: 'CONFLICT', message: 'Converted lead cannot be rejected' }
-  }
-  const updated = await prisma.managedSiteLead.update({
-    where: { id: lead.id },
+  return transitionLeadStatus({
+    leadId,
+    customerAccountId,
+    allowedFrom: ['RECEIVED', 'PENDING_REVIEW', 'QUALIFIED', 'DUPLICATE_REVIEW'],
+    to: 'REJECTED',
     data: {
-      status: 'REJECTED',
       rejectedAt: new Date(),
       rejectionReason: reason?.trim().slice(0, 500) ?? null,
     },
-    select: { id: true, status: true },
   })
-  return { ok: true, value: updated }
 }

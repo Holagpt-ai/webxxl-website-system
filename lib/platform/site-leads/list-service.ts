@@ -5,6 +5,7 @@ import {
   SITE_LEAD_LIST_DEFAULT_TAKE,
   SITE_LEAD_LIST_MAX_TAKE,
 } from '@/config/site-lead-intake'
+import { decodeSiteLeadListCursor, encodeSiteLeadListCursor } from '@/lib/platform/site-leads/cursor'
 import type { SiteLeadInboxRow, SiteLeadResult } from '@/lib/platform/site-leads/types'
 import { getManagedSiteForAccount } from '@/lib/managed-sites/queries'
 
@@ -59,6 +60,13 @@ function toRow(lead: {
   }
 }
 
+function buildCursorOr(cursor: { createdAt: Date; id: string }): Prisma.ManagedSiteLeadWhereInput[] {
+  return [
+    { createdAt: { lt: cursor.createdAt } },
+    { createdAt: cursor.createdAt, id: { lt: cursor.id } },
+  ]
+}
+
 export async function listManagedSiteLeads(input: {
   customerAccountId: string
   managedSiteId?: string | null
@@ -77,7 +85,8 @@ export async function listManagedSiteLeads(input: {
     }
   }
   const take = Math.min(Math.max(input.take ?? SITE_LEAD_LIST_DEFAULT_TAKE, 1), SITE_LEAD_LIST_MAX_TAKE)
-  const where: Prisma.ManagedSiteLeadWhereInput = {
+
+  const filters: Prisma.ManagedSiteLeadWhereInput = {
     customerAccountId: input.customerAccountId,
     ...(input.managedSiteId ? { managedSiteId: input.managedSiteId } : {}),
     ...(input.statuses?.length ? { status: { in: input.statuses } } : {}),
@@ -89,8 +98,26 @@ export async function listManagedSiteLeads(input: {
           },
         }
       : {}),
-    ...(input.cursor ? { id: { lt: input.cursor } } : {}),
   }
+
+  let where: Prisma.ManagedSiteLeadWhereInput = filters
+  if (input.cursor?.trim()) {
+    const decoded = decodeSiteLeadListCursor(input.cursor.trim())
+    if (!decoded) {
+      return { ok: false, code: 'VALIDATION', message: 'Invalid pagination cursor' }
+    }
+    const anchor = await prisma.managedSiteLead.findFirst({
+      where: { id: decoded.id, customerAccountId: input.customerAccountId },
+      select: { id: true, createdAt: true },
+    })
+    if (!anchor) {
+      return { ok: false, code: 'VALIDATION', message: 'Pagination cursor not found for account' }
+    }
+    where = {
+      AND: [filters, { OR: buildCursorOr({ createdAt: anchor.createdAt, id: anchor.id }) }],
+    }
+  }
+
   const rows = await prisma.managedSiteLead.findMany({
     where,
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
@@ -113,7 +140,8 @@ export async function listManagedSiteLeads(input: {
     },
   })
   const page = rows.slice(0, take)
-  const nextCursor = rows.length > take ? page[page.length - 1]?.id : undefined
+  const last = page[page.length - 1]
+  const nextCursor = rows.length > take && last ? encodeSiteLeadListCursor(last.createdAt, last.id) : undefined
   return {
     ok: true,
     value: {

@@ -74,6 +74,7 @@ describe('Batch 28A managed-site leads', () => {
 
   it('denies intake when credential site binding does not match account', async () => {
     vi.mocked(prisma.managedSiteLead.findUnique).mockResolvedValue(null)
+    vi.mocked(prisma.managedSiteLead.create).mockResolvedValue({ id: 'lead_1', status: 'RECEIVED' } as never)
     vi.mocked(prisma.managedSiteLeadIntakeCredential.findUnique).mockResolvedValue({
       id: 'cred_1',
       publicKeyId: 'site_key_1',
@@ -87,7 +88,6 @@ describe('Batch 28A managed-site leads', () => {
       updatedAt: new Date(),
     })
     vi.mocked(prisma.managedSite.findFirst).mockResolvedValue(null)
-    vi.mocked(prisma.$queryRaw).mockResolvedValue([{ requestCount: 1 }])
 
     const rawBody = JSON.stringify({ contactEmail: 'lead@example.com' })
     const ts = Math.floor(Date.now() / 1000)
@@ -110,18 +110,18 @@ describe('Batch 28A managed-site leads', () => {
 
   it('builds account-scoped submission fingerprints per site', () => {
     const a = buildSiteLeadSubmissionFingerprint({
+      customerAccountId: 'acct_1',
       managedSiteId: 'site_1',
       normalizedEmail: 'a@b.com',
       normalizedPhone: null,
       formReference: 'contact',
-      dedupeKey: 'k1',
     })
     const b = buildSiteLeadSubmissionFingerprint({
+      customerAccountId: 'acct_1',
       managedSiteId: 'site_2',
       normalizedEmail: 'a@b.com',
       normalizedPhone: null,
       formReference: 'contact',
-      dedupeKey: 'k1',
     })
     expect(a).not.toBe(b)
   })

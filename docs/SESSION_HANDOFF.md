@@ -1,12 +1,12 @@
 # Session Handoff
 
-**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 28A)
+**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 28A.1)
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | Batch **27C** **MERGED** (`828ac12…`); Batch **28A** managed-site leads **IN PR** |
+| 1 | Last verified checkpoint | Batch **28A** managed-site leads **IN PR #75**; **28A.1** integrity push on same PR |
 | 2 | GitHub SHA, branch, active PR | `828ac12e9968f84bd8e1bc42f44ba941c9551194` on `main`; `feature/batch-28a-managed-site-leads` — open PR pending |
 | 3 | Production deployment | Vercel **`dpl_5AuKd2RyiUqAgoNGr4XLSBS6rtj5` READY** @ `828ac12` |
 | 4 | Last updated | 2026-10-31 |
@@ -15,7 +15,7 @@
 
 ## This session
 
-Batch **28A:** Prisma models + migration source, signed `POST /api/v1/site-leads/intake`, customer inbox/qualification/convert APIs, summary counts with `{ value, scope }`, contract doc, 10 focused tests.
+Batch **28A.1:** Auth-before-replay intake, business duplicate fingerprints, composite pagination cursors, conditional lifecycle updates, 9 additional integrity tests (19 total with 28A).
 
 ## PENDING REPOSITORY SYNC
 
