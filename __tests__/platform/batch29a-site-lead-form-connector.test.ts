@@ -75,7 +75,9 @@ describe('Batch 29A managed-site form connector', () => {
   })
 
   it('reuses idempotency keys for identical payload retries', async () => {
-    const fetchImpl = mockFetch(201, { ok: true, leadId: 'lead_1', status: 'RECEIVED', duplicate: false })
+    const fetchImpl = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) =>
+      Response.json({ ok: true, leadId: 'lead_1', status: 'RECEIVED', duplicate: false }, { status: 201 }),
+    )
     const payload = { contactEmail: 'retry@example.com', message: 'Same' }
     const config = { intakeBaseUrl: 'https://app.test', publicKeyId, signingSecret: secret }
     await submitManagedSiteLead({ config, payload, fetchImpl, nowMs: 1_700_000_000_000 })
