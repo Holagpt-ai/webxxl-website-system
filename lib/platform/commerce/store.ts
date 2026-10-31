@@ -1,4 +1,5 @@
 import type { FundingMembership } from '@/lib/platform/billing-authz'
+import type { AtomicCancelUnpaidOutcome } from '@/lib/platform/commerce/atomic-cancel'
 import type {
   AuditRecord,
   CheckoutRecord,
@@ -126,4 +127,27 @@ export interface CommerceStore {
 
   appendAudit(event: AuditRecord): Promise<void>
   listAudit(entityType: string, entityId: string): Promise<AuditRecord[]>
+
+  atomicCancelUnpaidOrder(input: {
+    orderId: string
+    reason: string | null
+    now: Date
+  }): Promise<AtomicCancelUnpaidOutcome>
+
+  listReconciliationOrderContexts(
+    billingGroupId: string,
+    skip: number,
+    take: number,
+  ): Promise<{
+    totalOrders: number
+    contexts: Array<{
+      order: OrderRecord
+      payment: PaymentRecord | null
+      fulfillment: FulfillmentRecord | null
+      subscription: SubscriptionRecord | null
+    }>
+  }>
+
+  countFundingByBillingGroup(billingGroupId: string): Promise<number>
+  countWebhooksByBillingGroup(billingGroupId: string): Promise<number>
 }

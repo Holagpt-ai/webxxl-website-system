@@ -19,6 +19,13 @@
 - Live payment processor selection and activation
 - Wallet mint and top-up activation in production
 
+## Batch 32.1 (same PR #83)
+
+| Fix | Detail |
+|---|---|
+| F1 Atomic cancel | Store `atomicCancelUnpaidOrder` CAS/transaction; fail-closed when provider checkout ref exists; late verified capture retained (`LATE_CAPTURE_AFTER_CANCEL`) |
+| F2 Bounded reconciliation | Paginated order bundle load; `scanCoverage` + `groupReconciliationComplete`; no unbounded group order reads |
+
 ## Boundaries (unchanged)
 
 No production migrations, live checkout, real charges, webhook activation, wallet mint activation, or external provisioning in this batch.

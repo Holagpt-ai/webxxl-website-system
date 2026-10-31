@@ -1,5 +1,6 @@
 import { Prisma, type CommerceProduct } from '@prisma/client'
 import type { FundingMembership } from '@/lib/platform/billing-authz'
+import { hasUnconfirmedProviderCheckout, UNPAID_CANCELLABLE_ORDER_STATUSES } from '@/lib/platform/commerce/atomic-cancel'
 import { prisma } from '@/lib/db'
 import type { CommerceStore } from '@/lib/platform/commerce/store'
 import type {
@@ -395,5 +396,83 @@ export const prismaCommerceStore: CommerceStore = {
   async listAudit(entityType, entityId) {
     const rows = await prisma.commerceAuditEvent.findMany({ where: { entityType, entityId } })
     return rows.map((row) => ({ ...row, metadata: recordJson(row.metadata) }))
+  },
+  async atomicCancelUnpaidOrder(input) {
+    return prisma.$transaction(async (tx) => {
+      const order = await tx.commerceOrder.findUnique({
+        where: { id: input.orderId },
+        include: { checkouts: true, payments: { orderBy: { createdAt: 'desc' }, take: 1 } },
+      })
+      if (!order) return { kind: 'not_found' as const }
+      if (order.status === 'CANCELLED') return { kind: 'already_cancelled' as const, order }
+      const payment = order.payments[0] ?? null
+      if (payment?.status === 'CAPTURED') return { kind: 'payment_captured' as const, order }
+      if (hasUnconfirmedProviderCheckout(order.checkouts)) {
+        return { kind: 'provider_checkout_unconfirmed' as const, order }
+      }
+      if (!UNPAID_CANCELLABLE_ORDER_STATUSES.includes(order.status)) {
+        return { kind: 'status_not_cancellable' as const, order }
+      }
+      const priorStatus = order.status
+      const updated = await tx.commerceOrder.updateMany({
+        where: {
+          id: input.orderId,
+          status: { in: UNPAID_CANCELLABLE_ORDER_STATUSES },
+        },
+        data: {
+          status: 'CANCELLED',
+          failureCode: input.reason ?? 'CANCELLED_BY_PAYER',
+          updatedAt: input.now,
+        },
+      })
+      if (updated.count === 0) {
+        const fresh = await tx.commerceOrder.findUnique({ where: { id: input.orderId } })
+        if (!fresh) return { kind: 'not_found' as const }
+        if (fresh.status === 'CANCELLED') return { kind: 'already_cancelled' as const, order: fresh }
+        const captured = await tx.commercePayment.findFirst({ where: { orderId: input.orderId, status: 'CAPTURED' } })
+        if (captured) return { kind: 'payment_captured' as const, order: fresh }
+        return { kind: 'concurrent_conflict' as const, order: fresh }
+      }
+      await tx.commercePayment.updateMany({
+        where: { orderId: input.orderId, status: { not: 'CAPTURED' } },
+        data: { status: 'CANCELLED', updatedAt: input.now },
+      })
+      const cancelled = await tx.commerceOrder.findUnique({ where: { id: input.orderId } })
+      if (!cancelled) return { kind: 'not_found' as const }
+      return { kind: 'cancelled' as const, order: cancelled, priorStatus }
+    })
+  },
+  async listReconciliationOrderContexts(billingGroupId, skip, take) {
+    const totalOrders = await prisma.commerceOrder.count({ where: { billingGroupId } })
+    const rows = await prisma.commerceOrder.findMany({
+      where: { billingGroupId },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take,
+      include: {
+        payments: { orderBy: { createdAt: 'desc' }, take: 1 },
+        fulfillment: true,
+        subscriptions: { orderBy: { createdAt: 'desc' }, take: 1 },
+      },
+    })
+    return {
+      totalOrders,
+      contexts: rows.map((row) => ({
+        order: row,
+        payment: row.payments[0] ?? null,
+        fulfillment: row.fulfillment
+          ? { ...row.fulfillment, kind: row.fulfillment.kind === 'CREDIT' ? ('CREDIT' as const) : ('SERVICE' as const) }
+          : null,
+        subscription: row.subscriptions[0]
+          ? { ...row.subscriptions[0], renewalMetadata: recordJson(row.subscriptions[0].renewalMetadata) }
+          : null,
+      })),
+    }
+  },
+  async countFundingByBillingGroup(billingGroupId) {
+    return prisma.walletFundingEvidence.count({ where: { billingGroupId } })
+  },
+  async countWebhooksByBillingGroup(billingGroupId) {
+    return prisma.commerceWebhookEvent.count({ where: { order: { billingGroupId } } })
   },
 }

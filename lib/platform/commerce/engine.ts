@@ -1018,11 +1018,21 @@ export async function ingestPaymentWebhook(
     }
     const applied = await applyPayment('CAPTURED', null)
     if (!applied) return { ok: false, error: 'FORBIDDEN_TRANSITION' }
+    const lateCaptureAfterCancel = order.status === 'CANCELLED'
     if (canTransitionOrder(order.status, 'PAID')) {
       order.status = 'PAID'
-      order.failureCode = null
+      order.failureCode = lateCaptureAfterCancel ? 'LATE_CAPTURE_AFTER_CANCEL' : null
       order.updatedAt = now
       await store.saveOrder(order)
+    }
+    if (lateCaptureAfterCancel) {
+      await audit(store, {
+        billingGroupId: order.billingGroupId,
+        action: 'LATE_CAPTURE_AFTER_CANCEL',
+        entityType: 'CommerceOrder',
+        entityId: order.id,
+        metadata: { paymentId: payment.id, externalEventId: event.externalEventId, retainedForReconciliation: true },
+      })
     }
     const items = await store.listItems(order.id)
     const subscription = items[0] ? await ensureSubscription(store, order, payment, items[0]) : null

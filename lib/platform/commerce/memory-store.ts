@@ -1,4 +1,5 @@
 import type { FundingMembership } from '@/lib/platform/billing-authz'
+import { hasUnconfirmedProviderCheckout, UNPAID_CANCELLABLE_ORDER_STATUSES } from '@/lib/platform/commerce/atomic-cancel'
 import type { CommerceStore } from '@/lib/platform/commerce/store'
 import type {
   AuditRecord,
@@ -60,6 +61,16 @@ export function createMemoryCommerceStore(seed: CommerceMemorySeed): CommerceSto
   const serviceOrders: ServiceOrderLink[] = []
   const funding: FundingRecord[] = []
   const audits: AuditRecord[] = []
+  const orderMutationChains = new Map<string, Promise<unknown>>()
+
+  async function withOrderMutationLock<T>(orderId: string, run: () => Promise<T>): Promise<T> {
+    const prior = orderMutationChains.get(orderId) ?? Promise.resolve()
+    const next = prior.then(run, run)
+    orderMutationChains.set(orderId, next.finally(() => {
+      if (orderMutationChains.get(orderId) === next) orderMutationChains.delete(orderId)
+    }))
+    return next
+  }
 
   const store: CommerceStore = {
     async findBillingGroup(id) {
@@ -305,6 +316,72 @@ export function createMemoryCommerceStore(seed: CommerceMemorySeed): CommerceSto
     },
     async listAudit(entityType, entityId) {
       return audits.filter((event) => event.entityType === entityType && event.entityId === entityId)
+    },
+    async atomicCancelUnpaidOrder(input) {
+      return withOrderMutationLock(input.orderId, async () => {
+        const order = orders.find((row) => row.id === input.orderId)
+        if (!order) return { kind: 'not_found' as const }
+        if (order.status === 'CANCELLED') return { kind: 'already_cancelled' as const, order: { ...order } }
+        const payment = payments.find((row) => row.orderId === order.id) ?? null
+        if (payment?.status === 'CAPTURED') return { kind: 'payment_captured' as const, order: { ...order } }
+        const orderCheckouts = checkouts.filter((row) => row.orderId === order.id)
+        if (hasUnconfirmedProviderCheckout(orderCheckouts)) {
+          return { kind: 'provider_checkout_unconfirmed' as const, order: { ...order } }
+        }
+        if (!UNPAID_CANCELLABLE_ORDER_STATUSES.includes(order.status)) {
+          return { kind: 'status_not_cancellable' as const, order: { ...order } }
+        }
+        const priorStatus = order.status
+        const orderIndex = orders.findIndex(
+          (row) => row.id === input.orderId && UNPAID_CANCELLABLE_ORDER_STATUSES.includes(row.status),
+        )
+        if (orderIndex < 0) {
+          const fresh = orders.find((row) => row.id === input.orderId)
+          if (!fresh) return { kind: 'not_found' as const }
+          if (fresh.status === 'CANCELLED') return { kind: 'already_cancelled' as const, order: fresh }
+          return { kind: 'concurrent_conflict' as const, order: fresh }
+        }
+        const payIndex = payments.findIndex((row) => row.orderId === input.orderId && row.status !== 'CAPTURED')
+        orders[orderIndex] = {
+          ...orders[orderIndex],
+          status: 'CANCELLED',
+          failureCode: input.reason ?? 'CANCELLED_BY_PAYER',
+          updatedAt: input.now,
+        }
+        if (payIndex >= 0) {
+          payments[payIndex] = {
+            ...payments[payIndex],
+            status: 'CANCELLED',
+            updatedAt: input.now,
+          }
+        }
+        return {
+          kind: 'cancelled' as const,
+          order: { ...orders[orderIndex] },
+          priorStatus,
+        }
+      })
+    },
+    async listReconciliationOrderContexts(billingGroupId, skip, take) {
+      const groupOrders = orders
+        .filter((row) => row.billingGroupId === billingGroupId)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      const totalOrders = groupOrders.length
+      const page = groupOrders.slice(skip, skip + take)
+      const contexts = page.map((order) => ({
+        order,
+        payment: payments.find((row) => row.orderId === order.id) ?? null,
+        fulfillment: fulfillments.find((row) => row.orderId === order.id) ?? null,
+        subscription: subscriptions.find((row) => row.orderId === order.id) ?? null,
+      }))
+      return { totalOrders, contexts }
+    },
+    async countFundingByBillingGroup(billingGroupId) {
+      return funding.filter((row) => row.billingGroupId === billingGroupId).length
+    },
+    async countWebhooksByBillingGroup(billingGroupId) {
+      const orderIds = new Set(orders.filter((row) => row.billingGroupId === billingGroupId).map((row) => row.id))
+      return webhooks.filter((event) => event.orderId && orderIds.has(event.orderId)).length
     },
   }
 

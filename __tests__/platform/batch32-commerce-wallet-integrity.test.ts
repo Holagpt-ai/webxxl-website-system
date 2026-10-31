@@ -293,6 +293,8 @@ describe('Batch 32 — commerce, wallet & fulfillment integrity', () => {
     if (report.ok) {
       expect(report.value.bounded).toBe(true)
       expect(report.value.activation.correctiveMutationsEnabled).toBe(false)
+      expect(report.value.groupReconciliationComplete).toBe(true)
+      expect(report.value.scanCoverage.ordersScanComplete).toBe(true)
       expect(report.value.findings.some((f) => f.code === 'PAID_WITHOUT_FULFILLMENT' || f.code === 'FUNDING_WITHOUT_LEDGER')).toBe(true)
     }
   })

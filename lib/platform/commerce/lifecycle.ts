@@ -1,4 +1,5 @@
-import { canTransitionOrder, canTransitionPayment, canTransitionSubscription } from '@/lib/platform/commerce/state'
+import { randomUUID } from 'crypto'
+import { canTransitionSubscription } from '@/lib/platform/commerce/state'
 import type { CommerceStore } from '@/lib/platform/commerce/store'
 import type { CommerceActor, CommerceResult, FulfillmentRecord, OrderRecord } from '@/lib/platform/commerce/types'
 
@@ -22,43 +23,59 @@ async function authorizeCancel(
   return { ok: true, value: true }
 }
 
-const CANCELLABLE: OrderRecord['status'][] = ['PENDING', 'CHECKOUT_CREATED', 'PAYMENT_PENDING']
-
-/** Cancel an unpaid order before verified capture. Does not mutate wallet balances. */
+/** Cancel an unpaid order using store-level CAS / transaction semantics. */
 export async function cancelUnpaidOrder(
   store: CommerceStore,
   input: { actor: CommerceActor; orderId: string; reason?: string | null },
-): Promise<CommerceResult<{ orderId: string; status: OrderRecord['status'] }>> {
+): Promise<CommerceResult<{ orderId: string; status: OrderRecord['status']; idempotent: boolean }>> {
   const order = await store.findOrder(input.orderId)
   if (!order) return { ok: false, error: 'ORDER_NOT_FOUND' }
   const auth = await authorizeCancel(store, input.actor, order)
   if (!auth.ok) return auth
-  if (!CANCELLABLE.includes(order.status)) return { ok: false, error: 'FORBIDDEN_TRANSITION' }
-  const payment = await store.findPaymentByOrder(order.id)
-  if (payment && payment.status === 'CAPTURED') return { ok: false, error: 'FORBIDDEN_TRANSITION' }
-  if (!canTransitionOrder(order.status, 'CANCELLED')) return { ok: false, error: 'FORBIDDEN_TRANSITION' }
+
   const now = new Date()
-  const priorStatus = order.status
-  order.status = 'CANCELLED'
-  order.failureCode = input.reason ?? 'CANCELLED_BY_PAYER'
-  order.updatedAt = now
-  await store.saveOrder(order)
-  if (payment && canTransitionPayment(payment.status, 'CANCELLED')) {
-    payment.status = 'CANCELLED'
-    payment.updatedAt = now
-    await store.savePayment(payment)
+  const outcome = await store.atomicCancelUnpaidOrder({
+    orderId: input.orderId,
+    reason: input.reason ?? null,
+    now,
+  })
+
+  if (outcome.kind === 'not_found') return { ok: false, error: 'ORDER_NOT_FOUND' }
+  if (outcome.kind === 'payment_captured' || outcome.kind === 'concurrent_conflict') {
+    return { ok: false, error: 'FORBIDDEN_TRANSITION', message: 'Payment is captured or cancellation lost a concurrent race.' }
   }
+  if (outcome.kind === 'status_not_cancellable') {
+    return { ok: false, error: 'FORBIDDEN_TRANSITION' }
+  }
+  if (outcome.kind === 'provider_checkout_unconfirmed') {
+    return {
+      ok: false,
+      error: 'NOT_CONFIGURED',
+      message:
+        'Checkout was handed to a payment provider; cancellation cannot be confirmed locally without provider settlement evidence.',
+    }
+  }
+  if (outcome.kind === 'already_cancelled') {
+    return {
+      ok: true,
+      value: { orderId: outcome.order.id, status: outcome.order.status, idempotent: true },
+    }
+  }
+
   await store.appendAudit({
-    id: `aud_cancel_${order.id}`,
-    billingGroupId: order.billingGroupId,
+    id: `aud_cancel_${randomUUID().replace(/-/g, '')}`,
+    billingGroupId: outcome.order.billingGroupId,
     actorUserId: input.actor.userId,
     action: 'ORDER_CANCELLED',
     entityType: 'CommerceOrder',
-    entityId: order.id,
-    metadata: { priorStatus, reason: input.reason ?? null },
+    entityId: outcome.order.id,
+    metadata: { priorStatus: outcome.priorStatus, reason: input.reason ?? null, atomic: true },
     createdAt: now,
   })
-  return { ok: true, value: { orderId: order.id, status: order.status } }
+  return {
+    ok: true,
+    value: { orderId: outcome.order.id, status: outcome.order.status, idempotent: false },
+  }
 }
 
 /** After verified capture, mark recurring subscription active when provider subscription events are not yet configured. */

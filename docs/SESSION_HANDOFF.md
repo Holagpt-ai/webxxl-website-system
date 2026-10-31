@@ -1,6 +1,6 @@
 # Session Handoff
 
-**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 32)
+**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 32 + 32.1)
 
 ## Canonical checkpoint (six-field)
 
@@ -15,7 +15,7 @@
 
 ## This session
 
-Batch **32:** financial boundaries, lifecycle cancel + subscription capture activation, bounded commerce reconciliation report + admin route, wallet reservation review helper, `batch32` integrity tests, continuity for PR #82 @ `93e3010`.
+Batch **32 + 32.1:** financial boundaries, atomic unpaid cancellation (CAS + fail-closed provider checkout), late capture retention, truly bounded reconciliation scan coverage, admin reconciliation route, wallet reservation review, `batch32` / `batch32-1` tests + commerce11/wallet09 CI, continuity for PR #82 @ `93e3010`; **PR #83** open.
 
 ## PENDING REPOSITORY SYNC
 
