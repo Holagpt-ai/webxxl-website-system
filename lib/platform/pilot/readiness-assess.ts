@@ -26,6 +26,7 @@ import {
   isTwilioAdapterEnabled,
   isWalletSettlementEnabled,
 } from '@/config/wallet-backend'
+import { isSiteLeadIntakeEnabled } from '@/config/site-lead-intake'
 import { isWorkflowWorkerEnabled } from '@/config/workflow-backend'
 import { evaluateEntitlementAccess, getServiceEntitlement } from '@/lib/platform/entitlements'
 import { getOpen001FreeSoftwareCohort, isOpen001PolicyResolved } from '@/lib/platform/open001/policy'
@@ -233,6 +234,7 @@ export function buildPilotReadinessReport(input: {
 
   const flagRows: Array<{ id: string; label: string; enabled: boolean; provider?: boolean }> = [
     { id: 'flag.crm_backend', label: 'CRM_BACKEND_ENABLED', enabled: isCrmBackendEnabled() },
+    { id: 'flag.site_lead_intake', label: 'SITE_LEAD_INTAKE_ENABLED', enabled: isSiteLeadIntakeEnabled() },
     { id: 'flag.mkt_backend', label: 'MKT_BACKEND_ENABLED', enabled: isMktBackendEnabled() },
     { id: 'flag.seo_backend', label: 'SEO_BACKEND_ENABLED', enabled: isSeoBackendEnabled() },
     { id: 'flag.comms_backend', label: 'COMMS_BACKEND_ENABLED', enabled: isCommsBackendEnabled() },
@@ -309,6 +311,8 @@ export function buildPilotReadinessReport(input: {
     'Do not enable Chatwoot, Twilio, Resend, Postiz live publish, Google live ingestion, workflow workers, wallet settlement, or outbound comms without separate owner authorization.',
     'Provision or designate two non-production CustomerAccounts and memberships for internal pilot (synthetic ABMED accounts are test fixtures only).',
     'Run authenticated EN/ES dashboard smoke on Vercel preview or staging with real session — not inferred from CI build.',
+    'Batch 31: apply Batch 28A site-lead migrations on staging before live intake pilot; keep SITE_LEAD_INTAKE_ENABLED OFF in production until owner authorization.',
+    'Batch 31: designate staging-only CustomerAccounts (do not mutate ABMED synthetic fixture IDs used in Vitest).',
   ]
 
   return {

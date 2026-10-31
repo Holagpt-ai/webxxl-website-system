@@ -1,39 +1,39 @@
 # Session Handoff
 
-**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 30C)
+**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 31)
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **30A/30A.1** **MERGED** on `main`; **30B** v0 **DELIVERED**; **30C** UI integration **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `cb8d785d7ca4eb4ac26972a7db69b4a0e65b0b2f` on `main`; **PR #81** head `291ea32…` on `feature/batch-30c-lead-funnel-ui-integration` (open) |
-| 3 | Production deployment | Vercel **`dpl_Fev1t4X7U9EFvzXA7wCZHVUAjiLC` READY** @ `cb8d785` |
+| 1 | Last verified checkpoint | **30C** **MERGED** on `main`; **Batch 31** staging/pilot readiness **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `3a7d011466aeabcf4c2d3bdfe8a669d42e448957` on `main`; **Batch 31** branch `feature/batch-31-staging-pilot-readiness` (open PR) |
+| 3 | Production deployment | Vercel **`dpl_A6Lx8wv62nsXeGY7mUFcshLhDP89` READY** @ `3a7d011` |
 | 4 | Last updated | 2026-10-31 |
-| 5 | Next task / responsible platform | **Owner** review/merge **30C** — **Cursor** |
-| 6 | Open blocker / gate IDs | Batch 28A migrations UNVERIFIED/unapplied; `SITE_LEAD_INTAKE_ENABLED` OFF; live customer forms DEFERRED |
+| 5 | Next task / responsible platform | **Owner** merge **31** — **Cursor**; staging DB + migrate deploy — **Owner** |
+| 6 | Open blocker / gate IDs | Staging DB not identified; 28A migrations unverified; intake flag OFF |
 
 ## This session
 
-Batch **30C:** v0 Lead Funnel dashboard cherry-pick (`e4e85b2…`), routes `/dashboard/crm/leads/funnel`, CRM subnav + Lead Inbox handoff, `batch30c` integration tests, operational doc reset (30A merged, 30B v0, proposed Batches 31–38).
+Batch **31:** staging assessment (21C reaffirmed), migration dependency matrix + rehearsal CLI, synthetic pilot workflow, feature readiness matrix, `batch31` tests, continuity reset for PR #81 @ `3a7d011`.
 
 ## PENDING REPOSITORY SYNC
 
-None after 30C PR is opened.
+None after Batch 31 PR is opened.
 
 ## Handoff template
 
 ```
-Date / scope / owner: 2026-10-31 / BATCH-30C lead funnel UI integration + continuity reset / Cursor
-Repo / main SHA: Holagpt-ai/webxxl-website-system / cb8d785d7ca4eb4ac26972a7db69b4a0e65b0b2f
-Branch / PR / head: feature/batch-30c-lead-funnel-ui-integration / PR #81 open / 291ea32a6c65a22fcb4c5155f12d386b9232d793
-Merged / deployed: PR #80 @ cb8d785; Vercel dpl_Fev1t4X7U9EFvzXA7wCZHVUAjiLC READY @ cb8d785
-Migration / flags / activation: batch28a migrations NOT applied; SITE_LEAD_INTAKE_ENABLED OFF; funnel UI does not activate intake
-Next exact assignment / owning tool: Owner merge 30C PR — Owner + Cursor; then proposed Batch 31 staging pilot (owner gate)
-Do NOT touch: production migrations, flag activation, live customer forms, merge without owner
+Date / scope / owner: 2026-10-31 / BATCH-31 controlled staging + pilot foundation / Cursor
+Repo / main SHA: Holagpt-ai/webxxl-website-system / 3a7d011466aeabcf4c2d3bdfe8a669d42e448957
+Branch / PR / head: feature/batch-31-staging-pilot-readiness / PR open / (record after push)
+Merged / deployed: PR #81 @ 3a7d011; Vercel dpl_A6Lx8wv62nsXeGY7mUFcshLhDP89 READY @ 3a7d011
+Migration / flags / activation: NOT applied production; staging migrate BLOCKED pending owner DB
+Next exact assignment / owning tool: Owner merge Batch 31 PR — Owner + Cursor; then staging DB authorization
+Do NOT touch: production migrations, production flags, live customer data, paid infra provisioning
 ```
 
 ## Next assignment
 
-- **Owner + Cursor:** merge Batch **30C** PR after review.
-- **Owner (planning):** prioritize among **proposed** Batches **31–38** in `docs/PROJECT_MEMORY.md` (staging vs commerce vs comms vs release).
+- **Owner + Cursor:** merge Batch **31** PR.
+- **Owner:** authorize isolated staging database + `prisma migrate deploy` + staged flag plan per [`BATCH31-CONTROLLED-STAGING-PILOT.md`](BATCH31-CONTROLLED-STAGING-PILOT.md).

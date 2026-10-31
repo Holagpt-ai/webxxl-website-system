@@ -127,7 +127,8 @@ Next: owner-approved Paperclip staging pilot + Cursor/GitHub scoped integration 
 |---|---|---|
 | **30A + 30A.1** (Cursor) | **MERGED** | [PR #80](https://github.com/Holagpt-ai/webxxl-website-system/pull/80) @ `cb8d785…`; `GET /api/v1/site-leads/funnel-report`; Business Command Center website-lead summary |
 | **30B** (v0.app) | **DELIVERED** | `v0/lead-funnel-30b` @ `e4e85b2af0db01fb76bf23854dbe834bdb3af1a0` |
-| **30C** (Cursor integration) | **IN PR** | `/dashboard/crm/leads/funnel`, CRM subnav, Lead Inbox handoff, `batch30c` tests |
+| **30C** (Cursor integration) | **MERGED** | [PR #81](https://github.com/Holagpt-ai/webxxl-website-system/pull/81) @ `3a7d011…` |
+| **31** (Cursor staging/pilot) | **IN PR** | Migration rehearsal, synthetic pilot workflow, feature matrix — [`BATCH31-CONTROLLED-STAGING-PILOT.md`](../../BATCH31-CONTROLLED-STAGING-PILOT.md) |
 
 Reporting merge is not intake activation, migration apply, or live customer form wiring.
 

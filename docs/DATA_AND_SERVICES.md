@@ -18,7 +18,8 @@ Specifications: [`03-DATA-MODEL`](platform/docs/03-DATA-MODEL.md), [`04-API-INTE
 | Managed-site lead intake | `lib/platform/site-leads/**`, `/api/v1/site-leads/**` | Signed site intake + CRM qualification inbox + funnel report | MERGED 28A–30A.1 @ `cb8d785` | `SITE_LEAD_INTAKE_ENABLED` default OFF; migrations in Git only |
 | Managed-site form connector | `lib/platform/site-leads/connector/**` | Server-side HMAC submit to intake | MERGED 29A/29A.1 @ `3905994` | No customer site wiring |
 | Lead funnel reporting (30A) | `lib/platform/site-leads/funnel-*`, `GET /api/v1/site-leads/funnel-report`, CRM slice in business overview | Read-only `ManagedSiteLead` aggregates | MERGED Batch 30A @ `cb8d785` | Reporting does not require intake activation |
-| Lead funnel dashboard UI (30C) | `components/crm/lead-funnel-*`, `lib/crm-ui/lead-funnel.ts`, `/dashboard/crm/leads/funnel` | Customer CRM funnel charts wired to 30A API | IN PR Batch 30C | UI only; not production acceptance |
+| Lead funnel dashboard UI (30C) | `components/crm/lead-funnel-*`, `lib/crm-ui/lead-funnel.ts`, `/dashboard/crm/leads/funnel` | Customer CRM funnel charts wired to 30A API | MERGED Batch 30C @ `3a7d011` | UI only; not production acceptance |
+| Controlled staging / pilot readiness (31) | `lib/platform/pilot/*`, `scripts/migration-rehearsal.ts`, `scripts/synthetic-customer-pilot-report.ts` | Migration matrix, staging assess, synthetic workflow | IN PR Batch 31 | No staging DB provisioned |
 
 ## Analytics flags on this source tree
 

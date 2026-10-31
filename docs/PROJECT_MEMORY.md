@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `cb8d785d7ca4eb4ac26972a7db69b4a0e65b0b2f` (PR #80)
+**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `3a7d011466aeabcf4c2d3bdfe8a669d42e448957` (PR #81)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,12 +35,12 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **30A/30A.1** **MERGED** (PR #80 @ `cb8d785…`); **30B** v0 **DELIVERED**; **30C** Lead Funnel UI integration **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `cb8d785d7ca4eb4ac26972a7db69b4a0e65b0b2f` on `main`; **PR #81** head `291ea32…` on `feature/batch-30c-lead-funnel-ui-integration` (open) |
-| 3 | Production deployment | Vercel **`dpl_Fev1t4X7U9EFvzXA7wCZHVUAjiLC` READY** @ `cb8d785`. SHA only — not migration or activation |
+| 1 | Last verified checkpoint | **30C** **MERGED** (PR #81 @ `3a7d011…`); **Batch 31** staging/pilot readiness **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `3a7d011466aeabcf4c2d3bdfe8a669d42e448957` on `main`; **Batch 31** on `feature/batch-31-staging-pilot-readiness` (open PR) |
+| 3 | Production deployment | Vercel **`dpl_A6Lx8wv62nsXeGY7mUFcshLhDP89` READY** @ `3a7d011`. SHA only — not migration or activation |
 | 4 | Last updated | 2026-10-31 |
-| 5 | Next task / responsible platform | **Owner** review/merge **30C** PR (**Cursor**) |
-| 6 | Open blocker / gate IDs | `SITE_LEAD_INTAKE_ENABLED` OFF; batch28a migrations UNVERIFIED/unapplied; live customer forms DEFERRED |
+| 5 | Next task / responsible platform | **Owner** review/merge **31** PR; then authorize **staging DB + migrate deploy** (**Owner**) |
+| 6 | Open blocker / gate IDs | Isolated staging DB **NOT IDENTIFIED**; batch28a migrations UNVERIFIED/unapplied; `SITE_LEAD_INTAKE_ENABLED` OFF; live customer forms DEFERRED |
 
 ### Evidence table
 
@@ -110,7 +110,9 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 30A + 30A.1 Lead funnel reporting & Business Command Center integration | MERGED | [PR #80](https://github.com/Holagpt-ai/webxxl-website-system/pull/80), `cb8d785d7ca4eb4ac26972a7db69b4a0e65b0b2f`. [`BATCH30A-LEAD-FUNNEL-REPORTING-API-CONTRACT.md`](platform/docs/BATCH30A-LEAD-FUNNEL-REPORTING-API-CONTRACT.md) |
 | Vercel production SHA (2026-10-31, PR #80) | DEPLOYED | Vercel `dpl_Fev1t4X7U9EFvzXA7wCZHVUAjiLC` **READY** @ `cb8d785d7ca4eb4ac26972a7db69b4a0e65b0b2f`. SHA only |
 | Batch 30B Lead Funnel dashboard UI (v0) | DELIVERED | `v0/lead-funnel-30b` @ `e4e85b2af0db01fb76bf23854dbe834bdb3af1a0` |
-| Batch 30C Lead Funnel UI integration | IN PR | Cherry-pick `e4e85b2…` + CRM nav + Lead Inbox handoff + regression tests |
+| Batch 30C Lead Funnel UI integration | MERGED | [PR #81](https://github.com/Holagpt-ai/webxxl-website-system/pull/81), `3a7d011466aeabcf4c2d3bdfe8a669d42e448957`, v0 @ `e4e85b2…` |
+| Vercel production SHA (2026-10-31, PR #81) | DEPLOYED | Vercel `dpl_A6Lx8wv62nsXeGY7mUFcshLhDP89` **READY** @ `3a7d011466aeabcf4c2d3bdfe8a669d42e448957`. SHA only |
+| Batch 31 Controlled staging + synthetic pilot foundation | IN PR | [`BATCH31-CONTROLLED-STAGING-PILOT.md`](BATCH31-CONTROLLED-STAGING-PILOT.md), migration rehearsal + feature matrix |
 | Vercel production SHA (2026-10-31, PR #79) | DEPLOYED | Vercel `dpl_AQ2v84aWrtDkogkczTeuMM24CHc9` **READY** @ `3905994ebbb8c4b423481c961a65e938dfc76a59`. Superseded by PR #80 row |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
