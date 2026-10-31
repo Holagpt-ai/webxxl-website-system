@@ -3,6 +3,7 @@ export const BUSINESS_DESTINATIONS = {
   crmTasks: '/dashboard/crm/tasks',
   crmPipeline: '/dashboard/crm/pipeline',
   crmMerges: '/dashboard/crm/merges',
+  crmLeads: '/dashboard/crm/leads',
   crmContact: (contactId: string) => `/dashboard/crm/contacts/${encodeURIComponent(contactId)}`,
   marketingRequests: '/dashboard/marketing/requests',
   marketingRequest: (requestId: string) => `/dashboard/marketing/requests/${encodeURIComponent(requestId)}`,

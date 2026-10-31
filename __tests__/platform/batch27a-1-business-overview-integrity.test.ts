@@ -15,6 +15,16 @@ const portal: PortalUser = {
   customerAccount: { id: 'acct_a', businessName: 'A Co' } as PortalUser['customerAccount'],
 } as PortalUser
 
+vi.mock('@/lib/platform/site-leads/overview-leads', () => ({
+  loadWebsiteLeadOverviewAttachment: vi.fn(async () => ({
+    summaryMetrics: {},
+    actions: [],
+    reporting: {
+      readiness: { state: 'unavailable', reasonCode: 'TEST_SKIP', message: 'Lead reporting not under test in 27A.1' },
+    },
+  })),
+}))
+
 vi.mock('@/lib/platform/business-overview/access', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/platform/business-overview/access')>()
   return {

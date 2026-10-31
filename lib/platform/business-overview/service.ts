@@ -23,6 +23,7 @@ import {
 import { BUSINESS_DESTINATIONS } from '@/lib/platform/business-overview/destinations'
 import { compareActionPriority, priorityFromDueDate, priorityFromSeoScore } from '@/lib/platform/business-overview/priority'
 import { accountTotal, boundedSample, sumAccountTotals } from '@/lib/platform/business-overview/summary'
+import { loadWebsiteLeadOverviewAttachment } from '@/lib/platform/site-leads/overview-leads'
 import type {
   BusinessOverviewAction,
   BusinessOverviewModule,
@@ -134,11 +135,18 @@ async function collectCrm(
       openDealsSample: boundedSample(deals.length),
       pendingMergesSample: boundedSample(pendingMerges.length),
     }
+
+    const websiteLeads = await loadWebsiteLeadOverviewAttachment({
+      customerAccountId: accountId,
+      checkedAt,
+    })
+
     return {
       module: 'crm',
       readiness: availableReadiness(checkedAt, sumAccountTotals(summary)),
-      summary,
-      actions,
+      summary: { ...summary, ...websiteLeads.summaryMetrics },
+      websiteLeadReporting: websiteLeads.reporting,
+      actions: [...actions, ...websiteLeads.actions],
     }
   } catch (error) {
     if (isPrismaMissingTableError(error)) {

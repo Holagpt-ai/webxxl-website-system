@@ -41,6 +41,7 @@ All require dashboard session, OPEN-001 subscriber eligibility for `core.crm`, a
 |---|---|---|---|
 | GET | `/api/v1/site-leads` | `crm.read` | Inbox list; filters: `managedSiteId`, `status` (comma-separated), `createdFrom`, `createdTo`, `cursor`, `take`. Cursor is base64url `{createdAt ISO}|{leadId}` aligned with `(createdAt DESC, id DESC)`; foreign/malformed cursors return `VALIDATION`. |
 | GET | `/api/v1/site-leads/summary` | `crm.read` | Account-scoped counts `{ summary: { [key]: { value, scope } }, attribution }` |
+| GET | `/api/v1/site-leads/funnel-report` | `crm.read` | Date-range funnel report — [`BATCH30A-LEAD-FUNNEL-REPORTING-API-CONTRACT.md`](BATCH30A-LEAD-FUNNEL-REPORTING-API-CONTRACT.md) |
 | GET | `/api/v1/site-leads/[id]` | `crm.read` | Lead detail |
 | POST | `/api/v1/site-leads/[id]/pending-review` | `crm.write` | `PENDING_REVIEW` |
 | POST | `/api/v1/site-leads/[id]/qualify` | `crm.write` | `QUALIFIED` |

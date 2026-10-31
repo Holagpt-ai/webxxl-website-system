@@ -28,6 +28,8 @@ export type BusinessActionType =
   | 'crm.task.open'
   | 'crm.deal.open'
   | 'crm.merge.pending'
+  | 'crm.website_lead.awaiting_review'
+  | 'crm.website_lead.duplicate_review'
   | 'marketing.request.draft'
   | 'marketing.review.pending'
   | 'marketing.artifact.prepared'
@@ -72,6 +74,11 @@ export type BusinessOverviewModuleSnapshot = {
   readiness: BusinessModuleReadiness
   /** Present only when `readiness.state === 'available'`. */
   summary?: Record<string, BusinessSummaryMetric>
+  /** Batch 30A — managed-site lead funnel reporting attached to CRM (independent readiness). */
+  websiteLeadReporting?: {
+    readiness: BusinessModuleReadiness
+    summary?: Record<string, BusinessSummaryMetric>
+  }
 }
 
 export type BusinessOverviewResponse = {
