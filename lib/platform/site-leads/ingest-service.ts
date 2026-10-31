@@ -36,6 +36,14 @@ async function replayExistingLead(
   ) {
     return { ok: false, code: 'CONFLICT', message: 'Idempotency key conflict', status: 409 }
   }
+  if (!existing.intakePayloadFingerprint.trim()) {
+    return {
+      ok: false,
+      code: 'CONFLICT',
+      message: 'Idempotency record missing payload fingerprint',
+      status: 409,
+    }
+  }
   if (existing.intakePayloadFingerprint !== intakePayloadFingerprint) {
     return {
       ok: false,

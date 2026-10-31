@@ -52,6 +52,33 @@ describe('Batch 28A.2 intake payload idempotency', () => {
     vi.mocked(prisma.managedSite.findFirst).mockResolvedValue({ id: 'site_a', domain: 'example.com' } as never)
   })
 
+  it('does not treat legacy rows with empty payload fingerprint as verified replays', async () => {
+    const body = { contactEmail: 'lead@example.com' }
+    const { rawBody, ts, sig, parsed } = signedBody(body)
+    vi.mocked(prisma.managedSiteLead.findUnique).mockResolvedValue({
+      id: 'lead_legacy',
+      status: 'RECEIVED',
+      customerAccountId: 'acct_a',
+      managedSiteId: 'site_a',
+      intakePayloadFingerprint: '',
+    } as never)
+
+    const result = await ingestManagedSiteLead({
+      publicKeyId: 'site_key_1',
+      idempotencyKeyHeader: 'idem-legacy',
+      signatureHeader: sig,
+      timestampHeader: String(ts),
+      rawBody,
+      parsed,
+    })
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.code).toBe('CONFLICT')
+      expect(result.message).toContain('payload fingerprint')
+    }
+  })
+
   it('returns the existing lead when idempotency key and raw payload match', async () => {
     const body = { contactEmail: 'lead@example.com', message: 'Hello' }
     const { rawBody, ts, sig, parsed } = signedBody(body)

@@ -27,7 +27,7 @@ Body (JSON):
 
 Success: `{ ok: true, leadId, status, duplicate }` — `201` new, `200` idempotent replay.
 
-**Idempotency (28A.2):** replay after auth requires the same signed `rawBody` as the original submission (stored server-side as SHA-256 `intakePayloadFingerprint`). Same `x-idempotency-key` with a changed body returns **409**. Business duplicate detection uses a separate `submissionFingerprint` (account/site/contact/form) and is independent of the idempotency key.
+**Idempotency (28A.2):** replay after auth requires the same signed `rawBody` as the original submission (stored server-side as SHA-256 `intakePayloadFingerprint`). Same `x-idempotency-key` with a changed body returns **409**. Rows without a stored payload fingerprint (legacy pre-28A.2) are not eligible for verified replay and return **409**. Business duplicate detection uses a separate `submissionFingerprint` (account/site/contact/form) and is independent of the idempotency key.
 
 Secrets resolve from `secretRef` env pointer or `SITE_LEAD_INTAKE_SECRET_{publicKeyId}` — **never** exposed to browser JavaScript.
 

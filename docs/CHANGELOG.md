@@ -56,6 +56,7 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-10-31 | Batch 27A.2 overview integrity recovery | [PR #73](https://github.com/Holagpt-ai/webxxl-website-system/pull/73), `ccbca6b0eef330d75a77cc9ae3af6adadb806309` | MERGED. Bounded counts, module source failures, contract `{ value, scope }`. Not activation |
 | 2026-10-31 | Batch 27B Business Command Center UI (v0) | `v0/business-command-center-27b` @ `25220431bf713ccd1bf10dfc3b5260b466c412bd` | DELIVERED to v0 branch |
 | 2026-10-31 | Batch 27C Business Command Center UI integration | [PR #74](https://github.com/Holagpt-ai/webxxl-website-system/pull/74), `828ac12e9968f84bd8e1bc42f44ba941c9551194` | MERGED. v0 @ `25220431`. Not activation |
-| 2026-10-31 | Batch 28A Managed-site lead intake & CRM qualification | Branch `feature/batch-28a-managed-site-leads` | IN PR. Migration in source only. Not activation |
+| 2026-10-31 | Batch 28A Managed-site lead intake & CRM qualification | [PR #75](https://github.com/Holagpt-ai/webxxl-website-system/pull/75), `276ad9771b128dee0239b4a77e2d73e298f5d81a` | MERGED (28A + 28A.1). Migration in source only. Not activation |
+| 2026-10-31 | Batch 28A.2 Intake payload idempotency (recovery 28A.3) | Cherry-pick `496f412…` | IN PR. Adds `intakePayloadFingerprint` + migration `20261031140000_batch28a_2_intake_payload_fingerprint`. Not activation |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
