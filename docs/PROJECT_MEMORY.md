@@ -36,7 +36,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | Batch **28A** + **28A.1** **MERGED** (PR #75 @ `276ad97…`); **28A.2** payload idempotency **recovery IN PR** |
-| 2 | GitHub SHA, branch, active PR | `276ad9771b128dee0239b4a77e2d73e298f5d81a` on `main`; `feature/batch-28a-3-recover-payload-idempotency` — open recovery PR pending |
+| 2 | GitHub SHA, branch, active PR | `276ad9771b128dee0239b4a77e2d73e298f5d81a` on `main`; **PR #76** head `585e3d1eee9021b5bc4c00a005bd277e47f79a51` (open) |
 | 3 | Production deployment | GitHub Production deployment **success** @ `276ad97` (2026-10-31). SHA only — not migration or activation |
 | 4 | Last updated | 2026-10-31 |
 | 5 | Next task / responsible platform | **Owner** merge **28A.3** recovery PR (**Cursor**); then **v0.app** Lead Inbox UI |
@@ -102,7 +102,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Vercel production SHA (2026-10-31, PR #74) | DEPLOYED | Vercel `dpl_5AuKd2RyiUqAgoNGr4XLSBS6rtj5` **READY** @ `828ac12e9968f84bd8e1bc42f44ba941c9551194`. SHA only |
 | Batch 28A Managed-site lead intake & CRM qualification | MERGED | [PR #75](https://github.com/Holagpt-ai/webxxl-website-system/pull/75), `276ad9771b128dee0239b4a77e2d73e298f5d81a`. Branch tip pre-merge `7e9b127…`. Migration `20261031120000_batch28a_managed_site_leads` in Git only |
 | Batch 28A.1 Intake integrity (auth, pagination, lifecycle, dedupe) | MERGED | Included in PR #75 merge @ `276ad97…` |
-| Batch 28A.2 Intake payload idempotency fingerprint | IN PR (recovery) | Cherry-pick of `496f412…` on `feature/batch-28a-3-recover-payload-idempotency`; migration `20261031140000_batch28a_2_intake_payload_fingerprint` (Git only) |
+| Batch 28A.2 Intake payload idempotency fingerprint | IN PR (recovery) | [PR #76](https://github.com/Holagpt-ai/webxxl-website-system/pull/76); cherry-pick `496f412…` + 28A.3 legacy guard; migration `20261031140000_batch28a_2_intake_payload_fingerprint` (Git only) |
 | Vercel production SHA (2026-10-31, PR #75) | DEPLOYED | GitHub deployment Production success @ `276ad9771b128dee0239b4a77e2d73e298f5d81a`. SHA only |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 

@@ -7,7 +7,7 @@
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | **28A** + **28A.1** merged on `main`; **28A.2** payload idempotency recovery **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `276ad9771b128dee0239b4a77e2d73e298f5d81a` on `main`; recovery branch open (see handoff template) |
+| 2 | GitHub SHA, branch, active PR | `276ad9771b128dee0239b4a77e2d73e298f5d81a` on `main`; **PR #76** head `585e3d1eee9021b5bc4c00a005bd277e47f79a51` (open) |
 | 3 | Production deployment | Production deploy @ `276ad97` (GitHub). SHA only — not migration or activation |
 | 4 | Last updated | 2026-10-31 |
 | 5 | Next task / responsible platform | **Owner** merge **28A.3** recovery PR — **Cursor** |
@@ -26,7 +26,7 @@ None after recovery PR is pushed.
 ```
 Date / scope / owner: 2026-10-31 / BATCH-28A.3 recover 28A.2 payload idempotency / Cursor
 Repo / main SHA: Holagpt-ai/webxxl-website-system / 276ad9771b128dee0239b4a77e2d73e298f5d81a
-Branch / PR: feature/batch-28a-3-recover-payload-idempotency / open recovery PR (unmerged)
+Branch / PR / head: feature/batch-28a-3-recover-payload-idempotency / PR #76 open / 585e3d1eee9021b5bc4c00a005bd277e47f79a51
 Merged / deployed: PR #75 merged @ 276ad97; production GitHub deploy @ 276ad97 (SHA only)
 Migration / flags / activation: batch28a + batch28a_2 migrations NOT applied; SITE_LEAD_INTAKE_ENABLED OFF
 Next exact assignment / owning tool: Owner merge 28A.3 recovery PR — Owner + Cursor
