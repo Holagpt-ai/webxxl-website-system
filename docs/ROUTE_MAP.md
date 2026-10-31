@@ -38,7 +38,9 @@ All of these exist as `app/[locale]/dashboard/**/page.tsx`. They are authenticat
 
 **Batch 25 + 25.1 CRM audience planning APIs (MERGED PR #69, PR #70):** `GET /api/v1/marketing/crm-segments`, `POST /api/v1/marketing/crm-segments/[segmentId]/audience-preview`; `POST /api/v1/marketing/requests` accepts `crmSegmentId` with `CAMPAIGN_PREPARATION`. Contract: [`docs/platform/docs/MKT-25-CRM-AUDIENCE-PLANNING-API-CONTRACT.md`](platform/docs/MKT-25-CRM-AUDIENCE-PLANNING-API-CONTRACT.md).
 
-**Batch 26B CRM audience planning UI (ON BRANCH, PR #71):** Marketing Studio **Requests** and **Request detail** wire segment list, audience preview, and segment-linked `CAMPAIGN_PREPARATION` drafts (v0 Batch 26A @ `110c071c05912f5eb6237ebecea23dc4fd9a4520`). Manual description and SEO opportunity flows unchanged.
+**Batch 26B CRM audience planning UI (MERGED PR #71):** Marketing Studio **Requests** and **Request detail** wire segment list, audience preview, and segment-linked `CAMPAIGN_PREPARATION` drafts (v0 Batch 26A @ `110c071c`).
+
+**Batch 27A Business Command Center backend (ON BRANCH):** `GET /api/v1/business/overview` — read-only cross-module action summary. Contract: [`docs/platform/docs/BATCH27A-BUSINESS-COMMAND-CENTER-API-CONTRACT.md`](platform/docs/BATCH27A-BUSINESS-COMMAND-CENTER-API-CONTRACT.md). Does not replace `/dashboard` project Action Center.
 
 **Batch 20C communications workspace (MERGED PR #62):** `/dashboard/communications`, `/dashboard/communications/conversations/[id]`, `/dashboard/communications/connections` (v0 Batch 20B UI + Cursor nav). Project messaging remains `/dashboard/messages`.
 
@@ -59,6 +61,7 @@ Route handlers under `app/api`, MERGED, not indexed:
 | Analytics | `/api/v1/analytics/accounts/[accountId]/{overview,properties,traffic,search,local,conversions,trends,sync-status}` |
 | Commerce and wallet | `/api/v1/commerce/*`, `/api/v1/admin/commerce/*`, `/api/v1/billing-groups/*`, `/api/v1/wallet/*` |
 | CRM, marketing, social, SEO | `/api/v1/crm/*`, `/api/v1/marketing/*`, `/api/v1/social/*`, `/api/v1/seo/*` |
+| Business overview (Batch 27A) | `/api/v1/business/overview` |
 
 Batch 18A Marketing extensions (backend; UI in Batch 18B): `GET /api/v1/marketing/artifacts` (account-wide list, cursor pagination), `GET /api/v1/marketing/reviews` (approval inbox). Existing per-request artifact and decide routes unchanged.
 
