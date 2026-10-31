@@ -2,6 +2,7 @@ import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { isSiteLeadIntakeEnabled, SITE_LEAD_INTAKE_DUPLICATE_WINDOW_MS } from '@/config/site-lead-intake'
 import { buildSiteLeadSubmissionFingerprint } from '@/lib/platform/site-leads/fingerprint'
+import { buildSiteLeadIntakePayloadFingerprint } from '@/lib/platform/site-leads/payload-fingerprint'
 import { authenticateSiteLeadIntakeRequest } from '@/lib/platform/site-leads/intake-auth'
 import { checkSiteLeadIntakeRateLimit } from '@/lib/platform/site-leads/rate-limit'
 import { validateSiteLeadIntakePayload, type SiteLeadIntakeBody } from '@/lib/platform/site-leads/validate-payload'
@@ -15,7 +16,7 @@ const existingLeadSelect = {
   status: true,
   customerAccountId: true,
   managedSiteId: true,
-  submissionFingerprint: true,
+  intakePayloadFingerprint: true,
 } as const
 
 async function replayExistingLead(
@@ -24,10 +25,10 @@ async function replayExistingLead(
     status: string
     customerAccountId: string
     managedSiteId: string
-    submissionFingerprint: string
+    intakePayloadFingerprint: string
   },
   ctx: { customerAccountId: string; managedSiteId: string },
-  submissionFingerprint: string,
+  intakePayloadFingerprint: string,
 ): Promise<SiteLeadIngestResult> {
   if (
     existing.customerAccountId !== ctx.customerAccountId ||
@@ -35,7 +36,7 @@ async function replayExistingLead(
   ) {
     return { ok: false, code: 'CONFLICT', message: 'Idempotency key conflict', status: 409 }
   }
-  if (existing.submissionFingerprint !== submissionFingerprint) {
+  if (existing.intakePayloadFingerprint !== intakePayloadFingerprint) {
     return {
       ok: false,
       code: 'CONFLICT',
@@ -87,6 +88,7 @@ export async function ingestManagedSiteLead(input: {
     return { ok: false, code: validated.code, message: validated.message, status }
   }
 
+  const intakePayloadFingerprint = buildSiteLeadIntakePayloadFingerprint(input.rawBody)
   const submissionFingerprint = buildSiteLeadSubmissionFingerprint({
     customerAccountId: ctx.customerAccountId,
     managedSiteId: ctx.managedSiteId,
@@ -105,7 +107,7 @@ export async function ingestManagedSiteLead(input: {
     select: existingLeadSelect,
   })
   if (existing) {
-    return replayExistingLead(existing, ctx, submissionFingerprint)
+    return replayExistingLead(existing, ctx, intakePayloadFingerprint)
   }
 
   const since = new Date(Date.now() - SITE_LEAD_INTAKE_DUPLICATE_WINDOW_MS)
@@ -141,6 +143,7 @@ export async function ingestManagedSiteLead(input: {
         payload: validated.value.payload as Prisma.InputJsonValue,
         idempotencyKey,
         submissionFingerprint,
+        intakePayloadFingerprint,
         sourceAttribution: validated.value.sourceAttribution
           ? ({
               ...validated.value.sourceAttribution,
@@ -160,7 +163,7 @@ export async function ingestManagedSiteLead(input: {
         select: existingLeadSelect,
       })
       if (raced) {
-        return replayExistingLead(raced, ctx, submissionFingerprint)
+        return replayExistingLead(raced, ctx, intakePayloadFingerprint)
       }
     }
     throw error

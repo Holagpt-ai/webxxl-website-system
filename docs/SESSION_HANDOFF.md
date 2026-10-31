@@ -1,12 +1,12 @@
 # Session Handoff
 
-**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 28A.1)
+**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 28A.2)
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | Batch **28A** managed-site leads **IN PR #75**; **28A.1** integrity push on same PR |
+| 1 | Last verified checkpoint | Batch **28A** + **28A.1** + **28A.2** on **PR #75** (payload idempotency fingerprint) |
 | 2 | GitHub SHA, branch, active PR | `828ac12e9968f84bd8e1bc42f44ba941c9551194` on `main`; **PR #75** head `756b00956fc1f8f4c5897839f6683570a4638222` on `feature/batch-28a-managed-site-leads` (open) |
 | 3 | Production deployment | Vercel **`dpl_5AuKd2RyiUqAgoNGr4XLSBS6rtj5` READY** @ `828ac12` |
 | 4 | Last updated | 2026-10-31 |

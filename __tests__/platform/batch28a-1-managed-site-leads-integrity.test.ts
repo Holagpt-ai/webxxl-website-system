@@ -2,6 +2,7 @@ import { createHmac } from 'node:crypto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { hashSiteLeadIntakeSecret } from '@/lib/platform/site-leads/signature-auth'
 import { buildSiteLeadSubmissionFingerprint } from '@/lib/platform/site-leads/fingerprint'
+import { buildSiteLeadIntakePayloadFingerprint } from '@/lib/platform/site-leads/payload-fingerprint'
 import { encodeSiteLeadListCursor } from '@/lib/platform/site-leads/cursor'
 const credential = {
   id: 'cred_1',
@@ -79,19 +80,14 @@ describe('Batch 28A.1 managed-site lead integrity', () => {
   })
 
   it('rejects replay for existing idempotency key when HMAC is invalid', async () => {
-    const fp = buildSiteLeadSubmissionFingerprint({
-      customerAccountId: 'acct_a',
-      managedSiteId: 'site_a',
-      normalizedEmail: 'lead@example.com',
-      normalizedPhone: null,
-      formReference: null,
-    })
     vi.mocked(prisma.managedSiteLead.findUnique).mockResolvedValue({
       id: 'lead_existing',
       status: 'RECEIVED',
       customerAccountId: 'acct_a',
       managedSiteId: 'site_a',
-      submissionFingerprint: fp,
+      intakePayloadFingerprint: buildSiteLeadIntakePayloadFingerprint(
+        JSON.stringify({ contactEmail: 'lead@example.com' }),
+      ),
     } as never)
     const { rawBody, ts, parsed } = signedBody({ contactEmail: 'lead@example.com' })
     const result = await ingestManagedSiteLead({
@@ -126,13 +122,15 @@ describe('Batch 28A.1 managed-site lead integrity', () => {
   })
 
   it('conflicts when the same idempotency key is reused with different content', async () => {
-    const { rawBody, ts, sig, parsed } = signedBody({ contactEmail: 'other@example.com' })
+    const { rawBody, ts, sig, parsed } = signedBody({ contactEmail: 'lead@example.com', message: 'new' })
     vi.mocked(prisma.managedSiteLead.findUnique).mockResolvedValue({
       id: 'lead_existing',
       status: 'RECEIVED',
       customerAccountId: 'acct_a',
       managedSiteId: 'site_a',
-      submissionFingerprint: 'different-fingerprint',
+      intakePayloadFingerprint: buildSiteLeadIntakePayloadFingerprint(
+        JSON.stringify({ contactEmail: 'lead@example.com', message: 'original' }),
+      ),
     } as never)
     const result = await ingestManagedSiteLead({
       publicKeyId: 'site_key_1',
@@ -147,13 +145,8 @@ describe('Batch 28A.1 managed-site lead integrity', () => {
   })
 
   it('handles concurrent same-key submission via unique constraint replay', async () => {
-    const fp = buildSiteLeadSubmissionFingerprint({
-      customerAccountId: 'acct_a',
-      managedSiteId: 'site_a',
-      normalizedEmail: 'lead@example.com',
-      normalizedPhone: null,
-      formReference: null,
-    })
+    const { rawBody, ts, sig, parsed } = signedBody({ contactEmail: 'lead@example.com' })
+    const payloadFp = buildSiteLeadIntakePayloadFingerprint(rawBody)
     vi.mocked(prisma.managedSiteLead.findUnique)
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({
@@ -161,11 +154,10 @@ describe('Batch 28A.1 managed-site lead integrity', () => {
         status: 'RECEIVED',
         customerAccountId: 'acct_a',
         managedSiteId: 'site_a',
-        submissionFingerprint: fp,
+        intakePayloadFingerprint: payloadFp,
       } as never)
     vi.mocked(prisma.managedSiteLead.findFirst).mockResolvedValue(null)
     vi.mocked(prisma.managedSiteLead.create).mockRejectedValue({ code: 'P2002' })
-    const { rawBody, ts, sig, parsed } = signedBody({ contactEmail: 'lead@example.com' })
     const result = await ingestManagedSiteLead({
       publicKeyId: 'site_key_1',
       idempotencyKeyHeader: 'idem-race',
