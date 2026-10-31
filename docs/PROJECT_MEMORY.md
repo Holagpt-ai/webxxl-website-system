@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `3a7d011466aeabcf4c2d3bdfe8a669d42e448957` (PR #81)
+**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `93e3010d097b3e08fa47be9492c57ed3999d2f03` (PR #82)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,11 +35,11 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **30C** **MERGED** (PR #81 @ `3a7d011…`); **Batch 31** staging/pilot readiness **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `3a7d011466aeabcf4c2d3bdfe8a669d42e448957` on `main`; **PR #82** head `be67ce2…` on `feature/batch-31-staging-pilot-readiness` (open) |
-| 3 | Production deployment | Vercel **`dpl_A6Lx8wv62nsXeGY7mUFcshLhDP89` READY** @ `3a7d011`. SHA only — not migration or activation |
+| 1 | Last verified checkpoint | **31 + 31.1** **MERGED** (PR #82 @ `93e3010…`); **Batch 32 + 32.1** (late-capture safety) commerce/wallet integrity **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `93e3010d097b3e08fa47be9492c57ed3999d2f03` on `main`; **PR #83** head `1994eda…` on `feature/batch-32-commerce-wallet-fulfillment` (open) |
+| 3 | Production deployment | Vercel **`dpl_4Xwi3GRLzY3KTB9yicg9ef1iheW9` READY** @ `93e3010`. SHA only — not migration, commerce activation, or verified payments |
 | 4 | Last updated | 2026-10-31 |
-| 5 | Next task / responsible platform | **Owner** review/merge **31** PR; then authorize **staging DB + migrate deploy** (**Owner**) |
+| 5 | Next task / responsible platform | **Owner** review/merge **Batch 32** PR (**Cursor**); staging DB + migrate deploy remains **Owner** after 31 merge |
 | 6 | Open blocker / gate IDs | Isolated staging DB **NOT IDENTIFIED**; batch28a migrations UNVERIFIED/unapplied; `SITE_LEAD_INTAKE_ENABLED` OFF; live customer forms DEFERRED |
 
 ### Evidence table
@@ -112,7 +112,8 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 30B Lead Funnel dashboard UI (v0) | DELIVERED | `v0/lead-funnel-30b` @ `e4e85b2af0db01fb76bf23854dbe834bdb3af1a0` |
 | Batch 30C Lead Funnel UI integration | MERGED | [PR #81](https://github.com/Holagpt-ai/webxxl-website-system/pull/81), `3a7d011466aeabcf4c2d3bdfe8a669d42e448957`, v0 @ `e4e85b2…` |
 | Vercel production SHA (2026-10-31, PR #81) | DEPLOYED | Vercel `dpl_A6Lx8wv62nsXeGY7mUFcshLhDP89` **READY** @ `3a7d011466aeabcf4c2d3bdfe8a669d42e448957`. SHA only |
-| Batch 31 Controlled staging + synthetic pilot foundation | IN PR | [`BATCH31-CONTROLLED-STAGING-PILOT.md`](BATCH31-CONTROLLED-STAGING-PILOT.md), migration rehearsal + feature matrix |
+| Batch 31 + 31.1 Controlled staging + synthetic pilot foundation | MERGED | [PR #82](https://github.com/Holagpt-ai/webxxl-website-system/pull/82), `93e3010d097b3e08fa47be9492c57ed3999d2f03`, [`BATCH31-CONTROLLED-STAGING-PILOT.md`](BATCH31-CONTROLLED-STAGING-PILOT.md) |
+| Batch 32 Commerce, wallet & fulfillment integrity V1 | IN PR | [`BATCH32-COMMERCE-WALLET-INTEGRITY.md`](platform/docs/BATCH32-COMMERCE-WALLET-INTEGRITY.md), reconciliation report API |
 | Vercel production SHA (2026-10-31, PR #79) | DEPLOYED | Vercel `dpl_AQ2v84aWrtDkogkczTeuMM24CHc9` **READY** @ `3905994ebbb8c4b423481c961a65e938dfc76a59`. Superseded by PR #80 row |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 

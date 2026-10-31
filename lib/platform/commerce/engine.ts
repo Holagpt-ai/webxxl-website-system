@@ -6,6 +6,7 @@ import {
   isCommerceWebhookProcessingEnabled,
 } from '@/config/commerce-backend'
 import { COMMERCE_CATALOG_SKELETON } from '@/lib/platform/commerce/catalog'
+import { assertFulfillmentDoesNotDebitWallet, assertPurchaseInstrumentAllowed } from '@/lib/platform/commerce/financial-boundaries'
 import { getBillingProvider } from '@/lib/platform/commerce/providers'
 import { canTransitionOrder, canTransitionPayment, canTransitionSubscription } from '@/lib/platform/commerce/state'
 import type { CommerceStore } from '@/lib/platform/commerce/store'
@@ -303,6 +304,8 @@ async function resolveQuote(store: CommerceStore, input: QuoteInput): Promise<
   if (!product) return { ok: false, error: 'PRICE_UNAVAILABLE' }
   const allowed = sellable(product)
   if (!allowed.ok) return allowed
+  const instrument = assertPurchaseInstrumentAllowed(product)
+  if (!instrument.ok) return instrument
   if (product.kind === 'MESSAGING_CREDITS' && input.quantity !== 1) return { ok: false, error: 'VALIDATION' }
   if (product.creditEligible && (!price.creditAmount || price.creditAmount <= 0)) return { ok: false, error: 'PRICE_UNAVAILABLE' }
   const payer = await authorizePayer(
@@ -572,6 +575,9 @@ export async function rejectBrowserPaymentConfirmation(): Promise<CommerceResult
   return { ok: false, error: 'REDIRECT_NOT_CONFIRMATION', message: 'Browser return is not payment confirmation' }
 }
 
+export { cancelUnpaidOrder } from '@/lib/platform/commerce/lifecycle'
+export { buildCommerceReconciliationReport } from '@/lib/platform/commerce/reconciliation-report'
+
 async function authorizeOrderRead(store: CommerceStore, actor: CommerceActor, order: OrderRecord): Promise<boolean> {
   if (isStaff(actor)) return true
   const role = await store.findBillingRole(order.billingGroupId, actor.userId)
@@ -671,6 +677,8 @@ export async function executeFulfillment(
   if (!item) return { ok: false, error: 'VALIDATION' }
   const product = await store.findProduct(item.productId)
   if (!product) return { ok: false, error: 'PRICE_UNAVAILABLE' }
+  const walletBoundary = assertFulfillmentDoesNotDebitWallet(product, false)
+  if (!walletBoundary.ok) return walletBoundary
   const now = new Date()
   let fulfillment = existingFulfillment
   const kind = product.creditEligible ? 'CREDIT' : 'SERVICE'
@@ -1007,15 +1015,47 @@ export async function ingestPaymentWebhook(
       await store.saveWebhook(webhook)
       return { ok: false, error: 'PRICE_MISMATCH' }
     }
+    const lateCaptureAfterCancel = order.status === 'CANCELLED'
     const applied = await applyPayment('CAPTURED', null)
     if (!applied) return { ok: false, error: 'FORBIDDEN_TRANSITION' }
     if (canTransitionOrder(order.status, 'PAID')) {
       order.status = 'PAID'
-      order.failureCode = null
+      order.failureCode = lateCaptureAfterCancel ? 'LATE_CAPTURE_AFTER_CANCEL' : null
       order.updatedAt = now
       await store.saveOrder(order)
     }
     const items = await store.listItems(order.id)
+
+    if (lateCaptureAfterCancel) {
+      await ensureInvoice(store, order, payment, event.externalInvoiceRef ?? null, null)
+      webhook.processingStatus = 'PROCESSED'
+      webhook.processedAt = now
+      await store.saveWebhook(webhook)
+      await audit(store, {
+        billingGroupId: order.billingGroupId,
+        action: 'LATE_CAPTURE_AFTER_CANCEL',
+        entityType: 'CommerceOrder',
+        entityId: order.id,
+        metadata: {
+          paymentId: payment.id,
+          externalEventId: event.externalEventId,
+          retainedForReconciliation: true,
+          fulfillmentSkipped: true,
+          subscriptionSkipped: true,
+          workflowSkipped: true,
+        },
+      })
+      await audit(store, {
+        billingGroupId: order.billingGroupId,
+        action: 'PAYMENT_CAPTURED',
+        entityType: 'CommercePayment',
+        entityId: payment.id,
+        metadata: { source: 'webhook', browserRedirect: false, lateCaptureAfterCancel: true },
+      })
+      const fresh = await store.findOrder(order.id)
+      return { ok: true, value: { processingStatus: 'PROCESSED', orderStatus: fresh?.status ?? order.status } }
+    }
+
     const subscription = items[0] ? await ensureSubscription(store, order, payment, items[0]) : null
     await ensureInvoice(store, order, payment, event.externalInvoiceRef ?? null, subscription?.id ?? null)
     webhook.processingStatus = 'PROCESSED'
@@ -1071,6 +1111,16 @@ export async function ingestPaymentWebhook(
       order.status = 'REFUNDED'
       order.updatedAt = now
       await store.saveOrder(order)
+    }
+    const fulfillment = await store.findFulfillmentByOrder(order.id)
+    if (fulfillment?.ledgerEntryId) {
+      await audit(store, {
+        billingGroupId: order.billingGroupId,
+        action: 'COMPENSATING_REFUND_REVIEW',
+        entityType: 'CommerceOrder',
+        entityId: order.id,
+        metadata: { ledgerEntryId: fulfillment.ledgerEntryId, walletRefundRequiresActivation: true },
+      })
     }
     webhook.processingStatus = 'PROCESSED'
     webhook.processedAt = now

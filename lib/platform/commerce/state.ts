@@ -7,7 +7,7 @@ const ORDER_EDGES: Record<OrderStatus, OrderStatus[]> = {
   PAID: ['FULFILLMENT_PENDING', 'FULFILLED', 'FULFILLMENT_BLOCKED', 'REFUNDED'],
   FULFILLMENT_PENDING: ['FULFILLED', 'FULFILLMENT_BLOCKED', 'FAILED'],
   FULFILLMENT_BLOCKED: ['FULFILLMENT_PENDING', 'FULFILLED', 'FAILED'],
-  CANCELLED: [],
+  CANCELLED: ['PAID', 'FAILED'],
   REFUNDED: [],
   FAILED: [],
   FULFILLED: ['REFUNDED'],
@@ -20,7 +20,7 @@ const PAYMENT_EDGES: Record<PaymentStatus, PaymentStatus[]> = {
   FAILED: [],
   REFUNDED: [],
   PARTIALLY_REFUNDED: ['REFUNDED'],
-  CANCELLED: [],
+  CANCELLED: ['CAPTURED'],
 }
 
 const SUBSCRIPTION_EDGES: Record<SubscriptionStatus, SubscriptionStatus[]> = {
