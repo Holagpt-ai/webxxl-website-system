@@ -116,13 +116,13 @@ describe('Batch 27A business command center backend', () => {
     }
   })
 
-  it('scopes collectors to customerAccountId in service source', () => {
-    const source = readFileSync(join(process.cwd(), 'lib/platform/business-overview/service.ts'), 'utf8')
-    expect(source).toContain('customerAccountId: accountId')
-    expect(source).toContain('listMergeProposals')
-    expect(source).toContain('listMarketingReviews')
-    expect(source).toContain('listAccountConversations')
-    expect(source).not.toContain('.create(')
-    expect(source).not.toContain('.update(')
+  it('scopes collectors through data-access without unbounded merge fetch', () => {
+    const service = readFileSync(join(process.cwd(), 'lib/platform/business-overview/service.ts'), 'utf8')
+    const data = readFileSync(join(process.cwd(), 'lib/platform/business-overview/data-access.ts'), 'utf8')
+    expect(service).toContain('businessOverviewDataAccess')
+    expect(service).not.toContain('listMergeProposals')
+    expect(data).toContain('fetchPendingMergeProposals')
+    expect(data).toMatch(/take:\s*BUSINESS_OVERVIEW_CRM_MERGES/)
+    expect(data).toContain('countPendingMergeProposals')
   })
 })

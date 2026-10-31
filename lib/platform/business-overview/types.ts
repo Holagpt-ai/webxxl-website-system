@@ -61,11 +61,17 @@ export type BusinessOverviewAction = {
   customerAccountId: string
 }
 
+/** Numeric summary with explicit total vs capped-sample semantics (Batch 27A.1). */
+export type BusinessSummaryMetric = {
+  value: number
+  scope: 'account_total' | 'bounded_sample'
+}
+
 export type BusinessOverviewModuleSnapshot = {
   module: BusinessOverviewModule
   readiness: BusinessModuleReadiness
   /** Present only when `readiness.state === 'available'`. */
-  summary?: Record<string, number>
+  summary?: Record<string, BusinessSummaryMetric>
 }
 
 export type BusinessOverviewResponse = {

@@ -1,6 +1,6 @@
 # Session Handoff
 
-**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 27A)
+**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 27A.1)
 
 ## Part A — Context summary
 
@@ -18,12 +18,12 @@ Deliver read-only **Business Command Center** backend V1: one account-scoped ove
 
 - **GitHub `main`:** `6a889b3221fe2149446669a2016d14fe6f67e82a` (**PR #71** Batch 26B merged).
 - **Production:** GitHub deployment **`7459563378`**, Production **success**, SHA `6a889b3221fe2149446669a2016d14fe6f67e82a` (2026-10-31T14:00:53Z). SHA only.
-- **Batch 27A:** branch `feature/batch-27a-business-command-center-backend` pending owner merge.
+- **Batch 27A / 27A.1:** [PR #72](https://github.com/Holagpt-ai/webxxl-website-system/pull/72) on `feature/batch-27a-business-command-center-backend` — integrity fixes pushed; pending owner merge.
 - **Flags / migration:** CRM/MKT/SEO/COMMS backends default **OFF**; overview reflects disabled modules without zero-count masquerade. Live command center **not** verified.
 
 ### 4. Next Steps
 
-1. **Owner:** review/merge Batch **27A** PR.
+1. **Owner:** review/merge **PR #72** (Batch **27A** + **27A.1**).
 2. **v0.app:** Batch **27B** Business Command Center UI against [`BATCH27A-BUSINESS-COMMAND-CENTER-API-CONTRACT.md`](platform/docs/BATCH27A-BUSINESS-COMMAND-CENTER-API-CONTRACT.md).
 3. **Cursor (later):** Batch **27C** UI integration after v0 handoff.
 
@@ -31,8 +31,8 @@ Deliver read-only **Business Command Center** backend V1: one account-scoped ove
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | Batch **27A** command center backend awaiting owner merge; latest merge on `main` is Batch **26B** (`6a889b3…`) |
-| 2 | GitHub SHA, branch, active PR | `6a889b3221fe2149446669a2016d14fe6f67e82a` on `main`; `feature/batch-27a-business-command-center-backend` pending merge |
+| 1 | Last verified checkpoint | Batch **27A.1** overview data integrity on **PR #72**; latest merge on `main` is Batch **26B** (`6a889b3…`) |
+| 2 | GitHub SHA, branch, active PR | `6a889b3221fe2149446669a2016d14fe6f67e82a` on `main`; **PR #72** open on `feature/batch-27a-business-command-center-backend` |
 | 3 | Production deployment | GitHub Production **success** @ `6a889b3` (`7459563378`, 2026-10-31T14:00:53Z) |
 | 4 | Last updated | 2026-10-31 |
 | 5 | Next task / responsible platform | **Owner** merge Batch **27A** — **Cursor**; then **v0.app** Batch **27B** |
@@ -44,7 +44,7 @@ Deliver read-only **Business Command Center** backend V1: one account-scoped ove
 
 ## This session
 
-Batch **27A:** `lib/platform/business-overview/*`, `GET /api/v1/business/overview`, API contract doc, `batch27a-business-overview` tests; continuity sync for PR #71 merge/deploy.
+Batch **27A.1:** bounded `data-access` layer, `BusinessSummaryMetric` totals vs samples, marketing/comms `{ ok: false }` → `unavailable`, `batch27a-1-business-overview-integrity` tests (15 vitest total with 27A); contract + CI vitest list updated.
 
 ## PENDING REPOSITORY SYNC
 
