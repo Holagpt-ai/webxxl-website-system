@@ -35,8 +35,8 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **PR #70** Batch **25.1** audience planning integrity **MERGED** on `main`; Batch **26B** CRM audience planning UI **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `cd6ec31421fee97fdf2ba924ad2fe6dd34095299` on `main`; active **Batch 26B** on `feature/batch-26b-crm-audience-ui-integration` (unmerged) |
+| 1 | Last verified checkpoint | Batch **26B** CRM audience planning UI awaiting owner merge; latest merge on `main` is Batch **25.1** (`cd6ec314…`) |
+| 2 | GitHub SHA, branch, active PR | `cd6ec31421fee97fdf2ba924ad2fe6dd34095299` on `main`; `feature/batch-26b-crm-audience-ui-integration` pending merge |
 | 3 | Production deployment | Owner-reported Vercel production **`dpl_45iEUe5hmadGgYjG8iTT5qcm5AsC`**, state **READY**, SHA `cd6ec31421fee97fdf2ba924ad2fe6dd34095299` (PR #70). SHA only — not migration or activation |
 | 4 | Last updated | 2026-10-31 |
 | 5 | Next task / responsible platform | **Owner** review/merge **Batch 26B** PR (**Cursor**) |
@@ -91,7 +91,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 25.1 audience planning integrity | MERGED | [PR #70](https://github.com/Holagpt-ai/webxxl-website-system/pull/70), `cd6ec31421fee97fdf2ba924ad2fe6dd34095299` |
 | Vercel production SHA (2026-10-31, PR #70) | DEPLOYED | Owner-reported Vercel deployment `dpl_45iEUe5hmadGgYjG8iTT5qcm5AsC`, state **READY**, SHA `cd6ec31421fee97fdf2ba924ad2fe6dd34095299`. SHA only |
 | Batch 26A CRM audience planning UI (v0) | DELIVERED | `v0/crm-audience-26a` @ `110c071c05912f5eb6237ebecea23dc4fd9a4520` |
-| Batch 26B CRM audience planning UI integration | IN PR | Branch `feature/batch-26b-crm-audience-ui-integration`; cherry-pick of v0 26A onto Batch 25/25.1 `main` |
+| Batch 26B CRM audience planning UI integration | ON BRANCH | Branch `feature/batch-26b-crm-audience-ui-integration`; cherry-pick of v0 26A @ `110c071c` onto post-25.1 `main` |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.
