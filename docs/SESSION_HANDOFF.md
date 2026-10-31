@@ -7,7 +7,7 @@
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | **28A.2** merged on `main`; **28C** Lead Inbox UI integration **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `16755fc44de3fe699eba971564bdb1ceb3e403d7` on `main`; `feature/batch-28c-lead-inbox-ui-integration` — open PR pending |
+| 2 | GitHub SHA, branch, active PR | `16755fc44de3fe699eba971564bdb1ceb3e403d7` on `main`; **PR #77** head `d71c2627c83c58b7d149402eff2816adf16b1da9` (open) |
 | 3 | Production deployment | Vercel **`dpl_4QgPSyASypGEYK4srKSBZxbubFVC` READY** @ `16755fc` |
 | 4 | Last updated | 2026-10-31 |
 | 5 | Next task / responsible platform | **Owner** merge **28C** — **Cursor** |
@@ -26,7 +26,7 @@ None after 28C PR is pushed.
 ```
 Date / scope / owner: 2026-10-31 / BATCH-28C Lead Inbox UI integration / Cursor
 Repo / main SHA: Holagpt-ai/webxxl-website-system / 16755fc44de3fe699eba971564bdb1ceb3e403d7
-Branch / PR: feature/batch-28c-lead-inbox-ui-integration / open (unmerged)
+Branch / PR / head: feature/batch-28c-lead-inbox-ui-integration / PR #77 open / d71c2627c83c58b7d149402eff2816adf16b1da9
 Merged / deployed: PR #76 @ 16755fc; Vercel dpl_4QgPSyASypGEYK4srKSBZxbubFVC READY @ 16755fc
 Migration / flags / activation: batch28a migrations NOT applied; SITE_LEAD_INTAKE_ENABLED OFF
 Next exact assignment / owning tool: Owner merge 28C PR — Owner + Cursor

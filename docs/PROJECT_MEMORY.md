@@ -36,7 +36,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | **28A.2** **MERGED** (PR #76 @ `16755fc…`); **28C** Lead Inbox UI integration **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `16755fc44de3fe699eba971564bdb1ceb3e403d7` on `main`; `feature/batch-28c-lead-inbox-ui-integration` — open PR pending |
+| 2 | GitHub SHA, branch, active PR | `16755fc44de3fe699eba971564bdb1ceb3e403d7` on `main`; **PR #77** head `d71c2627c83c58b7d149402eff2816adf16b1da9` (open) |
 | 3 | Production deployment | Vercel **`dpl_4QgPSyASypGEYK4srKSBZxbubFVC` READY** @ `16755fc`. SHA only — not migration or activation |
 | 4 | Last updated | 2026-10-31 |
 | 5 | Next task / responsible platform | **Owner** merge **28C** PR (**Cursor**) |
@@ -104,7 +104,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 28A.1 Intake integrity (auth, pagination, lifecycle, dedupe) | MERGED | Included in PR #75 merge @ `276ad97…` |
 | Batch 28A.2 Intake payload idempotency fingerprint | MERGED | [PR #76](https://github.com/Holagpt-ai/webxxl-website-system/pull/76), `16755fc44de3fe699eba971564bdb1ceb3e403d7`; migration `20261031140000_batch28a_2_intake_payload_fingerprint` in Git only |
 | Batch 28B CRM Lead Inbox UI (v0) | DELIVERED | `v0/crm-lead-inbox-28b` @ `f9e21907e1d0b53504ede6bc6e078658a7eb7edf` |
-| Batch 28C Lead Inbox UI integration | IN PR | v0 @ `f9e21907`; CRM subnav + mutation sync + 10 integration tests |
+| Batch 28C Lead Inbox UI integration | IN PR | [PR #77](https://github.com/Holagpt-ai/webxxl-website-system/pull/77); v0 @ `f9e21907`; CRM subnav + mutation sync + 10 integration tests |
 | Vercel production SHA (2026-10-31, PR #76) | DEPLOYED | Vercel `dpl_4QgPSyASypGEYK4srKSBZxbubFVC` **READY** @ `16755fc44de3fe699eba971564bdb1ceb3e403d7`. SHA only |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
