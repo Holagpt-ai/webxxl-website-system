@@ -57,6 +57,22 @@ Session-scoped `CustomerAccount`; gates via `requireCrmApiActor` (`CRM_BACKEND_E
 
 UI binding contract: [`platform/docs/BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md).
 
+## CRM data operations (Batch 23)
+
+Services: `lib/platform/crm/import-analysis.ts`, `import-export-service.ts`, `export-pagination.ts`, `segment-engine.ts`, `segment-service.ts`, `dedup-service.ts`. Flags unchanged (`CRM_IMPORT_ENABLED`, `CRM_EXPORT_ENABLED` default off).
+
+| Method | Path | Permission | Notes |
+|---|---|---|---|
+| POST | `/api/v1/crm/imports/preview` | `crm.import` | Row-level dispositions, in-file/existing duplicate detection, normalized preview rows |
+| POST | `/api/v1/crm/imports/commit` | `crm.import` | Idempotent commit; returns `{ committed, skipped, rejected, duplicates, jobId }`; no consent grants |
+| POST | `/api/v1/crm/exports` | `crm.export` | Stable ascending `id` cursor pages; CSV formula escape preserved |
+| GET | `/api/v1/crm/segments/[id]` | `crm.read` | Evaluate saved segment; matched + account summaries |
+| PATCH | `/api/v1/crm/segments/[id]` | `crm.admin` | Update name/filter |
+| DELETE | `/api/v1/crm/segments/[id]` | `crm.admin` | Delete segment + members |
+| GET | `/api/v1/crm/merge-proposals` | `crm.read` | List pending merge proposals |
+| POST | `/api/v1/crm/merge-proposals` | `crm.admin` | Create merge proposal |
+| POST | `/api/v1/crm/merge-proposals/[id]` | `crm.admin` | Body `{ action: "approve" \| "reject" }`; account-scoped merge audit |
+
 ## Marketing customer HTTP (MKT-08 + Batch 18A)
 
 Session-scoped `CustomerAccount`; gates via `requireMktApiActor` (`MKT_BACKEND_ENABLED` + entitlement + permission).

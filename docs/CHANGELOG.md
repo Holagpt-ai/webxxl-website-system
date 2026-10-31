@@ -41,5 +41,7 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-10-29 | Vercel production deployment of `c6d122` (PR #64) | Owner deployment `dpl_EG54QzowAtcvrGibB3xWzpVxXYhE`, READY | DEPLOYED SHA only |
 | 2026-10-29 | WEBXXL-CONTINUITY-02 living blueprint sync | [PR #65](https://github.com/Holagpt-ai/webxxl-website-system/pull/65), `2de0f7f3b7f8f80b7006d7f7b7b13c7866b3822b` | MERGED. Documentation only |
 | 2026-10-29 | Vercel production deployment of `2de0f7f` (PR #65) | Owner deployment `dpl_Es1UxLoXgEHThHwNm2phiQN1icsb`, READY | DEPLOYED SHA only |
+| 2026-10-30 | Batch 22A OPEN-001 authorization hardening | [PR #66](https://github.com/Holagpt-ai/webxxl-website-system/pull/66), `c0ff8fed77f71adefbebc13fc44f9f9443c76a53` | MERGED. Env cohort lock + Social subscriber gates. Not activation |
+| 2026-10-30 | Batch 23 CRM data operations V1 | Open PR on `feature/batch-23-crm-data-ops` | IN PR. Import/export/segment/dedup hardening + regressions. Not merged |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
