@@ -1,6 +1,10 @@
 import { signSiteLeadIntakeRequest } from '@/lib/platform/site-leads/signature-auth'
 import { normalizeSiteLeadConnectorConfig } from '@/lib/platform/site-leads/connector/config'
-import { resolveSiteLeadIdempotencyKey } from '@/lib/platform/site-leads/connector/idempotency'
+import {
+  buildSiteLeadIntakeIdempotencyKey,
+  resolveSiteLeadSubmissionId,
+  SiteLeadSubmissionIdError,
+} from '@/lib/platform/site-leads/connector/idempotency'
 import {
   isRetryableConnectorFailure,
   parseSiteLeadIntakeResponse,
@@ -17,7 +21,12 @@ export const SITE_LEAD_INTAKE_PATH = '/api/v1/site-leads/intake'
 export type SubmitManagedSiteLeadInput = {
   config: SiteLeadConnectorConfig
   payload: SiteLeadConnectorPayload
-  /** Stable across retries for the same submission; derived from raw body when omitted. */
+  /**
+   * Stable submission identity for retries (same id → same scoped intake idempotency key).
+   * When omitted, a new id is generated once per `submitManagedSiteLead` call and reused on internal retries.
+   */
+  submissionId?: string | null
+  /** @deprecated Use `submissionId` — not the raw intake header value after Batch 29A.1. */
   idempotencyKey?: string | null
   fetchImpl?: typeof fetch
   nowMs?: number
@@ -43,6 +52,34 @@ export async function submitManagedSiteLead(input: SubmitManagedSiteLeadInput): 
     }
   }
 
+  let submissionId: string
+  try {
+    submissionId = resolveSiteLeadSubmissionId({
+      submissionId: input.submissionId,
+      legacyIdempotencyKey: input.idempotencyKey,
+    })
+  } catch (error) {
+    return {
+      ok: false,
+      code: 'VALIDATION',
+      message: error instanceof SiteLeadSubmissionIdError ? error.message : 'Invalid submission id',
+    }
+  }
+
+  let intakeIdempotencyKey: string
+  try {
+    intakeIdempotencyKey = buildSiteLeadIntakeIdempotencyKey({
+      publicKeyId: config.publicKeyId,
+      submissionId,
+    })
+  } catch (error) {
+    return {
+      ok: false,
+      code: 'VALIDATION',
+      message: error instanceof SiteLeadSubmissionIdError ? error.message : 'Invalid idempotency scope',
+    }
+  }
+
   let rawBody: string
   try {
     rawBody = serializeSiteLeadIntakeBody(input.payload)
@@ -53,12 +90,6 @@ export async function submitManagedSiteLead(input: SubmitManagedSiteLeadInput): 
       message: error instanceof Error ? error.message : 'Invalid lead payload',
     }
   }
-
-  const idempotencyKey = resolveSiteLeadIdempotencyKey({
-    payload: input.payload,
-    rawBody,
-    explicitKey: input.idempotencyKey,
-  })
 
   const url = `${config.intakeBaseUrl}${SITE_LEAD_INTAKE_PATH}`
   const fetchFn = input.fetchImpl ?? fetch
@@ -82,7 +113,7 @@ export async function submitManagedSiteLead(input: SubmitManagedSiteLeadInput): 
           'content-type': 'application/json',
           accept: 'application/json',
           'x-webxxl-lead-intake-key': config.publicKeyId,
-          'x-idempotency-key': idempotencyKey,
+          'x-idempotency-key': intakeIdempotencyKey,
           'x-webxxl-timestamp': timestampHeader,
           'x-webxxl-signature': signatureHeader,
         },

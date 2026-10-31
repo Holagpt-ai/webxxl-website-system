@@ -45,7 +45,9 @@ Rotation: provision a new credential, deploy the new secret, revoke the old cred
 
 Same JSON as Batch 28A intake: `contactEmail` (required), optional name/phone/message/formReference/locale/submittedAt/fields/analyticsProvenance.
 
-Idempotency: pass `x-idempotency-key` to the connector (or let it derive a stable SHA-256 from the exact signed raw body for retries).
+**Submission identity (29A.1):** Each distinct form post gets a **submission id** (caller-supplied or auto-generated UUID per `submitManagedSiteLead` call). Internal transport retries reuse that id. The connector sends intake `x-idempotency-key` as `SHA-256(publicKeyId + "\n" + submissionId)` (64 hex chars), scoped per site credential so keys never collide across sites. Content dedupe remains on the intake side via `intakePayloadFingerprint` / `submissionFingerprint` — not via hashing the raw body as the idempotency key.
+
+Browser → customer server: generate a stable UUID and send `x-webxxl-submission-id` on the **first** POST and every retry (required in the reference handler). Replay the **same JSON body** (including `submittedAt` if used) — the server must not inject or strip fields between attempts. Direct `submitManagedSiteLead` calls may omit `submissionId` to auto-mint one UUID per invocation (internal retries reuse it).
 
 ## Next.js reference
 

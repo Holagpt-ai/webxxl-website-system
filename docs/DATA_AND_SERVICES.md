@@ -15,8 +15,8 @@ Specifications: [`03-DATA-MODEL`](platform/docs/03-DATA-MODEL.md), [`04-API-INTE
 | AI workforce | `lib/platform/workforce/**`, `lib/platform/customer-ai-workforce/**` | Paperclip is a candidate adapter | MERGED | Live execution not inferred |
 | Business command center overview | `lib/platform/business-overview/**`, `GET /api/v1/business/overview` | Aggregates existing CRM/MKT/SEO/comms/project read paths | MERGED 27A/27A.2 on `main` @ `ccbca6b` | Read-only; per-module flags and OPEN-001 gates preserved |
 | Business command center UI | `app/[locale]/dashboard/business/**`, `components/business/**`, `lib/business-ui/**` | Client overview via session-scoped API | MERGED Batch 27C @ `828ac12` | — |
-| Managed-site lead intake | `lib/platform/site-leads/**`, `/api/v1/site-leads/**` | Signed site intake + CRM qualification inbox | MERGED 28A–28C; form connector **29A IN PR** | `SITE_LEAD_INTAKE_ENABLED` default OFF; migrations in Git only |
-| Managed-site form connector | `lib/platform/site-leads/connector/**` | Server-side HMAC submit to intake | IN PR Batch 29A | No customer site wiring in 29A |
+| Managed-site lead intake | `lib/platform/site-leads/**`, `/api/v1/site-leads/**` | Signed site intake + CRM qualification inbox | MERGED 28A–28C + connector 29A @ `fc702c6` | `SITE_LEAD_INTAKE_ENABLED` default OFF; migrations in Git only |
+| Managed-site form connector | `lib/platform/site-leads/connector/**` | Server-side HMAC submit to intake; 29A.1 submission id scoping **IN PR** | MERGED 29A; 29A.1 IN PR | No customer site wiring |
 
 ## Analytics flags on this source tree
 
