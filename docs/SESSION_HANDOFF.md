@@ -1,39 +1,39 @@
 # Session Handoff
 
-**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 28A.1)
+**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 28A.3)
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | Batch **28A** managed-site leads **IN PR #75**; **28A.1** integrity push on same PR |
-| 2 | GitHub SHA, branch, active PR | `828ac12e9968f84bd8e1bc42f44ba941c9551194` on `main`; **PR #75** head `756b00956fc1f8f4c5897839f6683570a4638222` on `feature/batch-28a-managed-site-leads` (open) |
-| 3 | Production deployment | Vercel **`dpl_5AuKd2RyiUqAgoNGr4XLSBS6rtj5` READY** @ `828ac12` |
+| 1 | Last verified checkpoint | **28A** + **28A.1** merged on `main`; **28A.2** payload idempotency recovery **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `276ad9771b128dee0239b4a77e2d73e298f5d81a` on `main`; **PR #76** head `585e3d1eee9021b5bc4c00a005bd277e47f79a51` (open) |
+| 3 | Production deployment | Production deploy @ `276ad97` (GitHub). SHA only — not migration or activation |
 | 4 | Last updated | 2026-10-31 |
-| 5 | Next task / responsible platform | **Owner** merge **28A** — **Cursor**; **v0.app** Lead Inbox UI (future) |
-| 6 | Open blocker / gate IDs | `SITE_LEAD_INTAKE_ENABLED` OFF; migration `20261031120000_batch28a_managed_site_leads` not applied |
+| 5 | Next task / responsible platform | **Owner** merge **28A.3** recovery PR — **Cursor** |
+| 6 | Open blocker / gate IDs | `SITE_LEAD_INTAKE_ENABLED` OFF; migrations `20261031120000` + `20261031140000` not applied |
 
 ## This session
 
-Batch **28A.1:** Auth-before-replay intake, business duplicate fingerprints, composite pagination cursors, conditional lifecycle updates, 12 integrity tests (22 total with 28A).
+Batch **28A.3:** Cherry-pick `496f412…` (28A.2) onto `main`; legacy empty `intakePayloadFingerprint` rejects replay; continuity reconciled for PR #75 merge @ `276ad97`.
 
 ## PENDING REPOSITORY SYNC
 
-None after 28A PR is pushed.
+None after recovery PR is pushed.
 
 ## Handoff template
 
 ```
-Date / scope / owner: 2026-10-31 / BATCH-28A managed-site leads / Cursor
-Repo / main SHA: Holagpt-ai/webxxl-website-system / 828ac12e9968f84bd8e1bc42f44ba941c9551194
-Branch / PR / head SHA: feature/batch-28a-managed-site-leads / PR #75 open / 756b00956fc1f8f4c5897839f6683570a4638222
-Merged / deployed: PR #74 merged @ 828ac12; production dpl_5AuKd2RyiUqAgoNGr4XLSBS6rtj5 READY @ 828ac12
-Migration / flags / activation: batch28a migration NOT applied; SITE_LEAD_INTAKE_ENABLED OFF
-Next exact assignment / owning tool: Owner merge 28A PR — Owner + Cursor; v0 Lead Inbox UI
+Date / scope / owner: 2026-10-31 / BATCH-28A.3 recover 28A.2 payload idempotency / Cursor
+Repo / main SHA: Holagpt-ai/webxxl-website-system / 276ad9771b128dee0239b4a77e2d73e298f5d81a
+Branch / PR / head: feature/batch-28a-3-recover-payload-idempotency / PR #76 open / 585e3d1eee9021b5bc4c00a005bd277e47f79a51
+Merged / deployed: PR #75 merged @ 276ad97; production GitHub deploy @ 276ad97 (SHA only)
+Migration / flags / activation: batch28a + batch28a_2 migrations NOT applied; SITE_LEAD_INTAKE_ENABLED OFF
+Next exact assignment / owning tool: Owner merge 28A.3 recovery PR — Owner + Cursor
 Do NOT touch: production migrations, flag activation, live form activation, outbound sends, merge without owner
 ```
 
 ## Next assignment
 
-- **Owner + Cursor:** merge Batch **28A** PR after review.
-- **v0.app:** Lead Inbox presentation against [`BATCH28A-MANAGED-SITE-LEADS-API-CONTRACT.md`](platform/docs/BATCH28A-MANAGED-SITE-LEADS-API-CONTRACT.md).
+- **Owner + Cursor:** merge Batch **28A.3** recovery PR.
+- **v0.app:** Lead Inbox UI against [`BATCH28A-MANAGED-SITE-LEADS-API-CONTRACT.md`](platform/docs/BATCH28A-MANAGED-SITE-LEADS-API-CONTRACT.md) after 28A.2 is on `main`.

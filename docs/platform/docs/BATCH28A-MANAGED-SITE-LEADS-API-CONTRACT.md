@@ -2,7 +2,7 @@
 
 **Status:** backend V1 (Cursor). **UI owner:** v0.app Lead Inbox (future); **integration:** Cursor (future).  
 **Flags:** `SITE_LEAD_INTAKE_ENABLED` (default **OFF**). Customer inbox APIs also require `CRM_BACKEND_ENABLED` and OPEN-001 `core.crm`.  
-**Migration:** `20261031120000_batch28a_managed_site_leads` — in Git only; **not applied** to production by this batch.
+**Migrations:** `20261031120000_batch28a_managed_site_leads`, `20261031140000_batch28a_2_intake_payload_fingerprint` — in Git only; **not applied** to production by this batch.
 
 ## Intake (signed, server-to-server)
 
@@ -26,6 +26,8 @@ Body (JSON):
 - **Must not** include `customerAccountId` or `managedSiteId`
 
 Success: `{ ok: true, leadId, status, duplicate }` — `201` new, `200` idempotent replay.
+
+**Idempotency (28A.2):** replay after auth requires the same signed `rawBody` as the original submission (stored server-side as SHA-256 `intakePayloadFingerprint`). Same `x-idempotency-key` with a changed body returns **409**. Rows without a stored payload fingerprint (legacy pre-28A.2) are not eligible for verified replay and return **409**. Business duplicate detection uses a separate `submissionFingerprint` (account/site/contact/form) and is independent of the idempotency key.
 
 Secrets resolve from `secretRef` env pointer or `SITE_LEAD_INTAKE_SECRET_{publicKeyId}` — **never** exposed to browser JavaScript.
 

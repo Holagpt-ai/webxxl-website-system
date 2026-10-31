@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `828ac12e9968f84bd8e1bc42f44ba941c9551194` (PR #74)
+**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `276ad9771b128dee0239b4a77e2d73e298f5d81a` (PR #75)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,12 +35,12 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | Batch **28A** + **28A.1** integrity on **PR #75** (managed-site leads); **27C** merged on `main` |
-| 2 | GitHub SHA, branch, active PR | `828ac12e9968f84bd8e1bc42f44ba941c9551194` on `main`; **PR #75** head `756b00956fc1f8f4c5897839f6683570a4638222` (open) |
-| 3 | Production deployment | Vercel **`dpl_5AuKd2RyiUqAgoNGr4XLSBS6rtj5` READY** @ `828ac12`. SHA only — not migration or activation |
+| 1 | Last verified checkpoint | Batch **28A** + **28A.1** **MERGED** (PR #75 @ `276ad97…`); **28A.2** payload idempotency **recovery IN PR** |
+| 2 | GitHub SHA, branch, active PR | `276ad9771b128dee0239b4a77e2d73e298f5d81a` on `main`; **PR #76** head `585e3d1eee9021b5bc4c00a005bd277e47f79a51` (open) |
+| 3 | Production deployment | GitHub Production deployment **success** @ `276ad97` (2026-10-31). SHA only — not migration or activation |
 | 4 | Last updated | 2026-10-31 |
-| 5 | Next task / responsible platform | **Owner** review/merge **Batch 28A** PR (**Cursor**); then **v0.app** Lead Inbox UI |
-| 6 | Open blocker / gate IDs | Module backend flags OFF (DEFERRED); live command center UNVERIFIED; MKT-25 migration apply (DEFERRED) |
+| 5 | Next task / responsible platform | **Owner** merge **28A.3** recovery PR (**Cursor**); then **v0.app** Lead Inbox UI |
+| 6 | Open blocker / gate IDs | `SITE_LEAD_INTAKE_ENABLED` OFF; batch28a migrations not applied (DEFERRED); 28A.2 not on `main` until recovery merge |
 
 ### Evidence table
 
@@ -100,8 +100,10 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 27B Business Command Center UI (v0) | DELIVERED | `v0/business-command-center-27b` @ `25220431bf713ccd1bf10dfc3b5260b466c412bd` |
 | Batch 27C Business Command Center UI integration | MERGED | [PR #74](https://github.com/Holagpt-ai/webxxl-website-system/pull/74), `828ac12e9968f84bd8e1bc42f44ba941c9551194`, v0 @ `25220431` |
 | Vercel production SHA (2026-10-31, PR #74) | DEPLOYED | Vercel `dpl_5AuKd2RyiUqAgoNGr4XLSBS6rtj5` **READY** @ `828ac12e9968f84bd8e1bc42f44ba941c9551194`. SHA only |
-| Batch 28A Managed-site lead intake & CRM qualification | IN PR | [PR #75](https://github.com/Holagpt-ai/webxxl-website-system/pull/75); migration `20261031120000_batch28a_managed_site_leads` in Git only |
-| Batch 28A.1 Intake integrity (auth, pagination, lifecycle, dedupe) | IN PR | Same PR #75; composite cursors, auth-before-replay, conditional workflow updates |
+| Batch 28A Managed-site lead intake & CRM qualification | MERGED | [PR #75](https://github.com/Holagpt-ai/webxxl-website-system/pull/75), `276ad9771b128dee0239b4a77e2d73e298f5d81a`. Branch tip pre-merge `7e9b127…`. Migration `20261031120000_batch28a_managed_site_leads` in Git only |
+| Batch 28A.1 Intake integrity (auth, pagination, lifecycle, dedupe) | MERGED | Included in PR #75 merge @ `276ad97…` |
+| Batch 28A.2 Intake payload idempotency fingerprint | IN PR (recovery) | [PR #76](https://github.com/Holagpt-ai/webxxl-website-system/pull/76); cherry-pick `496f412…` + 28A.3 legacy guard; migration `20261031140000_batch28a_2_intake_payload_fingerprint` (Git only) |
+| Vercel production SHA (2026-10-31, PR #75) | DEPLOYED | GitHub deployment Production success @ `276ad9771b128dee0239b4a77e2d73e298f5d81a`. SHA only |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.

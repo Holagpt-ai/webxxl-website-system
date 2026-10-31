@@ -1018,9 +1018,10 @@ model ManagedSiteLead {
   normalizedPhone       String?
   message               String?               @db.Text
   payload               Json
-  idempotencyKey        String                @unique
-  submissionFingerprint String
-  sourceAttribution     Json?
+  idempotencyKey           String                @unique
+  submissionFingerprint    String
+  intakePayloadFingerprint String
+  sourceAttribution        Json?
   analyticsEventRef     String?
   crmContactId          String?
   convertedAt           DateTime?
