@@ -38,3 +38,9 @@ export const SOCIAL_INCLUDED_FREE_ENTITLEMENT_KEYS = [
   'core.social-automation',
   'core.marketing-studio',
 ] as const
+
+/** CRM segment audience planning requires CRM data access and Marketing Studio membership. */
+export const CRM_AUDIENCE_PLANNING_INCLUDED_FREE_ENTITLEMENT_KEYS = [
+  'core.crm',
+  'core.marketing-studio',
+] as const

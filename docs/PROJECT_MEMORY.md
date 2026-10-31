@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `c3e599fe45ec913689a211d3cc5de3943c9ac388` (PR #68)
+**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `4fbcc4e22f2d44d3bb68237fc43d5ac4c61ae0ab` (PR #69)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,11 +35,11 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **PR #68** Batch **24B** CRM workflow UI **MERGED** on `main`; Batch **25** CRM → Marketing audience planning **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `c3e599fe45ec913689a211d3cc5de3943c9ac388` on `main`; active **Batch 25** on `feature/batch-25-crm-marketing-audience-planning` (unmerged) |
-| 3 | Production deployment | GitHub Production deployment **success** @ `c3e599fe45ec913689a211d3cc5de3943c9ac388` (2026-10-31T12:21:59Z, id `7458519029`; SHA only; see [`DEPLOYMENT_STATUS.md`](DEPLOYMENT_STATUS.md)) |
+| 1 | Last verified checkpoint | **PR #69** Batch **25** CRM → Marketing audience planning **MERGED** on `main`; Batch **25.1** integrity **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `4fbcc4e22f2d44d3bb68237fc43d5ac4c61ae0ab` on `main`; active **Batch 25.1** on `feature/batch-25-1-audience-planning-integrity` (unmerged) |
+| 3 | Production deployment | GitHub Production **success** @ `c3e599f` (`7458519029`, 2026-10-31T12:21:59Z). **`4fbcc4e` production deploy UNVERIFIED** in-repo (see [`DEPLOYMENT_STATUS.md`](DEPLOYMENT_STATUS.md)) |
 | 4 | Last updated | 2026-10-31 |
-| 5 | Next task / responsible platform | **Owner** review/merge **Batch 25** PR (**Cursor**); v0.app UI for audience planning per MKT-25 contract |
+| 5 | Next task / responsible platform | **Owner** review/merge **Batch 25.1** PR (**Cursor**) |
 | 6 | Open blocker / gate IDs | `RELEASE-001` (DEFERRED); `POLICY-SUB-001` (REPORTED) |
 
 ### Evidence table

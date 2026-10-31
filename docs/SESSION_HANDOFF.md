@@ -1,69 +1,66 @@
 # Session Handoff
 
-**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 25)
+**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 25.1)
 
 ## Part A — Context summary
 
 ### 1. Core Objective
 
-Connect CRM saved segments to Marketing Studio **campaign preparation** (planning evidence only): audience preview API, segment-linked draft marketing requests, OPEN-001 + CRM/MKT gates. No outreach activation.
+Harden Batch **25** audience planning: dual OPEN-001 entitlements (`core.crm` + `core.marketing-studio`) and idempotent campaign-preparation replays using stored audience snapshots (no live reevaluation on retry).
 
 ### 2. Decisions Made
 
-- Reuse Batch 24B segment engine + `resolveEffectiveMarketingConsent`; no new evaluator.
-- Verifiable segment link via `crmSegmentId`, `sourceRefs` (`crm:segment:{id}`), and `audiencePlanningSummary` snapshot on create.
-- Free-text `audience` / `audienceLabel` is display-only, not membership proof.
-- **ADR not required** — additive planning APIs and schema fields on existing MarketingRequest model.
+- Audience route auth mirrors Social dual-key pattern via `requireIncludedFreeSoftwareMembershipKeys`.
+- Idempotency resolves before segment preview; legitimate retries return `audiencePlanningSummary` even if the segment row was later removed.
+- **ADR not required** — integrity corrections only.
 
 ### 3. Current Status
 
-- **GitHub `main`:** `c3e599fe45ec913689a211d3cc5de3943c9ac388` (**PR #68** Batch 24B merged).
-- **Production:** GitHub Production deploy **success** @ `c3e599f` (deployment `7458519029`, 2026-10-31T12:21:59Z; SHA only).
-- **Batch 25:** open PR on `feature/batch-25-crm-marketing-audience-planning` (unmerged).
-- **Migration:** `20261031120000_mkt25_crm_audience_planning` in repo; **NOT applied** in production.
-- **Flags:** `MKT_CRM_AUDIENCE_PLANNING_ENABLED`, `MKT_DRAFT_PREPARATION_ENABLED`, `CRM_BACKEND_ENABLED`, `MKT_BACKEND_ENABLED` — source-default OFF; not activated.
+- **GitHub `main`:** `4fbcc4e22f2d44d3bb68237fc43d5ac4c61ae0ab` (**PR #69** Batch 25 merged).
+- **Production:** Latest GitHub Production deploy in-repo is **success** @ `c3e599f` (deployment `7458519029`, 2026-10-31T12:21:59Z). Deploy for `4fbcc4e` **UNVERIFIED** at handoff time (SHA only when recorded).
+- **Batch 25.1:** open PR on `feature/batch-25-1-audience-planning-integrity` (unmerged).
+- **Migration / flags:** MKT-25 migration not production-applied; planning flags OFF.
 
 ### 4. Next Steps
 
-1. **Owner:** review/merge Batch **25** PR (**Cursor** completed backend).
-2. **v0.app:** implement audience planning UI from [`docs/platform/docs/MKT-25-CRM-AUDIENCE-PLANNING-API-CONTRACT.md`](platform/docs/MKT-25-CRM-AUDIENCE-PLANNING-API-CONTRACT.md).
-
-## Next assignment
-
-- **Owner + Cursor:** merge Batch **25** PR after review.
-- **v0.app:** CRM audience planning UI per MKT-25 contract (EN/ES).
+1. **Owner:** review/merge Batch **25.1** PR.
+2. **v0.app:** audience planning UI (unchanged contract aside from dual entitlement note).
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **PR #68** Batch **24B** **MERGED** on `main`; Batch **25** audience planning **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `c3e599fe45ec913689a211d3cc5de3943c9ac388` on `main`; **Batch 25** branch (unmerged) |
-| 3 | Production deployment | GitHub Production **success** @ `c3e599fe45ec913689a211d3cc5de3943c9ac388` (SHA only) |
+| 1 | Last verified checkpoint | **PR #69** Batch **25** **MERGED** on `main`; Batch **25.1** integrity **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `4fbcc4e22f2d44d3bb68237fc43d5ac4c61ae0ab` on `main`; **Batch 25.1** branch (unmerged) |
+| 3 | Production deployment | GitHub Production **success** @ `c3e599f` (`7458519029`); `4fbcc4e` deploy **UNVERIFIED** |
 | 4 | Last updated | 2026-10-31 |
-| 5 | Next task / responsible platform | **Owner** merge Batch **25** — **Cursor**; UI — **v0.app** |
-| 6 | Open blocker / gate IDs | `RELEASE-001` (DEFERRED); production migration apply for MKT-25 columns (DEFERRED) |
+| 5 | Next task / responsible platform | **Owner** merge Batch **25.1** — **Cursor** |
+| 6 | Open blocker / gate IDs | `RELEASE-001` (DEFERRED); MKT-25 migration apply (DEFERRED) |
 
 ## Latest completed batch on main
 
-- **PR #68** Batch **24B** (+ 24B.1) **MERGED** at `c3e599fe45ec913689a211d3cc5de3943c9ac388`
+- **PR #69** Batch **25** **MERGED** at `4fbcc4e22f2d44d3bb68237fc43d5ac4c61ae0ab`
 
 ## This session
 
-Batch **25:** CRM segment audience preview service; marketing CRM-segment APIs; `CAMPAIGN_PREPARATION` draft requests with segment linkage; additive Prisma migration (not applied); MKT-25 API contract; focused tests; continuity sync.
+Batch **25.1:** dual entitlement gate; idempotency-before-preview; stored snapshot replay; regression tests; continuity sync.
 
 ## PENDING REPOSITORY SYNC
 
-None after Batch 25 PR is pushed.
+None after Batch 25.1 PR is pushed.
 
 ## Handoff template
 
 ```
-Date / scope / owner: 2026-10-31 / BATCH-25 CRM → Marketing audience planning / Cursor
-Repo / main SHA: Holagpt-ai/webxxl-website-system / c3e599fe45ec913689a211d3cc5de3943c9ac388
-Branch / PR: feature/batch-25-crm-marketing-audience-planning / open (unmerged)
-Merged / deployed: PR #68 merged; production GitHub deploy success @ c3e599f (SHA only)
-Migration / flags / activation: MKT-25 migration NOT applied; planning flags OFF — not activation
-Next exact assignment / owning tool: Owner merge Batch 25 — Owner + Cursor; v0 UI — v0.app
-Do NOT touch: production migrations, CRM/MKT flag activation, outbound sends/providers, merge without owner
+Date / scope / owner: 2026-10-31 / BATCH-25.1 audience planning integrity / Cursor
+Repo / main SHA: Holagpt-ai/webxxl-website-system / 4fbcc4e22f2d44d3bb68237fc43d5ac4c61ae0ab
+Branch / PR: feature/batch-25-1-audience-planning-integrity / open (unmerged)
+Merged / deployed: PR #69 merged; production SHA c3e599f verified via GitHub deploy 7458519029; 4fbcc4e deploy UNVERIFIED
+Migration / flags / activation: NOT applied / OFF — not activation
+Next exact assignment / owning tool: Owner merge Batch 25.1 — Owner + Cursor
+Do NOT touch: production migrations, flag activation, outbound sends/providers, merge without owner
 ```
+
+## Next assignment
+
+- **Owner + Cursor:** merge Batch **25.1** PR after review.

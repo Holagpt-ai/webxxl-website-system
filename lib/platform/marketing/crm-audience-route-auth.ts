@@ -4,7 +4,10 @@ import { isStaffRole } from '@/lib/admin/roles'
 import { assertCrmPermission } from '@/lib/platform/crm/permissions'
 import { assertMarketingPermission, type MarketingPermission } from '@/lib/platform/marketing/permissions'
 import { MktApiError } from '@/lib/platform/marketing/mkt-api-error'
-import { requireIncludedFreeSoftwareMembership } from '@/lib/platform/open001/module-api-gate'
+import {
+  CRM_AUDIENCE_PLANNING_INCLUDED_FREE_ENTITLEMENT_KEYS,
+  requireIncludedFreeSoftwareMembershipKeys,
+} from '@/lib/platform/open001/module-api-gate'
 
 export async function requireMktCrmAudienceActor(requiredPermission: MarketingPermission = 'marketing.read') {
   if (!isMktBackendEnabled()) {
@@ -16,7 +19,10 @@ export async function requireMktCrmAudienceActor(requiredPermission: MarketingPe
   if (!isCrmBackendEnabled()) {
     throw new MktApiError(503, 'CRM backend is disabled', 'NOT_CONFIGURED')
   }
-  const portal = await requireIncludedFreeSoftwareMembership('core.marketing-studio', MktApiError)
+  const portal = await requireIncludedFreeSoftwareMembershipKeys(
+    CRM_AUDIENCE_PLANNING_INCLUDED_FREE_ENTITLEMENT_KEYS,
+    MktApiError,
+  )
   const actor = { membershipRole: portal.membership.role, isStaff: isStaffRole(portal.role) }
   try {
     assertMarketingPermission(actor, requiredPermission)
