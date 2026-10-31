@@ -57,7 +57,7 @@ jobs:
       - run: pnpm exec prisma validate
       - run: pnpm exec prisma generate
       - run: pnpm typecheck
-      - run: npx vitest run __tests__/platform/pilot21a-readiness.test.ts __tests__/platform/open001-subscriber-eligibility.test.ts __tests__/platform/batch27a-business-overview.test.ts __tests__/platform/batch27a-1-business-overview-integrity.test.ts
+      - run: npx vitest run __tests__/platform/pilot21a-readiness.test.ts __tests__/platform/open001-subscriber-eligibility.test.ts __tests__/platform/batch27a-business-overview.test.ts __tests__/platform/batch27a-1-business-overview-integrity.test.ts __tests__/platform/batch27c-business-ui-integration.test.ts
       - run: pnpm build
 
   app-validate-gate:

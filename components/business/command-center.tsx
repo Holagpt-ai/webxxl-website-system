@@ -14,6 +14,7 @@ import {
   BUSINESS_MODULES,
   isBusinessModule,
   snapshotFor,
+  type BusinessAction,
   type BusinessModule,
   type BusinessOverviewResponse,
 } from '@/lib/business-ui/types'
@@ -40,12 +41,17 @@ function CommandCenterBody({ accountId, locale, copy }: BusinessViewProps) {
 
   const overview = data?.overview && data.overview.customerAccountId === accountId ? data.overview : null
   const actions = useMemo(
-    () => (overview?.actions ?? []).filter((a) => isBusinessModule(a.module) && a.customerAccountId === accountId),
+    () =>
+      (overview?.actions ?? []).filter(
+        (a: BusinessAction) => isBusinessModule(a.module) && a.customerAccountId === accountId,
+      ),
     [overview, accountId],
   )
   const counts = useMemo(() => {
     const c = Object.fromEntries(BUSINESS_MODULES.map((m) => [m, 0])) as Record<BusinessModule, number>
-    for (const a of actions) c[a.module] += 1
+    for (const a of actions) {
+      if (isBusinessModule(a.module)) c[a.module] += 1
+    }
     return c
   }, [actions])
 

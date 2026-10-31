@@ -53,6 +53,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-10-31 | Batch 26B CRM audience planning UI integration | [PR #71](https://github.com/Holagpt-ai/webxxl-website-system/pull/71), `6a889b3221fe2149446669a2016d14fe6f67e82a` | MERGED. v0 26A + MKT-25 audience APIs. Not activation |
 | 2026-10-31 | Vercel production deployment of `6a889b3` (PR #71) | GitHub deployment `7459563378`, Production success | DEPLOYED SHA only |
 | 2026-10-31 | Batch 27A Business Command Center backend | [PR #72](https://github.com/Holagpt-ai/webxxl-website-system/pull/72), `aea38692a07dba356fdd3b6d54d95b6a9a562a57` | MERGED. Read-only `GET /api/v1/business/overview`. Not activation |
-| 2026-10-31 | Batch 27A.1 overview integrity (recovery) | Cherry-pick `edc21fd6…` onto `main` via 27A.2 PR | IN PR. Bounded counts, module source failures, contract `{ value, scope }`. Not merged |
+| 2026-10-31 | Batch 27A.2 overview integrity recovery | [PR #73](https://github.com/Holagpt-ai/webxxl-website-system/pull/73), `ccbca6b0eef330d75a77cc9ae3af6adadb806309` | MERGED. Bounded counts, module source failures, contract `{ value, scope }`. Not activation |
+| 2026-10-31 | Batch 27B Business Command Center UI (v0) | `v0/business-command-center-27b` @ `25220431bf713ccd1bf10dfc3b5260b466c412bd` | DELIVERED to v0 branch |
+| 2026-10-31 | Batch 27C Business Command Center UI integration | Branch `feature/batch-27c-business-command-center-ui` | IN PR. Nav + tests. Not merged |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

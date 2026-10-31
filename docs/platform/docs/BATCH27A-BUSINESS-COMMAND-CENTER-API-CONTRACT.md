@@ -1,6 +1,6 @@
 # Batch 27A — Business Command Center API contract
 
-**Status:** backend V1 (read-only). **UI owner:** v0.app Batch 27B. **Integration owner:** Cursor Batch 27C (future).  
+**Status:** backend V1 (read-only) **MERGED** with 27A.2 on `main` @ `ccbca6b`. **UI:** v0 Batch 27B @ `25220431`; **integration:** Cursor Batch 27C (IN PR).  
 **Baseline:** GitHub `main` after PR #71. **ADR:** not required — aggregates existing module data; no new workflow engine.
 
 ## Purpose
