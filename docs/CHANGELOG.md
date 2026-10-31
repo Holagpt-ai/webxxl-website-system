@@ -55,6 +55,7 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-10-31 | Batch 27A Business Command Center backend | [PR #72](https://github.com/Holagpt-ai/webxxl-website-system/pull/72), `aea38692a07dba356fdd3b6d54d95b6a9a562a57` | MERGED. Read-only `GET /api/v1/business/overview`. Not activation |
 | 2026-10-31 | Batch 27A.2 overview integrity recovery | [PR #73](https://github.com/Holagpt-ai/webxxl-website-system/pull/73), `ccbca6b0eef330d75a77cc9ae3af6adadb806309` | MERGED. Bounded counts, module source failures, contract `{ value, scope }`. Not activation |
 | 2026-10-31 | Batch 27B Business Command Center UI (v0) | `v0/business-command-center-27b` @ `25220431bf713ccd1bf10dfc3b5260b466c412bd` | DELIVERED to v0 branch |
-| 2026-10-31 | Batch 27C Business Command Center UI integration | Branch `feature/batch-27c-business-command-center-ui` | IN PR. Nav + tests. Not merged |
+| 2026-10-31 | Batch 27C Business Command Center UI integration | [PR #74](https://github.com/Holagpt-ai/webxxl-website-system/pull/74), `828ac12e9968f84bd8e1bc42f44ba941c9551194` | MERGED. v0 @ `25220431`. Not activation |
+| 2026-10-31 | Batch 28A Managed-site lead intake & CRM qualification | Branch `feature/batch-28a-managed-site-leads` | IN PR. Migration in source only. Not activation |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

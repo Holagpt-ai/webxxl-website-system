@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `ccbca6b0eef330d75a77cc9ae3af6adadb806309` (PR #73)
+**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `828ac12e9968f84bd8e1bc42f44ba941c9551194` (PR #74)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,11 +35,11 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | Batch **27A.2** **MERGED** on `main` (`ccbca6b…`); Batch **27C** Business Command Center UI integration **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `ccbca6b0eef330d75a77cc9ae3af6adadb806309` on `main`; `feature/batch-27c-business-command-center-ui` — open PR pending |
-| 3 | Production deployment | Vercel **`dpl_Dz8ULG7kiAdZr499mZ6W7wnX1YyA` READY** @ `ccbca6b`; GitHub Production `7460984353` success (2026-10-31T16:06:26Z). SHA only |
+| 1 | Last verified checkpoint | Batch **28A** + **28A.1** integrity on **PR #75** (managed-site leads); **27C** merged on `main` |
+| 2 | GitHub SHA, branch, active PR | `828ac12e9968f84bd8e1bc42f44ba941c9551194` on `main`; **PR #75** head `756b00956fc1f8f4c5897839f6683570a4638222` (open) |
+| 3 | Production deployment | Vercel **`dpl_5AuKd2RyiUqAgoNGr4XLSBS6rtj5` READY** @ `828ac12`. SHA only — not migration or activation |
 | 4 | Last updated | 2026-10-31 |
-| 5 | Next task / responsible platform | **Owner** review/merge **Batch 27C** PR (**Cursor**) |
+| 5 | Next task / responsible platform | **Owner** review/merge **Batch 28A** PR (**Cursor**); then **v0.app** Lead Inbox UI |
 | 6 | Open blocker / gate IDs | Module backend flags OFF (DEFERRED); live command center UNVERIFIED; MKT-25 migration apply (DEFERRED) |
 
 ### Evidence table
@@ -98,7 +98,10 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 27A.2 overview integrity recovery | MERGED | [PR #73](https://github.com/Holagpt-ai/webxxl-website-system/pull/73), `ccbca6b0eef330d75a77cc9ae3af6adadb806309`. Cherry-pick of `edc21fd6…` |
 | Vercel production SHA (2026-10-31, PR #73) | DEPLOYED | Vercel `dpl_Dz8ULG7kiAdZr499mZ6W7wnX1YyA` **READY**; GitHub deployment `7460984353`, Production **success**, SHA `ccbca6b0eef330d75a77cc9ae3af6adadb806309`. SHA only |
 | Batch 27B Business Command Center UI (v0) | DELIVERED | `v0/business-command-center-27b` @ `25220431bf713ccd1bf10dfc3b5260b466c412bd` |
-| Batch 27C Business Command Center UI integration | IN PR | v0 cherry-pick + nav `/dashboard/business` + integration tests |
+| Batch 27C Business Command Center UI integration | MERGED | [PR #74](https://github.com/Holagpt-ai/webxxl-website-system/pull/74), `828ac12e9968f84bd8e1bc42f44ba941c9551194`, v0 @ `25220431` |
+| Vercel production SHA (2026-10-31, PR #74) | DEPLOYED | Vercel `dpl_5AuKd2RyiUqAgoNGr4XLSBS6rtj5` **READY** @ `828ac12e9968f84bd8e1bc42f44ba941c9551194`. SHA only |
+| Batch 28A Managed-site lead intake & CRM qualification | IN PR | [PR #75](https://github.com/Holagpt-ai/webxxl-website-system/pull/75); migration `20261031120000_batch28a_managed_site_leads` in Git only |
+| Batch 28A.1 Intake integrity (auth, pagination, lifecycle, dedupe) | IN PR | Same PR #75; composite cursors, auth-before-replay, conditional workflow updates |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.

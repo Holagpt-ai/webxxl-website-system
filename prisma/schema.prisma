@@ -389,6 +389,15 @@ enum LeadStage {
   LOST
 }
 
+enum ManagedSiteLeadStatus {
+  RECEIVED
+  PENDING_REVIEW
+  QUALIFIED
+  REJECTED
+  CONVERTED
+  DUPLICATE_REVIEW
+}
+
 enum LeadActivityType {
   CREATED
   STAGE_CHANGED
@@ -577,6 +586,8 @@ model CustomerAccount {
   analyticsConversionObservations AnalyticsConversionObservation[]
   webxxlConversionEvents       WebxxlConversionEvent[]
   analyticsSiteCaptureCredentials AnalyticsSiteCaptureCredential[]
+  managedSiteLeads                  ManagedSiteLead[]
+  managedSiteLeadIntakeCredentials  ManagedSiteLeadIntakeCredential[]
 }
 
 model CustomerMembership {
@@ -956,9 +967,81 @@ model ManagedSite {
   analyticsConversionObservations AnalyticsConversionObservation[]
   webxxlConversionEvents    WebxxlConversionEvent[]
   analyticsSiteCaptureCredentials AnalyticsSiteCaptureCredential[]
+  managedSiteLeadIntakeCredentials ManagedSiteLeadIntakeCredential[]
+  managedSiteLeads                 ManagedSiteLead[]
 
   @@index([customerAccountId])
   @@index([projectId])
+}
+
+model ManagedSiteLeadIntakeCredential {
+  id                String    @id @default(cuid())
+  customerAccountId String
+  managedSiteId     String
+  publicKeyId       String    @unique
+  secretRef         String?
+  secretHash        String
+  enabled           Boolean   @default(true)
+  revokedAt         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite     @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
+
+  @@index([managedSiteId, enabled])
+  @@index([customerAccountId])
+}
+
+model ManagedSiteLeadIntakeRateWindow {
+  publicKeyId  String
+  windowStart  DateTime
+  requestCount Int      @default(0)
+  expiresAt    DateTime
+
+  @@id([publicKeyId, windowStart])
+  @@index([expiresAt])
+}
+
+model ManagedSiteLead {
+  id                    String                @id @default(cuid())
+  customerAccountId     String
+  managedSiteId         String
+  status                ManagedSiteLeadStatus @default(RECEIVED)
+  locale                String                @default("en")
+  formReference         String?
+  submittedAt           DateTime
+  contactName           String?
+  contactEmail          String
+  contactPhone          String?
+  normalizedEmail       String
+  normalizedPhone       String?
+  message               String?               @db.Text
+  payload               Json
+  idempotencyKey        String                @unique
+  submissionFingerprint String
+  sourceAttribution     Json?
+  analyticsEventRef     String?
+  crmContactId          String?
+  convertedAt           DateTime?
+  duplicateOfLeadId     String?
+  qualifiedAt           DateTime?
+  rejectedAt            DateTime?
+  rejectionReason       String?
+  convertIdempotencyKey String?               @unique
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite     @relation(fields: [managedSiteId], references: [id], onDelete: Restrict)
+  crmContact      CrmContact?     @relation(fields: [crmContactId], references: [id], onDelete: SetNull)
+  duplicateOf     ManagedSiteLead? @relation("ManagedSiteLeadDuplicate", fields: [duplicateOfLeadId], references: [id], onDelete: SetNull)
+  duplicates      ManagedSiteLead[] @relation("ManagedSiteLeadDuplicate")
+
+  @@index([customerAccountId, status, createdAt])
+  @@index([managedSiteId, createdAt])
+  @@index([customerAccountId, normalizedEmail])
+  @@index([submissionFingerprint, createdAt])
 }
 
 model ManagedSiteCapability {
@@ -2742,6 +2825,7 @@ model CrmContact {
   chatwootConversationMappings ChatwootConversationMapping[]
   marketingLeadFollowUpEvaluations MarketingLeadFollowUpEvaluation[]
   marketingFollowUpTaskIntents     MarketingFollowUpTaskIntent[]
+  managedSiteLeads                 ManagedSiteLead[]
 
   @@unique([customerAccountId, id])
   @@index([customerAccountId, status])

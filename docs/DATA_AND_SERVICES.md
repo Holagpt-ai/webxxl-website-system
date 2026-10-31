@@ -14,7 +14,8 @@ Specifications: [`03-DATA-MODEL`](platform/docs/03-DATA-MODEL.md), [`04-API-INTE
 | Workflow | `lib/platform/workflow/**`, legacy notification worker | AUTO-10 is Prisma-first; Hatchet is not provisioned | MERGED | `WORKFLOW_*` default off in the AUTO-10 contract |
 | AI workforce | `lib/platform/workforce/**`, `lib/platform/customer-ai-workforce/**` | Paperclip is a candidate adapter | MERGED | Live execution not inferred |
 | Business command center overview | `lib/platform/business-overview/**`, `GET /api/v1/business/overview` | Aggregates existing CRM/MKT/SEO/comms/project read paths | MERGED 27A/27A.2 on `main` @ `ccbca6b` | Read-only; per-module flags and OPEN-001 gates preserved |
-| Business command center UI | `app/[locale]/dashboard/business/**`, `components/business/**`, `lib/business-ui/**` | Client overview via session-scoped API | IN PR Batch 27C (v0 @ `25220431`) | No backend changes in 27C |
+| Business command center UI | `app/[locale]/dashboard/business/**`, `components/business/**`, `lib/business-ui/**` | Client overview via session-scoped API | MERGED Batch 27C @ `828ac12` | — |
+| Managed-site lead intake | `lib/platform/site-leads/**`, `/api/v1/site-leads/**` | Signed site intake + CRM qualification inbox | IN PR Batch 28A | `SITE_LEAD_INTAKE_ENABLED` default OFF; migration in Git only |
 
 ## Analytics flags on this source tree
 
