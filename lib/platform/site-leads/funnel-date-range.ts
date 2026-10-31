@@ -17,20 +17,24 @@ export function parseSiteLeadFunnelDateRange(input: {
   const defaultFrom = new Date(defaultTo)
   defaultFrom.setUTCDate(defaultFrom.getUTCDate() - 30)
 
-  const createdFrom = input.createdFromRaw ? parseIsoDate(input.createdFromRaw, 'createdFrom') : defaultFrom
-  if (!createdFrom.ok) return createdFrom
-  const createdToInclusive = input.createdToRaw ? parseIsoDate(input.createdToRaw, 'createdTo') : defaultTo
-  if (!createdToInclusive.ok) return createdToInclusive
+  const fromParsed = input.createdFromRaw
+    ? parseIsoDate(input.createdFromRaw, 'createdFrom')
+    : ({ ok: true as const, value: defaultFrom })
+  if (!fromParsed.ok) return fromParsed
+  const toParsed = input.createdToRaw
+    ? parseIsoDate(input.createdToRaw, 'createdTo')
+    : ({ ok: true as const, value: defaultTo })
+  if (!toParsed.ok) return toParsed
 
-  if (createdFrom.value.getTime() > createdToInclusive.value.getTime()) {
+  if (fromParsed.value.getTime() > toParsed.value.getTime()) {
     return { ok: false, message: 'createdFrom must be on or before createdTo' }
   }
 
-  const createdToExclusive = new Date(createdToInclusive.value)
+  const createdToExclusive = new Date(toParsed.value)
   createdToExclusive.setUTCDate(createdToExclusive.getUTCDate() + 1)
 
   const spanDays =
-    (createdToExclusive.getTime() - createdFrom.value.getTime()) / (24 * 60 * 60 * 1000)
+    (createdToExclusive.getTime() - fromParsed.value.getTime()) / (24 * 60 * 60 * 1000)
   if (spanDays > SITE_LEAD_FUNNEL_MAX_RANGE_DAYS + 1) {
     return {
       ok: false,
@@ -41,10 +45,10 @@ export function parseSiteLeadFunnelDateRange(input: {
   return {
     ok: true,
     value: {
-      createdFrom: createdFrom.value,
+      createdFrom: fromParsed.value,
       createdToExclusive,
-      createdFromIso: createdFrom.value.toISOString().slice(0, 10),
-      createdToInclusiveIso: createdToInclusive.value.toISOString().slice(0, 10),
+      createdFromIso: fromParsed.value.toISOString().slice(0, 10),
+      createdToInclusiveIso: toParsed.value.toISOString().slice(0, 10),
     },
   }
 }

@@ -83,8 +83,8 @@ describe('Batch 30A lead funnel reporting', () => {
     vi.clearAllMocks()
     process.env.CRM_BACKEND_ENABLED = 'true'
     process.env.SITE_LEAD_INTAKE_ENABLED = 'false'
-    vi.mocked(prisma.managedSiteLead.count).mockImplementation(async (args) => {
-      const where = args?.where as { status?: string | { in: string[] }; customerAccountId?: string }
+    vi.mocked(prisma.managedSiteLead.count).mockImplementation(async (args: unknown) => {
+      const where = (args as { where?: { status?: string | { in: string[] }; customerAccountId?: string } })?.where
       if (where?.status === 'CONVERTED') return 2
       if (where?.status === 'QUALIFIED') return 3
       if (where?.status === 'REJECTED') return 1
@@ -106,7 +106,9 @@ describe('Batch 30A lead funnel reporting', () => {
     vi.mocked(prisma.managedSiteLead.groupBy).mockResolvedValue([
       { managedSiteId: 'site_a', _count: { _all: 5 } },
     ] as never)
-    vi.mocked(prisma.$queryRaw).mockResolvedValue([{ day: new Date('2026-10-01T00:00:00.000Z'), count: 5n }] as never)
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([
+      { day: new Date('2026-10-01T00:00:00.000Z'), count: BigInt(5) },
+    ] as never)
   })
 
   it('parses bounded date ranges and rejects spans over the configured maximum', () => {

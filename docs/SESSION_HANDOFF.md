@@ -7,7 +7,7 @@
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | **29A.1** **MERGED** on `main`; **30A** lead funnel reporting **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `3905994ebbb8c4b423481c961a65e938dfc76a59` on `main`; **PR TBD** `feature/batch-30a-lead-funnel-reporting` (open) |
+| 2 | GitHub SHA, branch, active PR | `3905994ebbb8c4b423481c961a65e938dfc76a59` on `main`; **PR #80** head `f1680d2…` on `feature/batch-30a-lead-funnel-reporting` (open) |
 | 3 | Production deployment | Vercel **`dpl_AQ2v84aWrtDkogkczTeuMM24CHc9` READY** @ `3905994` |
 | 4 | Last updated | 2026-10-31 |
 | 5 | Next task / responsible platform | **Owner** merge **30A** — **Cursor** |
@@ -26,7 +26,7 @@ None after 30A PR is pushed.
 ```
 Date / scope / owner: 2026-10-31 / BATCH-30A lead funnel reporting / Cursor
 Repo / main SHA: Holagpt-ai/webxxl-website-system / 3905994ebbb8c4b423481c961a65e938dfc76a59
-Branch / PR / head: feature/batch-30a-lead-funnel-reporting / PR TBD / (see PR)
+Branch / PR / head: feature/batch-30a-lead-funnel-reporting / PR #80 open / f1680d2…
 Merged / deployed: PR #79 @ 3905994; Vercel dpl_AQ2v84aWrtDkogkczTeuMM24CHc9 READY @ 3905994
 Migration / flags / activation: batch28a migrations NOT applied; SITE_LEAD_INTAKE_ENABLED OFF; reporting does not require intake activation
 Next exact assignment / owning tool: Owner merge 30A PR — Owner + Cursor; then v0 Batch 30B UI
