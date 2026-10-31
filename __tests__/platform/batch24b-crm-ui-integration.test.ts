@@ -7,6 +7,9 @@ import { classifyWorkspaceError } from '@/lib/crm-ui/workspace'
 import {
   effectiveMarketingConsentGranted,
   evaluateSegmentGroup,
+  operatorsForSegmentField,
+  resolveEffectiveMarketingConsent,
+  summarizeSegmentPopulation,
   validateSegmentFilterGroup,
 } from '@/lib/platform/crm/segment-engine'
 import { commitCrmImportResponseShape, previewCrmImportResponseShape } from '@/lib/platform/crm/import-api-contract'
@@ -68,6 +71,27 @@ describe('Batch 24B CRM UI integration contracts', () => {
       rules: [{ field: 'leadSource', operator: 'in', value: '' }],
     })
     expect(invalidIn.ok).toBe(false)
+    expect(
+      validateSegmentFilterGroup({
+        logic: 'AND',
+        rules: [{ field: 'createdAfter', operator: 'lte', value: '2026-01-01T00:00:00.000Z' }],
+      }).ok,
+    ).toBe(false)
+    expect(
+      validateSegmentFilterGroup({
+        logic: 'AND',
+        rules: [{ field: 'createdBefore', operator: 'gte', value: '2026-01-01T00:00:00.000Z' }],
+      }).ok,
+    ).toBe(false)
+  })
+
+  it('Segment Builder exposes backend-aligned operators per date field', () => {
+    expect(operatorsForSegmentField('createdAfter')).toEqual(['eq', 'gte'])
+    expect(operatorsForSegmentField('createdBefore')).toEqual(['eq', 'lte'])
+    expect(operatorsForSegmentField('lastActivityBefore')).toEqual(['eq', 'lte'])
+    const source = readFileSync(join(process.cwd(), 'components/crm/segments.tsx'), 'utf8')
+    expect(source).toContain('operatorsForSegmentField')
+    expect(source).not.toMatch(/date:\s*\['gte',\s*'lte',\s*'eq'\]/)
   })
 
   it('applies chronological revocation and active suppression to marketing eligibility', () => {
@@ -75,6 +99,7 @@ describe('Batch 24B CRM UI integration contracts', () => {
       channel: 'EMAIL' as const,
       purpose: 'MARKETING' as const,
     }
+    const now = new Date('2026-08-01T00:00:00Z')
     expect(
       effectiveMarketingConsentGranted(
         [
@@ -82,16 +107,89 @@ describe('Batch 24B CRM UI integration contracts', () => {
           { ...base, status: 'REVOKED', capturedAt: new Date('2026-06-01T00:00:00Z') },
         ],
         [],
+        'EMAIL',
+        'MARKETING',
+        now,
       ),
     ).toBe(false)
     expect(
-      effectiveMarketingConsentGranted([{ ...base, status: 'GRANTED', capturedAt: new Date('2026-06-01T00:00:00Z') }], [
-        { channel: 'EMAIL', purpose: 'MARKETING', active: true },
-      ]),
+      effectiveMarketingConsentGranted(
+        [
+          {
+            ...base,
+            status: 'GRANTED',
+            capturedAt: new Date('2026-01-01T00:00:00Z'),
+            expiresAt: new Date('2026-05-01T00:00:00Z'),
+          },
+        ],
+        [],
+        'EMAIL',
+        'MARKETING',
+        now,
+      ),
     ).toBe(false)
     expect(
-      effectiveMarketingConsentGranted([], []),
+      effectiveMarketingConsentGranted(
+        [{ ...base, status: 'GRANTED', capturedAt: new Date('2026-06-01T00:00:00Z') }],
+        [{ channel: 'EMAIL', purpose: 'MARKETING', active: true }],
+        'EMAIL',
+        'MARKETING',
+        now,
+      ),
     ).toBe(false)
+    expect(resolveEffectiveMarketingConsent([], [], 'EMAIL', 'MARKETING', now)).toBe('unknown')
+  })
+
+  it('treats latest UNKNOWN as non-eligible and ignores unrelated transactional consent', () => {
+    const now = new Date('2026-08-01T00:00:00Z')
+    const marketingBase = { channel: 'EMAIL' as const, purpose: 'MARKETING' as const }
+    expect(
+      resolveEffectiveMarketingConsent(
+        [
+          { ...marketingBase, status: 'GRANTED', capturedAt: new Date('2026-01-01T00:00:00Z') },
+          { ...marketingBase, status: 'UNKNOWN', capturedAt: new Date('2026-07-01T00:00:00Z') },
+        ],
+        [],
+        'EMAIL',
+        'MARKETING',
+        now,
+      ),
+    ).toBe('unknown')
+    expect(
+      resolveEffectiveMarketingConsent(
+        [
+          {
+            channel: 'EMAIL',
+            purpose: 'TRANSACTIONAL',
+            status: 'GRANTED',
+            capturedAt: new Date('2026-07-01T00:00:00Z'),
+          },
+        ],
+        [],
+        'EMAIL',
+        'MARKETING',
+        now,
+      ),
+    ).toBe('unknown')
+    const summary = summarizeSegmentPopulation([
+      {
+        id: 'c1',
+        customerAccountId: 'a1',
+        createdAt: now,
+        tagLabels: [],
+        consents: [
+          {
+            channel: 'EMAIL',
+            purpose: 'TRANSACTIONAL',
+            status: 'GRANTED',
+            capturedAt: now,
+          },
+        ],
+        suppressions: [],
+      },
+    ])
+    expect(summary.unknownConsentContacts).toBe(1)
+    expect(summary.eligibleContacts).toBe(0)
   })
 
   it('preserves Batch 23 import preview and commit response compatibility', () => {

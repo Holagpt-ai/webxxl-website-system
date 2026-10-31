@@ -29,6 +29,7 @@ function mapContactToSegmentView(
       status: row.status,
       capturedAt: row.capturedAt,
       revokedAt: row.revokedAt,
+      expiresAt: row.expiresAt,
     })),
     suppressions: c.suppressions.map((row) => ({ channel: row.channel, purpose: row.purpose, active: row.active })),
   }

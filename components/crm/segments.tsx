@@ -16,6 +16,7 @@ import {
   type SegmentPopulationSummary,
   type SegmentRuleField,
 } from '@/lib/crm-ui/types'
+import { operatorsForSegmentField } from '@/lib/platform/crm/segment-engine'
 import {
   EmptyNote,
   FormActions,
@@ -46,13 +47,6 @@ const FIELD_KIND: Record<SegmentRuleField, FieldKind> = {
   followUpCoverage: 'coverage',
   consentEligible: 'boolean',
   notSuppressed: 'boolean',
-}
-
-const OPERATORS_BY_KIND: Record<FieldKind, SegmentOperator[]> = {
-  text: ['eq', 'neq', 'in'],
-  date: ['gte', 'lte', 'eq'],
-  boolean: ['eq'],
-  coverage: ['eq', 'neq', 'in'],
 }
 
 type DraftRule = { key: number; field: SegmentRuleField; operator: SegmentOperator; value: string }
@@ -97,7 +91,9 @@ function fromDefinition(raw: unknown): Draft | null {
     const { field, operator, value } = item as { field?: unknown; operator?: unknown; value?: unknown }
     if (typeof field !== 'string' || !(field in FIELD_KIND)) return null
     const kind = FIELD_KIND[field as SegmentRuleField]
-    if (typeof operator !== 'string' || !OPERATORS_BY_KIND[kind].includes(operator as SegmentOperator)) return null
+    if (typeof operator !== 'string' || !operatorsForSegmentField(field as SegmentRuleField).includes(operator as SegmentOperator)) {
+      return null
+    }
     let text: string
     if (kind === 'boolean') {
       if (typeof value !== 'boolean') return null
@@ -436,8 +432,12 @@ function SegmentBuilder({
         const next = { ...rule, ...patch }
         if (patch.field && patch.field !== rule.field) {
           const kind = FIELD_KIND[patch.field]
-          next.operator = OPERATORS_BY_KIND[kind][0]
+          const allowed = operatorsForSegmentField(patch.field)
+          next.operator = allowed.includes(rule.operator) ? rule.operator : allowed[0]
           next.value = defaultValue(kind)
+        }
+        if (patch.operator && !operatorsForSegmentField(next.field).includes(patch.operator)) {
+          next.operator = operatorsForSegmentField(next.field)[0]
         }
         return next
       }),
@@ -520,7 +520,7 @@ function SegmentBuilder({
                     label={t.operator}
                     value={rule.operator}
                     onChange={(v) => update(rule.key, { operator: v as SegmentOperator })}
-                    options={OPERATORS_BY_KIND[kind].map((op) => ({ value: op, label: t.operators[op] }))}
+                    options={operatorsForSegmentField(rule.field).map((op) => ({ value: op, label: t.operators[op] }))}
                   />
                   {kind === 'boolean' ? (
                     <SelectField

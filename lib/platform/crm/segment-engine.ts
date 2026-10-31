@@ -7,6 +7,7 @@ export type SegmentConsentRecord = {
   status: CrmConsentStatus
   capturedAt: Date
   revokedAt?: Date | null
+  expiresAt?: Date | null
 }
 
 export type SegmentContactView = {
@@ -57,16 +58,27 @@ const ALLOWED_FIELDS = new Set<SegmentFilterField>([
   'notSuppressed',
 ])
 
-const FIELD_OPERATORS: Record<SegmentFilterField, ReadonlySet<SegmentFilterRule['operator']>> = {
-  tag: new Set(['eq', 'neq', 'in']),
-  leadSource: new Set(['eq', 'neq', 'in']),
-  createdAfter: new Set(['eq', 'gte']),
-  createdBefore: new Set(['eq', 'lte']),
-  lastActivityBefore: new Set(['eq', 'lte']),
-  hasOpenDeal: new Set(['eq', 'neq']),
-  followUpCoverage: new Set(['eq', 'neq', 'in']),
-  consentEligible: new Set(['eq']),
-  notSuppressed: new Set(['eq']),
+export const SEGMENT_FIELD_OPERATORS: Record<SegmentFilterField, readonly SegmentFilterRule['operator'][]> = {
+  tag: ['eq', 'neq', 'in'],
+  leadSource: ['eq', 'neq', 'in'],
+  createdAfter: ['eq', 'gte'],
+  createdBefore: ['eq', 'lte'],
+  lastActivityBefore: ['eq', 'lte'],
+  hasOpenDeal: ['eq', 'neq'],
+  followUpCoverage: ['eq', 'neq', 'in'],
+  consentEligible: ['eq'],
+  notSuppressed: ['eq'],
+}
+
+const FIELD_OPERATORS = Object.fromEntries(
+  (Object.entries(SEGMENT_FIELD_OPERATORS) as [SegmentFilterField, SegmentFilterRule['operator'][]][]).map(
+    ([field, ops]) => [field, new Set(ops)],
+  ),
+) as Record<SegmentFilterField, ReadonlySet<SegmentFilterRule['operator']>>
+
+/** Operators the segment API accepts for each filter field (shared with CRM Segment Builder UI). */
+export function operatorsForSegmentField(field: SegmentFilterField): SegmentFilterRule['operator'][] {
+  return [...SEGMENT_FIELD_OPERATORS[field]]
 }
 
 const DATE_FILTER_FIELDS = new Set<SegmentFilterField>(['createdAfter', 'createdBefore', 'lastActivityBefore'])
@@ -110,24 +122,41 @@ function compareScalar<T>(actual: T, operator: SegmentFilterRule['operator'], ex
   }
 }
 
-export function effectiveMarketingConsentGranted(
+export type EffectiveMarketingConsentState = 'granted' | 'revoked' | 'unknown'
+
+export function resolveEffectiveMarketingConsent(
   consents: SegmentConsentRecord[],
   suppressions: SegmentContactView['suppressions'],
   channel: CrmConsentChannel = 'EMAIL',
   purpose: CrmConsentPurpose = 'MARKETING',
-): boolean {
+  now: Date = new Date(),
+): EffectiveMarketingConsentState {
   if (suppressions.some((row) => row.active && row.channel === channel && row.purpose === purpose)) {
-    return false
+    return 'revoked'
   }
   const history = consents
     .filter((row) => row.channel === channel && row.purpose === purpose)
     .sort((a, b) => b.capturedAt.getTime() - a.capturedAt.getTime())
   const latest = history[0]
-  if (!latest) return false
-  if (latest.status === 'UNKNOWN') return false
-  if (latest.status === 'REVOKED') return false
-  if (latest.revokedAt && latest.revokedAt.getTime() <= Date.now()) return false
-  return latest.status === 'GRANTED'
+  if (!latest) return 'unknown'
+  if (latest.status === 'UNKNOWN') return 'unknown'
+  if (latest.status === 'REVOKED') return 'revoked'
+  if (latest.status === 'GRANTED') {
+    if (latest.revokedAt && latest.revokedAt.getTime() <= now.getTime()) return 'revoked'
+    if (latest.expiresAt && latest.expiresAt.getTime() <= now.getTime()) return 'revoked'
+    return 'granted'
+  }
+  return 'unknown'
+}
+
+export function effectiveMarketingConsentGranted(
+  consents: SegmentConsentRecord[],
+  suppressions: SegmentContactView['suppressions'],
+  channel: CrmConsentChannel = 'EMAIL',
+  purpose: CrmConsentPurpose = 'MARKETING',
+  now: Date = new Date(),
+): boolean {
+  return resolveEffectiveMarketingConsent(consents, suppressions, channel, purpose, now) === 'granted'
 }
 
 export function validateSegmentFilterGroup(group: SegmentFilterGroup): { ok: true } | { ok: false; message: string } {
@@ -235,10 +264,9 @@ export function summarizeSegmentPopulation(contacts: SegmentContactView[]) {
   for (const contact of contacts) {
     const hasSuppression = contact.suppressions.some((s) => s.active)
     if (hasSuppression) suppressed += 1
-    const granted = effectiveMarketingConsentGranted(contact.consents, contact.suppressions)
-    const hasHistory = contact.consents.some((c) => c.channel === 'EMAIL' && c.purpose === 'MARKETING')
-    if (!hasHistory || contact.consents.every((c) => c.status === 'UNKNOWN')) unknownConsent += 1
-    if (!hasSuppression && granted) eligible += 1
+    const consentState = resolveEffectiveMarketingConsent(contact.consents, contact.suppressions)
+    if (consentState === 'unknown') unknownConsent += 1
+    if (consentState === 'granted') eligible += 1
   }
   return {
     totalContacts: contacts.length,
