@@ -17,7 +17,9 @@ export type StagingEnvironmentAssessment = {
 const STAGING_DB_KEYS = ['STAGING_DATABASE_URL', 'WEBXXL_STAGING_DATABASE_URL', 'DATABASE_URL_STAGING'] as const
 const STAGING_APP_KEYS = ['WEBXXL_STAGING_APP_URL', 'WEBXXL_APP_BASE_URL'] as const
 
-export function assessStagingEnvironment(env: NodeJS.ProcessEnv = process.env): StagingEnvironmentAssessment {
+export function assessStagingEnvironment(
+  env: Record<string, string | undefined> = process.env,
+): StagingEnvironmentAssessment {
   const stagingDb = STAGING_DB_KEYS.some((k) => env[k]?.trim())
   const prodDb = Boolean(env.DATABASE_URL?.trim() && !stagingDb)
   const stagingApp = STAGING_APP_KEYS.some((k) => {

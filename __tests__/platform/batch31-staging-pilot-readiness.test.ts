@@ -22,7 +22,7 @@ import { localizePath } from '@/lib/i18n/localize'
 
 describe('Batch 31 controlled staging and synthetic pilot readiness', () => {
   it('reports staging environment NOT_IDENTIFIED without staging env vars', () => {
-    const assessment = assessStagingEnvironment({})
+    const assessment = assessStagingEnvironment({ NODE_ENV: 'test' })
     expect(assessment.state).toBe('NOT_IDENTIFIED')
     expect(assessment.isolatedDatabaseConfigured).toBe(false)
     expect(assessment.reproducibleArtifacts.length).toBeGreaterThan(2)

@@ -32,7 +32,8 @@ function entitlementState(key: string): FeatureReadinessState {
   if (!ent) return 'not_configured'
   const access = evaluateEntitlementAccess(ent)
   if (access.access === 'POLICY_UNRESOLVED') return 'policy_unresolved'
-  if (access.access === 'DENIED') return 'unauthorized'
+  if (access.access === 'DISABLED') return 'disabled'
+  if (access.access === 'PAID') return 'unauthorized'
   return 'ready_pending_migration'
 }
 
