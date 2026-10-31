@@ -79,11 +79,13 @@ function baseDataAccess(overrides: Partial<BusinessOverviewDataAccess> = {}): Bu
 }
 
 describe('Batch 30A lead funnel reporting', () => {
+  let countMock: ReturnType<typeof vi.fn>
+
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.CRM_BACKEND_ENABLED = 'true'
     process.env.SITE_LEAD_INTAKE_ENABLED = 'false'
-    const countMock = vi.mocked(prisma.managedSiteLead.count) as unknown as ReturnType<typeof vi.fn>
+    countMock = vi.mocked(prisma.managedSiteLead.count) as unknown as ReturnType<typeof vi.fn>
     countMock.mockImplementation(async (args: { where?: { status?: string | { in: string[] }; customerAccountId?: string } }) => {
       const where = args?.where
       if (where?.status === 'CONVERTED') return 2
