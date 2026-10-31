@@ -1,5 +1,8 @@
+import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import type { CrmResult } from '@/lib/platform/crm/types'
+
+type DbTx = Omit<typeof prisma, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>
 
 export async function findDuplicateCandidatesWithinAccount(customerAccountId: string, emailNormalized: string) {
   return prisma.crmContactChannelIdentity.findMany({
@@ -52,22 +55,137 @@ export async function rejectMergeProposal(input: {
   proposalId: string
   actorUserId: string
 }): Promise<CrmResult<true>> {
-  const proposal = await prisma.crmMergeProposal.findFirst({
-    where: { id: input.proposalId, customerAccountId: input.customerAccountId },
+  const rejected = await prisma.$transaction(async (tx) => {
+    const claim = await tx.crmMergeProposal.updateMany({
+      where: { id: input.proposalId, customerAccountId: input.customerAccountId, status: 'PENDING' },
+      data: { status: 'REJECTED' },
+    })
+    return claim.count
   })
-  if (!proposal) return { ok: false, code: 'NOT_FOUND', message: 'Merge proposal not found' }
-  if (proposal.status !== 'PENDING') {
+  if (rejected === 0) {
+    const proposal = await prisma.crmMergeProposal.findFirst({
+      where: { id: input.proposalId, customerAccountId: input.customerAccountId },
+    })
+    if (!proposal) return { ok: false, code: 'NOT_FOUND', message: 'Merge proposal not found' }
     return { ok: false, code: 'CONFLICT', message: 'Merge proposal is not pending' }
   }
-  await prisma.crmMergeProposal.update({
-    where: { id: proposal.id },
-    data: { status: 'REJECTED' },
-  })
   return { ok: true, value: true }
 }
 
+export async function applyConsentMergePreservation(
+  customerAccountId: string,
+  fromContactId: string,
+  toContactId: string,
+): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    await mergeConsentsPreservingProvenance(tx, customerAccountId, fromContactId, toContactId)
+  })
+}
+
+async function mergeConsentsPreservingProvenance(
+  tx: DbTx,
+  customerAccountId: string,
+  fromContactId: string,
+  toContactId: string,
+) {
+  const duplicateConsents = await tx.contactConsent.findMany({
+    where: { customerAccountId, contactId: fromContactId },
+  })
+  for (const consent of duplicateConsents) {
+    const primaryMatch = await tx.contactConsent.findFirst({
+      where: {
+        customerAccountId,
+        contactId: toContactId,
+        channel: consent.channel,
+        purpose: consent.purpose,
+      },
+      orderBy: { capturedAt: 'desc' },
+    })
+    if (!primaryMatch) {
+      await tx.contactConsent.update({ where: { id: consent.id }, data: { contactId: toContactId } })
+      continue
+    }
+    if (primaryMatch.status === consent.status) {
+      await tx.contactConsent.delete({ where: { id: consent.id } })
+      continue
+    }
+    if (primaryMatch.status !== 'GRANTED' && consent.status === 'GRANTED') {
+      await tx.contactConsent.delete({ where: { id: consent.id } })
+      continue
+    }
+    await tx.contactConsent.delete({ where: { id: consent.id } })
+  }
+
+  const duplicateSuppressions = await tx.contactSuppression.findMany({
+    where: { customerAccountId, contactId: fromContactId },
+  })
+  for (const suppression of duplicateSuppressions) {
+    if (suppression.active) {
+      const primaryActive = await tx.contactSuppression.findFirst({
+        where: {
+          customerAccountId,
+          contactId: toContactId,
+          channel: suppression.channel,
+          purpose: suppression.purpose,
+          active: true,
+        },
+      })
+      if (primaryActive) {
+        await tx.contactSuppression.delete({ where: { id: suppression.id } })
+        continue
+      }
+    }
+    await tx.contactSuppression.update({ where: { id: suppression.id }, data: { contactId: toContactId } })
+  }
+}
+
+async function reassignChatwootMappings(tx: DbTx, customerAccountId: string, fromContactId: string, toContactId: string) {
+  const survivorMapping = await tx.chatwootContactMapping.findFirst({
+    where: { customerAccountId, crmContactId: toContactId },
+  })
+  const duplicateMappings = await tx.chatwootContactMapping.findMany({
+    where: { customerAccountId, crmContactId: fromContactId },
+  })
+  for (const mapping of duplicateMappings) {
+    if (survivorMapping) {
+      await tx.chatwootContactMapping.delete({ where: { id: mapping.id } })
+    } else {
+      await tx.chatwootContactMapping.update({ where: { id: mapping.id }, data: { crmContactId: toContactId } })
+    }
+  }
+  await tx.chatwootConversationMapping.updateMany({
+    where: { customerAccountId, crmContactId: fromContactId },
+    data: { crmContactId: toContactId },
+  })
+}
+
+async function reassignFollowUpRecords(tx: DbTx, customerAccountId: string, fromContactId: string, toContactId: string) {
+  await tx.marketingLeadFollowUpEvaluation.updateMany({
+    where: { customerAccountId, crmContactId: fromContactId },
+    data: { crmContactId: toContactId },
+  })
+  const duplicateIntents = await tx.marketingFollowUpTaskIntent.findMany({
+    where: { customerAccountId, crmContactId: fromContactId },
+  })
+  for (const intent of duplicateIntents) {
+    const conflict = await tx.marketingFollowUpTaskIntent.findFirst({
+      where: {
+        customerAccountId,
+        crmContactId: toContactId,
+        policyKey: intent.policyKey,
+        evaluationId: intent.evaluationId,
+      },
+    })
+    if (conflict) {
+      await tx.marketingFollowUpTaskIntent.delete({ where: { id: intent.id } })
+    } else {
+      await tx.marketingFollowUpTaskIntent.update({ where: { id: intent.id }, data: { crmContactId: toContactId } })
+    }
+  }
+}
+
 async function reassignContactChildren(
-  tx: Omit<typeof prisma, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>,
+  tx: DbTx,
   customerAccountId: string,
   fromContactId: string,
   toContactId: string,
@@ -77,8 +195,9 @@ async function reassignContactChildren(
   await tx.crmTask.updateMany({ where: { customerAccountId, contactId: fromContactId }, data: { contactId: toContactId } })
   await tx.crmDeal.updateMany({ where: { customerAccountId, contactId: fromContactId }, data: { contactId: toContactId } })
   await tx.crmContactSource.updateMany({ where: { customerAccountId, contactId: fromContactId }, data: { contactId: toContactId } })
-  await tx.contactConsent.updateMany({ where: { customerAccountId, contactId: fromContactId }, data: { contactId: toContactId } })
-  await tx.contactSuppression.updateMany({ where: { customerAccountId, contactId: fromContactId }, data: { contactId: toContactId } })
+  await mergeConsentsPreservingProvenance(tx, customerAccountId, fromContactId, toContactId)
+  await reassignChatwootMappings(tx, customerAccountId, fromContactId, toContactId)
+  await reassignFollowUpRecords(tx, customerAccountId, fromContactId, toContactId)
 
   const duplicateIdentities = await tx.crmContactChannelIdentity.findMany({
     where: { customerAccountId, contactId: fromContactId },
@@ -143,52 +262,66 @@ export async function approveMergeProposal(input: {
   proposalId: string
   actorUserId: string
 }): Promise<CrmResult<{ survivorContactId: string; mergedContactId: string }>> {
-  const proposal = await prisma.crmMergeProposal.findFirst({
-    where: { id: input.proposalId, customerAccountId: input.customerAccountId },
-  })
-  if (!proposal) return { ok: false, code: 'NOT_FOUND', message: 'Merge proposal not found' }
-  if (proposal.status !== 'PENDING') {
-    return { ok: false, code: 'CONFLICT', message: 'Merge proposal is not pending' }
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const claim = await tx.crmMergeProposal.updateMany({
+        where: { id: input.proposalId, customerAccountId: input.customerAccountId, status: 'PENDING' },
+        data: { status: 'RESOLVING' },
+      })
+      if (claim.count === 0) throw new Error('MERGE_NOT_PENDING')
+
+      const proposal = await tx.crmMergeProposal.findFirst({
+        where: { id: input.proposalId, customerAccountId: input.customerAccountId },
+      })
+      if (!proposal) throw new Error('MERGE_NOT_FOUND')
+
+      const [primary, duplicate] = await Promise.all([
+        tx.crmContact.findFirst({
+          where: { id: proposal.primaryContactId, customerAccountId: input.customerAccountId, status: 'ACTIVE' },
+        }),
+        tx.crmContact.findFirst({
+          where: { id: proposal.duplicateContactId, customerAccountId: input.customerAccountId, status: 'ACTIVE' },
+        }),
+      ])
+      if (!primary || !duplicate) throw new Error('MERGE_CONTACTS_INVALID')
+      if (primary.customerAccountId !== duplicate.customerAccountId) throw new Error('MERGE_CROSS_ACCOUNT')
+
+      await reassignContactChildren(tx, input.customerAccountId, duplicate.id, primary.id)
+      await tx.crmContact.update({
+        where: { id: duplicate.id },
+        data: { status: 'MERGED', mergedIntoContactId: primary.id },
+      })
+      await tx.crmContactMergeAudit.create({
+        data: {
+          customerAccountId: input.customerAccountId,
+          survivorContactId: primary.id,
+          mergedContactId: duplicate.id,
+          actorUserId: input.actorUserId,
+          detail: { proposalId: proposal.id, confidenceBps: proposal.confidenceBps } as Prisma.JsonObject,
+        },
+      })
+      await tx.crmMergeProposal.update({
+        where: { id: proposal.id },
+        data: { status: 'APPROVED' },
+      })
+      return { survivorContactId: primary.id, mergedContactId: duplicate.id }
+    })
+    return { ok: true, value: result }
+  } catch (error) {
+    if (error instanceof Error && error.message === 'MERGE_NOT_FOUND') {
+      return { ok: false, code: 'NOT_FOUND', message: 'Merge proposal not found' }
+    }
+    if (error instanceof Error && error.message === 'MERGE_NOT_PENDING') {
+      return { ok: false, code: 'CONFLICT', message: 'Merge proposal is not pending' }
+    }
+    if (error instanceof Error && error.message === 'MERGE_CONTACTS_INVALID') {
+      return { ok: false, code: 'NOT_FOUND', message: 'Merge contacts not found' }
+    }
+    if (error instanceof Error && error.message === 'MERGE_CROSS_ACCOUNT') {
+      return { ok: false, code: 'CROSS_ACCOUNT_DENIED', message: 'Cross-account merge denied' }
+    }
+    throw error
   }
-
-  const cross = await rejectCrossAccountMerge(input.customerAccountId, input.customerAccountId)
-  if (!cross.ok) return cross
-
-  const [primary, duplicate] = await Promise.all([
-    prisma.crmContact.findFirst({
-      where: { id: proposal.primaryContactId, customerAccountId: input.customerAccountId, status: 'ACTIVE' },
-    }),
-    prisma.crmContact.findFirst({
-      where: { id: proposal.duplicateContactId, customerAccountId: input.customerAccountId, status: 'ACTIVE' },
-    }),
-  ])
-  if (!primary || !duplicate) return { ok: false, code: 'NOT_FOUND', message: 'Merge contacts not found' }
-  if (primary.customerAccountId !== duplicate.customerAccountId) {
-    return { ok: false, code: 'CROSS_ACCOUNT_DENIED', message: 'Cross-account merge denied' }
-  }
-
-  await prisma.$transaction(async (tx) => {
-    await reassignContactChildren(tx, input.customerAccountId, duplicate.id, primary.id)
-    await tx.crmContact.update({
-      where: { id: duplicate.id },
-      data: { status: 'MERGED', mergedIntoContactId: primary.id },
-    })
-    await tx.crmContactMergeAudit.create({
-      data: {
-        customerAccountId: input.customerAccountId,
-        survivorContactId: primary.id,
-        mergedContactId: duplicate.id,
-        actorUserId: input.actorUserId,
-        detail: { proposalId: proposal.id, confidenceBps: proposal.confidenceBps },
-      },
-    })
-    await tx.crmMergeProposal.update({
-      where: { id: proposal.id },
-      data: { status: 'APPROVED' },
-    })
-  })
-
-  return { ok: true, value: { survivorContactId: primary.id, mergedContactId: duplicate.id } }
 }
 
 export async function rejectCrossAccountMerge(

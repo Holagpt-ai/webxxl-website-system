@@ -24,7 +24,7 @@ describe('Batch 23 CRM data operations', () => {
   afterEach(() => vi.unstubAllEnvs())
 
   it('validates import mapping and detects in-file and existing duplicates', () => {
-    const mapping = { Email: 'email', First: 'givenName' }
+    const mapping = { email: 'Email', givenName: 'First' }
     expect(validateImportFieldMapping(mapping).ok).toBe(true)
     const analyses = analyzeImportRows({
       rows: [
@@ -100,7 +100,7 @@ describe('Batch 23 CRM data operations', () => {
             status: 'COMMITTED',
             committedContactCount: 2,
             previewReport: {
-              outcome: { committed: 2, skipped: 1, rejected: 0, duplicates: 3, jobId: 'job_a' },
+              outcome: { committed: 2, skipped: 1, rejected: 0, duplicates: 3, jobId: 'job_a', importedCount: 2 },
             },
           }),
         },

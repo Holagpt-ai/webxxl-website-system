@@ -11,11 +11,14 @@ import { recordCrmDataAccessAudit } from '@/lib/platform/crm/audit-service'
 import { buildExportIdCursorWhere } from '@/lib/platform/crm/export-pagination'
 import {
   analyzeImportRows,
+  buildLegacyImportDuplicates,
+  classifyImportRowForCommit,
+  importRowPersistenceFromAnalysis,
+  normalizeImportMapping,
   summarizeImportAnalysis,
   validateImportFieldMapping,
-  type ImportRowAnalysis,
 } from '@/lib/platform/crm/import-analysis'
-import { escapeCsvCell, normalizeEmail } from '@/lib/platform/crm/normalize'
+import { escapeCsvCell, normalizeEmail, normalizePhone } from '@/lib/platform/crm/normalize'
 import type { CrmResult } from '@/lib/platform/crm/types'
 
 export type CsvPreviewRow = Record<string, string>
@@ -28,6 +31,23 @@ export type CrmImportCommitOutcome = {
   rejected: number
   duplicates: number
   jobId: string
+  importedCount: number
+}
+
+function toCommitOutcome(input: Omit<CrmImportCommitOutcome, 'importedCount'>): CrmImportCommitOutcome {
+  return { ...input, importedCount: input.committed }
+}
+
+function readMappedColumnValue(
+  raw: Record<string, string>,
+  mapping: Record<string, string>,
+  target: string,
+): string | undefined {
+  const canonical = normalizeImportMapping(mapping)
+  const column = Object.entries(canonical).find(([, mappedTarget]) => mappedTarget === target)?.[0]
+  if (!column) return undefined
+  const value = raw[column]?.trim()
+  return value || undefined
 }
 
 export function validateImportPayload(rows: CsvPreviewRow[], fields: string[]): CrmResult<{ rowCount: number }> {
@@ -47,12 +67,6 @@ export function validateImportPayload(rows: CsvPreviewRow[], fields: string[]): 
   return { ok: true, value: { rowCount: rows.length } }
 }
 
-function dispositionToDuplicateCandidateId(disposition: ImportRowAnalysis['disposition']): string | undefined {
-  if (disposition.kind === 'duplicate_existing') return disposition.contactId
-  if (disposition.kind === 'duplicate_in_file') return `in-file:${disposition.firstRowNumber}`
-  return undefined
-}
-
 export async function previewCrmImport(input: {
   customerAccountId: string
   createdByUserId: string
@@ -65,39 +79,56 @@ export async function previewCrmImport(input: {
   }
   const mappingValid = validateImportFieldMapping(input.mapping)
   if (!mappingValid.ok) return mappingValid
-  const fields = Object.keys(input.mapping)
+  const canonicalMapping = normalizeImportMapping(input.mapping)
+  const fields = Object.keys(canonicalMapping)
   const valid = validateImportPayload(input.rows, fields)
   if (!valid.ok) return valid
 
   const normalizedEmails = new Set<string>()
+  const normalizedPhones = new Set<string>()
   for (const row of input.rows) {
-    const emailCol = Object.entries(input.mapping).find(([, target]) => target === 'email')?.[0]
-    const email = emailCol ? row[emailCol] : undefined
-    if (email?.trim()) normalizedEmails.add(normalizeEmail(email))
+    const email = readMappedColumnValue(row, canonicalMapping, 'email')
+    if (email) normalizedEmails.add(normalizeEmail(email))
+    const phoneCol = readMappedColumnValue(row, canonicalMapping, 'phone')
+    if (phoneCol) normalizedPhones.add(normalizePhone(phoneCol))
   }
   const existingIdentities =
-    normalizedEmails.size > 0
+    normalizedEmails.size > 0 || normalizedPhones.size > 0
       ? await prisma.crmContactChannelIdentity.findMany({
           where: {
             customerAccountId: input.customerAccountId,
-            identityType: 'EMAIL',
-            normalizedValue: { in: [...normalizedEmails] },
+            OR: [
+              ...(normalizedEmails.size > 0
+                ? [{ identityType: 'EMAIL' as const, normalizedValue: { in: [...normalizedEmails] } }]
+                : []),
+              ...(normalizedPhones.size > 0
+                ? [{ identityType: 'PHONE' as const, normalizedValue: { in: [...normalizedPhones] } }]
+                : []),
+            ],
           },
-          select: { normalizedValue: true, contactId: true },
+          select: { normalizedValue: true, contactId: true, identityType: true },
         })
       : []
-  const existingEmailToContactId = new Map(existingIdentities.map((row) => [row.normalizedValue, row.contactId]))
+  const existingEmailToContactId = new Map(
+    existingIdentities.filter((row) => row.identityType === 'EMAIL').map((row) => [row.normalizedValue, row.contactId]),
+  )
+  const existingPhoneToContactId = new Map(
+    existingIdentities.filter((row) => row.identityType === 'PHONE').map((row) => [row.normalizedValue, row.contactId]),
+  )
 
   const analyses = analyzeImportRows({
     rows: input.rows,
-    mapping: input.mapping,
+    mapping: canonicalMapping,
     existingEmailToContactId,
+    existingPhoneToContactId,
   })
   const summary = summarizeImportAnalysis(analyses)
+  const duplicates = buildLegacyImportDuplicates(analyses)
 
   const previewReport: Prisma.JsonObject = {
     rowCount: input.rows.length,
     consentGranted: false,
+    duplicates,
     summary,
     rows: analyses.map((row) => ({
       rowNumber: row.rowNumber,
@@ -111,20 +142,20 @@ export async function previewCrmImport(input: {
       customerAccountId: input.customerAccountId,
       fileName: input.fileName,
       rowLimit: CRM_IMPORT_MAX_ROWS,
-      mapping: input.mapping,
+      mapping: canonicalMapping,
       createdByUserId: input.createdByUserId,
       previewReport,
       rows: {
         create: input.rows.map((rawData, idx) => {
           const analysis = analyses[idx]
+          const persisted = analysis ? importRowPersistenceFromAnalysis(analysis) : { normalizedData: {} }
           return {
             customerAccountId: input.customerAccountId,
             rowNumber: idx + 1,
             rawData,
-            normalizedData: analysis?.normalized ?? undefined,
-            duplicateCandidateId: analysis ? dispositionToDuplicateCandidateId(analysis.disposition) : undefined,
-            validationErrors:
-              analysis?.disposition.kind === 'rejected' ? analysis.disposition.errors : undefined,
+            normalizedData: persisted.normalizedData,
+            duplicateCandidateId: persisted.duplicateCandidateId,
+            validationErrors: persisted.validationErrors,
           }
         }),
       },
@@ -138,15 +169,6 @@ export async function previewCrmImport(input: {
     detail: summary,
   })
   return { ok: true, value: { jobId: job.id, previewReport: job.previewReport as Prisma.JsonObject } }
-}
-
-function rowIsCommittable(row: {
-  duplicateCandidateId: string | null
-  validationErrors: Prisma.JsonValue
-}): boolean {
-  if (row.validationErrors) return false
-  if (row.duplicateCandidateId) return false
-  return true
 }
 
 export async function commitCrmImport(input: {
@@ -172,17 +194,21 @@ export async function commitCrmImport(input: {
     if (priorByKey.status === 'COMMITTED') {
       const report = (priorByKey.previewReport ?? {}) as { outcome?: CrmImportCommitOutcome }
       if (report.outcome) {
-        return { ok: true, value: report.outcome }
+        const outcome = report.outcome as CrmImportCommitOutcome
+        return {
+          ok: true,
+          value: { ...outcome, importedCount: outcome.importedCount ?? outcome.committed },
+        }
       }
       return {
         ok: true,
-        value: {
+        value: toCommitOutcome({
           committed: priorByKey.committedContactCount ?? 0,
           skipped: 0,
           rejected: 0,
           duplicates: 0,
           jobId: priorByKey.id,
-        },
+        }),
       }
     }
     if (priorByKey.commitIdempotencyKey === input.commitIdempotencyKey) {
@@ -190,13 +216,13 @@ export async function commitCrmImport(input: {
     }
   }
 
-  let outcome: CrmImportCommitOutcome = {
+  let outcome = toCommitOutcome({
     committed: 0,
     skipped: 0,
     rejected: 0,
     duplicates: 0,
     jobId: input.jobId,
-  }
+  })
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -215,13 +241,13 @@ export async function commitCrmImport(input: {
         })
         if (!current) throw new Error('NOT_FOUND')
         if (current.status === 'COMMITTED' && current.commitIdempotencyKey === input.commitIdempotencyKey) {
-          outcome = {
+          outcome = toCommitOutcome({
             committed: current.committedContactCount ?? 0,
             skipped: 0,
             rejected: 0,
             duplicates: 0,
             jobId: current.id,
-          }
+          })
           return
         }
         throw new Error('COMMIT_CONFLICT')
@@ -239,32 +265,35 @@ export async function commitCrmImport(input: {
       let rejected = 0
       let duplicates = 0
 
+      const mapping = normalizeImportMapping(job.mapping as Record<string, string>)
+
       for (const row of job.rows) {
         if (row.committedContactId) {
           committed += 1
           continue
         }
-        if (row.validationErrors) {
+        const action = classifyImportRowForCommit(row, mapping)
+        if (action === 'skip') {
+          skipped += 1
+          continue
+        }
+        if (action === 'reject') {
           rejected += 1
           continue
         }
-        if (row.duplicateCandidateId) {
+        if (action === 'duplicate') {
           duplicates += 1
-          continue
-        }
-        if (!rowIsCommittable(row)) {
-          skipped += 1
           continue
         }
 
         const raw = row.rawData as Record<string, string>
-        const mapping = job.mapping as Record<string, string>
         const normalized = (row.normalizedData ?? {}) as Record<string, string | undefined>
-        const email = normalized.email ?? (mapping.email ? raw[mapping.email] : undefined)
-        const givenName = normalized.givenName ?? (mapping.givenName ? raw[mapping.givenName] : undefined)
-        const familyName = normalized.familyName ?? (mapping.familyName ? raw[mapping.familyName] : undefined)
-        const phoneNormalized = normalized.phoneNormalized
-        const leadSource = normalized.leadSource ?? 'csv.import'
+        const email = normalized.email ?? readMappedColumnValue(raw, mapping, 'email')
+        const givenName = normalized.givenName ?? readMappedColumnValue(raw, mapping, 'givenName')
+        const familyName = normalized.familyName ?? readMappedColumnValue(raw, mapping, 'familyName')
+        const phoneRaw = readMappedColumnValue(raw, mapping, 'phone')
+        const phoneNormalized = normalized.phoneNormalized ?? (phoneRaw ? normalizePhone(phoneRaw) : undefined)
+        const leadSource = normalized.leadSource ?? readMappedColumnValue(raw, mapping, 'leadSource') ?? 'csv.import'
 
         if (email) {
           const existingIdentity = await tx.crmContactChannelIdentity.findFirst({
@@ -275,6 +304,19 @@ export async function commitCrmImport(input: {
             },
           })
           if (existingIdentity) {
+            duplicates += 1
+            continue
+          }
+        }
+        if (phoneNormalized) {
+          const existingPhone = await tx.crmContactChannelIdentity.findFirst({
+            where: {
+              customerAccountId: input.customerAccountId,
+              identityType: 'PHONE',
+              normalizedValue: phoneNormalized,
+            },
+          })
+          if (existingPhone) {
             duplicates += 1
             continue
           }
@@ -308,7 +350,7 @@ export async function commitCrmImport(input: {
               contactId: contact.id,
               identityType: 'PHONE',
               normalizedValue: phoneNormalized,
-              displayValue: phoneNormalized,
+              displayValue: phoneRaw ?? phoneNormalized,
               sourceSystem: 'csv.import',
             },
           })
@@ -317,7 +359,7 @@ export async function commitCrmImport(input: {
         committed += 1
       }
 
-      outcome = { committed, skipped, rejected, duplicates, jobId: job.id }
+      outcome = toCommitOutcome({ committed, skipped, rejected, duplicates, jobId: job.id })
       const previewReport = (job.previewReport ?? {}) as Prisma.JsonObject
       await tx.crmImportJob.update({
         where: { id: job.id },

@@ -45,7 +45,7 @@ Harden CRM import, export, segmentation, and duplicate-merge lifecycles on the e
 
 ## This session
 
-Batch **23:** import analysis + commit outcomes; export `id` cursor pagination; segment lifecycle/evaluation fixes; merge proposal approve/reject APIs; focused regressions; continuity updates.
+Batch **23 / 23.1:** import analysis + commit outcomes; legacy UI mapping/response compatibility; empty-row skip persistence; phone identity conflict handling; export `id` cursor pagination; segment lifecycle/evaluation fixes; merge integrity (Chatwoot/follow-up/consent); focused regressions.
 
 ## Next assignment
 
