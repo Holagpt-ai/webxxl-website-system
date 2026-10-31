@@ -83,8 +83,9 @@ describe('Batch 30A lead funnel reporting', () => {
     vi.clearAllMocks()
     process.env.CRM_BACKEND_ENABLED = 'true'
     process.env.SITE_LEAD_INTAKE_ENABLED = 'false'
-    vi.mocked(prisma.managedSiteLead.count).mockImplementation(async (args: unknown) => {
-      const where = (args as { where?: { status?: string | { in: string[] }; customerAccountId?: string } })?.where
+    const countMock = vi.mocked(prisma.managedSiteLead.count) as unknown as ReturnType<typeof vi.fn>
+    countMock.mockImplementation(async (args: { where?: { status?: string | { in: string[] }; customerAccountId?: string } }) => {
+      const where = args?.where
       if (where?.status === 'CONVERTED') return 2
       if (where?.status === 'QUALIFIED') return 3
       if (where?.status === 'REJECTED') return 1
@@ -168,7 +169,7 @@ describe('Batch 30A lead funnel reporting', () => {
   })
 
   it('keeps CRM module available when lead tables fail while preserving independent lead reporting readiness', async () => {
-    vi.mocked(prisma.managedSiteLead.count).mockRejectedValueOnce({ code: 'P2021' })
+    countMock.mockRejectedValueOnce({ code: 'P2021' })
     const overview = await getBusinessOverview(portal, baseDataAccess())
     const crm = overview.modules.find((m) => m.module === 'crm')!
     expect(crm.readiness.state).toBe('available')
