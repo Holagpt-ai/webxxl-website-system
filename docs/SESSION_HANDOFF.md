@@ -1,38 +1,38 @@
 # Session Handoff
 
-**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 28C)
+**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 29A)
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **28A.2** merged on `main`; **28C** Lead Inbox UI integration **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `16755fc44de3fe699eba971564bdb1ceb3e403d7` on `main`; **PR #77** head `d71c2627c83c58b7d149402eff2816adf16b1da9` (open) |
-| 3 | Production deployment | Vercel **`dpl_4QgPSyASypGEYK4srKSBZxbubFVC` READY** @ `16755fc` |
+| 1 | Last verified checkpoint | **28C** **MERGED** on `main`; **29A** form connector **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `0135a8b7d0a40bf7830624e22b57319753921aec` on `main`; **PR #78** head `d93f4da7fa8eb729f868b15d3c54f5abf05777f0` (open) |
+| 3 | Production deployment | Vercel **`dpl_2qyVziSXffjdpavWgqZn4fycPF9V` READY** @ `0135a8b` |
 | 4 | Last updated | 2026-10-31 |
-| 5 | Next task / responsible platform | **Owner** merge **28C** — **Cursor** |
-| 6 | Open blocker / gate IDs | Migrations unapplied; `SITE_LEAD_INTAKE_ENABLED` OFF; no live form activation |
+| 5 | Next task / responsible platform | **Owner** merge **29A** — **Cursor** |
+| 6 | Open blocker / gate IDs | Batch 28A migrations UNVERIFIED/unapplied; live intake + customer forms DEFERRED |
 
 ## This session
 
-Batch **28C:** Cherry-pick v0 `f9e21907`, CRM subnav (Website Leads / Prospectos del sitio web), list+summary+detail SWR refresh, qualify/pending confirmations, reject dialog fix, 10 integration tests.
+Batch **29A:** Reusable `lib/platform/site-leads/connector` (HMAC submit, retries, idempotency), Next.js reference handler, contract doc, 10 connector tests.
 
 ## PENDING REPOSITORY SYNC
 
-None after 28C PR is pushed.
+None after 29A PR is pushed.
 
 ## Handoff template
 
 ```
-Date / scope / owner: 2026-10-31 / BATCH-28C Lead Inbox UI integration / Cursor
-Repo / main SHA: Holagpt-ai/webxxl-website-system / 16755fc44de3fe699eba971564bdb1ceb3e403d7
-Branch / PR / head: feature/batch-28c-lead-inbox-ui-integration / PR #77 open / d71c2627c83c58b7d149402eff2816adf16b1da9
-Merged / deployed: PR #76 @ 16755fc; Vercel dpl_4QgPSyASypGEYK4srKSBZxbubFVC READY @ 16755fc
-Migration / flags / activation: batch28a migrations NOT applied; SITE_LEAD_INTAKE_ENABLED OFF
-Next exact assignment / owning tool: Owner merge 28C PR — Owner + Cursor
-Do NOT touch: production migrations, flag activation, live form activation, outbound sends, merge without owner
+Date / scope / owner: 2026-10-31 / BATCH-29A managed-site form connector / Cursor
+Repo / main SHA: Holagpt-ai/webxxl-website-system / 0135a8b7d0a40bf7830624e22b57319753921aec
+Branch / PR / head: feature/batch-29a-site-lead-form-connector / PR #78 open / d93f4da7fa8eb729f868b15d3c54f5abf05777f0
+Merged / deployed: PR #77 @ 0135a8b; Vercel dpl_2qyVziSXffjdpavWgqZn4fycPF9V READY @ 0135a8b
+Migration / flags / activation: batch28a migrations NOT applied; SITE_LEAD_INTAKE_ENABLED OFF; no customer site connect
+Next exact assignment / owning tool: Owner merge 29A PR — Owner + Cursor
+Do NOT touch: production migrations, flag activation, live customer forms, credential provisioning, merge without owner
 ```
 
 ## Next assignment
 
-- **Owner + Cursor:** merge Batch **28C** PR after review.
+- **Owner + Cursor:** merge Batch **29A** PR after review.

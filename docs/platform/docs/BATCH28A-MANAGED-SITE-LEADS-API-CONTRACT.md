@@ -31,6 +31,8 @@ Success: `{ ok: true, leadId, status, duplicate }` — `201` new, `200` idempote
 
 Secrets resolve from `secretRef` env pointer or `SITE_LEAD_INTAKE_SECRET_{publicKeyId}` — **never** exposed to browser JavaScript.
 
+**Website connector (29A):** server-side helper and integration contract — [`BATCH29A-MANAGED-SITE-FORM-CONNECTOR.md`](BATCH29A-MANAGED-SITE-FORM-CONNECTOR.md).
+
 ## Customer inbox (session + CRM permissions)
 
 All require dashboard session, OPEN-001 subscriber eligibility for `core.crm`, and `crm.read` or `crm.write` as noted.
