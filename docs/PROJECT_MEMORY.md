@@ -102,6 +102,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Vercel production SHA (2026-10-31, PR #74) | DEPLOYED | Vercel `dpl_5AuKd2RyiUqAgoNGr4XLSBS6rtj5` **READY** @ `828ac12e9968f84bd8e1bc42f44ba941c9551194`. SHA only |
 | Batch 28A Managed-site lead intake & CRM qualification | IN PR | [PR #75](https://github.com/Holagpt-ai/webxxl-website-system/pull/75); migration `20261031120000_batch28a_managed_site_leads` in Git only |
 | Batch 28A.1 Intake integrity (auth, pagination, lifecycle, dedupe) | IN PR | Same PR #75; composite cursors, auth-before-replay, conditional workflow updates |
+| Batch 28A.2 Intake payload idempotency fingerprint | IN PR | Same PR #75; `intakePayloadFingerprint` + migration `20261031140000_batch28a_2_intake_payload_fingerprint` (Git only) |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.
