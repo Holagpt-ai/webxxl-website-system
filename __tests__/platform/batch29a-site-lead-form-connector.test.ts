@@ -81,9 +81,11 @@ describe('Batch 29A managed-site form connector', () => {
     await submitManagedSiteLead({ config, payload, fetchImpl, nowMs: 1_700_000_000_000 })
     await submitManagedSiteLead({ config, payload, fetchImpl, nowMs: 1_700_000_000_000 })
     expect(fetchImpl).toHaveBeenCalledTimes(2)
-    const key1 = (fetchImpl.mock.calls[0][1] as RequestInit).headers as Record<string, string>
-    const key2 = (fetchImpl.mock.calls[1][1] as RequestInit).headers as Record<string, string>
-    expect(key1['x-idempotency-key']).toBe(key2['x-idempotency-key'])
+    const init0 = fetchImpl.mock.calls[0]?.[1] as RequestInit | undefined
+    const init1 = fetchImpl.mock.calls[1]?.[1] as RequestInit | undefined
+    const key1 = init0?.headers as Record<string, string> | undefined
+    const key2 = init1?.headers as Record<string, string> | undefined
+    expect(key1?.['x-idempotency-key']).toBe(key2?.['x-idempotency-key'])
   })
 
   it('uses explicit idempotency keys that differ from conflicting payloads', () => {
@@ -142,16 +144,14 @@ describe('Batch 29A managed-site form connector', () => {
 
   it('rejects client-supplied tenant or consent fields in serialized payloads', () => {
     expect(() =>
-      serializeSiteLeadIntakeBody({
-        contactEmail: 'a@b.com',
-        ...( { customerAccountId: 'x' } as never),
-      }),
+      serializeSiteLeadIntakeBody(
+        Object.assign({ contactEmail: 'a@b.com' }, { customerAccountId: 'x' }) as never,
+      ),
     ).toThrow(/must not be sent/)
     expect(() =>
-      serializeSiteLeadIntakeBody({
-        contactEmail: 'a@b.com',
-        ...( { marketingConsent: true } as never),
-      }),
+      serializeSiteLeadIntakeBody(
+        Object.assign({ contactEmail: 'a@b.com' }, { marketingConsent: true }) as never,
+      ),
     ).toThrow(/must not be sent/)
   })
 
@@ -165,7 +165,7 @@ describe('Batch 29A managed-site form connector', () => {
 
   it('completes synthetic intake submission when API confirms success', async () => {
     const rawBody = serializeSiteLeadIntakeBody({ contactEmail: 'ok@example.com' })
-    const fetchImpl = vi.fn(async (_url: string, init?: RequestInit) => {
+    const fetchImpl = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
       const headers = init?.headers as Record<string, string>
       const sig = createHmac('sha256', secret)
         .update(`${headers['x-webxxl-timestamp']}.${rawBody}`)
