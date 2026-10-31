@@ -566,7 +566,14 @@ function SegmentBuilder({
           <Button
             variant={editMode ? 'outline' : 'default'}
             disabled={!complete || evaluation.pending}
-            onClick={() => evaluation.run(() => workspaceSend<SegmentEvaluation>(`${CRM_API.segments}/evaluate`, { filterDefinition: toDefinition(logic, rules) }))}
+            onClick={() =>
+              evaluation.run(() =>
+                workspaceSend<SegmentEvaluation>(CRM_API.segments, {
+                  evaluateOnly: true,
+                  filterDefinition: toDefinition(logic, rules),
+                }),
+              )
+            }
           >
             {evaluation.pending ? t.evaluating : t.evaluate}
           </Button>

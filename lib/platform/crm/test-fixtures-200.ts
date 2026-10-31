@@ -16,9 +16,9 @@ export function buildSynthetic200ContactSegmentFixture(accountId: string): Segme
       followUpCoverage: mod === 5 ? 'OVERDUE' : undefined,
       consents:
         mod === 1
-          ? [{ channel: 'EMAIL', purpose: 'MARKETING', status: 'GRANTED' }]
+          ? [{ channel: 'EMAIL', purpose: 'MARKETING', status: 'GRANTED', capturedAt: new Date(Date.UTC(2026, 1, 1)) }]
           : mod === 6
-            ? [{ channel: 'EMAIL', purpose: 'MARKETING', status: 'UNKNOWN' }]
+            ? [{ channel: 'EMAIL', purpose: 'MARKETING', status: 'UNKNOWN', capturedAt: new Date(Date.UTC(2026, 1, 1)) }]
             : [],
       suppressions: mod === 8 ? [{ channel: 'EMAIL', purpose: 'MARKETING', active: true }] : [],
     })
