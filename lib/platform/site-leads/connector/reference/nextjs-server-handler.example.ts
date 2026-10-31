@@ -9,10 +9,16 @@
  */
 import { NextResponse } from 'next/server'
 import {
+  newSiteLeadSubmissionId,
   resolveSiteLeadConnectorConfigFromEnv,
   submitManagedSiteLead,
+  validateExplicitSiteLeadSubmissionId,
   type SiteLeadConnectorPayload,
 } from '@/lib/platform/site-leads/connector'
+
+function readSubmissionIdHeader(request: Request): string | null {
+  return request.headers.get('x-webxxl-submission-id') ?? request.headers.get('x-idempotency-key')
+}
 
 export async function POST(request: Request) {
   let form: SiteLeadConnectorPayload
@@ -32,13 +38,30 @@ export async function POST(request: Request) {
     )
   }
 
+  const headerSubmission = readSubmissionIdHeader(request)
+  let submissionId: string
+  try {
+    submissionId =
+      headerSubmission != null && headerSubmission.trim() !== ''
+        ? validateExplicitSiteLeadSubmissionId(headerSubmission)
+        : newSiteLeadSubmissionId()
+  } catch (error) {
+    return NextResponse.json(
+      { ok: false, message: error instanceof Error ? error.message : 'Invalid submission id' },
+      { status: 400 },
+    )
+  }
+
+  const isRetry = headerSubmission != null && headerSubmission.trim() !== ''
+  const payload: SiteLeadConnectorPayload = {
+    ...form,
+    submittedAt: form.submittedAt ?? (isRetry ? undefined : new Date().toISOString()),
+  }
+
   const result = await submitManagedSiteLead({
     config,
-    payload: {
-      ...form,
-      submittedAt: form.submittedAt ?? new Date().toISOString(),
-    },
-    idempotencyKey: request.headers.get('x-idempotency-key'),
+    payload,
+    submissionId,
   })
 
   if (!result.ok) {
@@ -54,7 +77,16 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json(
-    { ok: true, leadId: result.leadId, status: result.status, duplicate: result.duplicate },
-    { status: result.duplicate ? 200 : 201 },
+    {
+      ok: true,
+      leadId: result.leadId,
+      status: result.status,
+      duplicate: result.duplicate,
+      submissionId,
+    },
+    {
+      status: result.duplicate ? 200 : 201,
+      headers: { 'x-webxxl-submission-id': submissionId },
+    },
   )
 }

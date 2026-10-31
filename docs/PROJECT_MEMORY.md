@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `0135a8b7d0a40bf7830624e22b57319753921aec` (PR #77)
+**Evidence review:** 2026-10-31 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `fc702c696fe0a35ef3b61f4dc3eb6dc896a06442` (PR #78)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,11 +35,11 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **28C** **MERGED** (PR #77 @ `0135a8b…`); **29A** managed-site form connector **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `0135a8b7d0a40bf7830624e22b57319753921aec` on `main`; **PR #78** head `d93f4da7fa8eb729f868b15d3c54f5abf05777f0` (open) |
-| 3 | Production deployment | Vercel **`dpl_2qyVziSXffjdpavWgqZn4fycPF9V` READY** @ `0135a8b`. SHA only — not migration or activation |
+| 1 | Last verified checkpoint | **29A** **MERGED** (PR #78 @ `fc702c6…`); **29A.1** submission identity **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `fc702c696fe0a35ef3b61f4dc3eb6dc896a06442` on `main`; **PR TBD** `feature/batch-29a-1-submission-identity` (open) |
+| 3 | Production deployment | Vercel **`dpl_CUrcig1btP6LQy2CePa6DXmF87c9` READY** @ `fc702c6`. SHA only — not migration or activation |
 | 4 | Last updated | 2026-10-31 |
-| 5 | Next task / responsible platform | **Owner** merge **29A** PR (**Cursor**) |
+| 5 | Next task / responsible platform | **Owner** merge **29A.1** PR (**Cursor**) |
 | 6 | Open blocker / gate IDs | `SITE_LEAD_INTAKE_ENABLED` OFF; batch28a migrations UNVERIFIED/unapplied; live customer forms DEFERRED |
 
 ### Evidence table
@@ -105,8 +105,9 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batch 28A.2 Intake payload idempotency fingerprint | MERGED | [PR #76](https://github.com/Holagpt-ai/webxxl-website-system/pull/76), `16755fc44de3fe699eba971564bdb1ceb3e403d7`; migration `20261031140000_batch28a_2_intake_payload_fingerprint` in Git only |
 | Batch 28B CRM Lead Inbox UI (v0) | DELIVERED | `v0/crm-lead-inbox-28b` @ `f9e21907e1d0b53504ede6bc6e078658a7eb7edf` |
 | Batch 28C Lead Inbox UI integration | MERGED | [PR #77](https://github.com/Holagpt-ai/webxxl-website-system/pull/77), `0135a8b7d0a40bf7830624e22b57319753921aec`, v0 @ `f9e21907` |
-| Batch 29A Managed-site form connector V1 | IN PR | [PR #78](https://github.com/Holagpt-ai/webxxl-website-system/pull/78); [`BATCH29A-MANAGED-SITE-FORM-CONNECTOR.md`](platform/docs/BATCH29A-MANAGED-SITE-FORM-CONNECTOR.md) |
-| Vercel production SHA (2026-10-31, PR #77) | DEPLOYED | Vercel `dpl_2qyVziSXffjdpavWgqZn4fycPF9V` **READY** @ `0135a8b7d0a40bf7830624e22b57319753921aec`. SHA only |
+| Batch 29A Managed-site form connector V1 | MERGED | [PR #78](https://github.com/Holagpt-ai/webxxl-website-system/pull/78), `fc702c696fe0a35ef3b61f4dc3eb6dc896a06442`. [`BATCH29A-MANAGED-SITE-FORM-CONNECTOR.md`](platform/docs/BATCH29A-MANAGED-SITE-FORM-CONNECTOR.md) |
+| Batch 29A.1 Connector submission identity & retry integrity | IN PR | Branch `feature/batch-29a-1-submission-identity` |
+| Vercel production SHA (2026-10-31, PR #78) | DEPLOYED | Vercel `dpl_CUrcig1btP6LQy2CePa6DXmF87c9` **READY** @ `fc702c696fe0a35ef3b61f4dc3eb6dc896a06442`. SHA only |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
 Batch 15, merged in PR #51, extends `lib/platform/analytics/` with capture, aggregation, and ingestion worker paths. `ANALYTICS_INGESTION_ENABLED`, `ANALYTICS_FIRST_PARTY_CAPTURE_ENABLED`, and `ANALYTICS_PROVIDER_FETCH_ENABLED` default off. No production activation without owner authorization.

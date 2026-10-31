@@ -1,18 +1,71 @@
 import { createHash, randomUUID } from 'node:crypto'
-import type { SiteLeadConnectorPayload } from '@/lib/platform/site-leads/connector/types'
 
-/** Reuse the same key when retrying an identical submission attempt. */
-export function resolveSiteLeadIdempotencyKey(input: {
-  payload: SiteLeadConnectorPayload
-  rawBody: string
-  explicitKey?: string | null
-}): string {
-  const explicit = input.explicitKey?.trim()
-  if (explicit) return explicit.slice(0, 128)
-  return createHash('sha256').update(input.rawBody, 'utf8').digest('hex').slice(0, 64)
+/** Caller-provided submission identity (before site scoping). */
+export const SITE_LEAD_SUBMISSION_ID_MAX_LENGTH = 128
+
+const SUBMISSION_ID_PATTERN = /^[A-Za-z0-9._:-]+$/
+
+export class SiteLeadSubmissionIdError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'SiteLeadSubmissionIdError'
+  }
 }
 
-/** New key for a distinct user submission when the caller does not supply one. */
-export function newSiteLeadSubmissionIdempotencyKey(): string {
+/** Validate an explicit submission id — no silent truncation. */
+export function validateExplicitSiteLeadSubmissionId(raw: string): string {
+  const id = raw.trim()
+  if (!id) {
+    throw new SiteLeadSubmissionIdError('submission id must not be empty')
+  }
+  if (id.length > SITE_LEAD_SUBMISSION_ID_MAX_LENGTH) {
+    throw new SiteLeadSubmissionIdError(
+      `submission id must be at most ${SITE_LEAD_SUBMISSION_ID_MAX_LENGTH} characters`,
+    )
+  }
+  if (!SUBMISSION_ID_PATTERN.test(id)) {
+    throw new SiteLeadSubmissionIdError(
+      'submission id may only contain letters, digits, and . _ : -',
+    )
+  }
+  return id
+}
+
+/** New identity for a distinct user submission when the caller does not supply one. */
+export function newSiteLeadSubmissionId(): string {
   return randomUUID()
+}
+
+export function resolveSiteLeadSubmissionId(input: {
+  submissionId?: string | null
+  /** Legacy alias — same semantics as `submissionId`. */
+  legacyIdempotencyKey?: string | null
+}): string {
+  const explicit = input.submissionId ?? input.legacyIdempotencyKey
+  if (explicit != null && String(explicit).trim() !== '') {
+    return validateExplicitSiteLeadSubmissionId(String(explicit))
+  }
+  return newSiteLeadSubmissionId()
+}
+
+/**
+ * Intake `x-idempotency-key` — scoped to the site credential so keys never collide across sites.
+ * Collision-resistant SHA-256 hex (64 chars, within intake 128-char limit).
+ */
+export function buildSiteLeadIntakeIdempotencyKey(input: {
+  publicKeyId: string
+  submissionId: string
+}): string {
+  const publicKeyId = input.publicKeyId.trim()
+  if (!publicKeyId) {
+    throw new SiteLeadSubmissionIdError('publicKeyId is required to scope idempotency')
+  }
+  return createHash('sha256')
+    .update(`${publicKeyId}\n${input.submissionId}`, 'utf8')
+    .digest('hex')
+}
+
+/** @deprecated Renamed to `newSiteLeadSubmissionId`. */
+export function newSiteLeadSubmissionIdempotencyKey(): string {
+  return newSiteLeadSubmissionId()
 }

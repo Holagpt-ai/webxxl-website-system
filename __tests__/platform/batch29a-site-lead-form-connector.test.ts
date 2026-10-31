@@ -6,10 +6,10 @@ import {
   verifySiteLeadIntakeSignature,
 } from '@/lib/platform/site-leads/signature-auth'
 import {
+  buildSiteLeadIntakeIdempotencyKey,
   newSiteLeadSubmissionIdempotencyKey,
   redactSiteLeadConnectorConfig,
   resolveSiteLeadConnectorConfigFromEnv,
-  resolveSiteLeadIdempotencyKey,
   serializeSiteLeadIntakeBody,
   submitManagedSiteLead,
 } from '@/lib/platform/site-leads/connector'
@@ -74,38 +74,30 @@ describe('Batch 29A managed-site form connector', () => {
     expect(fetchImpl).not.toHaveBeenCalled()
   })
 
-  it('reuses idempotency keys for identical payload retries', async () => {
+  it('reuses scoped intake keys when the same submission id is supplied', async () => {
     const fetchImpl = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) =>
       Response.json({ ok: true, leadId: 'lead_1', status: 'RECEIVED', duplicate: false }, { status: 201 }),
     )
     const payload = { contactEmail: 'retry@example.com', message: 'Same' }
     const config = { intakeBaseUrl: 'https://app.test', publicKeyId, signingSecret: secret }
-    await submitManagedSiteLead({ config, payload, fetchImpl, nowMs: 1_700_000_000_000 })
-    await submitManagedSiteLead({ config, payload, fetchImpl, nowMs: 1_700_000_000_000 })
+    const submissionId = 'stable-retry-key'
+    const scoped = buildSiteLeadIntakeIdempotencyKey({ publicKeyId, submissionId })
+    await submitManagedSiteLead({ config, payload, submissionId, fetchImpl, nowMs: 1_700_000_000_000 })
+    await submitManagedSiteLead({ config, payload, submissionId, fetchImpl, nowMs: 1_700_000_000_000 })
     expect(fetchImpl).toHaveBeenCalledTimes(2)
     const init0 = fetchImpl.mock.calls[0]?.[1] as RequestInit | undefined
     const init1 = fetchImpl.mock.calls[1]?.[1] as RequestInit | undefined
     const key1 = init0?.headers as Record<string, string> | undefined
     const key2 = init1?.headers as Record<string, string> | undefined
-    expect(key1?.['x-idempotency-key']).toBe(key2?.['x-idempotency-key'])
+    expect(key1?.['x-idempotency-key']).toBe(scoped)
+    expect(key2?.['x-idempotency-key']).toBe(scoped)
   })
 
-  it('uses explicit idempotency keys that differ from conflicting payloads', () => {
-    const bodyA = serializeSiteLeadIntakeBody({ contactEmail: 'a@b.com', message: 'A' })
-    const bodyB = serializeSiteLeadIntakeBody({ contactEmail: 'a@b.com', message: 'B' })
-    const keyA = resolveSiteLeadIdempotencyKey({
-      payload: { contactEmail: 'a@b.com', message: 'A' },
-      rawBody: bodyA,
-      explicitKey: 'fixed-key',
-    })
-    const keyB = resolveSiteLeadIdempotencyKey({
-      payload: { contactEmail: 'a@b.com', message: 'B' },
-      rawBody: bodyB,
-      explicitKey: 'fixed-key',
-    })
-    expect(keyA).toBe('fixed-key')
-    expect(keyB).toBe('fixed-key')
-    expect(bodyA).not.toBe(bodyB)
+  it('scopes explicit submission ids to the site public key id', () => {
+    const submissionId = 'fixed-key'
+    const scoped = buildSiteLeadIntakeIdempotencyKey({ publicKeyId, submissionId })
+    expect(scoped).toMatch(/^[a-f0-9]{64}$/)
+    expect(scoped).not.toBe(submissionId)
   })
 
   it('retries rate limits and maps unauthorized responses without claiming success', async () => {
