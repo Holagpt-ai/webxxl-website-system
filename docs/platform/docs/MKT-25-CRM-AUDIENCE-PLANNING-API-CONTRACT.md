@@ -6,7 +6,7 @@
 
 | Gate | Env / check | Failure |
 |---|---|---|
-| OPEN-001 subscriber | `requireIncludedFreeSoftwareMembership('core.marketing-studio')` | `403` `FREE_SOFTWARE_NOT_ELIGIBLE` |
+| OPEN-001 subscriber | `requireIncludedFreeSoftwareMembershipKeys(['core.crm','core.marketing-studio'])` | `403` `FREE_SOFTWARE_NOT_ELIGIBLE` |
 | Marketing backend | `MKT_BACKEND_ENABLED=true` | `503` `MKT_DISABLED` |
 | CRM audience planning | `MKT_CRM_AUDIENCE_PLANNING_ENABLED=true` | `503` `NOT_CONFIGURED` |
 | CRM backend | `CRM_BACKEND_ENABLED=true` | `503` `NOT_CONFIGURED` |

@@ -3,10 +3,13 @@ import { isMktCrmAudiencePlanningEnabled, isMktDraftPreparationEnabled } from '@
 import { prisma } from '@/lib/db'
 import { assertManagedSiteInAccount } from '@/lib/platform/marketing/account-isolation'
 import { assertMarketingContentAllowed } from '@/lib/platform/marketing/content-safety'
+import { idempotentCampaignPreparationResponse } from '@/lib/platform/marketing/crm-audience-idempotency'
 import {
   previewCrmSegmentAudience,
   type CrmSegmentAudiencePreview,
 } from '@/lib/platform/marketing/crm-segment-audience-service'
+
+export { parseStoredAudiencePlanningPreview } from '@/lib/platform/marketing/crm-audience-idempotency'
 import { buildCrmSegmentSourceRef } from '@/lib/platform/marketing/crm-segment-source-ref'
 import { computeMarketingRequestFingerprint } from '@/lib/platform/marketing/request-fingerprint'
 import { validateMarketingRequestPayload } from '@/lib/platform/marketing/request-validation'
@@ -63,18 +66,6 @@ export async function createCampaignPreparationFromCrmSegment(input: {
     if (!site.ok) return site
   }
 
-  const segmentOwned = await prisma.crmSegment.findFirst({
-    where: { id: input.crmSegmentId, customerAccountId: input.customerAccountId },
-    select: { id: true },
-  })
-  if (!segmentOwned) {
-    return { ok: false, code: 'NOT_FOUND', message: 'CRM segment not found for account' }
-  }
-
-  const evaluatedAt = new Date()
-  const preview = await previewCrmSegmentAudience(input.customerAccountId, input.crmSegmentId, evaluatedAt)
-  if (!preview.ok) return preview
-
   const sourceRefs = [buildCrmSegmentSourceRef(input.crmSegmentId)]
   const fingerprint = computeMarketingRequestFingerprint({
     customerAccountId: input.customerAccountId,
@@ -100,16 +91,23 @@ export async function createCampaignPreparationFromCrmSegment(input: {
     if (existingGlobal.requestFingerprint !== fingerprint) {
       return { ok: false, code: 'CONFLICT', message: 'Idempotency key reused with different request payload' }
     }
-    return {
-      ok: true,
-      value: {
-        requestId: existingGlobal.id,
-        status: existingGlobal.status,
-        crmSegmentId: input.crmSegmentId,
-        audiencePreview: preview.value,
-      },
-    }
+    return idempotentCampaignPreparationResponse({
+      existing: existingGlobal,
+      crmSegmentId: input.crmSegmentId,
+    })
   }
+
+  const segmentOwned = await prisma.crmSegment.findFirst({
+    where: { id: input.crmSegmentId, customerAccountId: input.customerAccountId },
+    select: { id: true },
+  })
+  if (!segmentOwned) {
+    return { ok: false, code: 'NOT_FOUND', message: 'CRM segment not found for account' }
+  }
+
+  const evaluatedAt = new Date()
+  const preview = await previewCrmSegmentAudience(input.customerAccountId, input.crmSegmentId, evaluatedAt)
+  if (!preview.ok) return preview
 
   try {
     const created = await prisma.marketingRequest.create({
@@ -162,15 +160,7 @@ export async function createCampaignPreparationFromCrmSegment(input: {
       if (raced.requestFingerprint !== fingerprint) {
         return { ok: false, code: 'CONFLICT', message: 'Idempotency key reused with different request payload' }
       }
-      return {
-        ok: true,
-        value: {
-          requestId: raced.id,
-          status: raced.status,
-          crmSegmentId: input.crmSegmentId,
-          audiencePreview: preview.value,
-        },
-      }
+      return idempotentCampaignPreparationResponse({ existing: raced, crmSegmentId: input.crmSegmentId })
     }
     throw error
   }
