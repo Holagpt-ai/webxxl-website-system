@@ -16,8 +16,18 @@
 
 ```env
 # Staging-only — never commit literals
-STAGING_DATABASE_URL=postgresql://…/webxxl_staging?schema=public
+WEBXXL_STAGING_DATABASE_IDENTITY=db.staging.example.com:5432/webxxl_staging
+DATABASE_URL=postgresql://…/webxxl_staging?schema=public
 DIRECT_URL=postgresql://…/webxxl_staging?schema=public
+```
+
+`DATABASE_URL` and `DIRECT_URL` must reference the **same** host and database. The identity line is a fingerprint (no password) used by preflight — it must match both URLs.
+
+After independent verification that this identity is not production:
+
+```env
+WEBXXL_STAGING_BOUNDARIES_CONFIRMED=1
+WEBXXL_PRODUCTION_DATABASE_IDENTITY=db.prod.example.com:5432/webxxl_prod
 ```
 
 Vercel **Preview** or **Staging** project environment variables must reference the staging host only. Production Supabase project ID must differ.
@@ -51,9 +61,15 @@ Provider/outbound flags (`POSTIZ_LIVE_PUBLISHING_ENABLED`, `SMS_SEND_ENABLED`, e
 
 ```bash
 pnpm migration:rehearsal
+pnpm migration:rehearsal --verify-db
 pnpm synthetic-pilot:report
-PILOT_READINESS_DB_PROBE=1 DATABASE_URL="$STAGING_DATABASE_URL" pnpm pilot:readiness
+export DATABASE_URL="…staging…"
+export DIRECT_URL="…staging…"
+export WEBXXL_STAGING_DATABASE_IDENTITY="host:port/dbname"
+PILOT_READINESS_DB_PROBE=1 pnpm pilot:readiness
 ```
+
+`prisma migrate deploy` (owner-authorized, not run from this batch) always applies the **full** pending migration chain. The rehearsal `--foundation` flag filters the report only.
 
 ## Missing owner authorization (recorded)
 

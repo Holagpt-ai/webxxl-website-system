@@ -19,6 +19,12 @@ import {
 } from '@/lib/platform/pilot/synthetic-customer-pilot-workflow'
 import { buildPilotReadinessReport } from '@/lib/platform/pilot/readiness-assess'
 import { localizePath } from '@/lib/i18n/localize'
+import {
+  databaseIdentityFromUrl,
+  verifyStagingDatabaseConnectionPair,
+  verifyStagingDatabaseConnections,
+} from '@/lib/platform/pilot/staging-database-preflight'
+import { allRepositoryMigrationFolders } from '@/lib/platform/pilot/migration-repository-chain'
 
 describe('Batch 31 controlled staging and synthetic pilot readiness', () => {
   it('reports staging environment NOT_IDENTIFIED without staging env vars', () => {
@@ -86,5 +92,74 @@ describe('Batch 31 controlled staging and synthetic pilot readiness', () => {
     const pkg = readFileSync(join(process.cwd(), 'package.json'), 'utf8')
     expect(pkg).toContain('migration:rehearsal')
     expect(pkg).toContain('synthetic-pilot:report')
+  })
+})
+
+describe('Batch 31.1 staging safety guard', () => {
+  const stagingUrl = 'postgresql://user:secret@db.staging.example.com:5432/webxxl_staging?schema=public'
+  const identity = 'db.staging.example.com:5432/webxxl_staging'
+
+  it('states prisma migrate deploy applies the full pending chain in the rehearsal runbook', () => {
+    const script = readFileSync(join(process.cwd(), 'scripts/migration-rehearsal.ts'), 'utf8')
+    expect(script).toContain('FULL pending migration chain')
+    expect(script).toContain('--foundation')
+    expect(script).toContain('READ-ONLY report')
+    const chain = allRepositoryMigrationFolders()
+    expect(script).toMatch(/ALL pending migrations/)
+    expect(chain.length).toBeGreaterThan(batch31FoundationMigrationFolders().length)
+  })
+
+  it('rejects mismatched DATABASE_URL and DIRECT_URL targets', () => {
+    const result = verifyStagingDatabaseConnectionPair({
+      DATABASE_URL: stagingUrl,
+      DIRECT_URL: 'postgresql://user:secret@other.host:5432/webxxl_staging',
+      WEBXXL_STAGING_DATABASE_IDENTITY: identity,
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.code).toBe('MISMATCHED_TARGETS')
+  })
+
+  it('rejects missing staging identity evidence', () => {
+    const result = verifyStagingDatabaseConnectionPair({
+      DATABASE_URL: stagingUrl,
+      DIRECT_URL: stagingUrl,
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.code).toBe('MISSING_STAGING_IDENTITY')
+  })
+
+  it('does not treat env presence alone as BOUNDARIES_VERIFIED', () => {
+    const assessment = assessStagingEnvironment({
+      NODE_ENV: 'test',
+      DATABASE_URL: stagingUrl,
+      DIRECT_URL: stagingUrl,
+      WEBXXL_STAGING_DATABASE_IDENTITY: identity,
+      WEBXXL_STAGING_APP_URL: 'https://staging.example.webxxl.internal',
+    })
+    expect(assessment.state).not.toBe('BOUNDARIES_VERIFIED')
+    expect(assessment.state).toBe('CONFIG_PRESENT_UNVERIFIED')
+  })
+
+  it('reports BOUNDARIES_VERIFIED only with identity match and operator confirmation', () => {
+    const assessment = assessStagingEnvironment({
+      NODE_ENV: 'test',
+      DATABASE_URL: stagingUrl,
+      DIRECT_URL: stagingUrl,
+      WEBXXL_STAGING_DATABASE_IDENTITY: identity,
+      WEBXXL_STAGING_BOUNDARIES_CONFIRMED: '1',
+      WEBXXL_PRODUCTION_DATABASE_IDENTITY: 'db.prod.example.com:5432/webxxl_prod',
+    })
+    expect(assessment.state).toBe('BOUNDARIES_VERIFIED')
+    expect(verifyStagingDatabaseConnections({
+      DATABASE_URL: stagingUrl,
+      DIRECT_URL: stagingUrl,
+      WEBXXL_STAGING_DATABASE_IDENTITY: identity,
+      WEBXXL_STAGING_BOUNDARIES_CONFIRMED: '1',
+    }).ok).toBe(true)
+  })
+
+  it('parses database identity without exposing credentials', () => {
+    expect(databaseIdentityFromUrl(stagingUrl)).toBe(identity)
+    expect(databaseIdentityFromUrl(stagingUrl)).not.toContain('secret')
   })
 })

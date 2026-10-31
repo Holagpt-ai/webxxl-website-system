@@ -46,7 +46,7 @@ Focused tests only (see CI `app-validate.yml`). Not a RELEASE-14 acceptance run.
 ## Owner approvals before staging execution
 
 1. Isolated staging database (not production `DATABASE_URL`).
-2. `prisma migrate deploy` on staging (full chain or foundation slice per operator plan).
+2. `prisma migrate deploy` on staging (**full pending chain only** — foundation view is report-only via `migration:rehearsal --foundation`).
 3. Per-module backend flags on **staging only** (CRM, MKT, SEO, COMMS, ANALYTICS) — one module at a time or together per owner plan.
 4. `SITE_LEAD_INTAKE_ENABLED` on staging only after 28A migrations applied.
 5. Provision **new** pilot CustomerAccounts + website subscription evidence (do not mutate ABMED Vitest fixtures in shared DB).
