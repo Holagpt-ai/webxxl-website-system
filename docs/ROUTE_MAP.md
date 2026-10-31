@@ -67,6 +67,7 @@ Route handlers under `app/api`, MERGED, not indexed:
 | Business Command Center UI (Batch 27C) | `/dashboard/business` |
 | Managed-site lead intake (Batch 28A) | `POST /api/v1/site-leads/intake` |
 | Managed-site lead inbox (Batch 28A) | `/api/v1/site-leads`, `/api/v1/site-leads/summary`, `/api/v1/site-leads/[id]/*` |
+| Managed-site lead funnel report (Batch 30A) | `GET /api/v1/site-leads/funnel-report` — [`BATCH30A-LEAD-FUNNEL-REPORTING-API-CONTRACT.md`](platform/docs/BATCH30A-LEAD-FUNNEL-REPORTING-API-CONTRACT.md) |
 
 Batch 18A Marketing extensions (backend; UI in Batch 18B): `GET /api/v1/marketing/artifacts` (account-wide list, cursor pagination), `GET /api/v1/marketing/reviews` (approval inbox). Existing per-request artifact and decide routes unchanged.
 

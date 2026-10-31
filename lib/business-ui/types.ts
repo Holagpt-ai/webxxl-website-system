@@ -35,6 +35,10 @@ export type ModuleSnapshot = {
   module: BusinessModule
   readiness: ModuleReadiness
   summary?: Record<string, SummaryMetric>
+  websiteLeadReporting?: {
+    readiness: ModuleReadiness
+    summary?: Record<string, SummaryMetric>
+  }
 }
 
 export type ActionPriority = 'high' | 'medium' | 'normal' | 'low'

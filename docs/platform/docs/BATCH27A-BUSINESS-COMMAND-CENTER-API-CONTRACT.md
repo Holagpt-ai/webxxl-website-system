@@ -54,7 +54,7 @@ Each summary entry is `{ "value": number, "scope": "account_total" | "bounded_sa
 - **`account_total`** — full account-scoped count query (use for headline totals).
 - **`bounded_sample`** — rows returned for action construction, capped by overview limits (may be lower than the total).
 
-Example CRM keys: `openTasks` / `openDeals` / `pendingMerges` (totals); `openTasksSample` / `openDealsSample` / `pendingMergesSample` (samples). Marketing and communications follow the same pattern.
+Example CRM keys: `openTasks` / `openDeals` / `pendingMerges` (totals); `openTasksSample` / `openDealsSample` / `pendingMergesSample` (samples). **Batch 30A** adds managed-site lead totals on the same CRM module: `websiteLeadsReceived`, `websiteLeadsAwaitingReview`, `websiteLeadsQualified`, `websiteLeadsConverted`, `websiteLeadsDuplicateReview`, plus optional `websiteLeadReporting` readiness (independent from core CRM when lead tables are missing). Marketing and communications follow the same pattern.
 
 `readiness.evidenceCount` (when `available`) sums **`account_total`** metrics only.
 
@@ -94,7 +94,7 @@ Actions are sorted by priority then timestamp, capped by `limits`.
 
 | Module | Existing sources |
 |---|---|
-| CRM | Bounded `CrmTask` / `CrmDeal` / `CrmMergeProposal` reads + matching `count` queries |
+| CRM | Bounded `CrmTask` / `CrmDeal` / `CrmMergeProposal` reads + matching `count` queries; **30A:** `ManagedSiteLead` summary + bounded inbox actions via `getManagedSiteLeadSummary` |
 | Marketing | `MarketingRequest`, `listMarketingReviews`, `listMarketingArtifacts` |
 | Local SEO | `SeoOpportunity` (actionable states) |
 | Communications | `listAccountInboxes`, `listAccountConversations` (`needs_attention`) |
