@@ -1,6 +1,6 @@
 # Batch 21C — Isolated staging pilot preflight (read-only)
 
-**Status:** Completed read-only assessment (2026-10-29). **No** provisioning, migrations, flags, or provider activation.
+**Status:** Completed read-only assessment (2026-10-29); **reaffirmed Batch 31** (2026-10-31). **No** provisioning, migrations, flags, or provider activation.
 
 **Baseline reviewed:** `main` @ `2de0f7f3b7f8f80b7006d7f7b7b13c7866b3822b` (PR #65 merged).
 
@@ -14,4 +14,4 @@
 
 ## Authorized next gates (unchanged)
 
-See [`PILOT-21B-STAGING-EXECUTION-PLAN.md`](PILOT-21B-STAGING-EXECUTION-PLAN.md) and [`PILOT-21A-CONTROLLED-CUSTOMER-READINESS.md`](PILOT-21A-CONTROLLED-CUSTOMER-READINESS.md).
+See [`PILOT-21B-STAGING-EXECUTION-PLAN.md`](PILOT-21B-STAGING-EXECUTION-PLAN.md), [`PILOT-21A-CONTROLLED-CUSTOMER-READINESS.md`](PILOT-21A-CONTROLLED-CUSTOMER-READINESS.md), and Batch **31** [`BATCH31-CONTROLLED-STAGING-PILOT.md`](BATCH31-CONTROLLED-STAGING-PILOT.md).

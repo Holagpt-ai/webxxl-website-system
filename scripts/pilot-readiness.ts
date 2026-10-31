@@ -13,6 +13,7 @@ import {
   summarizePilotReport,
   type MigrationProbeResult,
 } from '@/lib/platform/pilot/readiness-assess'
+import { verifyStagingDatabaseConnectionPair } from '@/lib/platform/pilot/staging-database-preflight'
 
 const MIGRATION_HISTORY_DISCLAIMER =
   'Matching migration history does not prove schema integrity, data correctness, or authenticated functionality.'
@@ -26,6 +27,14 @@ async function probeMigrations(): Promise<MigrationProbeResult> {
   }
   if (!process.env.DATABASE_URL?.trim()) {
     return { state: 'BLOCKED', reason: 'DATABASE_URL is not set' }
+  }
+
+  const preflight = verifyStagingDatabaseConnectionPair(process.env)
+  if (!preflight.ok) {
+    return {
+      state: 'BLOCKED',
+      reason: `Staging DB preflight blocked probe (${preflight.code}): ${preflight.message}`,
+    }
   }
 
   const pilotExpected = allPilotMigrationFolders()
