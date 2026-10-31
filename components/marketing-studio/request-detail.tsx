@@ -9,6 +9,7 @@ import { useAction, useWorkspace } from '@/lib/crm-ui/use-workspace'
 import { DASH, enumLabel, fill, formatDateTime, workspaceSend } from '@/lib/crm-ui/workspace'
 import { MKT_API, type MarketingRequest } from '@/lib/marketing-studio-ui/types'
 import type { MarketingViewProps } from '@/lib/marketing-studio-ui/server'
+import { AudienceSnapshotSection } from './audience-planning'
 import { ArtifactsTable } from './deliverables'
 import { REQUEST_TONE, flagBody, siteLabel } from './shared'
 
@@ -69,6 +70,8 @@ export function MarketingRequestDetail(props: MarketingViewProps & { requestId: 
         />
         <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-foreground">{row.brief}</p>
       </Section>
+
+      <AudienceSnapshotSection {...props} request={row} />
 
       <Section
         title={q.artifactsTitle}
