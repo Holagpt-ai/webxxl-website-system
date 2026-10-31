@@ -70,11 +70,17 @@ export const SEGMENT_FIELD_OPERATORS: Record<SegmentFilterField, readonly Segmen
   notSuppressed: ['eq'],
 }
 
-const FIELD_OPERATORS = Object.fromEntries(
-  (Object.entries(SEGMENT_FIELD_OPERATORS) as [SegmentFilterField, SegmentFilterRule['operator'][]][]).map(
-    ([field, ops]) => [field, new Set(ops)],
-  ),
-) as Record<SegmentFilterField, ReadonlySet<SegmentFilterRule['operator']>>
+const FIELD_OPERATORS: Record<SegmentFilterField, ReadonlySet<SegmentFilterRule['operator']>> = {
+  tag: new Set(SEGMENT_FIELD_OPERATORS.tag),
+  leadSource: new Set(SEGMENT_FIELD_OPERATORS.leadSource),
+  createdAfter: new Set(SEGMENT_FIELD_OPERATORS.createdAfter),
+  createdBefore: new Set(SEGMENT_FIELD_OPERATORS.createdBefore),
+  lastActivityBefore: new Set(SEGMENT_FIELD_OPERATORS.lastActivityBefore),
+  hasOpenDeal: new Set(SEGMENT_FIELD_OPERATORS.hasOpenDeal),
+  followUpCoverage: new Set(SEGMENT_FIELD_OPERATORS.followUpCoverage),
+  consentEligible: new Set(SEGMENT_FIELD_OPERATORS.consentEligible),
+  notSuppressed: new Set(SEGMENT_FIELD_OPERATORS.notSuppressed),
+}
 
 /** Operators the segment API accepts for each filter field (shared with CRM Segment Builder UI). */
 export function operatorsForSegmentField(field: SegmentFilterField): SegmentFilterRule['operator'][] {
