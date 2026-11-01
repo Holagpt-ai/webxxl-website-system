@@ -66,6 +66,7 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-10-31 | Batch 30B Lead Funnel dashboard UI (v0) | `v0/lead-funnel-30b` @ `e4e85b2af0db01fb76bf23854dbe834bdb3af1a0` | DELIVERED to v0 branch |
 | 2026-10-31 | Batch 30C Lead Funnel UI integration | [PR #81](https://github.com/Holagpt-ai/webxxl-website-system/pull/81), `3a7d011466aeabcf4c2d3bdfe8a669d42e448957` | MERGED. CRM nav + inbox handoff. Not activation |
 | 2026-10-31 | Batch 31 + 31.1 Controlled staging + synthetic pilot foundation | [PR #82](https://github.com/Holagpt-ai/webxxl-website-system/pull/82), `93e3010d097b3e08fa47be9492c57ed3999d2f03` | MERGED. Readiness tooling only. Not activation |
-| 2026-10-31 | Batch 32 Commerce, shared wallet & fulfillment integrity V1 | Branch `feature/batch-32-commerce-wallet-fulfillment` | IN PR. Reconciliation read APIs + tests. Not live payments or mint activation |
+| 2026-11-01 | Batch 32 + 32.1 Commerce, shared wallet & fulfillment integrity V1 | [PR #83](https://github.com/Holagpt-ai/webxxl-website-system/pull/83), `b8e58dfc7a1520cb927e67785137734d4ed3d637` | MERGED. Reconciliation read APIs + atomic cancel safety. Not live payments |
+| 2026-11-01 | Batch 33 SEO & analytics Google integration preparation V1 | Branch `feature/batch-33-seo-analytics-google-readiness` | IN PR. Stored readiness only. Not live OAuth or provider fetch |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

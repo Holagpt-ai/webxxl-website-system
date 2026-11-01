@@ -1,39 +1,39 @@
 # Session Handoff
 
-**Compiled:** 2026-10-31 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 32 + 32.1)
+**Compiled:** 2026-11-01 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 33)
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **31 + 31.1** **MERGED** on `main`; **Batch 32 + 32.1** (late-capture safety) **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `93e3010d097b3e08fa47be9492c57ed3999d2f03` on `main`; **PR #83** head `1994eda…` on `feature/batch-32-commerce-wallet-fulfillment` (open) |
-| 3 | Production deployment | Vercel **`dpl_4Xwi3GRLzY3KTB9yicg9ef1iheW9` READY** @ `93e3010` |
-| 4 | Last updated | 2026-10-31 |
-| 5 | Next task / responsible platform | **Owner** merge **Batch 32** — **Cursor**; staging DB + migrate deploy — **Owner** |
-| 6 | Open blocker / gate IDs | Staging DB not identified; commerce/wallet live flags OFF; verified payment ops UNVERIFIED |
+| 1 | Last verified checkpoint | **32 + 32.1** **MERGED** on `main`; **Batch 33** Google provider connection readiness **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `b8e58dfc7a1520cb927e67785137734d4ed3d637` on `main`; **PR #84** head `5283527…` on `feature/batch-33-seo-analytics-google-readiness` (open) |
+| 3 | Production deployment | Vercel **`dpl_CMoTpuKRNKU1ejgE9HaiJRqTUTac` READY** @ `b8e58df` |
+| 4 | Last updated | 2026-11-01 |
+| 5 | Next task / responsible platform | **Owner** merge **Batch 33** PR — **Cursor**; Google Cloud OAuth + property linking — **Owner** on staging |
+| 6 | Open blocker / gate IDs | Staging DB not identified; `GOOGLE_PROVIDER_READINESS_ENABLED` OFF; GA4/GBP live ingest NOT_SUPPORTED |
 
 ## This session
 
-Batch **32 + 32.1:** financial boundaries, atomic unpaid cancellation (CAS + fail-closed provider checkout), **late capture after cancel** (payment/invoice retained; no fulfillment/workflow/subscription; reconciliation `LATE_CAPTURE_AFTER_CANCEL`), truly bounded reconciliation scan coverage, admin reconciliation route, wallet reservation review, `batch32` / `batch32-1` tests + commerce11/wallet09 CI; **PR #83** head `1994edaa14dce53e98e30a1b959b955655fc6825` (safety fix `e454b41…`; open, CI green).
+Batch **33:** GSC/GA4/GBP stored connection readiness (`lib/platform/google/*`), credential lifecycle + property ref validation, bounded `POST …/google/readiness/assess` (records `SeoProviderSyncRun` status `READINESS`, no external fetch), SEO + analytics GET readiness routes, GA4/GBP adapter boundary deps, `batch33-google-provider-readiness` Vitest + CI; continuity docs updated for PR #83 merged @ `b8e58df` and Vercel `dpl_CMoTpuKRNKU1ejgE9HaiJRqTUTac`.
 
 ## PENDING REPOSITORY SYNC
 
-None after Batch 32 PR is opened.
+None after Batch 33 PR is opened.
 
 ## Handoff template
 
 ```
-Date / scope / owner: 2026-10-31 / BATCH-32 commerce wallet fulfillment integrity / Cursor
-Repo / main SHA: Holagpt-ai/webxxl-website-system / 93e3010d097b3e08fa47be9492c57ed3999d2f03
-Branch / PR / head: feature/batch-32-commerce-wallet-fulfillment / PR #83 / 1994eda (safety e454b41)
-Merged / deployed: PR #82 @ 93e3010; Vercel dpl_4Xwi3GRLzY3KTB9yicg9ef1iheW9 READY @ 93e3010
-Migration / flags / activation: NOT applied production; COMMERCE_* and WALLET_* live execution OFF
-Next exact assignment / owning tool: Owner merge Batch 32 PR — Owner + Cursor
-Do NOT touch: production migrations, production flags, live checkout, wallet mint activation, ABMED financial mutations
+Date / scope / owner: 2026-11-01 / BATCH-33 SEO analytics Google integration prep / Cursor
+Repo / main SHA: Holagpt-ai/webxxl-website-system / b8e58dfc7a1520cb927e67785137734d4ed3d637
+Branch / PR / head: feature/batch-33-seo-analytics-google-readiness / PR #84 / 5283527a8d15d93252afaec5d1096d1556d08fbc
+Merged / deployed: PR #83 @ b8e58df; Vercel dpl_CMoTpuKRNKU1ejgE9HaiJRqTUTac READY @ b8e58df
+Migration / flags / activation: NOT applied production; GOOGLE_PROVIDER_READINESS_ENABLED OFF; live OAuth OFF
+Next exact assignment / owning tool: Owner merge Batch 33 PR — Owner + Cursor
+Do NOT touch: production migrations, live Google OAuth, ANALYTICS_PROVIDER_FETCH activation, customer connection mutations without staging authorization
 ```
 
 ## Next assignment
 
-- **Owner + Cursor:** merge Batch **32** PR.
-- **Owner:** authorize isolated staging database + `prisma migrate deploy` per Batch 31 docs when ready.
+- **Owner + Cursor:** merge Batch **33** PR.
+- **Owner:** Google Cloud OAuth consent + staging property connections before enabling readiness flag on staging.
