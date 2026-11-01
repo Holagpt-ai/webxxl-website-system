@@ -447,6 +447,9 @@ export const prismaCustomerAiStore: CustomerAiStore = {
   async incrementToolDenial(employeeId, customerAccountId) {
     await bumpCounter(employeeId, customerAccountId, { toolCallsDenied: 1 })
   },
+  async incrementTokenReservation(employeeId, customerAccountId, units) {
+    await bumpCounter(employeeId, customerAccountId, { tokensReserved: units })
+  },
 }
 
 function mapPermission(row: {
@@ -528,7 +531,9 @@ function mapPolicy(row: {
 async function bumpCounter(
   employeeId: string,
   customerAccountId: string,
-  delta: Partial<Pick<UsageCounterRecord, 'messagesIngested' | 'toolCallsAuthorized' | 'toolCallsDenied'>>,
+  delta: Partial<
+    Pick<UsageCounterRecord, 'messagesIngested' | 'toolCallsAuthorized' | 'toolCallsDenied' | 'tokensReserved'>
+  >,
 ) {
   const periodKey = customerAiUsagePeriodKey()
   await prisma.customerAiEmployeeUsageCounter.upsert({
@@ -540,12 +545,14 @@ async function bumpCounter(
       messagesIngested: delta.messagesIngested ?? 0,
       toolCallsAuthorized: delta.toolCallsAuthorized ?? 0,
       toolCallsDenied: delta.toolCallsDenied ?? 0,
+      tokensReserved: delta.tokensReserved ?? 0,
       updatedAt: new Date(),
     },
     update: {
       messagesIngested: delta.messagesIngested ? { increment: delta.messagesIngested } : undefined,
       toolCallsAuthorized: delta.toolCallsAuthorized ? { increment: delta.toolCallsAuthorized } : undefined,
       toolCallsDenied: delta.toolCallsDenied ? { increment: delta.toolCallsDenied } : undefined,
+      tokensReserved: delta.tokensReserved ? { increment: delta.tokensReserved } : undefined,
       updatedAt: new Date(),
     },
   })

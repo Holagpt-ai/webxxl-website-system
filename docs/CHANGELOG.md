@@ -71,6 +71,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-11-01 | Vercel production deployment of `1ae7c0a` (PR #84 on `main`) | GitHub deployment `7478496108`, Production success | DEPLOYED SHA only |
 | 2026-11-01 | Batch 34 Marketing Studio execution gates V1 | [PR #85](https://github.com/Holagpt-ai/webxxl-website-system/pull/85), `e400c49df62b99069110cadd59c0f721e676ea35` | MERGED. Guarded scheduling prep + reconcile policy. Not live Postiz publish |
 | 2026-11-01 | Vercel production deployment of `e400c49` (PR #85) | Vercel `dpl_A7yAQkZD7T994YnSjGwhae1PuBL1` READY | DEPLOYED SHA only |
-| 2026-11-01 | Batch 35 Unified communications integration V1 | Branch `feature/batch-35-unified-comms-integration` | IN PR. Outbound gateway + provider readiness. No live sends |
+| 2026-11-01 | Batch 35 Unified communications integration V1 | [PR #86](https://github.com/Holagpt-ai/webxxl-website-system/pull/86), `3386ac6a5ca8c406ad1bc8c6259726a4c134060e` | MERGED. Outbound gateway + provider readiness. No live sends |
+| 2026-11-01 | Vercel production deployment of `3386ac6` (PR #86) | Vercel `dpl_DB2fCd4wt9C6htqVNU125jCUUYJh` READY | DEPLOYED SHA only |
+| 2026-11-01 | Batch 36 Customer AI Workforce pilot prep V1 | Branch `feature/batch-36-customer-ai-workforce-pilot` | IN PR. Preparation + approval binding only. No LLM execution |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

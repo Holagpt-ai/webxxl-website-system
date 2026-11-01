@@ -24,6 +24,7 @@ HTTP **503**.
 | `CUSTOMER_AI_EXECUTION_ENABLED` | off | Tool/LLM execution gateway |
 | `CUSTOMER_AI_OUTBOUND_ENABLED` | off | Live outbound messaging |
 | `CUSTOMER_AI_CHATWOOT_ADAPTER_ENABLED` | off | Chatwoot bridge (does not send) |
+| `CUSTOMER_AI_PILOT_PREP_ENABLED` | off | Batch 36 pilot task preparation (no execution) |
 
 ## Pagination
 
@@ -73,6 +74,18 @@ Deny-by-default. Forbidden tools (e.g. `customerAi.clinical.readPhi`, `customerA
 | POST | `/api/v1/customer-ai/accounts/{accountId}/conversations/{sessionId}/handoffs` | Request human handoff |
 
 Optional future link: `chatwootConversationMappingId` on session (COMMS-06 mapping), adapter disabled by default.
+
+## Pilot task preparation (Batch 36)
+
+When `CUSTOMER_AI_PILOT_PREP_ENABLED` is off, pilot routes return **503** `EXECUTION_DISABLED` (workforce disabled returns `AI_WORKFORCE_DISABLED` first).
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/v1/customer-ai/accounts/{accountId}/employees/{employeeId}/pilot-tasks/prepare` | Body `{ workflowKind, idempotencyKey, locale?, managedSiteId?, prepareConsequentialDraft?, scopedSnapshot? }` |
+| POST | `/api/v1/customer-ai/accounts/{accountId}/pilot-tasks/{taskId}/approvals` | Trusted human approval binding for prepared consequential drafts |
+| POST | `/api/v1/customer-ai/accounts/{accountId}/pilot-tasks/{taskId}/execution-attempt` | Always blocked while execution flags off |
+
+See [`BATCH36-CUSTOMER-AI-PILOT-V1.md`](BATCH36-CUSTOMER-AI-PILOT-V1.md).
 
 ## Usage
 

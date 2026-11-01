@@ -28,6 +28,11 @@ export function customerAiDefaultEntitlementKey(): string {
   return 'future.ai-employee'
 }
 
+/** Guarded pilot task preparation workflow (Batch 36). Does not enable LLM execution. */
+export function isCustomerAiPilotPrepEnabled(): boolean {
+  return envFlag('CUSTOMER_AI_PILOT_PREP_ENABLED', false)
+}
+
 export function customerAiUsagePeriodKey(at: Date = new Date()): string {
   const year = at.getUTCFullYear()
   const month = String(at.getUTCMonth() + 1).padStart(2, '0')

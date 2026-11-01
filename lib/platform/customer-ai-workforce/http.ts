@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { isCustomerAiWorkforceEnabled } from '@/config/customer-ai-workforce'
+import { isCustomerAiPilotPrepEnabled, isCustomerAiWorkforceEnabled } from '@/config/customer-ai-workforce'
 import { AuthError } from '@/lib/portal/authz'
 import type { CustomerAiError } from '@/lib/platform/customer-ai-workforce/types'
 import type { User } from '@prisma/client'
@@ -9,6 +9,16 @@ export function customerAiDisabledResponse() {
   if (isCustomerAiWorkforceEnabled()) return null
   return NextResponse.json(
     { code: 'AI_WORKFORCE_DISABLED', message: 'Customer AI workforce backend is disabled' },
+    { status: 503 },
+  )
+}
+
+export function customerAiPilotPrepDisabledResponse() {
+  const workforce = customerAiDisabledResponse()
+  if (workforce) return workforce
+  if (isCustomerAiPilotPrepEnabled()) return null
+  return NextResponse.json(
+    { code: 'EXECUTION_DISABLED', message: 'Customer AI pilot preparation is disabled' },
     { status: 503 },
   )
 }
