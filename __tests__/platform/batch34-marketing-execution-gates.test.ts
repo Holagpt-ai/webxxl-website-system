@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ABMED_AESTHETICS_ACCOUNT_ID, ABMED_PHYSICIANS_ACCOUNT_ID } from '@/lib/platform/fixtures/abmed'
 import { assertMarketingRequestApprovedForSocialExecution } from '@/lib/platform/marketing/social-execution-gate'
@@ -232,5 +234,17 @@ describe('Batch 34 — Marketing Studio execution gates', () => {
     expect(outcome.kind).toBe('SCHEDULED')
     const publishedWithoutUrl = mapPostizPostStateToReconcileOutcome({ state: 'PUBLISHED' })
     expect(publishedWithoutUrl.kind).toBe('RECONCILIATION_REQUIRED')
+  })
+
+  it('schedule HTTP route returns 503 DISPATCH_BLOCKED without implying intent persistence', () => {
+    const route = readFileSync(
+      join(process.cwd(), 'app/api/v1/social/campaigns/[id]/schedule/route.ts'),
+      'utf8',
+    )
+    expect(route).toContain("code: 'DISPATCH_BLOCKED'")
+    expect(route).toContain('status: 503')
+    expect(route).toContain('intentPersisted: false')
+    expect(route).toContain('No scheduling intent was persisted')
+    expect(route).not.toContain('status: 202')
   })
 })

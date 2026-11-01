@@ -43,16 +43,15 @@ export async function POST(request: Request, { params }: Params) {
       {
         code: 'DISPATCH_BLOCKED',
         message:
-          'Execution gates validated request shape; guarded scheduling intent persistence is domain-tested. Enable POSTIZ_LIVE_PUBLISHING only after owner pilot authorization.',
+          'POSTIZ_LIVE_PUBLISHING_ENABLED is false. Only request shape was checked; campaign approval and scheduling authorization were not verified on this route. No scheduling intent was persisted and no scheduling or publishing occurred.',
         campaignId,
-        channelId: body.channelId,
-        approvalId: body.approvalId,
-        idempotencyKey: body.idempotencyKey,
-        scheduledAt: body.scheduledAt,
+        intentPersisted: false,
+        schedulingOccurred: false,
+        publishingOccurred: false,
         livePublishingEnabled: false,
         executionGatesEnabled: true,
       },
-      { status: 202 },
+      { status: 503 },
     )
   } catch (error) {
     if (error instanceof SocialApiError) {
