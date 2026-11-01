@@ -85,7 +85,7 @@ Prepare bodies must **not** include client snapshots or data classification; the
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/api/v1/customer-ai/accounts/{accountId}/employees/{employeeId}/pilot-tasks/prepare` | Body `{ workflowKind, idempotencyKey, locale?, managedSiteId?, prepareConsequentialDraft?, scopedSnapshot? }` |
+| POST | `/api/v1/customer-ai/accounts/{accountId}/employees/{employeeId}/pilot-tasks/prepare` | Body `{ workflowKind, idempotencyKey, locale?, prepareConsequentialDraft? }` — site and snapshots resolved server-side |
 | POST | `/api/v1/customer-ai/accounts/{accountId}/pilot-tasks/{taskId}/approvals` | Trusted human approval binding for prepared consequential drafts |
 | POST | `/api/v1/customer-ai/accounts/{accountId}/pilot-tasks/{taskId}/execution-attempt` | Always blocked while execution flags off |
 

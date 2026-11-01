@@ -142,11 +142,11 @@ export async function buildPilotWorkflowDraft(
     }
     case 'receptionist_preparation': {
       const published = await store.listPublishedKnowledge(input.customerAccountId, input.context.locale)
-      const { items, siteRestrictedOmitted, unverifiedSiteScope } = filterPilotReceptionistKnowledge(
+      const { items, omittedCount, omittedClassifications } = filterPilotReceptionistKnowledge(
         published,
         input.context.managedSiteId,
       )
-      if (items.length === 0 && (siteRestrictedOmitted > 0 || unverifiedSiteScope)) {
+      if (items.length === 0) {
         return {
           toolKey,
           accessMode,
@@ -154,8 +154,9 @@ export async function buildPilotWorkflowDraft(
           estimatedCostUnits: null,
           draftPayload: {
             outcome: 'UNVERIFIED',
-            reason: 'Site-restricted knowledge cannot be verified without site ownership binding',
-            siteRestrictedOmitted,
+            reason: 'No safely authorized published knowledge for receptionist preparation',
+            omittedCount,
+            omittedClassifications,
           },
           outcomeHint: 'UNVERIFIED',
         }
@@ -169,7 +170,7 @@ export async function buildPilotWorkflowDraft(
       const draftPayload = {
         locale: input.context.locale,
         approvedFaqRefs: faqExcerpt,
-        siteRestrictedOmitted,
+        omittedKnowledgeCount: omittedCount,
         handoffPrep: input.prepareConsequentialDraft
           ? {
               reason: 'visitor_requested_human',

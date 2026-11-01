@@ -96,6 +96,91 @@ describe('Batch 36.1 — pilot security regressions', () => {
     expect(JSON.stringify(prep.value.draftPayload)).not.toContain('Site only FAQ')
   })
 
+  it('never returns PHI, regulated healthcare, or unknown classifications in receptionist prep', async () => {
+    const acct = 'acct_class_denied'
+    const s = createMemoryCustomerAiStore({
+      operating: [{ userId: staff.userId, customerAccountId: acct }],
+      policies: [policy(acct)],
+    })
+    const emp = await activeEmployee(s, acct)
+    const safeTitle = 'Safe business hours'
+    const forbidden = [
+      { title: 'PHI record leak', classification: 'PHI' },
+      { title: 'Clinical trial data', classification: 'REGULATED_HEALTHCARE' },
+      { title: 'Mystery bucket', classification: 'UNKNOWN_SENSITIVE_BUCKET' },
+    ] as const
+    for (const row of forbidden) {
+      const draft = await upsertCustomerAiKnowledge(s, staff, {
+        customerAccountId: acct,
+        kind: 'FAQ',
+        title: row.title,
+        languageTag: 'en',
+        classification: row.classification,
+        content: { excerpt: row.title },
+        status: 'IN_REVIEW',
+      })
+      if (draft.ok) await approveCustomerAiKnowledge(s, staff, acct, draft.value.id)
+    }
+    const safe = await upsertCustomerAiKnowledge(s, staff, {
+      customerAccountId: acct,
+      kind: 'FAQ',
+      title: safeTitle,
+      languageTag: 'en',
+      classification: 'GENERAL_BUSINESS',
+      content: { excerpt: 'Mon-Fri 9-5' },
+      status: 'IN_REVIEW',
+    })
+    if (safe.ok) await approveCustomerAiKnowledge(s, staff, acct, safe.value.id)
+
+    const prep = await prepareCustomerAiPilotTaskApi(s, staff, {
+      customerAccountId: acct,
+      employeeId: emp.id,
+      managedSiteId: null,
+      workflowKind: 'receptionist_preparation',
+      idempotencyKey: 'class-deny',
+      prepareConsequentialDraft: false,
+      context: { locale: 'en', managedSiteId: null, trustedDataSource: 'SERVER' },
+    })
+    expect(prep.ok).toBe(true)
+    if (!prep.ok) return
+    expect(prep.value.outcome).toBe('PREPARED')
+    const payload = JSON.stringify(prep.value.draftPayload)
+    expect(payload).toContain(safeTitle)
+    for (const row of forbidden) {
+      expect(payload).not.toContain(row.title)
+    }
+
+    const onlyForbidden = createMemoryCustomerAiStore({
+      operating: [{ userId: staff.userId, customerAccountId: 'acct_only_bad' }],
+      policies: [policy('acct_only_bad')],
+    })
+    const emp2 = await activeEmployee(onlyForbidden, 'acct_only_bad')
+    for (const row of forbidden) {
+      const draft = await upsertCustomerAiKnowledge(onlyForbidden, staff, {
+        customerAccountId: 'acct_only_bad',
+        kind: 'FAQ',
+        title: row.title,
+        languageTag: 'en',
+        classification: row.classification,
+        content: { excerpt: row.title },
+        status: 'IN_REVIEW',
+      })
+      if (draft.ok) await approveCustomerAiKnowledge(onlyForbidden, staff, 'acct_only_bad', draft.value.id)
+    }
+    const unverified = await prepareCustomerAiPilotTaskApi(onlyForbidden, staff, {
+      customerAccountId: 'acct_only_bad',
+      employeeId: emp2.id,
+      managedSiteId: null,
+      workflowKind: 'receptionist_preparation',
+      idempotencyKey: 'class-unverified',
+      prepareConsequentialDraft: false,
+      context: { locale: 'en', managedSiteId: null, trustedDataSource: 'SERVER' },
+    })
+    expect(unverified.ok).toBe(true)
+    if (!unverified.ok) return
+    expect(unverified.value.outcome).toBe('UNVERIFIED')
+  })
+
   it('returns UNVERIFIED for SERVER CRM prep without authoritative retrieval', async () => {
     const acct = 'acct_server_crm'
     const s = createMemoryCustomerAiStore({
