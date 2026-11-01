@@ -21,7 +21,7 @@ Specifications: [`03-DATA-MODEL`](platform/docs/03-DATA-MODEL.md), [`04-API-INTE
 | Lead funnel dashboard UI (30C) | `components/crm/lead-funnel-*`, `lib/crm-ui/lead-funnel.ts`, `/dashboard/crm/leads/funnel` | Customer CRM funnel charts wired to 30A API | MERGED Batch 30C @ `3a7d011` | UI only; not production acceptance |
 | Controlled staging / pilot readiness (31) | `lib/platform/pilot/*`, `scripts/migration-rehearsal.ts`, `scripts/synthetic-customer-pilot-report.ts` | Migration matrix, staging assess, synthetic workflow | MERGED Batch 31 + 31.1 @ `93e3010` | No staging DB provisioned |
 | Commerce wallet fulfillment integrity (32) | `lib/platform/commerce/reconciliation-report.ts`, `lib/platform/commerce/financial-boundaries.ts`, admin reconciliation route | Bounded reconciliation read model; no live checkout | MERGED Batch 32 @ `b8e58df` | Corrective wallet/commerce mutations remain gated |
-| Google SEO/analytics connection readiness (33) | `lib/platform/google/*`, `/api/v1/seo/sites/*/google/readiness`, `/api/v1/analytics/accounts/*/google/readiness` | GSC/GA4/GBP stored connection assess; reuses `SiteAnalyticsConnection` | IN PR Batch 33 | `GOOGLE_PROVIDER_READINESS_ENABLED` default OFF; no live OAuth |
+| Google SEO/analytics connection readiness (33) | `lib/platform/google/*`, `/api/v1/seo/sites/*/google/readiness`, `/api/v1/analytics/accounts/*/google/readiness` | GSC/GA4/GBP stored connection assess; reuses `SiteAnalyticsConnection` | MERGED Batch 33 @ `1ae7c0a` | `GOOGLE_PROVIDER_READINESS_ENABLED` default OFF; no live OAuth |
 
 ## Analytics flags on this source tree
 

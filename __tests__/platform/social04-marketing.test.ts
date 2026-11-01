@@ -32,6 +32,7 @@ function aestheticsChannelId(store: ReturnType<typeof createSocial04TestStore>) 
 describe('SOCIAL-04 Marketing Studio backend', () => {
   beforeEach(() => {
     vi.stubEnv('SOCIAL_MARKETING_ENABLED', 'true')
+    vi.stubEnv('SOCIAL_EXECUTION_GATES_ENABLED', 'true')
     vi.stubEnv('POSTIZ_API_ENABLED', 'false')
     vi.stubEnv('POSTIZ_LIVE_PUBLISHING_ENABLED', 'false')
     vi.stubEnv('MARKETING_STUDIO_DRAFTS_PER_MONTH', '100')

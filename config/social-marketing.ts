@@ -20,6 +20,11 @@ export function isPostizLivePublishingEnabled(): boolean {
   return envFlag('POSTIZ_LIVE_PUBLISHING_ENABLED', false)
 }
 
+/** Guarded scheduling intent prep, provider readiness HTTP, reconcile boundaries (Batch 34). Live dispatch stays gated separately. */
+export function isSocialExecutionGatesEnabled(): boolean {
+  return envFlag('SOCIAL_EXECUTION_GATES_ENABLED', false)
+}
+
 export function isSocialAutomatedApprovalEnabled(): boolean {
   return envFlag('SOCIAL_AUTOMATED_APPROVAL_ENABLED', false)
 }

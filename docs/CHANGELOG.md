@@ -67,6 +67,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-10-31 | Batch 30C Lead Funnel UI integration | [PR #81](https://github.com/Holagpt-ai/webxxl-website-system/pull/81), `3a7d011466aeabcf4c2d3bdfe8a669d42e448957` | MERGED. CRM nav + inbox handoff. Not activation |
 | 2026-10-31 | Batch 31 + 31.1 Controlled staging + synthetic pilot foundation | [PR #82](https://github.com/Holagpt-ai/webxxl-website-system/pull/82), `93e3010d097b3e08fa47be9492c57ed3999d2f03` | MERGED. Readiness tooling only. Not activation |
 | 2026-11-01 | Batch 32 + 32.1 Commerce, shared wallet & fulfillment integrity V1 | [PR #83](https://github.com/Holagpt-ai/webxxl-website-system/pull/83), `b8e58dfc7a1520cb927e67785137734d4ed3d637` | MERGED. Reconciliation read APIs + atomic cancel safety. Not live payments |
-| 2026-11-01 | Batch 33 SEO & analytics Google integration preparation V1 | Branch `feature/batch-33-seo-analytics-google-readiness` | IN PR. Stored readiness only. Not live OAuth or provider fetch |
+| 2026-11-01 | Batch 33 + 33.1 + 33.2 SEO & analytics Google integration preparation V1 | [PR #84](https://github.com/Holagpt-ai/webxxl-website-system/pull/84), `1ae7c0a1e13748969ead7f3b177a74fcc68ed5d8` | MERGED. Stored readiness + assess idempotency/reliability. Not live OAuth or provider fetch |
+| 2026-11-01 | Vercel production deployment of `1ae7c0a` (PR #84 on `main`) | GitHub deployment `7478496108`, Production success | DEPLOYED SHA only |
+| 2026-11-01 | Batch 34 Marketing Studio execution gates V1 | Branch `feature/batch-34-marketing-execution-gates` | IN PR. Guarded scheduling prep + reconcile policy. Not live Postiz publish |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

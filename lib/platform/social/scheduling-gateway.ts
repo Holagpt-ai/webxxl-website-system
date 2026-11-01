@@ -4,14 +4,14 @@ import {
   isSocialMarketingEnabled,
 } from '@/config/social-marketing'
 import { verifySocialApprovalForScheduling } from '@/lib/platform/social/approval-service'
-import { assertPostizExternalIntegrationForSchedule } from '@/lib/platform/social/connections-postiz'
-import {
-  assertChannelDispatchAllowed,
-  denyBillingGroupSiblingAccess,
-  getConnectionForAccount,
-} from '@/lib/platform/social/connections-service'
+import { socialProviderDispatchBlocked, socialProviderReconcileBlocked } from '@/lib/platform/social/execution-gates'
 import { nextSocialId, type SocialStore } from '@/lib/platform/social/in-memory-store'
+import {
+  applyReconcileOutcomeToPublicationStatus,
+  mapPostizPostStateToReconcileOutcome,
+} from '@/lib/platform/social/publication-reconcile-policy'
 import { assertWithinQuota, recordMarketingStudioUsage } from '@/lib/platform/social/quota-service'
+import { authorizeSocialSchedulingRequest } from '@/lib/platform/social/scheduling-authorization'
 import { transitionSocialCampaign } from '@/lib/platform/social/campaign-service'
 import { computeSchedulingRequestFingerprint } from '@/lib/platform/social/scheduling-fingerprint'
 import type { SocialPublicationRecord, SocialResult, SocialSchedulingIntentRecord } from '@/lib/platform/social/types'
@@ -78,14 +78,13 @@ export async function scheduleApprovedSocialCampaign(
     return { ok: false, code: 'NO_APPROVED_REVISION', message: 'Missing approved revision' }
   }
 
-  const scheduledAt = input.scheduledAt
   const requestFingerprint = computeSchedulingRequestFingerprint({
     customerAccountId: input.customerAccountId,
     campaignId: campaign.id,
     revisionId: revision.id,
     approvalId: input.approvalId,
     channelId: input.channelId,
-    scheduledAt,
+    scheduledAt: input.scheduledAt,
     contentHash: revision.contentHash,
   })
 
@@ -104,46 +103,11 @@ export async function scheduleApprovedSocialCampaign(
     return replaySchedulingResult(store, existing)
   }
 
-  if (campaign.status !== 'APPROVED' && campaign.status !== 'SCHEDULING') {
-    return { ok: false, code: 'INVALID_STATE', message: 'Campaign must be approved before scheduling' }
-  }
-  if (!revision.targetChannelIds.includes(input.channelId)) {
-    return { ok: false, code: 'CHANNEL_NOT_IN_SCOPE', message: 'Channel not in approved revision' }
-  }
-  if (revision.scheduledAt && revision.scheduledAt.getTime() !== scheduledAt.getTime()) {
-    return { ok: false, code: 'SCHEDULE_TIME_MISMATCH', message: 'Scheduled time outside approved scope' }
-  }
+  const auth = authorizeSocialSchedulingRequest(store, input)
+  if (!auth.ok) return auth
 
-  const approvalCheck = verifySocialApprovalForScheduling(store, {
-    approvalId: input.approvalId,
-    campaignId: campaign.id,
-    revisionId: revision.id,
-    contentHash: revision.contentHash,
-    consumeUse: false,
-  })
-  if (!approvalCheck.ok) return approvalCheck
-
-  const connectionGate = getConnectionForAccount(store, input.channelId, input.customerAccountId)
-  if (!connectionGate.ok) return connectionGate
-  const siblingGate = denyBillingGroupSiblingAccess(
-    store,
-    input.actorUserId,
-    input.customerAccountId,
-    connectionGate.value.customerAccountId,
-  )
-  if (!siblingGate.ok) return siblingGate
-  const channelGate = assertChannelDispatchAllowed(connectionGate.value)
-  if (!channelGate.ok) return channelGate
-
-  const postizBoundary = assertPostizExternalIntegrationForSchedule(
-    store,
-    input.customerAccountId,
-    connectionGate.value.externalChannelRef,
-  )
-  if (!postizBoundary.ok) return postizBoundary
-
-  const quota = assertWithinQuota(store, input.customerAccountId, 'schedule')
-  if (!quota.ok) return quota
+  const dispatchBlock = socialProviderDispatchBlocked()
+  if (dispatchBlock) return dispatchBlock
 
   if (!isPostizApiEnabled() || !isPostizLivePublishingEnabled()) {
     return {
@@ -164,7 +128,7 @@ export async function scheduleApprovedSocialCampaign(
     approvalId: input.approvalId,
     customerAccountId: input.customerAccountId,
     channelId: input.channelId,
-    scheduledAt,
+    scheduledAt: input.scheduledAt,
     status: 'PENDING',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -204,12 +168,17 @@ export async function scheduleApprovedSocialCampaign(
     return apiQuota
   }
 
+  const connection = store.connections.get(input.channelId)
+  if (!connection) {
+    return { ok: false, code: 'NOT_FOUND', message: 'Social connection not found' }
+  }
+
   const dispatch = await publisher.schedulePost({
     customerAccountId: input.customerAccountId,
-    externalIntegrationId: connectionGate.value.externalChannelRef,
+    externalIntegrationId: connection.externalChannelRef,
     caption: campaign.locale === 'es' && revision.captionEs ? revision.captionEs : revision.captionEn,
-    scheduledAt,
-    platformType: connectionGate.value.platform,
+    scheduledAt: input.scheduledAt,
+    platformType: connection.platform,
     idempotencyKey: input.idempotencyKey,
   })
 
@@ -273,6 +242,9 @@ export async function reconcileSocialPublication(
   publicationId: string,
   customerAccountId: string,
 ): Promise<SocialResult<SocialPublicationRecord>> {
+  const reconcileBlock = socialProviderReconcileBlocked()
+  if (reconcileBlock) return reconcileBlock
+
   const publication = store.publications.get(publicationId)
   if (!publication || publication.customerAccountId !== customerAccountId) {
     return { ok: false, code: 'NOT_FOUND', message: 'Publication not found' }
@@ -281,18 +253,41 @@ export async function reconcileSocialPublication(
     return { ok: false, code: 'NO_EXTERNAL_REF', message: 'No provider reference to reconcile' }
   }
   const status = await publisher.getPostStatus(publication.externalPostRef)
-  if (!status.ok) return status
+  if (!status.ok) {
+    if (status.code === 'UNKNOWN') {
+      publication.status = 'RECONCILIATION_REQUIRED'
+      publication.updatedAt = new Date()
+      return { ok: false, code: 'RECONCILIATION_REQUIRED', message: status.message }
+    }
+    return status
+  }
 
-  if (status.value.state === 'PUBLISHED' && status.value.releaseURL) {
-    publication.status = 'PUBLISHED'
-    publication.publishedUrl = status.value.releaseURL
-    publication.publishedAt = status.value.publishDate ? new Date(status.value.publishDate) : new Date()
+  const outcome = mapPostizPostStateToReconcileOutcome({
+    state: status.value.state,
+    releaseURL: status.value.releaseURL,
+    publishDate: status.value.publishDate,
+  })
+
+  if (outcome.kind === 'RECONCILIATION_REQUIRED') {
+    publication.status = 'RECONCILIATION_REQUIRED'
+    publication.updatedAt = new Date()
+    store.publicationEvents.push({
+      id: nextSocialId('socevt'),
+      publicationId: publication.id,
+      eventKind: 'RECONCILE_AMBIGUOUS',
+      detail: { reason: outcome.reason },
+      createdAt: new Date(),
+    })
+    return { ok: false, code: 'RECONCILIATION_REQUIRED', message: outcome.reason }
+  }
+
+  const nextStatus = applyReconcileOutcomeToPublicationStatus(publication.status, outcome)
+  publication.status = nextStatus
+  if (outcome.kind === 'PUBLISHED') {
+    publication.publishedUrl = outcome.publishedUrl
+    publication.publishedAt = outcome.publishedAt
     const campaign = store.campaigns.get(publication.campaignId)
     if (campaign) transitionSocialCampaign(store, campaign.id, campaign.customerAccountId, 'PUBLISHED')
-  } else if (status.value.state === 'QUEUE') {
-    publication.status = 'SCHEDULED'
-  } else if (status.value.state === 'ERROR') {
-    publication.status = 'FAILED'
   }
   publication.updatedAt = new Date()
   return { ok: true, value: publication }
