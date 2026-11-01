@@ -22,12 +22,13 @@ export type CustomerAiPilotTaskRecord = {
   actionHash: string
   draftPayload: Record<string, unknown>
   provenance: {
-    source: 'DETERMINISTIC_PILOT_V1'
-    contentLabel: 'PREPARED_DRAFT'
+    source: 'DETERMINISTIC_PILOT_V1' | 'DETERMINISTIC_PILOT_V1_TEST'
+    contentLabel: 'PREPARED_DRAFT' | 'UNVERIFIED'
     locale: string
     correlationId: string
     preparedAt: string
     actorUserId: string
+    durable: false
   }
   requiresHumanApproval: boolean
   approvalId: string | null
