@@ -2,6 +2,7 @@ import { isAnalyticsBackendEnabled } from '@/config/analytics-backend'
 import { isCommsBackendEnabled } from '@/config/comms-backend'
 import { isCrmBackendEnabled } from '@/config/crm-backend'
 import { isMktBackendEnabled } from '@/config/mkt-backend'
+import { isGoogleProviderReadinessEnabled } from '@/config/google-integration'
 import { isSeoBackendEnabled } from '@/config/seo-backend'
 import { isSiteLeadIntakeEnabled } from '@/config/site-lead-intake'
 import { evaluateEntitlementAccess, getServiceEntitlement } from '@/lib/platform/entitlements'
@@ -91,6 +92,14 @@ export function buildFeatureReadinessMatrix(): FeatureReadinessRow[] {
       flagEnabled: isAnalyticsBackendEnabled(),
       typicalCustomerState: isAnalyticsBackendEnabled() ? 'ready_pending_migration' : 'disabled',
       notes: 'Dashboard + ingestion flags separate; ingestion default OFF.',
+    },
+    {
+      id: 'google_provider_readiness',
+      label: 'Google SEO/analytics connection readiness',
+      backendFlag: 'GOOGLE_PROVIDER_READINESS_ENABLED',
+      flagEnabled: isGoogleProviderReadinessEnabled(),
+      typicalCustomerState: isGoogleProviderReadinessEnabled() ? 'ready_pending_data' : 'disabled',
+      notes: 'Batch 33 stored readiness for GSC/GA4/GBP; no live OAuth or provider fetch.',
     },
     {
       id: 'communications',

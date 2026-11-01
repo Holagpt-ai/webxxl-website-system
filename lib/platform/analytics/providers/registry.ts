@@ -1,3 +1,4 @@
+import { isGoogleProviderReadinessEnabled } from '@/config/google-integration'
 import {
   isSeoGa4ApiEnabled,
   isSeoGbpApiEnabled,
@@ -5,6 +6,7 @@ import {
   isSeoGscApiEnabled,
   isSeoRankProviderEnabled,
 } from '@/config/seo-backend'
+import { buildGoogleProviderCapabilities } from '@/lib/platform/google/capabilities'
 import type { ProviderAuthContext, ProviderResult } from '@/lib/platform/providers/types'
 import type { AnalyticsSourceProvider } from '@/lib/platform/analytics/providers/types'
 
@@ -44,7 +46,18 @@ export function listAnalyticsSourceProviders(): AnalyticsSourceProvider[] {
         if (!isSeoGbpApiEnabled() || !isSeoGoogleOauthEnabled()) {
           return disabledState('GBP', 'GBP API or Google OAuth disabled')
         }
-        return { ok: true, value: { provider: 'GBP', status: 'NOT_SUPPORTED', message: 'GBP ingestion adapter pending live credentials' } }
+        const caps = buildGoogleProviderCapabilities('GBP')
+        if (!isGoogleProviderReadinessEnabled()) {
+          return disabledState('GBP', 'Google provider readiness module disabled')
+        }
+        return {
+          ok: true,
+          value: {
+            provider: 'GBP',
+            status: caps.providerIngest ? 'PENDING' : 'NOT_SUPPORTED',
+            message: 'GBP live ingest adapter pending owner activation; readiness assess available when connections exist',
+          },
+        }
       },
     },
     {
