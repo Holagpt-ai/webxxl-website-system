@@ -87,6 +87,7 @@ The server recomputes/validates all IDs from actor membership, not from user inp
 | `GET /api/v1/communications/intents/{id}` | `comms.read` | — | intent status, recipients, dispatch attempts (metadata only) |
 | `GET /api/v1/communications/inboxes` | `comms.read` | — | all inbox mappings with visibility/sync state (no secrets) |
 | `GET /api/v1/communications/connections` | `comms.read` | — | Chatwoot configured/pending/revoked/stale summary; outbound flags honest |
+| `GET /api/v1/communications/provider-readiness` | `comms.read` | — | Chatwoot + Twilio/Resend readiness (503 when `COMMS_INTEGRATION_GATES_ENABLED` off); no live dispatch |
 | `GET /api/v1/communications/conversations/{id}` | `comms.read` | — | account-scoped detail + CRM link; **metadata only** (`transcriptAvailable: false`) |
 | `POST /api/v1/communications/webhooks/chatwoot` | relay HMAC | signed body + idempotency | **503 until** `CHATWOOT_WEBHOOK_INGEST_ENABLED` + relay secret; quarantine unknown tenants |
 | `POST /api/v1/communications/campaigns` | campaign creator | draft + consent scope | DRAFT only, immutable revision hash |
