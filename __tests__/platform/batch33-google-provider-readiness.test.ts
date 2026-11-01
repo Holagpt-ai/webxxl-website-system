@@ -7,8 +7,7 @@ vi.mock('@/lib/db', () => ({
     seoProviderSyncRun: {
       findUnique: vi.fn().mockResolvedValue(null),
       create: vi.fn().mockResolvedValue({ id: 'sync' }),
-      update: vi.fn(),
-      upsert: vi.fn(),
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
   },
 }))

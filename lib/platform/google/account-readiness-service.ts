@@ -1,9 +1,11 @@
-import { GOOGLE_READINESS_MAX_SITES_PER_ACCOUNT, isGoogleProviderReadinessEnabled } from '@/config/google-integration'
+import { isGoogleProviderReadinessEnabled } from '@/config/google-integration'
+import {
+  loadBoundedAccountReadinessSites,
+  loadSingleAccountReadinessSite,
+} from '@/lib/platform/google/account-readiness-load'
 import { assessGoogleSiteReadiness } from '@/lib/platform/google/readiness-assess'
 import type { GoogleAccountReadinessDto } from '@/lib/platform/google/types'
-import { requireManagedSiteInAccount } from '@/lib/platform/seo/site-scope'
-import { prisma } from '@/lib/db'
-import { loadGoogleConnectionsForAccount } from '@/lib/platform/google/prisma-load'
+import { loadGoogleConnectionsForSites } from '@/lib/platform/google/prisma-load'
 
 export async function buildGoogleAccountReadiness(input: {
   customerAccountId: string
@@ -18,66 +20,74 @@ export async function buildGoogleAccountReadiness(input: {
     }
   }
 
-  const connections = await loadGoogleConnectionsForAccount({
+  const assessedAt = new Date()
+
+  if (input.managedSiteId) {
+    const site = await loadSingleAccountReadinessSite({
+      customerAccountId: input.customerAccountId,
+      managedSiteId: input.managedSiteId,
+    })
+    if (!site.ok) {
+      return {
+        ok: false,
+        status: site.code === 'NOT_FOUND' ? 404 : 400,
+        code: site.code,
+        message: site.message,
+      }
+    }
+    const connections = await loadGoogleConnectionsForSites({
+      customerAccountId: input.customerAccountId,
+      managedSiteIds: [site.value.id],
+    })
+    const siteDto = assessGoogleSiteReadiness({
+      customerAccountId: input.customerAccountId,
+      managedSiteId: site.value.id,
+      authorizedHosts: site.value.authorizedHosts,
+      siteCanonicalUrl: site.value.siteCanonicalUrl,
+      connections,
+      assessedAt,
+    })
+    return {
+      ok: true,
+      value: {
+        customerAccountId: input.customerAccountId,
+        managedSiteId: input.managedSiteId,
+        sites: [siteDto],
+        assessedAt: assessedAt.toISOString(),
+      },
+    }
+  }
+
+  const bounded = await loadBoundedAccountReadinessSites(input.customerAccountId)
+  const siteIds = bounded.sites.map((s) => s.id)
+  const connections = await loadGoogleConnectionsForSites({
     customerAccountId: input.customerAccountId,
-    managedSiteId: input.managedSiteId,
+    managedSiteIds: siteIds,
   })
 
-  let sitesTotal: number | undefined
-  let sitesTruncated = false
-  const allSiteIds = input.managedSiteId
-    ? [input.managedSiteId]
-    : (
-        await prisma.managedSite.findMany({
-          where: { customerAccountId: input.customerAccountId },
-          select: { id: true },
-          orderBy: { createdAt: 'asc' },
-        })
-      ).map((s) => s.id)
-
-  let sites = allSiteIds
-  if (!input.managedSiteId && allSiteIds.length > GOOGLE_READINESS_MAX_SITES_PER_ACCOUNT) {
-    sitesTotal = allSiteIds.length
-    sitesTruncated = true
-    sites = allSiteIds.slice(0, GOOGLE_READINESS_MAX_SITES_PER_ACCOUNT)
-  }
-
-  const assessedAt = new Date()
-  const siteDtos = []
-  for (const siteId of sites) {
-    const site = await requireManagedSiteInAccount({
-      siteId,
+  const siteDtos = bounded.sites.map((site) =>
+    assessGoogleSiteReadiness({
       customerAccountId: input.customerAccountId,
-    })
-    if (!site.ok) continue
-    let siteCanonicalUrl: string | null = null
-    if (site.value.domain) {
-      siteCanonicalUrl = site.value.domain.startsWith('http') ? site.value.domain : `https://${site.value.domain}`
-    }
-    siteDtos.push(
-      assessGoogleSiteReadiness({
-        customerAccountId: input.customerAccountId,
-        managedSiteId: siteId,
-        authorizedHosts: site.value.authorizedHosts,
-        siteCanonicalUrl,
-        connections,
-        assessedAt,
-      }),
-    )
-  }
+      managedSiteId: site.id,
+      authorizedHosts: site.authorizedHosts,
+      siteCanonicalUrl: site.siteCanonicalUrl,
+      connections,
+      assessedAt,
+    }),
+  )
 
   return {
     ok: true,
     value: {
       customerAccountId: input.customerAccountId,
-      managedSiteId: input.managedSiteId,
+      managedSiteId: null,
       sites: siteDtos,
       assessedAt: assessedAt.toISOString(),
-      ...(sitesTruncated
+      ...(bounded.sitesTruncated
         ? {
             sitesTruncated: true,
             sitesReturned: siteDtos.length,
-            sitesTotal,
+            sitesTotal: bounded.sitesTotal,
           }
         : {}),
     },

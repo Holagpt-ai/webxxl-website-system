@@ -5,8 +5,7 @@ vi.mock('@/lib/db', () => ({
     seoProviderSyncRun: {
       findUnique: vi.fn(),
       create: vi.fn().mockResolvedValue({ id: 'sync-new' }),
-      update: vi.fn().mockResolvedValue({ id: 'sync-upd' }),
-      upsert: vi.fn(),
+      updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
   },
 }))
@@ -94,7 +93,7 @@ describe('Batch 33.1 Google readiness safety', () => {
     })
 
     expect(outcome.outcome).toBe('BLOCKED_BY_INGESTION_RUN')
-    expect(prisma.seoProviderSyncRun.update).not.toHaveBeenCalled()
+    expect(prisma.seoProviderSyncRun.updateMany).not.toHaveBeenCalled()
     expect(prisma.seoProviderSyncRun.create).not.toHaveBeenCalled()
   })
 
@@ -147,7 +146,7 @@ describe('Batch 33.1 Google readiness safety', () => {
     if (result.ok) {
       expect(result.value.outcomes[0]?.syncRunStatus).toBe('READINESS_REPLAY')
     }
-    expect(prisma.seoProviderSyncRun.update).not.toHaveBeenCalled()
+    expect(prisma.seoProviderSyncRun.updateMany).not.toHaveBeenCalled()
   })
 
   it('reports ingestion run untouched when worker row already exists for derived key', async () => {

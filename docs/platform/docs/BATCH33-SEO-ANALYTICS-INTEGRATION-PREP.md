@@ -44,7 +44,8 @@ Reuse SEO-07 `SiteAnalyticsConnection`, GSC authorization (`gsc-query-auth`, `pr
 | Idempotency | Client `Idempotency-Key` (8–128 chars) hashed into `google-readiness:v1:{account}:{site}:{provider}:{digest}` |
 | Ingestion isolation | Readiness rows use status `READINESS` + `dataState NOT_CONNECTED`; never overwrite ingestion sync runs |
 | POST auth | `seo.configure` (OWNER); OPEN-001 gate unchanged |
-| Account GET bound | Max 25 sites when `siteId` omitted (`GOOGLE_READINESS_MAX_SITES_PER_ACCOUNT`) |
+| Account GET bound | DB `take: N+1` lookahead; `count` only when truncated; connections scoped to selected site ids |
+| Concurrency | Readiness persist: create + `P2002` replay; updates via `updateMany` where `status = READINESS` only |
 
 ## ADR
 
