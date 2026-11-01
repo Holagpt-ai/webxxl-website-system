@@ -7,7 +7,7 @@
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | **35** **MERGED** on `main`; **Batch 36** Customer AI pilot prep **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `3386ac6a5ca8c406ad1bc8c6259726a4c134060e` on `main`; **PR #87** @ `3c88ed868748b25b6482e7a694ea84c9d626f6e3` (open) |
+| 2 | GitHub SHA, branch, active PR | `3386ac6a5ca8c406ad1bc8c6259726a4c134060e` on `main`; **PR #87** @ `cb0f671e33c414dc0ab1d8389d1126ca614c042e` (open) |
 | 3 | Production deployment | Vercel **`dpl_DB2fCd4wt9C6htqVNU125jCUUYJh` READY** @ `3386ac6` |
 | 4 | Last updated | 2026-11-01 |
 | 5 | Next task / responsible platform | **Owner** merge **Batch 36** PR — **Cursor**; external LLM / AUTO-10 execution — **Owner** |
