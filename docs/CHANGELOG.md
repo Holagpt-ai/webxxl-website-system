@@ -73,6 +73,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-11-01 | Vercel production deployment of `e400c49` (PR #85) | Vercel `dpl_A7yAQkZD7T994YnSjGwhae1PuBL1` READY | DEPLOYED SHA only |
 | 2026-11-01 | Batch 35 Unified communications integration V1 | [PR #86](https://github.com/Holagpt-ai/webxxl-website-system/pull/86), `3386ac6a5ca8c406ad1bc8c6259726a4c134060e` | MERGED. Outbound gateway + provider readiness. No live sends |
 | 2026-11-01 | Vercel production deployment of `3386ac6` (PR #86) | Vercel `dpl_DB2fCd4wt9C6htqVNU125jCUUYJh` READY | DEPLOYED SHA only |
-| 2026-11-01 | Batch 36 Customer AI Workforce pilot prep V1 | [PR #87](https://github.com/Holagpt-ai/webxxl-website-system/pull/87), `3c88ed868748b25b6482e7a694ea84c9d626f6e3` | IN PR. Preparation + approval binding only. No LLM execution |
+| 2026-11-01 | Batch 36 Customer AI Workforce pilot prep V1 | [PR #87](https://github.com/Holagpt-ai/webxxl-website-system/pull/87), `f620e4f1c7a0c6cbcecf2bca8365b8e4cae6c646` | MERGED. Preparation + approval binding only. No LLM execution |
+| 2026-11-01 | Vercel production deployment of `f620e4f` (PR #87) | Vercel `dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY | DEPLOYED SHA only |
+| 2026-11-01 | Cursor Cloud Workforce operating instructions V1 | `docs/cursor-cloud-workforce/` | IN PR. Configuration docs only. No agent activation |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

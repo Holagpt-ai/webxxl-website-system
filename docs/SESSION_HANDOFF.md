@@ -1,39 +1,40 @@
 # Session Handoff
 
-**Compiled:** 2026-11-01 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 36)
+**Compiled:** 2026-11-01 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Cloud Workforce Config V1)
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **35** **MERGED** on `main`; **Batch 36** Customer AI pilot prep **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `3386ac6a5ca8c406ad1bc8c6259726a4c134060e` on `main`; **PR #87** @ `cb0f671e33c414dc0ab1d8389d1126ca614c042e` (open) |
-| 3 | Production deployment | Vercel **`dpl_DB2fCd4wt9C6htqVNU125jCUUYJh` READY** @ `3386ac6` |
+| 1 | Last verified checkpoint | **36** **MERGED** on `main`; **Cloud Workforce Config V1** **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `f620e4f1c7a0c6cbcecf2bca8365b8e4cae6c646` on `main`; **Cloud Workforce Config V1** on `cursor/cloud-workforce-config-v1-b991` (open) |
+| 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` |
 | 4 | Last updated | 2026-11-01 |
-| 5 | Next task / responsible platform | **Owner** merge **Batch 36** PR — **Cursor**; external LLM / AUTO-10 execution — **Owner** |
-| 6 | Open blocker / gate IDs | `CUSTOMER_AI_PILOT_PREP_ENABLED` OFF; `CUSTOMER_AI_EXECUTION_ENABLED` OFF; AI DB migration UNVERIFIED |
+| 5 | Next task / responsible platform | **Owner** review/merge **Cloud Workforce Config V1** PR — **Cursor**; map five Cursor Cloud agents to [`docs/cursor-cloud-workforce/`](cursor-cloud-workforce/README.md) — **Owner** |
+| 6 | Open blocker / gate IDs | Isolated staging DB **NOT IDENTIFIED**; production migrations UNVERIFIED; `CUSTOMER_AI_PILOT_PREP_ENABLED` OFF; `CUSTOMER_AI_EXECUTION_ENABLED` OFF; workforce live execution OFF |
 
 ## This session
 
-Batch **36:** guarded customer AI pilot task preparation service (CRM lead intelligence, marketing/SEO assistant, receptionist prep), human approval binding, in-memory pilot task store, HTTP routes, Vitest `batch36-customer-ai-pilot`; continuity updated for PR **#86** @ `3386ac6` and Vercel **`dpl_DB2fCd4wt9C6htqVNU125jCUUYJh`**.
+Reconciled Batch **36** merge (PR **#87** @ `f620e4f`) and production deployment **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF`**. Added version-controlled Cursor Cloud Workforce role instructions (PM, Engineer, QA, Documentation, Operations) under `docs/cursor-cloud-workforce/` — supervised on-demand only, no automations.
 
 ## PENDING REPOSITORY SYNC
 
-None after Batch 36 PR is opened.
+None after Cloud Workforce Config V1 PR is opened.
 
 ## Handoff template
 
 ```
-Date / scope / owner: 2026-11-01 / BATCH-36 Customer AI Workforce pilot V1 / Cursor
-Repo / main SHA: Holagpt-ai/webxxl-website-system / 3386ac6a5ca8c406ad1bc8c6259726a4c134060e
-Branch / PR / head: feature/batch-36-customer-ai-workforce-pilot / PR #87 / 3c88ed868748b25b6482e7a694ea84c9d626f6e3
-Merged / deployed: PR #86 @ 3386ac6; Vercel dpl_DB2fCd4wt9C6htqVNU125jCUUYJh READY @ 3386ac6
-Migration / flags / activation: NOT applied production; CUSTOMER_AI_PILOT_PREP_ENABLED OFF; no LLM/outbound
-Next exact assignment / owning tool: Owner merge Batch 36 PR — Owner + Cursor
-Do NOT touch: production migrations, LLM credentials, live Chatwoot/voice, v0 UI, AUTO-10 dispatch without ADR
+Date / scope / owner: 2026-11-01 / Cloud Workforce Configuration V1 / Cursor
+Repo / main SHA: Holagpt-ai/webxxl-website-system / f620e4f1c7a0c6cbcecf2bca8365b8e4cae6c646
+Branch / PR / head: cursor/cloud-workforce-config-v1-b991 / <PR#> / <head sha>
+Merged / deployed: Batch 36 PR #87 @ f620e4f; Vercel dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF READY @ f620e4f
+Migration / flags / activation: NOT applied production; CUSTOMER_AI_* OFF; no LLM/outbound; workforce agents config-only
+Next exact assignment / owning tool: Owner merge Cloud Workforce Config PR — Owner + Cursor
+Do NOT touch: production migrations, LLM credentials, live Chatwoot/voice, v0 UI overlap, AUTO-10 dispatch without ADR
 ```
 
 ## Next assignment
 
-- **Owner + Cursor:** merge Batch **36** PR.
-- **Owner:** explicit authorization before enabling any `CUSTOMER_AI_EXECUTION_ENABLED` or provider credentials.
+- **Owner + Cursor:** review and merge **Cloud Workforce Config V1** PR (do not merge from agent unless explicitly instructed).
+- **Owner:** create five Cursor Cloud Agents using **WebXXL Cloud Development** and paste role files from `docs/cursor-cloud-workforce/`; keep automations disabled in V1.
+- **Owner:** explicit authorization before enabling any `CUSTOMER_AI_EXECUTION_ENABLED`, workforce live execution, or provider credentials.

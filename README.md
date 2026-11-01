@@ -21,6 +21,7 @@ WebXXL is a modular, multi-tenant managed-website and business-operations platfo
 - [`docs/CHANGELOG.md`](docs/CHANGELOG.md) — merged source milestones.
 - [`docs/RELEASE_GATES.md`](docs/RELEASE_GATES.md) — PR, deploy, and activation gates.
 - [`docs/CHATGPT_PROJECT_INSTRUCTIONS.md`](docs/CHATGPT_PROJECT_INSTRUCTIONS.md) — copyable ChatGPT project instructions.
+- [`docs/cursor-cloud-workforce/README.md`](docs/cursor-cloud-workforce/README.md) — supervised Cursor Cloud Agent roles (PM, Engineer, QA, Documentation, Operations).
 - [`docs/adr/INDEX.md`](docs/adr/INDEX.md) and [`docs/adr/README.md`](docs/adr/README.md) — ADR-018+ registry. ADR-001 through ADR-017 stay in the Master TAD decision log.
 
 ## Technical quick start
