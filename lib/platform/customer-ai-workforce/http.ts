@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
-import { isCustomerAiWorkforceEnabled } from '@/config/customer-ai-workforce'
+import {
+  isCustomerAiPilotHttpEnabled,
+  isCustomerAiPilotPrepEnabled,
+  isCustomerAiWorkforceEnabled,
+} from '@/config/customer-ai-workforce'
 import { AuthError } from '@/lib/portal/authz'
 import type { CustomerAiError } from '@/lib/platform/customer-ai-workforce/types'
 import type { User } from '@prisma/client'
@@ -9,6 +13,31 @@ export function customerAiDisabledResponse() {
   if (isCustomerAiWorkforceEnabled()) return null
   return NextResponse.json(
     { code: 'AI_WORKFORCE_DISABLED', message: 'Customer AI workforce backend is disabled' },
+    { status: 503 },
+  )
+}
+
+export function customerAiPilotPrepDisabledResponse() {
+  const workforce = customerAiDisabledResponse()
+  if (workforce) return workforce
+  if (isCustomerAiPilotPrepEnabled()) return null
+  return NextResponse.json(
+    { code: 'EXECUTION_DISABLED', message: 'Customer AI pilot preparation is disabled' },
+    { status: 503 },
+  )
+}
+
+/** Pilot HTTP uses a non-durable in-process store — not production-safe on Vercel. */
+export function customerAiPilotHttpDisabledResponse() {
+  const prep = customerAiPilotPrepDisabledResponse()
+  if (prep) return prep
+  if (isCustomerAiPilotHttpEnabled()) return null
+  return NextResponse.json(
+    {
+      code: 'EXECUTION_DISABLED',
+      message:
+        'Customer AI pilot HTTP is disabled. Tasks and approvals are non-durable and test-only until a persistent store is approved.',
+    },
     { status: 503 },
   )
 }

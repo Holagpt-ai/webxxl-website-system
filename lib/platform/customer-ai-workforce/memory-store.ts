@@ -244,6 +244,20 @@ export function createMemoryCustomerAiStore(seed: MemoryCustomerAiSeed): Custome
       }
       counters.set(key, { ...prev, toolCallsAuthorized: prev.toolCallsAuthorized + 1 })
     },
+    async incrementTokenReservation(employeeId, customerAccountId, units) {
+      const periodKey = customerAiUsagePeriodKey()
+      const key = counterKey(employeeId, periodKey)
+      const prev = counters.get(key) ?? {
+        employeeId,
+        customerAccountId,
+        periodKey,
+        messagesIngested: 0,
+        tokensReserved: 0,
+        toolCallsAuthorized: 0,
+        toolCallsDenied: 0,
+      }
+      counters.set(key, { ...prev, tokensReserved: prev.tokensReserved + units })
+    },
     async incrementToolDenial(employeeId, customerAccountId) {
       const periodKey = customerAiUsagePeriodKey()
       const key = counterKey(employeeId, periodKey)

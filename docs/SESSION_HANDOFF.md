@@ -1,39 +1,39 @@
 # Session Handoff
 
-**Compiled:** 2026-11-01 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 35)
+**Compiled:** 2026-11-01 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 36)
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **34** **MERGED** on `main`; **Batch 35** unified communications **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `e400c49df62b99069110cadd59c0f721e676ea35` on `main`; **PR #86** on `feature/batch-35-unified-comms-integration` (open) |
-| 3 | Production deployment | Vercel **`dpl_A7yAQkZD7T994YnSjGwhae1PuBL1` READY** @ `e400c49` |
+| 1 | Last verified checkpoint | **35** **MERGED** on `main`; **Batch 36** Customer AI pilot prep **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `3386ac6a5ca8c406ad1bc8c6259726a4c134060e` on `main`; **PR #87** @ `cb0f671e33c414dc0ab1d8389d1126ca614c042e` (open) |
+| 3 | Production deployment | Vercel **`dpl_DB2fCd4wt9C6htqVNU125jCUUYJh` READY** @ `3386ac6` |
 | 4 | Last updated | 2026-11-01 |
-| 5 | Next task / responsible platform | **Owner** merge **Batch 35** PR — **Cursor**; Chatwoot/Twilio/Resend provisioning — **Owner** |
-| 6 | Open blocker / gate IDs | `COMMS_INTEGRATION_GATES_ENABLED` OFF; live outbound OFF; comms migrations UNVERIFIED/unapplied |
+| 5 | Next task / responsible platform | **Owner** merge **Batch 36** PR — **Cursor**; external LLM / AUTO-10 execution — **Owner** |
+| 6 | Open blocker / gate IDs | `CUSTOMER_AI_PILOT_PREP_ENABLED` OFF; `CUSTOMER_AI_EXECUTION_ENABLED` OFF; AI DB migration UNVERIFIED |
 
 ## This session
 
-Batch **35:** outbound authorization gateway, Chatwoot/messaging provider readiness GET, wallet quote authorization prep, dispatch reconcile policy, execution gates; Vitest `batch35-unified-comms-integration`; continuity updated for PR **#85** @ `e400c49` and Vercel **`dpl_A7yAQkZD7T994YnSjGwhae1PuBL1`**.
+Batch **36:** guarded customer AI pilot task preparation service (CRM lead intelligence, marketing/SEO assistant, receptionist prep), human approval binding, in-memory pilot task store, HTTP routes, Vitest `batch36-customer-ai-pilot`; continuity updated for PR **#86** @ `3386ac6` and Vercel **`dpl_DB2fCd4wt9C6htqVNU125jCUUYJh`**.
 
 ## PENDING REPOSITORY SYNC
 
-None after Batch 35 PR is opened.
+None after Batch 36 PR is opened.
 
 ## Handoff template
 
 ```
-Date / scope / owner: 2026-11-01 / BATCH-35 unified communications integration V1 / Cursor
-Repo / main SHA: Holagpt-ai/webxxl-website-system / e400c49df62b99069110cadd59c0f721e676ea35
-Branch / PR / head: feature/batch-35-unified-comms-integration / PR #86 / (see PR after push)
-Merged / deployed: PR #85 @ e400c49; Vercel dpl_A7yAQkZD7T994YnSjGwhae1PuBL1 READY @ e400c49
-Migration / flags / activation: NOT applied production; COMMS_INTEGRATION_GATES_ENABLED OFF; no live sends
-Next exact assignment / owning tool: Owner merge Batch 35 PR — Owner + Cursor
-Do NOT touch: production migrations, Chatwoot install, Twilio/Resend live activation, v0 UI, customer message sends
+Date / scope / owner: 2026-11-01 / BATCH-36 Customer AI Workforce pilot V1 / Cursor
+Repo / main SHA: Holagpt-ai/webxxl-website-system / 3386ac6a5ca8c406ad1bc8c6259726a4c134060e
+Branch / PR / head: feature/batch-36-customer-ai-workforce-pilot / PR #87 / 3c88ed868748b25b6482e7a694ea84c9d626f6e3
+Merged / deployed: PR #86 @ 3386ac6; Vercel dpl_DB2fCd4wt9C6htqVNU125jCUUYJh READY @ 3386ac6
+Migration / flags / activation: NOT applied production; CUSTOMER_AI_PILOT_PREP_ENABLED OFF; no LLM/outbound
+Next exact assignment / owning tool: Owner merge Batch 36 PR — Owner + Cursor
+Do NOT touch: production migrations, LLM credentials, live Chatwoot/voice, v0 UI, AUTO-10 dispatch without ADR
 ```
 
 ## Next assignment
 
-- **Owner + Cursor:** merge Batch **35** PR.
-- **Owner:** Chatwoot workspace + Twilio/Resend credentials and explicit outbound authorization before enabling comms flags.
+- **Owner + Cursor:** merge Batch **36** PR.
+- **Owner:** explicit authorization before enabling any `CUSTOMER_AI_EXECUTION_ENABLED` or provider credentials.

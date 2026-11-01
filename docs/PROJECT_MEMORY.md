@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-01 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `e400c49df62b99069110cadd59c0f721e676ea35` (PR #85)
+**Evidence review:** 2026-11-01 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `3386ac6a5ca8c406ad1bc8c6259726a4c134060e` (PR #86)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,12 +35,12 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **34** **MERGED** (PR #85 @ `e400c49…`); **Batch 35** unified communications integration **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `e400c49df62b99069110cadd59c0f721e676ea35` on `main`; **PR #86** on `feature/batch-35-unified-comms-integration` (open) |
-| 3 | Production deployment | Vercel **`dpl_A7yAQkZD7T994YnSjGwhae1PuBL1` READY** @ `e400c49`. SHA only — not migration, Chatwoot/Twilio/Resend activation, or live outbound |
+| 1 | Last verified checkpoint | **35** **MERGED** (PR #86 @ `3386ac6…`); **Batch 36** Customer AI pilot prep **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `3386ac6a5ca8c406ad1bc8c6259726a4c134060e` on `main`; **PR #87** on `feature/batch-36-customer-ai-workforce-pilot` @ `cb0f671e33c414dc0ab1d8389d1126ca614c042e` (open) |
+| 3 | Production deployment | Vercel **`dpl_DB2fCd4wt9C6htqVNU125jCUUYJh` READY** @ `3386ac6`. SHA only — not migration, AI activation, Chatwoot/Twilio/Resend live outbound |
 | 4 | Last updated | 2026-11-01 |
-| 5 | Next task / responsible platform | **Owner** review/merge **Batch 35** PR (**Cursor**); Chatwoot/Twilio/Resend owner credentials remain **Owner** |
-| 6 | Open blocker / gate IDs | Isolated staging DB **NOT IDENTIFIED**; batch28a migrations UNVERIFIED/unapplied; `COMMS_INTEGRATION_GATES_ENABLED` OFF; `COMMUNICATIONS_OUTBOUND_ENABLED` OFF |
+| 5 | Next task / responsible platform | **Owner** review/merge **Batch 36** PR (**Cursor**); LLM/provider credentials and AI execution remain **Owner** |
+| 6 | Open blocker / gate IDs | Isolated staging DB **NOT IDENTIFIED**; AI/customer-ai migrations UNVERIFIED/unapplied; all `CUSTOMER_AI_*` execution flags OFF; `CUSTOMER_AI_PILOT_PREP_ENABLED` OFF |
 
 ### Evidence table
 

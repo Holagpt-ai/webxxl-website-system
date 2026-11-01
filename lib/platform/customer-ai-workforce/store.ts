@@ -184,4 +184,5 @@ export type CustomerAiStore = {
   incrementMessageIngestion(employeeId: string | null, customerAccountId: string): Promise<void>
   incrementToolAllowance(employeeId: string, customerAccountId: string): Promise<void>
   incrementToolDenial(employeeId: string, customerAccountId: string): Promise<void>
+  incrementTokenReservation(employeeId: string, customerAccountId: string, units: number): Promise<void>
 }

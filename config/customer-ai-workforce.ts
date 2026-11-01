@@ -28,6 +28,24 @@ export function customerAiDefaultEntitlementKey(): string {
   return 'future.ai-employee'
 }
 
+/** Guarded pilot task preparation workflow (Batch 36). Does not enable LLM execution. */
+export function isCustomerAiPilotPrepEnabled(): boolean {
+  return envFlag('CUSTOMER_AI_PILOT_PREP_ENABLED', false)
+}
+
+/**
+ * HTTP routes for non-durable in-process pilot tasks. Default off — unsuitable for Vercel production.
+ * Library preparation (e.g. Vitest) may use CUSTOMER_AI_PILOT_PREP_ENABLED without this flag.
+ */
+export function isCustomerAiPilotHttpEnabled(): boolean {
+  return envFlag('CUSTOMER_AI_PILOT_HTTP_ENABLED', false)
+}
+
+/** Allows TEST_SYNTHETIC snapshots in library prep (Vitest only). Never enable in production. */
+export function isCustomerAiPilotTestSyntheticEnabled(): boolean {
+  return envFlag('CUSTOMER_AI_PILOT_TEST_SYNTHETIC', false)
+}
+
 export function customerAiUsagePeriodKey(at: Date = new Date()): string {
   const year = at.getUTCFullYear()
   const month = String(at.getUTCMonth() + 1).padStart(2, '0')
