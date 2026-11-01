@@ -110,28 +110,25 @@ describe('Batch 33.2 Google readiness reliability', () => {
   })
 
   it('uses guarded updateMany and refuses to clobber ingestion status under concurrency', async () => {
-    let findCalls = 0
-    vi.mocked(prisma.seoProviderSyncRun.findUnique).mockImplementation(async () => {
-      findCalls += 1
-      if (findCalls === 1) {
-        return {
-          id: 'r2',
-          customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
-          managedSiteId: 'site-a',
-          status: 'READINESS',
-          errorClass: 'GOOGLE_READINESS_NOT_CONNECTED',
-          dataState: 'NOT_CONNECTED',
-        } as never
-      }
-      return {
-        id: 'r2',
-        customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
-        managedSiteId: 'site-a',
-        status: 'COMPLETED',
-        errorClass: null,
-        dataState: 'READY',
-      } as never
-    })
+    const readinessRow = {
+      id: 'r2',
+      customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
+      managedSiteId: 'site-a',
+      status: 'READINESS',
+      errorClass: 'GOOGLE_READINESS_NOT_CONNECTED',
+      dataState: 'NOT_CONNECTED',
+    }
+    const completedRow = {
+      id: 'r2',
+      customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
+      managedSiteId: 'site-a',
+      status: 'COMPLETED',
+      errorClass: null,
+      dataState: 'READY',
+    }
+    vi.mocked(prisma.seoProviderSyncRun.findUnique)
+      .mockResolvedValueOnce(readinessRow as never)
+      .mockResolvedValueOnce(completedRow as never)
 
     vi.mocked(prisma.seoProviderSyncRun.updateMany).mockResolvedValue({ count: 0 })
     vi.mocked(prisma.seoProviderSyncRun.create).mockRejectedValue(new Error('create should not run'))
