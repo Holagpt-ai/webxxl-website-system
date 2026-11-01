@@ -24,7 +24,9 @@ HTTP **503**.
 | `CUSTOMER_AI_EXECUTION_ENABLED` | off | Tool/LLM execution gateway |
 | `CUSTOMER_AI_OUTBOUND_ENABLED` | off | Live outbound messaging |
 | `CUSTOMER_AI_CHATWOOT_ADAPTER_ENABLED` | off | Chatwoot bridge (does not send) |
-| `CUSTOMER_AI_PILOT_PREP_ENABLED` | off | Batch 36 pilot task preparation (no execution) |
+| `CUSTOMER_AI_PILOT_PREP_ENABLED` | off | Batch 36 library pilot prep (no execution) |
+| `CUSTOMER_AI_PILOT_HTTP_ENABLED` | off | Batch 36 HTTP routes (non-durable store; default off) |
+| `CUSTOMER_AI_PILOT_TEST_SYNTHETIC` | off | Test-only synthetic fixtures for Vitest |
 
 ## Pagination
 
@@ -77,7 +79,9 @@ Optional future link: `chatwootConversationMappingId` on session (COMMS-06 mappi
 
 ## Pilot task preparation (Batch 36)
 
-When `CUSTOMER_AI_PILOT_PREP_ENABLED` is off, pilot routes return **503** `EXECUTION_DISABLED` (workforce disabled returns `AI_WORKFORCE_DISABLED` first).
+When `CUSTOMER_AI_PILOT_HTTP_ENABLED` is off (default), pilot HTTP routes return **503** `EXECUTION_DISABLED` with a non-durable boundary message. Workforce/prep flags must also be on for HTTP to respond with success.
+
+Prepare bodies must **not** include client snapshots or data classification; the server resolves employee locale/site from persistence.
 
 | Method | Path | Description |
 |--------|------|-------------|

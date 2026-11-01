@@ -2,19 +2,26 @@ import { randomUUID } from 'node:crypto'
 import {
   isCustomerAiExecutionEnabled,
   isCustomerAiPilotPrepEnabled,
+  isCustomerAiPilotTestSyntheticEnabled,
 } from '@/config/customer-ai-workforce'
 import { denyBillingGroupSiblingCustomerAiAccess } from '@/lib/platform/customer-ai-workforce/account-isolation'
-import { buildCustomerAiPilotActionFingerprint } from '@/lib/platform/customer-ai-workforce/pilot-action-hash'
+import {
+  buildCustomerAiPilotActionFingerprint,
+  buildCustomerAiPilotRequestFingerprint,
+  hashPilotSyntheticSnapshot,
+} from '@/lib/platform/customer-ai-workforce/pilot-action-hash'
 import {
   assertCustomerAiPilotPrepEnabled,
   blockCustomerAiPilotExternalExecution,
   detectCustomerAiPromptInjection,
 } from '@/lib/platform/customer-ai-workforce/pilot-prep-gates'
-import type { CustomerAiPilotOutcomeLabel, CustomerAiPilotWorkflowKind } from '@/lib/platform/customer-ai-workforce/pilot-types'
-import {
-  findPilotTaskByIdempotency,
-  savePilotTask,
-} from '@/lib/platform/customer-ai-workforce/pilot-task-store'
+import type {
+  CustomerAiPilotOutcomeLabel,
+  CustomerAiPilotTrustedDataSource,
+  CustomerAiPilotWorkflowKind,
+} from '@/lib/platform/customer-ai-workforce/pilot-types'
+import { findPilotTaskByIdempotency, savePilotTask } from '@/lib/platform/customer-ai-workforce/pilot-task-store'
+import type { CustomerAiPilotTaskRecord } from '@/lib/platform/customer-ai-workforce/pilot-types'
 import { buildPilotWorkflowDraft, type PilotWorkflowContext } from '@/lib/platform/customer-ai-workforce/pilot-workflows'
 import { getCustomerAiTool } from '@/lib/platform/customer-ai-workforce/tool-catalog'
 import type { CustomerAiActor, CustomerAiResult } from '@/lib/platform/customer-ai-workforce/types'
@@ -29,11 +36,10 @@ export type PrepareCustomerAiPilotTaskInput = {
   idempotencyKey: string
   prepareConsequentialDraft: boolean
   context: PilotWorkflowContext
-  /** Snapshot account id must match path account (prevents cross-tenant injection). */
-  snapshotAccountId?: string
-  dataClassification?: string
   billingGroupSiblingAccounts?: Map<string, string[]>
   operatingMemberships?: Array<{ userId: string; customerAccountId: string }>
+  /** Server-side record account for sibling isolation checks (never from HTTP). */
+  authoritativeRecordAccountId?: string
 }
 
 export type CustomerAiPilotTaskDto = {
@@ -49,6 +55,7 @@ export type CustomerAiPilotTaskDto = {
   requiresHumanApproval: boolean
   executionAuthorized: false
   externalExecutionBlocked: true
+  durable: false
 }
 
 async function assertAccountAccess(
@@ -61,7 +68,7 @@ async function assertAccountAccess(
   return { ok: false, error: 'FORBIDDEN', message: 'Operating membership required' }
 }
 
-function toDto(task: ReturnType<typeof savePilotTask>): CustomerAiPilotTaskDto {
+function toDto(task: CustomerAiPilotTaskRecord): CustomerAiPilotTaskDto {
   return {
     taskId: task.id,
     publicId: task.publicId,
@@ -75,7 +82,39 @@ function toDto(task: ReturnType<typeof savePilotTask>): CustomerAiPilotTaskDto {
     requiresHumanApproval: task.requiresHumanApproval,
     executionAuthorized: false,
     externalExecutionBlocked: true,
+    durable: false,
   }
+}
+
+function resolveTrustedDataSource(context: PilotWorkflowContext): CustomerAiResult<CustomerAiPilotTrustedDataSource> {
+  if (context.trustedDataSource === 'TEST_SYNTHETIC') {
+    if (!isCustomerAiPilotTestSyntheticEnabled()) {
+      return { ok: false, error: 'VALIDATION', message: 'TEST_SYNTHETIC preparation is disabled' }
+    }
+    return { ok: true, value: 'TEST_SYNTHETIC' }
+  }
+  return { ok: true, value: 'SERVER' }
+}
+
+async function recheckPilotPreparationEligibility(
+  store: CustomerAiStore,
+  input: PrepareCustomerAiPilotTaskInput,
+): Promise<CustomerAiResult<true>> {
+  const employee = await store.findEmployeeById(input.employeeId)
+  if (!employee || employee.customerAccountId !== input.customerAccountId) {
+    return { ok: false, error: 'NOT_FOUND', message: 'Employee not found' }
+  }
+  if (employee.emergencyPaused) {
+    return { ok: false, error: 'EMERGENCY_DISABLED', message: 'Employee emergency pause active' }
+  }
+  if (employee.status !== 'ACTIVE') {
+    return { ok: false, error: 'FORBIDDEN', message: 'Employee not ACTIVE' }
+  }
+  const policy = await store.getUsagePolicy(input.customerAccountId)
+  if (policy?.emergencyDisabled) {
+    return { ok: false, error: 'EMERGENCY_DISABLED', message: 'Account emergency disable is active' }
+  }
+  return { ok: true, value: true }
 }
 
 export async function prepareCustomerAiPilotTask(
@@ -89,8 +128,34 @@ export async function prepareCustomerAiPilotTask(
   const access = await assertAccountAccess(store, actor, input.customerAccountId)
   if (!access.ok) return access
 
+  const dataSource = resolveTrustedDataSource(input.context)
+  if (!dataSource.ok) return dataSource
+
+  const requestFingerprint = buildCustomerAiPilotRequestFingerprint({
+    customerAccountId: input.customerAccountId,
+    employeeId: input.employeeId,
+    managedSiteId: input.managedSiteId,
+    workflowKind: input.workflowKind,
+    prepareConsequentialDraft: input.prepareConsequentialDraft,
+    locale: input.context.locale,
+    trustedDataSource: dataSource.value,
+    syntheticSnapshotHash:
+      dataSource.value === 'TEST_SYNTHETIC'
+        ? hashPilotSyntheticSnapshot(input.context.testSyntheticSnapshot)
+        : null,
+  })
+
   const existing = findPilotTaskByIdempotency(input.customerAccountId, input.employeeId, input.idempotencyKey)
   if (existing) {
+    if (existing.requestFingerprint !== requestFingerprint) {
+      return {
+        ok: false,
+        error: 'VALIDATION',
+        message: 'Idempotency key reused with a different request fingerprint',
+      }
+    }
+    const recheck = await recheckPilotPreparationEligibility(store, input)
+    if (!recheck.ok) return recheck
     return { ok: true, value: toDto(existing) }
   }
 
@@ -98,15 +163,11 @@ export async function prepareCustomerAiPilotTask(
     const siblingCheck = denyBillingGroupSiblingCustomerAiAccess({
       actorUserId: actor.userId,
       operatingAccountId: input.customerAccountId,
-      recordAccountId: input.snapshotAccountId ?? input.customerAccountId,
+      recordAccountId: input.authoritativeRecordAccountId ?? input.customerAccountId,
       operatingMemberships: input.operatingMemberships,
       billingGroupSiblingAccounts: input.billingGroupSiblingAccounts,
     })
     if (!siblingCheck.ok) return siblingCheck
-  }
-
-  if (input.snapshotAccountId && input.snapshotAccountId !== input.customerAccountId) {
-    return { ok: false, error: 'TENANT_MISMATCH', message: 'Scoped snapshot account mismatch' }
   }
 
   const employee = await store.findEmployeeById(input.employeeId)
@@ -114,11 +175,12 @@ export async function prepareCustomerAiPilotTask(
     return { ok: false, error: 'NOT_FOUND', message: 'Employee not found' }
   }
   if (employee.emergencyPaused) {
-    return blockedTask(store, actor, input, 'Employee emergency pause active')
+    return blockedTask(store, actor, input, requestFingerprint, 'Employee emergency pause active')
   }
   if (employee.status !== 'ACTIVE') {
-    return blockedTask(store, actor, input, 'Employee not ACTIVE')
+    return blockedTask(store, actor, input, requestFingerprint, 'Employee not ACTIVE')
   }
+  const effectiveSiteId = input.managedSiteId ?? employee.managedSiteId
   if (input.managedSiteId && employee.managedSiteId && employee.managedSiteId !== input.managedSiteId) {
     return { ok: false, error: 'FORBIDDEN', message: 'Employee site scope mismatch' }
   }
@@ -128,24 +190,25 @@ export async function prepareCustomerAiPilotTask(
     return { ok: false, error: 'EMERGENCY_DISABLED', message: 'Account emergency disable is active' }
   }
 
-  const hintText = [
-    input.context.untrustedUserHint ?? '',
-    JSON.stringify(input.context.scopedSnapshot ?? {}),
-  ].join('\n')
+  const hintText = input.context.untrustedUserHint ?? ''
   const injection = detectCustomerAiPromptInjection(hintText)
   if (injection) {
-    return blockedTask(store, actor, input, injection)
+    return blockedTask(store, actor, input, requestFingerprint, injection)
   }
 
-  if (input.dataClassification === 'REGULATED_HEALTHCARE' || input.dataClassification === 'PHI') {
-    return { ok: false, error: 'POLICY_BLOCKED', message: 'Healthcare participant data blocked' }
+  const workflowContext: PilotWorkflowContext = {
+    locale: input.context.locale,
+    managedSiteId: effectiveSiteId,
+    trustedDataSource: dataSource.value,
+    testSyntheticSnapshot: dataSource.value === 'TEST_SYNTHETIC' ? input.context.testSyntheticSnapshot : undefined,
+    untrustedUserHint: input.context.untrustedUserHint,
   }
 
   const workflow = await buildPilotWorkflowDraft(store, {
     customerAccountId: input.customerAccountId,
     employeeId: input.employeeId,
     workflowKind: input.workflowKind,
-    context: input.context,
+    context: workflowContext,
     prepareConsequentialDraft: input.prepareConsequentialDraft,
   })
 
@@ -159,7 +222,7 @@ export async function prepareCustomerAiPilotTask(
     return { ok: false, error: 'FORBIDDEN', message: 'Tool not granted' }
   }
 
-  if (workflow.estimatedCostUnits == null && input.prepareConsequentialDraft) {
+  if (workflow.estimatedCostUnits == null && input.prepareConsequentialDraft && workflow.outcomeHint !== 'UNVERIFIED') {
     return { ok: false, error: 'POLICY_BLOCKED', message: 'Unknown task cost — preparation denied' }
   }
 
@@ -172,18 +235,26 @@ export async function prepareCustomerAiPilotTask(
     return { ok: false, error: 'RATE_LIMITED', message: 'Per-agent task limit reached' }
   }
 
-  if (policy?.monthlyTokenBudget != null && workflow.estimatedCostUnits != null) {
+  if (
+    workflow.outcomeHint !== 'UNVERIFIED' &&
+    policy?.monthlyTokenBudget != null &&
+    workflow.estimatedCostUnits != null
+  ) {
     const used = counters.reduce((sum, c) => sum + c.tokensReserved, 0)
     if (used + workflow.estimatedCostUnits > policy.monthlyTokenBudget) {
       return { ok: false, error: 'POLICY_BLOCKED', message: 'Monthly internal AI cost cap exhausted' }
     }
-  } else if (input.prepareConsequentialDraft && policy?.monthlyTokenBudget == null) {
+  } else if (
+    input.prepareConsequentialDraft &&
+    policy?.monthlyTokenBudget == null &&
+    workflow.outcomeHint !== 'UNVERIFIED'
+  ) {
     return { ok: false, error: 'POLICY_BLOCKED', message: 'Monthly token budget unavailable — consequential draft blocked' }
   }
 
   const actionHash = buildCustomerAiPilotActionFingerprint({
     customerAccountId: input.customerAccountId,
-    managedSiteId: input.managedSiteId,
+    managedSiteId: effectiveSiteId,
     employeeId: input.employeeId,
     toolKey: workflow.toolKey,
     workflowKind: input.workflowKind,
@@ -196,22 +267,24 @@ export async function prepareCustomerAiPilotTask(
 
   const task = savePilotTask({
     customerAccountId: input.customerAccountId,
-    managedSiteId: input.managedSiteId,
+    managedSiteId: effectiveSiteId,
     employeeId: input.employeeId,
     workflowKind: input.workflowKind,
     toolKey: workflow.toolKey,
     accessMode: workflow.accessMode,
     idempotencyKey: input.idempotencyKey,
+    requestFingerprint,
     outcome,
     actionHash,
     draftPayload: workflow.draftPayload,
     provenance: {
-      source: 'DETERMINISTIC_PILOT_V1',
-      contentLabel: 'PREPARED_DRAFT',
+      source: dataSource.value === 'TEST_SYNTHETIC' ? 'DETERMINISTIC_PILOT_V1_TEST' : 'DETERMINISTIC_PILOT_V1',
+      contentLabel: outcome === 'UNVERIFIED' ? 'UNVERIFIED' : 'PREPARED_DRAFT',
       locale: input.context.locale,
       correlationId,
       preparedAt: new Date().toISOString(),
       actorUserId: actor.userId,
+      durable: false,
     },
     requiresHumanApproval: workflow.requiresHumanApproval,
     approvalId: null,
@@ -237,7 +310,7 @@ export async function prepareCustomerAiPilotTask(
     },
   })
 
-  if (workflow.estimatedCostUnits != null) {
+  if (workflow.estimatedCostUnits != null && outcome !== 'UNVERIFIED') {
     await store.incrementToolAllowance(input.employeeId, input.customerAccountId)
     await store.incrementTokenReservation(input.employeeId, input.customerAccountId, workflow.estimatedCostUnits)
   }
@@ -249,6 +322,7 @@ async function blockedTask(
   store: CustomerAiStore,
   actor: CustomerAiActor,
   input: PrepareCustomerAiPilotTaskInput,
+  requestFingerprint: string,
   reason: string,
 ): Promise<CustomerAiResult<CustomerAiPilotTaskDto>> {
   const task = savePilotTask({
@@ -259,6 +333,7 @@ async function blockedTask(
     toolKey: 'customerAi.workflow.request',
     accessMode: 'READ',
     idempotencyKey: input.idempotencyKey,
+    requestFingerprint,
     outcome: 'BLOCKED',
     actionHash: buildCustomerAiPilotActionFingerprint({
       customerAccountId: input.customerAccountId,
@@ -277,6 +352,7 @@ async function blockedTask(
       correlationId: randomUUID(),
       preparedAt: new Date().toISOString(),
       actorUserId: actor.userId,
+      durable: false,
     },
     requiresHumanApproval: false,
     approvalId: null,

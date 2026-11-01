@@ -5,6 +5,8 @@ export type CustomerAiPilotWorkflowKind =
 
 export type CustomerAiPilotOutcomeLabel = 'PREPARED' | 'PENDING_APPROVAL' | 'BLOCKED' | 'UNVERIFIED'
 
+export type CustomerAiPilotTrustedDataSource = 'SERVER' | 'TEST_SYNTHETIC'
+
 export type CustomerAiPilotTaskRecord = {
   id: string
   publicId: string
@@ -15,6 +17,7 @@ export type CustomerAiPilotTaskRecord = {
   toolKey: string
   accessMode: 'READ' | 'WRITE'
   idempotencyKey: string
+  requestFingerprint: string
   outcome: CustomerAiPilotOutcomeLabel
   actionHash: string
   draftPayload: Record<string, unknown>
@@ -35,6 +38,7 @@ export type CustomerAiPilotTaskRecord = {
 
 export type CustomerAiPilotApprovalRecord = {
   id: string
+  preparedTaskId: string
   customerAccountId: string
   managedSiteId: string | null
   employeeId: string

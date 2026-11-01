@@ -1,12 +1,11 @@
 import { issueCustomerAiPilotApprovalApi } from '@/lib/platform/customer-ai-workforce/pilot-api'
 import {
-  customerAiPilotPrepDisabledResponse,
+  customerAiPilotHttpDisabledResponse,
   customerAiResultResponse,
   customerAiRouteError,
   toCustomerAiActor,
 } from '@/lib/platform/customer-ai-workforce/http'
 import { findPilotTaskById } from '@/lib/platform/customer-ai-workforce/pilot-task-store'
-import type { CustomerAiPilotWorkflowKind } from '@/lib/platform/customer-ai-workforce/pilot-types'
 import { prismaCustomerAiStore } from '@/lib/platform/customer-ai-workforce/prisma-store'
 import { requireUser } from '@/lib/portal/authz'
 
@@ -14,7 +13,7 @@ type Params = { params: Promise<{ accountId: string; taskId: string }> }
 
 export async function POST(request: Request, { params }: Params) {
   try {
-    const disabled = customerAiPilotPrepDisabledResponse()
+    const disabled = customerAiPilotHttpDisabledResponse()
     if (disabled) return disabled
     const user = await requireUser()
     const { accountId, taskId } = await params
@@ -28,15 +27,10 @@ export async function POST(request: Request, { params }: Params) {
       maxCostUnits?: number | null
       ttlSeconds?: number
     }
-    const allowedAction = body.allowedAction ?? 'execute_prepared_draft'
     const result = await issueCustomerAiPilotApprovalApi(prismaCustomerAiStore, toCustomerAiActor(user), {
+      preparedTaskId: taskId,
       customerAccountId: accountId,
-      managedSiteId: task.managedSiteId,
-      employeeId: task.employeeId,
-      toolKey: task.toolKey,
-      workflowKind: task.workflowKind as CustomerAiPilotWorkflowKind,
-      actionHash: task.actionHash,
-      allowedAction,
+      allowedAction: body.allowedAction ?? 'execute_prepared_draft',
       destinationRef: body.destinationRef ?? null,
       maxCostUnits: body.maxCostUnits ?? task.estimatedCostUnits,
       ttlSeconds: body.ttlSeconds ?? 3600,

@@ -96,6 +96,7 @@ export async function attemptCustomerAiPilotExecutionApi(
   if (input.approvalId) {
     const validated = validateCustomerAiPilotApproval({
       approvalId: input.approvalId,
+      preparedTaskId: task.id,
       customerAccountId: task.customerAccountId,
       managedSiteId: task.managedSiteId,
       employeeId: task.employeeId,

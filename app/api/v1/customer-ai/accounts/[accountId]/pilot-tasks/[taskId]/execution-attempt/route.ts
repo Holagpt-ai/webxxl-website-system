@@ -1,6 +1,6 @@
 import { attemptCustomerAiPilotExecutionApi } from '@/lib/platform/customer-ai-workforce/pilot-api'
 import {
-  customerAiPilotPrepDisabledResponse,
+  customerAiPilotHttpDisabledResponse,
   customerAiResultResponse,
   customerAiRouteError,
   toCustomerAiActor,
@@ -12,7 +12,7 @@ type Params = { params: Promise<{ accountId: string; taskId: string }> }
 
 export async function POST(request: Request, { params }: Params) {
   try {
-    const disabled = customerAiPilotPrepDisabledResponse()
+    const disabled = customerAiPilotHttpDisabledResponse()
     if (disabled) return disabled
     const user = await requireUser()
     const { accountId, taskId } = await params

@@ -6,9 +6,13 @@
 
 | Env | Default | Meaning |
 |-----|---------|---------|
-| `CUSTOMER_AI_PILOT_PREP_ENABLED` | off | Pilot task preparation APIs and in-memory task registry |
+| `CUSTOMER_AI_PILOT_PREP_ENABLED` | off | Library pilot task preparation (Vitest / internal) |
+| `CUSTOMER_AI_PILOT_HTTP_ENABLED` | off | HTTP routes (non-durable; not production-safe on Vercel) |
+| `CUSTOMER_AI_PILOT_TEST_SYNTHETIC` | off | Allows `TEST_SYNTHETIC` snapshots in library prep only |
 
 Requires `CUSTOMER_AI_WORKFORCE_ENABLED`. Does **not** enable `CUSTOMER_AI_EXECUTION_ENABLED` or outbound flags.
+
+HTTP preparation uses **SERVER** data sources only (no client snapshots). CRM authoritative reads return **UNVERIFIED** until a server resolver exists. Tasks/approvals remain **non-durable** (in-process Map).
 
 ## Pilot workflows (deterministic)
 

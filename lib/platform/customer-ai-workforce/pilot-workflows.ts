@@ -1,12 +1,14 @@
-import type { CustomerAiPilotWorkflowKind } from '@/lib/platform/customer-ai-workforce/pilot-types'
+import type { CustomerAiPilotTrustedDataSource, CustomerAiPilotWorkflowKind } from '@/lib/platform/customer-ai-workforce/pilot-types'
+import { filterPilotReceptionistKnowledge } from '@/lib/platform/customer-ai-workforce/pilot-knowledge-scope'
 import type { CustomerAiStore } from '@/lib/platform/customer-ai-workforce/store'
 import { getCustomerAiTool } from '@/lib/platform/customer-ai-workforce/tool-catalog'
 
 export type PilotWorkflowContext = {
   locale: string
   managedSiteId: string | null
-  /** Tenant-scoped snapshot supplied by trusted server boundary (never cross-tenant). */
-  scopedSnapshot?: Record<string, unknown>
+  trustedDataSource: CustomerAiPilotTrustedDataSource
+  /** Test-only synthetic CRM/SEO fixture; ignored unless trustedDataSource is TEST_SYNTHETIC. */
+  testSyntheticSnapshot?: Record<string, unknown>
   untrustedUserHint?: string
 }
 
@@ -52,15 +54,27 @@ export async function buildPilotWorkflowDraft(
 
   switch (input.workflowKind) {
     case 'crm_lead_intelligence': {
-      const leads = Array.isArray(input.context.scopedSnapshot?.leads)
-        ? (input.context.scopedSnapshot?.leads as Array<Record<string, unknown>>)
-        : []
-      const channelConnected = input.context.scopedSnapshot?.smsChannelConnected === true
+      if (input.context.trustedDataSource !== 'TEST_SYNTHETIC') {
+        return {
+          toolKey,
+          accessMode,
+          requiresHumanApproval: false,
+          estimatedCostUnits: null,
+          draftPayload: {
+            outcome: 'UNVERIFIED',
+            reason: 'Authoritative CRM lead retrieval is not available on the server boundary',
+            authoritativeFindingsBlocked: true,
+          },
+          outcomeHint: 'UNVERIFIED',
+        }
+      }
+      const snapshot = input.context.testSyntheticSnapshot ?? {}
+      const leads = Array.isArray(snapshot.leads) ? (snapshot.leads as Array<Record<string, unknown>>) : []
+      const channelConnected = snapshot.smsChannelConnected === true
       const missingFollowUps = leads.filter((l) => l.needsFollowUp === true)
-      const disconnectedCoverage = !channelConnected
-        ? leads.filter((l) => l.lastTouchChannel === 'sms')
-        : []
+      const disconnectedCoverage = !channelConnected ? leads.filter((l) => l.lastTouchChannel === 'sms') : []
       const draftPayload = {
+        dataLabel: 'TEST_SYNTHETIC_ONLY',
         summary: {
           leadCount: leads.length,
           missingFollowUpCount: missingFollowUps.length,
@@ -91,7 +105,6 @@ export async function buildPilotWorkflowDraft(
       }
     }
     case 'marketing_seo_assistant': {
-      const seo = (input.context.scopedSnapshot?.seoSnapshot ?? {}) as Record<string, unknown>
       const recommendations = [
         {
           kind: 'deterministic_test_recommendation',
@@ -101,7 +114,8 @@ export async function buildPilotWorkflowDraft(
         },
       ]
       const draftPayload = {
-        seoSnapshotRef: seo.siteRef ?? input.context.managedSiteId,
+        seoSnapshotRef: input.context.managedSiteId,
+        seoAuthoritative: false,
         recommendations,
         draftProposal: input.prepareConsequentialDraft
           ? {
@@ -111,28 +125,51 @@ export async function buildPilotWorkflowDraft(
             }
           : null,
       }
+      const outcomeHint =
+        input.context.trustedDataSource === 'TEST_SYNTHETIC' || input.context.trustedDataSource === 'SERVER'
+          ? input.prepareConsequentialDraft
+            ? 'PENDING_APPROVAL'
+            : 'PREPARED'
+          : 'UNVERIFIED'
       return {
         toolKey,
         accessMode,
         requiresHumanApproval: input.prepareConsequentialDraft,
         estimatedCostUnits: input.prepareConsequentialDraft ? 15 : 2,
         draftPayload,
-        outcomeHint: input.prepareConsequentialDraft ? 'PENDING_APPROVAL' : 'PREPARED',
+        outcomeHint,
       }
     }
     case 'receptionist_preparation': {
       const published = await store.listPublishedKnowledge(input.customerAccountId, input.context.locale)
-      const siteScoped = published.filter(
-        (p) => !input.context.managedSiteId || p.classification !== 'SITE_RESTRICTED' || true,
+      const { items, siteRestrictedOmitted, unverifiedSiteScope } = filterPilotReceptionistKnowledge(
+        published,
+        input.context.managedSiteId,
       )
-      const faqExcerpt = siteScoped.slice(0, 3).map((p) => ({
+      if (items.length === 0 && (siteRestrictedOmitted > 0 || unverifiedSiteScope)) {
+        return {
+          toolKey,
+          accessMode,
+          requiresHumanApproval: false,
+          estimatedCostUnits: null,
+          draftPayload: {
+            outcome: 'UNVERIFIED',
+            reason: 'Site-restricted knowledge cannot be verified without site ownership binding',
+            siteRestrictedOmitted,
+          },
+          outcomeHint: 'UNVERIFIED',
+        }
+      }
+      const faqExcerpt = items.slice(0, 3).map((p) => ({
         knowledgePublicId: p.publicId,
         title: p.title,
         languageTag: p.languageTag,
+        classification: p.classification,
       }))
       const draftPayload = {
         locale: input.context.locale,
         approvedFaqRefs: faqExcerpt,
+        siteRestrictedOmitted,
         handoffPrep: input.prepareConsequentialDraft
           ? {
               reason: 'visitor_requested_human',
