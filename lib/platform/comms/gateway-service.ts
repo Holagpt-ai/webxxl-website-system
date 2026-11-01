@@ -1,4 +1,5 @@
 import { isCommunicationsOutboundEnabled, isSmsSendEnabled } from '@/config/comms-backend'
+import { commsProviderDispatchBlocked } from '@/lib/platform/comms/execution-gates'
 import { prisma } from '@/lib/db'
 import { evaluateChatwootDirectSendBypass, evaluateCommunicationPolicy } from '@/lib/platform/comms/policy-engine'
 import { buildCommunicationContentHash } from '@/lib/platform/comms/intent-hash'
@@ -169,6 +170,19 @@ export async function attemptGatewayDispatch(input: {
     where: { id: input.intentId, customerAccountId: input.customerAccountId },
   })
   if (!intent) return { ok: false, code: 'NOT_FOUND', message: 'Intent not found' }
+  const integrationBlock = commsProviderDispatchBlocked()
+  if (integrationBlock) {
+    await prisma.communicationDispatchAttempt.create({
+      data: {
+        intentId: intent.id,
+        customerAccountId: input.customerAccountId,
+        status: 'BLOCKED',
+        idempotencyKey: input.idempotencyKey,
+        detail: { reason: integrationBlock && !integrationBlock.ok ? integrationBlock.code : 'BLOCKED' },
+      },
+    })
+    return { ok: true, value: { status: 'BLOCKED' } }
+  }
   if (!isCommunicationsOutboundEnabled() || !isSmsSendEnabled()) {
     await prisma.communicationDispatchAttempt.create({
       data: {

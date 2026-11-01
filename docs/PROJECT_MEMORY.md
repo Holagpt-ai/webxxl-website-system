@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-01 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `1ae7c0a1e13748969ead7f3b177a74fcc68ed5d8` (PR #84)
+**Evidence review:** 2026-11-01 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `e400c49df62b99069110cadd59c0f721e676ea35` (PR #85)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,12 +35,12 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **33 + 33.1 + 33.2** **MERGED** (PR #84 @ `1ae7c0a…`); **Batch 34** Marketing Studio execution gates **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `1ae7c0a1e13748969ead7f3b177a74fcc68ed5d8` on `main`; **PR #85** on `feature/batch-34-marketing-execution-gates` (open) |
-| 3 | Production deployment | GitHub Production deployment **`7478496108`** success @ `1ae7c0a` (2026-11-01T20:17:09Z, `vercel[bot]`). SHA only — not migration, Google OAuth, Postiz publish, or provider fetch activation |
+| 1 | Last verified checkpoint | **34** **MERGED** (PR #85 @ `e400c49…`); **Batch 35** unified communications integration **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `e400c49df62b99069110cadd59c0f721e676ea35` on `main`; **PR #86** on `feature/batch-35-unified-comms-integration` (open) |
+| 3 | Production deployment | Vercel **`dpl_A7yAQkZD7T994YnSjGwhae1PuBL1` READY** @ `e400c49`. SHA only — not migration, Chatwoot/Twilio/Resend activation, or live outbound |
 | 4 | Last updated | 2026-11-01 |
-| 5 | Next task / responsible platform | **Owner** review/merge **Batch 34** PR (**Cursor**); Postiz credentials + live publish remain **Owner** |
-| 6 | Open blocker / gate IDs | Isolated staging DB **NOT IDENTIFIED**; batch28a migrations UNVERIFIED/unapplied; `GOOGLE_PROVIDER_READINESS_ENABLED` OFF; `SOCIAL_EXECUTION_GATES_ENABLED` OFF; `POSTIZ_LIVE_PUBLISHING_ENABLED` OFF |
+| 5 | Next task / responsible platform | **Owner** review/merge **Batch 35** PR (**Cursor**); Chatwoot/Twilio/Resend owner credentials remain **Owner** |
+| 6 | Open blocker / gate IDs | Isolated staging DB **NOT IDENTIFIED**; batch28a migrations UNVERIFIED/unapplied; `COMMS_INTEGRATION_GATES_ENABLED` OFF; `COMMUNICATIONS_OUTBOUND_ENABLED` OFF |
 
 ### Evidence table
 
@@ -117,7 +117,9 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Vercel production SHA (2026-11-01, PR #83) | DEPLOYED | Vercel `dpl_CMoTpuKRNKU1ejgE9HaiJRqTUTac` **READY** @ `b8e58dfc7a1520cb927e67785137734d4ed3d637`. SHA only |
 | Batch 33 SEO & analytics Google integration prep V1 (+ 33.1, 33.2) | MERGED | [PR #84](https://github.com/Holagpt-ai/webxxl-website-system/pull/84), `1ae7c0a1e13748969ead7f3b177a74fcc68ed5d8`, [`BATCH33-SEO-ANALYTICS-INTEGRATION-PREP.md`](platform/docs/BATCH33-SEO-ANALYTICS-INTEGRATION-PREP.md) |
 | Vercel production SHA (2026-11-01, PR #84) | DEPLOYED | GitHub deployment `7478496108`, Production success @ `1ae7c0a1e13748969ead7f3b177a74fcc68ed5d8`. SHA only |
-| Batch 34 Marketing Studio execution gates V1 | IN PR | [`BATCH34-MARKETING-EXECUTION-GATES.md`](platform/docs/BATCH34-MARKETING-EXECUTION-GATES.md), `lib/platform/social/*`, `lib/platform/marketing/social-execution-gate.ts` |
+| Batch 34 Marketing Studio execution gates V1 | MERGED | [PR #85](https://github.com/Holagpt-ai/webxxl-website-system/pull/85), `e400c49df62b99069110cadd59c0f721e676ea35`, [`BATCH34-MARKETING-EXECUTION-GATES.md`](platform/docs/BATCH34-MARKETING-EXECUTION-GATES.md) |
+| Vercel production SHA (2026-11-01, PR #85) | DEPLOYED | Vercel `dpl_A7yAQkZD7T994YnSjGwhae1PuBL1` **READY** @ `e400c49df62b99069110cadd59c0f721e676ea35`. SHA only |
+| Batch 35 Unified communications integration V1 | IN PR | [`BATCH35-UNIFIED-COMMUNICATIONS-INTEGRATION.md`](platform/docs/BATCH35-UNIFIED-COMMUNICATIONS-INTEGRATION.md), `lib/platform/comms/*` extensions |
 | Vercel production SHA (2026-10-31, PR #79) | DEPLOYED | Vercel `dpl_AQ2v84aWrtDkogkczTeuMM24CHc9` **READY** @ `3905994ebbb8c4b423481c961a65e938dfc76a59`. Superseded by PR #80 row |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 

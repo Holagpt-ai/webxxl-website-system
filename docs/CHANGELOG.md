@@ -69,6 +69,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-11-01 | Batch 32 + 32.1 Commerce, shared wallet & fulfillment integrity V1 | [PR #83](https://github.com/Holagpt-ai/webxxl-website-system/pull/83), `b8e58dfc7a1520cb927e67785137734d4ed3d637` | MERGED. Reconciliation read APIs + atomic cancel safety. Not live payments |
 | 2026-11-01 | Batch 33 + 33.1 + 33.2 SEO & analytics Google integration preparation V1 | [PR #84](https://github.com/Holagpt-ai/webxxl-website-system/pull/84), `1ae7c0a1e13748969ead7f3b177a74fcc68ed5d8` | MERGED. Stored readiness + assess idempotency/reliability. Not live OAuth or provider fetch |
 | 2026-11-01 | Vercel production deployment of `1ae7c0a` (PR #84 on `main`) | GitHub deployment `7478496108`, Production success | DEPLOYED SHA only |
-| 2026-11-01 | Batch 34 Marketing Studio execution gates V1 | Branch `feature/batch-34-marketing-execution-gates` | IN PR. Guarded scheduling prep + reconcile policy. Not live Postiz publish |
+| 2026-11-01 | Batch 34 Marketing Studio execution gates V1 | [PR #85](https://github.com/Holagpt-ai/webxxl-website-system/pull/85), `e400c49df62b99069110cadd59c0f721e676ea35` | MERGED. Guarded scheduling prep + reconcile policy. Not live Postiz publish |
+| 2026-11-01 | Vercel production deployment of `e400c49` (PR #85) | Vercel `dpl_A7yAQkZD7T994YnSjGwhae1PuBL1` READY | DEPLOYED SHA only |
+| 2026-11-01 | Batch 35 Unified communications integration V1 | Branch `feature/batch-35-unified-comms-integration` | IN PR. Outbound gateway + provider readiness. No live sends |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

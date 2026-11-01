@@ -12,6 +12,11 @@ export function isCommsBackendEnabled(): boolean {
   return envFlag('COMMS_BACKEND_ENABLED', false)
 }
 
+/** Unified Chatwoot/Twilio/Resend/wallet integration readiness and outbound prep gates (Batch 35). */
+export function isCommsIntegrationGatesEnabled(): boolean {
+  return envFlag('COMMS_INTEGRATION_GATES_ENABLED', false)
+}
+
 export function isChatwootApiEnabled(): boolean {
   return envFlag('CHATWOOT_API_ENABLED', false)
 }
