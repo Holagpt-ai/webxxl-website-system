@@ -4,7 +4,7 @@ import {
   parseGoogleReadinessProviders,
   runBoundedGoogleReadinessOperation,
 } from '@/lib/platform/google/readiness-operation'
-import type { GoogleAnalyticsProviderKey } from '@/lib/platform/google/types'
+import { validateGoogleReadinessClientRequestKey } from '@/lib/platform/google/readiness-request-validate'
 import { requireSeoApiActor, SeoApiError } from '@/lib/platform/seo/route-auth'
 import { requireManagedSiteInAccount } from '@/lib/platform/seo/site-scope'
 
@@ -12,7 +12,7 @@ type Params = { params: Promise<{ siteId: string }> }
 
 export async function POST(request: Request, { params }: Params) {
   try {
-    const actor = await requireSeoApiActor('seo.read')
+    const actor = await requireSeoApiActor('seo.configure')
     const { siteId } = await params
     const site = await requireManagedSiteInAccount({
       siteId,
@@ -22,19 +22,23 @@ export async function POST(request: Request, { params }: Params) {
       return NextResponse.json({ code: site.code, message: site.message }, { status: site.code === 'NOT_FOUND' ? 404 : 400 })
     }
 
-    const idempotencyKey = request.headers.get('Idempotency-Key') ?? request.headers.get('idempotency-key')
-    if (!idempotencyKey?.trim()) {
-      return NextResponse.json({ code: 'VALIDATION', message: 'Idempotency-Key header required' }, { status: 400 })
+    const headerKey = request.headers.get('Idempotency-Key') ?? request.headers.get('idempotency-key')
+    const requestKey = validateGoogleReadinessClientRequestKey(headerKey)
+    if (!requestKey.ok) {
+      return NextResponse.json({ code: requestKey.code, message: requestKey.message }, { status: 400 })
     }
 
-    let bodyProviders: GoogleAnalyticsProviderKey[] | undefined
-    try {
-      const body = (await request.json().catch(() => ({}))) as { providers?: GoogleAnalyticsProviderKey[] }
-      bodyProviders = body.providers
-    } catch {
-      bodyProviders = undefined
+    let body: unknown = {}
+    const raw = await request.text()
+    if (raw.trim()) {
+      try {
+        body = JSON.parse(raw) as unknown
+      } catch {
+        return NextResponse.json({ code: 'VALIDATION', message: 'Request body must be valid JSON' }, { status: 400 })
+      }
     }
-    const parsedProviders = parseGoogleReadinessProviders(bodyProviders)
+    const bodyObj = body && typeof body === 'object' && !Array.isArray(body) ? (body as { providers?: unknown }) : {}
+    const parsedProviders = parseGoogleReadinessProviders(bodyObj.providers as never)
     if (!parsedProviders.ok) {
       return NextResponse.json({ code: parsedProviders.code, message: parsedProviders.message }, { status: 400 })
     }
@@ -55,7 +59,7 @@ export async function POST(request: Request, { params }: Params) {
       siteCanonicalUrl,
       connections,
       providers: parsedProviders.value.providers,
-      idempotencyKey: idempotencyKey.trim(),
+      clientRequestKey: requestKey.value.normalized,
     })
     if (!result.ok) {
       const status = result.code === 'NOT_CONFIGURED' ? 503 : 400
@@ -65,6 +69,9 @@ export async function POST(request: Request, { params }: Params) {
   } catch (error) {
     if (error instanceof SeoApiError) {
       return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
+    }
+    if (error instanceof Error && error.message.startsWith('Missing SEO permission:')) {
+      return NextResponse.json({ code: 'FORBIDDEN', message: error.message }, { status: 403 })
     }
     console.error('seo google readiness assess POST failed', error)
     return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to run Google readiness operation' }, { status: 500 })

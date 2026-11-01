@@ -37,6 +37,15 @@ Reuse SEO-07 `SiteAnalyticsConnection`, GSC authorization (`gsc-query-auth`, `pr
 3. Staging `prisma migrate deploy` before persisting connections in non-fixture DBs.
 4. Enable provider API flags on **staging only** before pilot ingest.
 
+## Batch 33.1 safety (PR #84)
+
+| Control | Behavior |
+|---|---|
+| Idempotency | Client `Idempotency-Key` (8–128 chars) hashed into `google-readiness:v1:{account}:{site}:{provider}:{digest}` |
+| Ingestion isolation | Readiness rows use status `READINESS` + `dataState NOT_CONNECTED`; never overwrite ingestion sync runs |
+| POST auth | `seo.configure` (OWNER); OPEN-001 gate unchanged |
+| Account GET bound | Max 25 sites when `siteId` omitted (`GOOGLE_READINESS_MAX_SITES_PER_ACCOUNT`) |
+
 ## ADR
 
 Not required — extends SEO-07 and ANALYTICS-14/15 without architectural change.

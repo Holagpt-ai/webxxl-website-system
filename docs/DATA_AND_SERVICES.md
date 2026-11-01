@@ -108,7 +108,7 @@ Session-scoped `CustomerAccount`; gates via `requireSeoApiActor` (`SEO_BACKEND_E
 | GET | `/api/v1/seo/sites/[siteId]/keywords` | `seo.read` | Per-query stored rows; cursor + search; shared GSC context |
 | GET | `/api/v1/seo/sites/[siteId]/opportunities` | `seo.read` | Cursor pagination; optional state/severity/confidence filters |
 | GET | `/api/v1/seo/sites/[siteId]/google/readiness` | `seo.read` | Batch 33 stored GSC/GA4/GBP readiness (`GOOGLE_PROVIDER_READINESS_ENABLED`) |
-| POST | `/api/v1/seo/sites/[siteId]/google/readiness/assess` | `seo.read` | Bounded readiness operation; `Idempotency-Key`; no live Google fetch |
+| POST | `/api/v1/seo/sites/[siteId]/google/readiness/assess` | `seo.configure` | Bounded readiness operation; client `Idempotency-Key` (8–128 chars); tenant-scoped sync key; no live Google fetch |
 
 Shared loader: `lib/platform/seo/gsc-site-read.ts` (connection + latest matching `SeoSnapshot` + keyword window). Marketing create validates `seoOpportunityId` against account and site in `request-service.ts`.
 

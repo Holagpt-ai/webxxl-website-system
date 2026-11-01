@@ -79,12 +79,16 @@ export type GoogleAccountReadinessDto = {
   managedSiteId: string | null
   sites: GoogleSiteReadinessDto[]
   assessedAt: string
+  /** True when account has more managed sites than the readiness GET bound. */
+  sitesTruncated?: boolean
+  sitesReturned?: number
+  sitesTotal?: number
 }
 
 export type GoogleReadinessOperationOutcome = {
   provider: GoogleAnalyticsProviderKey
   readinessState: GoogleProviderReadinessState
-  syncRunStatus: 'READINESS_RECORDED'
+  syncRunStatus: 'READINESS_RECORDED' | 'READINESS_REPLAY' | 'INGESTION_RUN_UNTOUCHED'
   idempotencyKey: string
   reason: string
   externalFetchAttempted: false

@@ -1,4 +1,4 @@
-import { isGoogleProviderReadinessEnabled } from '@/config/google-integration'
+import { GOOGLE_READINESS_MAX_SITES_PER_ACCOUNT, isGoogleProviderReadinessEnabled } from '@/config/google-integration'
 import { assessGoogleSiteReadiness } from '@/lib/platform/google/readiness-assess'
 import type { GoogleAccountReadinessDto } from '@/lib/platform/google/types'
 import { requireManagedSiteInAccount } from '@/lib/platform/seo/site-scope'
@@ -23,7 +23,9 @@ export async function buildGoogleAccountReadiness(input: {
     managedSiteId: input.managedSiteId,
   })
 
-  const sites = input.managedSiteId
+  let sitesTotal: number | undefined
+  let sitesTruncated = false
+  const allSiteIds = input.managedSiteId
     ? [input.managedSiteId]
     : (
         await prisma.managedSite.findMany({
@@ -32,6 +34,13 @@ export async function buildGoogleAccountReadiness(input: {
           orderBy: { createdAt: 'asc' },
         })
       ).map((s) => s.id)
+
+  let sites = allSiteIds
+  if (!input.managedSiteId && allSiteIds.length > GOOGLE_READINESS_MAX_SITES_PER_ACCOUNT) {
+    sitesTotal = allSiteIds.length
+    sitesTruncated = true
+    sites = allSiteIds.slice(0, GOOGLE_READINESS_MAX_SITES_PER_ACCOUNT)
+  }
 
   const assessedAt = new Date()
   const siteDtos = []
@@ -64,6 +73,13 @@ export async function buildGoogleAccountReadiness(input: {
       managedSiteId: input.managedSiteId,
       sites: siteDtos,
       assessedAt: assessedAt.toISOString(),
+      ...(sitesTruncated
+        ? {
+            sitesTruncated: true,
+            sitesReturned: siteDtos.length,
+            sitesTotal,
+          }
+        : {}),
     },
   }
 }

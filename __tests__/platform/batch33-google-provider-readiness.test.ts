@@ -4,7 +4,12 @@ vi.mock('@/lib/db', () => ({
   prisma: {
     siteAnalyticsConnection: { findMany: vi.fn().mockResolvedValue([]) },
     managedSite: { findMany: vi.fn().mockResolvedValue([]) },
-    seoProviderSyncRun: { upsert: vi.fn().mockResolvedValue({ id: 'sync' }) },
+    seoProviderSyncRun: {
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockResolvedValue({ id: 'sync' }),
+      update: vi.fn(),
+      upsert: vi.fn(),
+    },
   },
 }))
 
@@ -172,14 +177,15 @@ describe('Batch 33 Google provider connection readiness', () => {
       authorizedHosts: ['example.test'],
       connections: [baseConnection],
       providers: ['GSC'],
-      idempotencyKey: 'batch33-test-key',
+      clientRequestKey: 'batch33-test-key',
     })
     expect(result.ok).toBe(true)
     if (result.ok) {
       expect(result.value.outcomes[0]?.externalFetchAttempted).toBe(false)
       expect(result.value.outcomes[0]?.syncRunStatus).toBe('READINESS_RECORDED')
+      expect(result.value.outcomes[0]?.idempotencyKey).toContain('google-readiness:v1:')
     }
-    expect(prisma.seoProviderSyncRun.upsert).toHaveBeenCalled()
+    expect(prisma.seoProviderSyncRun.create).toHaveBeenCalled()
   })
 
   it('assesses all three Google providers for a site', () => {

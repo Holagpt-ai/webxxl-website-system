@@ -11,3 +11,9 @@ export function isGoogleProviderReadinessEnabled(): boolean {
 
 /** Max providers assessed per bounded readiness operation. */
 export const GOOGLE_READINESS_MAX_PROVIDERS_PER_OPERATION = 3
+
+/** Max managed sites returned on account-wide readiness GET (no siteId filter). */
+export const GOOGLE_READINESS_MAX_SITES_PER_ACCOUNT = 25
+
+export const GOOGLE_READINESS_REQUEST_KEY_MIN_LENGTH = 8
+export const GOOGLE_READINESS_REQUEST_KEY_MAX_LENGTH = 128
