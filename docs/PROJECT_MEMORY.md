@@ -36,7 +36,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | **32 + 32.1** **MERGED** (PR #83 @ `b8e58df…`); **Batch 33** Google SEO/analytics connection readiness **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `b8e58dfc7a1520cb927e67785137734d4ed3d637` on `main`; **Batch 33** on `feature/batch-33-seo-analytics-google-readiness` (open PR pending) |
+| 2 | GitHub SHA, branch, active PR | `b8e58dfc7a1520cb927e67785137734d4ed3d637` on `main`; **PR #84** head `5283527…` on `feature/batch-33-seo-analytics-google-readiness` (open) |
 | 3 | Production deployment | Vercel **`dpl_CMoTpuKRNKU1ejgE9HaiJRqTUTac` READY** @ `b8e58df`. SHA only — not migration, Google OAuth, or provider fetch activation |
 | 4 | Last updated | 2026-11-01 |
 | 5 | Next task / responsible platform | **Owner** review/merge **Batch 33** PR (**Cursor**); staging DB + migrate deploy remains **Owner** |
