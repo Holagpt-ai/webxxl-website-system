@@ -42,3 +42,7 @@ End each session with one copyable handoff: exact repo, branch, SHA, PR, merged/
 **PENDING REPOSITORY SYNC** marks a material decision, status change, or implementation handoff that exists in ChatGPT or v0.app and is not yet in GitHub. Each item names what must be synchronized, the repository file that receives it, the responsible platform, and the next action. Clear the marker only after that update is committed and the pull request or merge is recorded.
 
 Cursor owns repository documentation and Git synchronization. v0.app supplies an exact UI delivery handoff with edited paths and verification evidence, and Cursor reconciles it into GitHub. ChatGPT coordinates, identifies discrepancies, and writes handoffs. ChatGPT does not claim that a session end wrote the repository or that session end was detected automatically. No overlapping Cursor and v0.app file edits.
+
+## Cursor Cloud Workforce (supervised V1)
+
+Five on-demand Cursor Cloud Agent roles (Project Manager, Engineer, QA Reviewer, Documentation, Operations) are defined in [`docs/cursor-cloud-workforce/README.md`](docs/cursor-cloud-workforce/README.md). They extend these instructions and AGENT-03; they do not enable live workforce execution, schedules, or automations until a separate owner gate.

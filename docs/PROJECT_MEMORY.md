@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-01 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `3386ac6a5ca8c406ad1bc8c6259726a4c134060e` (PR #86)
+**Evidence review:** 2026-11-01 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `f620e4f1c7a0c6cbcecf2bca8365b8e4cae6c646` (PR #87)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,12 +35,12 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **35** **MERGED** (PR #86 @ `3386ac6…`); **Batch 36** Customer AI pilot prep **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `3386ac6a5ca8c406ad1bc8c6259726a4c134060e` on `main`; **PR #87** on `feature/batch-36-customer-ai-workforce-pilot` @ `cb0f671e33c414dc0ab1d8389d1126ca614c042e` (open) |
-| 3 | Production deployment | Vercel **`dpl_DB2fCd4wt9C6htqVNU125jCUUYJh` READY** @ `3386ac6`. SHA only — not migration, AI activation, Chatwoot/Twilio/Resend live outbound |
+| 1 | Last verified checkpoint | **36** **MERGED** (PR #87 @ `f620e4f…`); **Cloud Workforce Config V1** **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `f620e4f1c7a0c6cbcecf2bca8365b8e4cae6c646` on `main`; **Cloud Workforce Config V1** PR on `cursor/cloud-workforce-config-v1-b991` (open) |
+| 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f`. SHA only — not migration, AI activation, Chatwoot/Twilio/Resend live outbound |
 | 4 | Last updated | 2026-11-01 |
-| 5 | Next task / responsible platform | **Owner** review/merge **Batch 36** PR (**Cursor**); LLM/provider credentials and AI execution remain **Owner** |
-| 6 | Open blocker / gate IDs | Isolated staging DB **NOT IDENTIFIED**; AI/customer-ai migrations UNVERIFIED/unapplied; all `CUSTOMER_AI_*` execution flags OFF; `CUSTOMER_AI_PILOT_PREP_ENABLED` OFF |
+| 5 | Next task / responsible platform | **Owner** review/merge **Cloud Workforce Config V1** PR (**Cursor**); configure supervised Cursor Cloud agents per [`docs/cursor-cloud-workforce/`](cursor-cloud-workforce/README.md) — **Owner** |
+| 6 | Open blocker / gate IDs | Isolated staging DB **NOT IDENTIFIED**; production migrations UNVERIFIED; all `CUSTOMER_AI_*` execution flags OFF; `CUSTOMER_AI_PILOT_PREP_ENABLED` OFF; workforce live execution OFF |
 
 ### Evidence table
 
@@ -119,7 +119,10 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Vercel production SHA (2026-11-01, PR #84) | DEPLOYED | GitHub deployment `7478496108`, Production success @ `1ae7c0a1e13748969ead7f3b177a74fcc68ed5d8`. SHA only |
 | Batch 34 Marketing Studio execution gates V1 | MERGED | [PR #85](https://github.com/Holagpt-ai/webxxl-website-system/pull/85), `e400c49df62b99069110cadd59c0f721e676ea35`, [`BATCH34-MARKETING-EXECUTION-GATES.md`](platform/docs/BATCH34-MARKETING-EXECUTION-GATES.md) |
 | Vercel production SHA (2026-11-01, PR #85) | DEPLOYED | Vercel `dpl_A7yAQkZD7T994YnSjGwhae1PuBL1` **READY** @ `e400c49df62b99069110cadd59c0f721e676ea35`. SHA only |
-| Batch 35 Unified communications integration V1 | IN PR | [`BATCH35-UNIFIED-COMMUNICATIONS-INTEGRATION.md`](platform/docs/BATCH35-UNIFIED-COMMUNICATIONS-INTEGRATION.md), `lib/platform/comms/*` extensions |
+| Batch 35 Unified communications integration V1 | MERGED | [PR #86](https://github.com/Holagpt-ai/webxxl-website-system/pull/86), `3386ac6a5ca8c406ad1bc8c6259726a4c134060e`. [`BATCH35-UNIFIED-COMMUNICATIONS-INTEGRATION.md`](platform/docs/BATCH35-UNIFIED-COMMUNICATIONS-INTEGRATION.md). No live sends |
+| Vercel production SHA (2026-11-01, PR #86) | DEPLOYED | Vercel `dpl_DB2fCd4wt9C6htqVNU125jCUUYJh` **READY** @ `3386ac6`. SHA only. Superseded by PR #87 row |
+| Batch 36 Customer AI Workforce pilot prep V1 | MERGED | [PR #87](https://github.com/Holagpt-ai/webxxl-website-system/pull/87), `f620e4f1c7a0c6cbcecf2bca8365b8e4cae6c646`. [`BATCH36-CUSTOMER-AI-PILOT-V1.md`](platform/docs/BATCH36-CUSTOMER-AI-PILOT-V1.md). Preparation + approval binding only; no LLM execution |
+| Vercel production SHA (2026-11-01, PR #87) | DEPLOYED | Owner-verified Vercel `dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` **READY** @ `f620e4f`. SHA only. Not migration or activation |
 | Vercel production SHA (2026-10-31, PR #79) | DEPLOYED | Vercel `dpl_AQ2v84aWrtDkogkczTeuMM24CHc9` **READY** @ `3905994ebbb8c4b423481c961a65e938dfc76a59`. Superseded by PR #80 row |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
