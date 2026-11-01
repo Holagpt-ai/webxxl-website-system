@@ -5,7 +5,7 @@
 ## Scope
 
 - Chatwoot integration readiness (`chatwoot-readiness-service.ts`) and `GET /api/v1/communications/provider-readiness`.
-- Unified outbound authorization gateway (`outbound-authorization-gateway.ts`) for SMS/email prep — no live dispatch.
+- Unified outbound authorization gateway (`outbound-authorization-gateway.ts`) for SMS/email prep — no live dispatch. Callers must supply consent, membership, sender, and wallet facts from trusted server-side loaders; email requires `emailDomainVerified === true`. Retry authorization fails closed on unknown or provider-accepted outcomes.
 - Twilio/Resend sender readiness assessment (`messaging-provider-readiness.ts`) with A2P/domain distinctions; never VERIFIED without stored evidence.
 - Wallet quote authorization prep (`wallet-quote-authorization.ts`) — no ledger mutation.
 - Dispatch reconcile policy — unknown or unproven delivery stays `RECONCILIATION_REQUIRED`.

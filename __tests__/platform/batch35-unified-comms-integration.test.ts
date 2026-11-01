@@ -110,6 +110,11 @@ describe('Batch 35 — unified communications integration', () => {
       emailDomainVerified: false,
     })
     expect(badDomain.ok).toBe(false)
+    const missingDomainProof = authorizeOutboundCommunication({
+      ...baseAuthInput,
+      channel: 'EMAIL',
+    })
+    expect(missingDomainProof.ok).toBe(false)
     const regulated = authorizeOutboundCommunication({
       ...baseAuthInput,
       dataClassification: 'REGULATED_HEALTHCARE',
@@ -146,7 +151,38 @@ describe('Batch 35 — unified communications integration', () => {
       sameFingerprint: true,
     })
     expect(retry.ok).toBe(true)
-    if (retry.ok) expect(retry.value.allowRetry).toBe(false)
+    if (retry.ok) {
+      expect(retry.value.allowRetry).toBe(false)
+      expect(retry.value.requireReconciliation).toBe(false)
+    }
+  })
+
+  it('6b retry fail-closed for unknown outcomes even when outbound flags enabled', () => {
+    vi.stubEnv('COMMUNICATIONS_OUTBOUND_ENABLED', 'true')
+    vi.stubEnv('SMS_SEND_ENABLED', 'true')
+    vi.stubEnv('EMAIL_SEND_ENABLED', 'true')
+    expect(commsProviderDispatchBlocked()).toBeNull()
+    for (const priorDispatchStatus of ['UNKNOWN', 'RECONCILIATION_REQUIRED', 'ACCEPTED_BY_PROVIDER']) {
+      const retry = authorizeOutboundDispatchRetry({
+        priorDispatchStatus,
+        idempotencyKey: 'idem-1',
+        sameFingerprint: true,
+        providerSendConfirmedAbsent: true,
+      })
+      expect(retry.ok).toBe(true)
+      if (retry.ok) {
+        expect(retry.value.allowRetry).toBe(false)
+        expect(retry.value.requireReconciliation).toBe(true)
+      }
+    }
+    const safeRetry = authorizeOutboundDispatchRetry({
+      priorDispatchStatus: 'BLOCKED',
+      idempotencyKey: 'idem-1',
+      sameFingerprint: true,
+      providerSendConfirmedAbsent: true,
+    })
+    expect(safeRetry.ok).toBe(true)
+    if (safeRetry.ok) expect(safeRetry.value.allowRetry).toBe(true)
   })
 
   it('7 unknown delivery outcomes remain unresolved', () => {
@@ -188,5 +224,34 @@ describe('Batch 35 — unified communications integration', () => {
     })
     expect(insufficient.ok).toBe(false)
     if (!insufficient.ok) expect(insufficient.message).toContain('INSUFFICIENT_BALANCE')
+  })
+
+  it('8b wallet quote rejects non-finite credits and enforces site cap context', () => {
+    const baseWallet = {
+      operatingAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
+      quoteCustomerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
+      billingGroupId: ABMED_GROUP_ID,
+      authorizedBillingGroupIds: [ABMED_GROUP_ID],
+      siblingCustomerAccountIds: [ABMED_PHYSICIANS_ACCOUNT_ID],
+      ratePlanVersion: 'v1',
+      estimatedUnits: 1,
+      availableCredits: 100,
+      requiredCredits: 5,
+    }
+    expect(authorizeCommsWalletQuoteReservation({ ...baseWallet, requiredCredits: NaN }).ok).toBe(false)
+    expect(authorizeCommsWalletQuoteReservation({ ...baseWallet, availableCredits: Infinity }).ok).toBe(false)
+    const capNoSite = authorizeCommsWalletQuoteReservation({
+      ...baseWallet,
+      siteSpendingCapCredits: 10,
+    })
+    expect(capNoSite.ok).toBe(false)
+    if (!capNoSite.ok) expect(capNoSite.message).toBe('SITE_CAP_CONTEXT_REQUIRED')
+    const capNoUsage = authorizeCommsWalletQuoteReservation({
+      ...baseWallet,
+      siteSpendingCapCredits: 10,
+      managedSiteId: 'site-1',
+    })
+    expect(capNoUsage.ok).toBe(false)
+    if (!capNoUsage.ok) expect(capNoUsage.message).toBe('SITE_USAGE_UNAVAILABLE')
   })
 })

@@ -69,14 +69,38 @@ function validateSenderAndDomain(input: OutboundAuthorizationInput): CommsResult
   if (!input.senderUseCaseRegistered) {
     return { ok: false, code: 'FORBIDDEN', message: 'Messaging use case not registered for sender' }
   }
-  if (input.channel === 'EMAIL' && input.emailDomainVerified === false) {
-    return { ok: false, code: 'FORBIDDEN', message: 'Email domain ownership not verified' }
+  if (input.channel === 'EMAIL' && input.emailDomainVerified !== true) {
+    return {
+      ok: false,
+      code: 'FORBIDDEN',
+      message: 'Email preparation requires emailDomainVerified === true from server-side sender evidence',
+    }
   }
   return { ok: true, value: true }
 }
 
+const RETRY_UNCERTAIN_OR_PROVIDER_ACCEPTED = new Set([
+  'UNKNOWN',
+  'RECONCILIATION_REQUIRED',
+  'ACCEPTED_BY_PROVIDER',
+  'DELIVERED',
+  'DISPATCHED',
+  'PENDING',
+  'PROCESSING',
+  'IN_PROGRESS',
+  'QUEUED',
+  'SENT',
+])
+
 /**
- * Authoritative outbound prep/dispatch authorization boundary (Batch 35).
+ * Outbound **preparation** authorization boundary (Batch 35).
+ *
+ * This module evaluates policy inputs supplied by the caller. It does **not** load
+ * consent, membership, sender identities, wallet balances, or CRM facts from the
+ * database. Production dispatch authorization requires trusted server-side services
+ * (route auth, OPEN-001 gates, Prisma-backed consent/suppression/sender/quote loaders)
+ * to populate `OutboundAuthorizationInput` before invoking this helper.
+ *
  * Does not persist intents, quote wallet credits, or call external providers.
  */
 export function authorizeOutboundCommunication(
@@ -169,21 +193,40 @@ export function authorizeOutboundCommunication(
   }
 }
 
-/** Retry-safe: dispatch remains blocked; duplicate authorization does not imply duplicate send. */
+/**
+ * Retry-safe dispatch authorization. Never authorizes another provider attempt when the
+ * prior outcome may represent an in-flight or accepted provider send.
+ */
 export function authorizeOutboundDispatchRetry(input: {
   priorDispatchStatus: string
   idempotencyKey: string
   sameFingerprint: boolean
-}): CommsResult<{ allowRetry: boolean }> {
+  /**
+   * Server-side evidence that no provider message was created (e.g. dispatch blocked before transport).
+   * Must not be supplied from client input without verification.
+   */
+  providerSendConfirmedAbsent?: boolean
+}): CommsResult<{ allowRetry: boolean; requireReconciliation: boolean }> {
   const dispatchBlock = commsProviderDispatchBlocked()
   if (dispatchBlock) {
-    return { ok: true, value: { allowRetry: false } }
+    return { ok: true, value: { allowRetry: false, requireReconciliation: false } }
   }
   if (!input.sameFingerprint) {
     return { ok: false, code: 'CONFLICT', message: 'Retry fingerprint mismatch' }
   }
-  if (input.priorDispatchStatus === 'ACCEPTED_BY_PROVIDER' || input.priorDispatchStatus === 'DELIVERED') {
-    return { ok: true, value: { allowRetry: false } }
+
+  const prior = input.priorDispatchStatus.trim().toUpperCase()
+  if (RETRY_UNCERTAIN_OR_PROVIDER_ACCEPTED.has(prior)) {
+    return { ok: true, value: { allowRetry: false, requireReconciliation: true } }
   }
-  return { ok: true, value: { allowRetry: true } }
+
+  if (input.providerSendConfirmedAbsent !== true) {
+    return { ok: true, value: { allowRetry: false, requireReconciliation: true } }
+  }
+
+  if (prior === 'BLOCKED' || prior === 'FAILED') {
+    return { ok: true, value: { allowRetry: true, requireReconciliation: false } }
+  }
+
+  return { ok: true, value: { allowRetry: false, requireReconciliation: true } }
 }
