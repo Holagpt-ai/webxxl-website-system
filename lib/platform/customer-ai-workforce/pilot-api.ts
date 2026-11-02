@@ -43,7 +43,7 @@ export async function issueCustomerAiPilotApprovalApi(
 export async function validateCustomerAiPilotApprovalApi(input: ValidatePilotApprovalInput) {
   const gate = assertCustomerAiPilotPrepEnabled()
   if (!gate.ok) return gate
-  return validateCustomerAiPilotApproval(input)
+  return await validateCustomerAiPilotApproval(input)
 }
 
 export async function getCustomerAiPilotTask(
@@ -59,7 +59,7 @@ export async function getCustomerAiPilotTask(
       return { ok: false as const, error: 'FORBIDDEN' as const, message: 'Operating membership required' }
     }
   }
-  const task = findPilotTaskById(taskId)
+  const task = await findPilotTaskById(taskId)
   if (!task || task.customerAccountId !== customerAccountId) {
     return { ok: false as const, error: 'NOT_FOUND' as const, message: 'Task not found' }
   }
@@ -73,6 +73,8 @@ export async function getCustomerAiPilotTask(
       actionHash: task.actionHash,
       requiresHumanApproval: task.requiresHumanApproval,
       approvalId: task.approvalId,
+      workflowSyncState: task.workflowSyncState,
+      workflowJobId: task.workflowJobId,
     },
   }
 }
@@ -89,12 +91,12 @@ export async function attemptCustomerAiPilotExecutionApi(
       return { ok: false as const, error: 'FORBIDDEN' as const, message: 'Operating membership required' }
     }
   }
-  const task = findPilotTaskById(input.taskId)
+  const task = await findPilotTaskById(input.taskId)
   if (!task || task.customerAccountId !== input.customerAccountId) {
     return { ok: false as const, error: 'NOT_FOUND' as const, message: 'Task not found' }
   }
   if (input.approvalId) {
-    const validated = validateCustomerAiPilotApproval({
+    const validated = await validateCustomerAiPilotApproval({
       approvalId: input.approvalId,
       preparedTaskId: task.id,
       customerAccountId: task.customerAccountId,

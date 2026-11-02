@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import {
+  isCustomerAiPilotDurableEnabled,
   isCustomerAiPilotHttpEnabled,
   isCustomerAiPilotPrepEnabled,
   isCustomerAiWorkforceEnabled,
@@ -27,16 +28,24 @@ export function customerAiPilotPrepDisabledResponse() {
   )
 }
 
-/** Pilot HTTP uses a non-durable in-process store — not production-safe on Vercel. */
+/** Pilot HTTP requires durable PostgreSQL persistence (Batch 37). */
 export function customerAiPilotHttpDisabledResponse() {
   const prep = customerAiPilotPrepDisabledResponse()
   if (prep) return prep
+  if (!isCustomerAiPilotDurableEnabled()) {
+    return NextResponse.json(
+      {
+        code: 'EXECUTION_DISABLED',
+        message: 'Customer AI pilot durable persistence is disabled. Apply migration and enable CUSTOMER_AI_PILOT_DURABLE_ENABLED.',
+      },
+      { status: 503 },
+    )
+  }
   if (isCustomerAiPilotHttpEnabled()) return null
   return NextResponse.json(
     {
       code: 'EXECUTION_DISABLED',
-      message:
-        'Customer AI pilot HTTP is disabled. Tasks and approvals are non-durable and test-only until a persistent store is approved.',
+      message: 'Customer AI pilot HTTP is disabled.',
     },
     { status: 503 },
   )

@@ -354,6 +354,6 @@ describe('Batch 36.1 — pilot security regressions', () => {
     })
     expect(issued.ok).toBe(true)
     if (!issued.ok) return
-    updatePilotApproval(issued.value.approvalId, { expiresAt: new Date(Date.now() - 1000) })
+    await updatePilotApproval(issued.value.approvalId, { expiresAt: new Date(Date.now() - 1000) })
   })
 })

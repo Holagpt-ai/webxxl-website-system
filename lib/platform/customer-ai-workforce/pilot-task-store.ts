@@ -1,77 +1,80 @@
+import { isCustomerAiPilotDurableEnabled } from '@/config/customer-ai-workforce'
+import { memoryPilotTaskPersistence } from '@/lib/platform/customer-ai-workforce/pilot-task-memory-store'
+import { prismaPilotTaskPersistence } from '@/lib/platform/customer-ai-workforce/pilot-task-prisma-store'
+import type {
+  PilotTaskPersistence,
+  PilotTaskWorkflowPatch,
+  SavePilotApprovalInput,
+  SavePilotTaskInput,
+} from '@/lib/platform/customer-ai-workforce/pilot-task-persistence'
 import type {
   CustomerAiPilotApprovalRecord,
   CustomerAiPilotTaskRecord,
 } from '@/lib/platform/customer-ai-workforce/pilot-types'
 
-const tasks = new Map<string, CustomerAiPilotTaskRecord>()
-const tasksByIdempotency = new Map<string, string>()
-const approvals = new Map<string, CustomerAiPilotApprovalRecord>()
+function defaultPersistence(): PilotTaskPersistence {
+  if (process.env.VITEST === 'true' || process.env.NODE_ENV === 'test') {
+    return memoryPilotTaskPersistence
+  }
+  if (isCustomerAiPilotDurableEnabled()) {
+    return prismaPilotTaskPersistence
+  }
+  return memoryPilotTaskPersistence
+}
 
-let seq = 0
+let activePersistence: PilotTaskPersistence = defaultPersistence()
 
-function nextPublicId(prefix: string): string {
-  seq += 1
-  return `${prefix}_${seq.toString(36)}`
+export function setPilotTaskPersistenceForTests(store: PilotTaskPersistence): void {
+  activePersistence = store
 }
 
 export function resetCustomerAiPilotTaskStoreForTests(): void {
-  tasks.clear()
-  tasksByIdempotency.clear()
-  approvals.clear()
-  seq = 0
+  memoryPilotTaskPersistence.resetForTests()
+  activePersistence = memoryPilotTaskPersistence
 }
 
-export function findPilotTaskByIdempotency(
+export async function findPilotTaskByIdempotency(
   customerAccountId: string,
   employeeId: string,
   idempotencyKey: string,
-): CustomerAiPilotTaskRecord | null {
-  const key = `${customerAccountId}:${employeeId}:${idempotencyKey}`
-  const id = tasksByIdempotency.get(key)
-  if (!id) return null
-  return tasks.get(id) ?? null
+): Promise<CustomerAiPilotTaskRecord | null> {
+  return activePersistence.findPilotTaskByIdempotency(customerAccountId, employeeId, idempotencyKey)
 }
 
-export function savePilotTask(record: Omit<CustomerAiPilotTaskRecord, 'id' | 'publicId' | 'createdAt'>): CustomerAiPilotTaskRecord {
-  const id = nextPublicId('pilot_task')
-  const full: CustomerAiPilotTaskRecord = {
-    ...record,
-    id,
-    publicId: nextPublicId('pt'),
-    createdAt: new Date(),
-  }
-  tasks.set(id, full)
-  tasksByIdempotency.set(`${record.customerAccountId}:${record.employeeId}:${record.idempotencyKey}`, id)
-  return full
+export async function savePilotTask(record: SavePilotTaskInput): Promise<CustomerAiPilotTaskRecord> {
+  return activePersistence.savePilotTask(record)
 }
 
-export function findPilotTaskById(id: string): CustomerAiPilotTaskRecord | null {
-  return tasks.get(id) ?? null
+export async function findPilotTaskById(id: string): Promise<CustomerAiPilotTaskRecord | null> {
+  return activePersistence.findPilotTaskById(id)
 }
 
-export function savePilotApproval(
-  record: Omit<CustomerAiPilotApprovalRecord, 'id' | 'createdAt'>,
-): CustomerAiPilotApprovalRecord {
-  const id = nextPublicId('pilot_approval')
-  const full: CustomerAiPilotApprovalRecord = { ...record, id, createdAt: new Date() }
-  approvals.set(id, full)
-  return full
+export async function updatePilotTaskWorkflow(
+  taskId: string,
+  patch: PilotTaskWorkflowPatch,
+): Promise<CustomerAiPilotTaskRecord | null> {
+  return activePersistence.updatePilotTaskWorkflow(taskId, patch)
 }
 
-export function findPilotApprovalById(id: string): CustomerAiPilotApprovalRecord | null {
-  return approvals.get(id) ?? null
+export async function savePilotApproval(record: SavePilotApprovalInput): Promise<CustomerAiPilotApprovalRecord> {
+  return activePersistence.savePilotApproval(record)
 }
 
-export function updatePilotApproval(id: string, patch: Partial<CustomerAiPilotApprovalRecord>): CustomerAiPilotApprovalRecord | null {
-  const existing = approvals.get(id)
-  if (!existing) return null
-  const next = { ...existing, ...patch }
-  approvals.set(id, next)
-  return next
+export async function findPilotApprovalById(id: string): Promise<CustomerAiPilotApprovalRecord | null> {
+  return activePersistence.findPilotApprovalById(id)
 }
 
-export function linkPilotTaskApproval(taskId: string, approvalId: string): void {
-  const task = tasks.get(taskId)
-  if (!task) return
-  tasks.set(taskId, { ...task, approvalId })
+export async function updatePilotApproval(
+  id: string,
+  patch: Partial<CustomerAiPilotApprovalRecord>,
+  options?: { consumeIfUnset?: boolean; customerAccountId?: string },
+): Promise<CustomerAiPilotApprovalRecord | null> {
+  return activePersistence.updatePilotApproval(id, patch, options)
 }
+
+export async function linkPilotTaskApproval(taskId: string, approvalId: string): Promise<void> {
+  return activePersistence.linkPilotTaskApproval(taskId, approvalId)
+}
+
+/** @deprecated Use updatePilotApproval with consumeIfUnset for concurrency-safe consume */
+export { memoryPilotTaskPersistence }
