@@ -9,6 +9,7 @@ export type MigrationOrderingIssueCode =
   | 'INLINE_PRISMA_COMMENT_DDL'
   | 'DUPLICATE_ENUM_ADD_VALUE'
   | 'REDUNDANT_MIGRATION_DDL'
+  | 'UNGUARDED_SUPABASE_REVOKE'
   | 'DUPLICATE_TIMESTAMP_PREFIX'
   | 'UNSORTED_CHAIN'
   | 'EMPTY_CHAIN'
@@ -151,6 +152,31 @@ function collectCreateIndexes(sql: string): string[] {
   return names
 }
 
+/** REVOKE FROM Supabase PostgREST roles must be guarded — plain Postgres has no `anon` / `authenticated`. */
+export function findUnguardedSupabaseRevokeIssues(
+  orderedFolders: string[],
+  cwd = process.cwd(),
+): MigrationOrderingIssue[] {
+  const unguarded: string[] = []
+  for (const folder of orderedFolders) {
+    const sqlPath = path.join(cwd, 'prisma', 'migrations', folder, 'migration.sql')
+    if (!fs.existsSync(sqlPath)) continue
+    const raw = fs.readFileSync(sqlPath, 'utf8')
+    if (!/\bREVOKE\b[\s\S]*\bFROM\b[\s\S]*\b(anon|authenticated)\b/i.test(raw)) continue
+    if (/pg_roles[\s\S]*rolname\s*=\s*'anon'/i.test(raw)) continue
+    unguarded.push(folder)
+  }
+  if (unguarded.length === 0) return []
+  return [
+    {
+      code: 'UNGUARDED_SUPABASE_REVOKE',
+      message:
+        'REVOKE FROM anon/authenticated must run inside DO $$ … IF EXISTS (pg_roles) — fails on plain Postgres (42704) and breaks local migration rehearsal',
+      folders: unguarded,
+    },
+  ]
+}
+
 /** ADD COLUMN / CREATE INDEX in a later migration that repeats objects from an earlier migration in the chain. */
 export function findRedundantMigrationDdlIssues(
   orderedFolders: string[],
@@ -275,6 +301,7 @@ export function validateMigrationOrderingSafeguards(cwd = process.cwd()): {
 
   issues.push(...findDuplicateEnumAddValueIssues(orderedFolders, cwd))
   issues.push(...findRedundantMigrationDdlIssues(orderedFolders, cwd))
+  issues.push(...findUnguardedSupabaseRevokeIssues(orderedFolders, cwd))
 
   const blocking = issues.some(
     (i) =>
@@ -284,6 +311,7 @@ export function validateMigrationOrderingSafeguards(cwd = process.cwd()): {
       i.code === 'INLINE_PRISMA_COMMENT_DDL' ||
       i.code === 'DUPLICATE_ENUM_ADD_VALUE' ||
       i.code === 'REDUNDANT_MIGRATION_DDL' ||
+      i.code === 'UNGUARDED_SUPABASE_REVOKE' ||
       i.code === 'EMPTY_CHAIN',
   )
   return { ok: !blocking, folderCount: orderedFolders.length, issues, orderedFolders }

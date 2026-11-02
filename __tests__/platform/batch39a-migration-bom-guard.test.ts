@@ -11,6 +11,7 @@ describe('Batch 39A migration BOM guard', () => {
     expect(result.issues.some((i) => i.code === 'INLINE_PRISMA_COMMENT_DDL')).toBe(false)
     expect(result.issues.some((i) => i.code === 'DUPLICATE_ENUM_ADD_VALUE')).toBe(false)
     expect(result.issues.some((i) => i.code === 'REDUNDANT_MIGRATION_DDL')).toBe(false)
+    expect(result.issues.some((i) => i.code === 'UNGUARDED_SUPABASE_REVOKE')).toBe(false)
     expect(result.ok).toBe(true)
   })
 

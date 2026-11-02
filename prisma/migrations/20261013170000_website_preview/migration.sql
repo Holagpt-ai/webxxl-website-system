@@ -57,4 +57,10 @@ ALTER TABLE "WebsitePreviewVersion" ADD CONSTRAINT "WebsitePreviewVersion_regist
 ALTER TABLE "WebsitePreviewVersion" ADD CONSTRAINT "WebsitePreviewVersion_approvalId_fkey" FOREIGN KEY ("approvalId") REFERENCES "ProjectApproval"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE "WebsitePreviewVersion" ADD CONSTRAINT "WebsitePreviewVersion_changeRequestId_fkey" FOREIGN KEY ("changeRequestId") REFERENCES "ChangeRequest"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
-REVOKE ALL ON TABLE "WebsitePreview", "WebsitePreviewVersion" FROM anon, authenticated;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon')
+     AND EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+    REVOKE ALL ON TABLE "WebsitePreview", "WebsitePreviewVersion" FROM anon, authenticated;
+  END IF;
+END $$;

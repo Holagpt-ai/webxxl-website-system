@@ -59,7 +59,7 @@ Prisma applies migrations in **lexicographic order by full folder name**. `_batc
 
 ## CI guard
 
-`validateMigrationOrderingSafeguards()` fails with **`UTF8_BOM_IN_SQL`** if any `migration.sql` starts with BOM; **`SINGLE_LINE_MIGRATION_SQL`** and **`INLINE_PRISMA_COMMENT_DDL`** catch Postgres comment-swallowed DDL (Batch 39C/39E); **`DUPLICATE_ENUM_ADD_VALUE`** catches redundant `ALTER TYPE ADD VALUE` (Batch 39G); **`REDUNDANT_MIGRATION_DDL`** catches duplicate columns/indexes across migrations (Batch 39H). Wired in `pnpm release:readiness --verify-ordering` and application validate workflow.
+`validateMigrationOrderingSafeguards()` fails with **`UTF8_BOM_IN_SQL`** if any `migration.sql` starts with BOM; **`SINGLE_LINE_MIGRATION_SQL`** and **`INLINE_PRISMA_COMMENT_DDL`** catch Postgres comment-swallowed DDL (Batch 39C/39E); **`DUPLICATE_ENUM_ADD_VALUE`** catches redundant `ALTER TYPE ADD VALUE` (Batch 39G); **`REDUNDANT_MIGRATION_DDL`** catches duplicate columns/indexes across migrations (Batch 39H); **`UNGUARDED_SUPABASE_REVOKE`** catches bare `REVOKE FROM anon` (Batch 40). Wired in `pnpm release:readiness --verify-ordering` and application validate workflow. Full-chain local proof: `pnpm migration:chain-rehearsal`.
 
 ## Related
 

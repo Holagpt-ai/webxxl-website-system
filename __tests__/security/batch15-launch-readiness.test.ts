@@ -15,6 +15,8 @@ describe('batch15 supabase hardening migration', () => {
       'utf8',
     )
     expect(sql).toContain('REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated')
+    expect(sql).toContain("pg_roles")
+    expect(sql).toContain("rolname = 'anon'")
     expect(sql).not.toContain('ENABLE ROW LEVEL SECURITY')
     expect(SUPABASE_HARDENING_NOTES.accessPattern).toContain('Prisma')
   })
