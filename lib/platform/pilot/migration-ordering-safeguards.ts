@@ -7,6 +7,7 @@ export type MigrationOrderingIssueCode =
   | 'UTF8_BOM_IN_SQL'
   | 'SINGLE_LINE_MIGRATION_SQL'
   | 'INLINE_PRISMA_COMMENT_DDL'
+  | 'DUPLICATE_ENUM_ADD_VALUE'
   | 'DUPLICATE_TIMESTAMP_PREFIX'
   | 'UNSORTED_CHAIN'
   | 'EMPTY_CHAIN'
@@ -32,6 +33,64 @@ function migrationSqlIsSingleLineSwallowed(sqlPath: string): boolean {
 function migrationSqlInlineSwallowedLineCount(sqlPath: string): number {
   const raw = fs.readFileSync(sqlPath, 'utf8')
   return raw.split(/\r?\n/).filter((line) => INLINE_PRISMA_COMMENT_DDL.test(line)).length
+}
+
+const CREATE_TYPE_ENUM_RE =
+  /CREATE TYPE\s+"([^"]+)"\s+AS ENUM\s*\(\s*([^;]+?)\s*\)\s*;/gis
+const ALTER_TYPE_ADD_VALUE_RE =
+  /ALTER TYPE\s+"([^"]+)"\s+ADD VALUE\s+'([^']+)'/gi
+
+function enumLabelsFromCreateClause(clause: string): string[] {
+  const labels: string[] = []
+  const tokenRe = /'([^']+)'/g
+  let m: RegExpExecArray | null
+  while ((m = tokenRe.exec(clause)) !== null) labels.push(m[1]!)
+  return labels
+}
+
+/** Detect ALTER TYPE ADD VALUE for labels already declared in CREATE TYPE or prior ADD VALUE (clean-deploy 42710). */
+export function findDuplicateEnumAddValueIssues(
+  orderedFolders: string[],
+  cwd = process.cwd(),
+): MigrationOrderingIssue[] {
+  const enumLabels = new Map<string, Set<string>>()
+  const duplicates: { folder: string; typeName: string; label: string }[] = []
+
+  for (const folder of orderedFolders) {
+    const sqlPath = path.join(cwd, 'prisma', 'migrations', folder, 'migration.sql')
+    if (!fs.existsSync(sqlPath)) continue
+    const raw = fs.readFileSync(sqlPath, 'utf8')
+
+    CREATE_TYPE_ENUM_RE.lastIndex = 0
+    let createMatch: RegExpExecArray | null
+    while ((createMatch = CREATE_TYPE_ENUM_RE.exec(raw)) !== null) {
+      const typeName = createMatch[1]!
+      const set = enumLabels.get(typeName) ?? new Set<string>()
+      for (const label of enumLabelsFromCreateClause(createMatch[2]!)) set.add(label)
+      enumLabels.set(typeName, set)
+    }
+
+    ALTER_TYPE_ADD_VALUE_RE.lastIndex = 0
+    let addMatch: RegExpExecArray | null
+    while ((addMatch = ALTER_TYPE_ADD_VALUE_RE.exec(raw)) !== null) {
+      const typeName = addMatch[1]!
+      const label = addMatch[2]!
+      const set = enumLabels.get(typeName) ?? new Set<string>()
+      if (set.has(label)) duplicates.push({ folder, typeName, label })
+      else set.add(label)
+      enumLabels.set(typeName, set)
+    }
+  }
+
+  if (duplicates.length === 0) return []
+  return [
+    {
+      code: 'DUPLICATE_ENUM_ADD_VALUE',
+      message:
+        'ALTER TYPE ADD VALUE repeats a label already defined in CREATE TYPE or an earlier migration — Postgres 42710 on clean deploy',
+      folders: [...new Set(duplicates.map((d) => d.folder))],
+    },
+  ]
 }
 
 export type MigrationOrderingIssue = {
@@ -124,12 +183,15 @@ export function validateMigrationOrderingSafeguards(cwd = process.cwd()): {
     }
   }
 
+  issues.push(...findDuplicateEnumAddValueIssues(orderedFolders, cwd))
+
   const blocking = issues.some(
     (i) =>
       i.code === 'MISSING_SQL' ||
       i.code === 'UTF8_BOM_IN_SQL' ||
       i.code === 'SINGLE_LINE_MIGRATION_SQL' ||
       i.code === 'INLINE_PRISMA_COMMENT_DDL' ||
+      i.code === 'DUPLICATE_ENUM_ADD_VALUE' ||
       i.code === 'EMPTY_CHAIN',
   )
   return { ok: !blocking, folderCount: orderedFolders.length, issues, orderedFolders }

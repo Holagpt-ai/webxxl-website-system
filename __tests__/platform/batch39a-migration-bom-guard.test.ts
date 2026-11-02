@@ -9,6 +9,7 @@ describe('Batch 39A migration BOM guard', () => {
     expect(result.issues.some((i) => i.code === 'UTF8_BOM_IN_SQL')).toBe(false)
     expect(result.issues.some((i) => i.code === 'SINGLE_LINE_MIGRATION_SQL')).toBe(false)
     expect(result.issues.some((i) => i.code === 'INLINE_PRISMA_COMMENT_DDL')).toBe(false)
+    expect(result.issues.some((i) => i.code === 'DUPLICATE_ENUM_ADD_VALUE')).toBe(false)
     expect(result.ok).toBe(true)
   })
 
