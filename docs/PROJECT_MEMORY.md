@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-01 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `f620e4f1c7a0c6cbcecf2bca8365b8e4cae6c646` (PR #87)
+**Evidence review:** 2026-11-02 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `8c2e5df7f79eb7538e1fe6d513316f70026bbe6d` (PR #89)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,12 +35,12 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **36** **MERGED** + **Cloud Workforce Config V1** **MERGED** (PR #88 @ `3a33e54…`); **Batch 37** durable pilot persistence **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `3a33e542f5fa0f284c84c17ad54b1840a21c0ecc` on `main`; **PR #89** on `feature/batch-37-customer-ai-pilot-durable` @ `23c7129c4694ea68aa27bca1a7fed88c1aa970a6` (open) |
-| 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` (prior); post–#88 deploy **UNVERIFIED** until owner/Vercel record. SHA only — not migration, AI activation, Chatwoot/Twilio/Resend live outbound |
+| 1 | Last verified checkpoint | **37** **MERGED** (PR #89 @ `8c2e5df…`); **Batch 38** release readiness **IN PR** |
+| 2 | GitHub SHA, branch, active PR | `8c2e5df7f79eb7538e1fe6d513316f70026bbe6d` on `main`; **Batch 38** on `feature/batch-38-release-readiness` (open) |
+| 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` (last verified); post–#89 deploy **UNVERIFIED**. SHA only — not migration, AI activation, Chatwoot/Twilio/Resend live outbound |
 | 4 | Last updated | 2026-11-02 |
-| 5 | Next task / responsible platform | **Owner** review/merge **Batch 37** PR (**Cursor**); staging migration rehearsal for `20261102130000_batch37_customer_ai_pilot_persistence` — **Owner** |
-| 6 | Open blocker / gate IDs | Isolated staging DB **NOT IDENTIFIED**; Batch 37 + AI migrations **UNVERIFIED**/unapplied; all `CUSTOMER_AI_*` execution flags OFF; `CUSTOMER_AI_PILOT_DURABLE_ENABLED` OFF; `WORKFLOW_*` OFF |
+| 5 | Next task / responsible platform | **Owner** review/merge **Batch 38** PR (**Cursor**); isolated staging DB + `pnpm release:readiness` / migrate deploy rehearsal — **Owner** |
+| 6 | Open blocker / gate IDs | Isolated staging DB **NOT IDENTIFIED**; production/staging migrations **UNVERIFIED**; all `CUSTOMER_AI_*` execution flags OFF; `WORKFLOW_WORKER_ENABLED` OFF |
 
 ### Evidence table
 

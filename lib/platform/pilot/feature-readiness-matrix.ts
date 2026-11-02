@@ -5,6 +5,13 @@ import { isMktBackendEnabled } from '@/config/mkt-backend'
 import { isGoogleProviderReadinessEnabled } from '@/config/google-integration'
 import { isSeoBackendEnabled } from '@/config/seo-backend'
 import { isSiteLeadIntakeEnabled } from '@/config/site-lead-intake'
+import {
+  isCustomerAiExecutionEnabled,
+  isCustomerAiPilotDurableEnabled,
+  isCustomerAiPilotPrepEnabled,
+  isCustomerAiWorkforceEnabled,
+} from '@/config/customer-ai-workforce'
+import { isWorkflowWorkerEnabled } from '@/config/workflow-backend'
 import { evaluateEntitlementAccess, getServiceEntitlement } from '@/lib/platform/entitlements'
 import { isOpen001PolicyResolved } from '@/lib/platform/open001/policy'
 
@@ -117,6 +124,31 @@ export function buildFeatureReadinessMatrix(): FeatureReadinessRow[] {
       flagEnabled: true,
       typicalCustomerState: 'ready_pending_data',
       notes: '`GET /api/v1/business/overview` — module slices fail independently; no separate activation flag.',
+    },
+    {
+      id: 'customer_ai_pilot',
+      label: 'Customer AI pilot (prep + durable tasks)',
+      backendFlag: 'CUSTOMER_AI_PILOT_PREP_ENABLED / CUSTOMER_AI_PILOT_DURABLE_ENABLED',
+      flagEnabled: isCustomerAiPilotPrepEnabled() || isCustomerAiPilotDurableEnabled(),
+      typicalCustomerState:
+        isCustomerAiExecutionEnabled() ? 'unauthorized' : isCustomerAiPilotDurableEnabled() ? 'ready_pending_migration' : 'disabled',
+      notes: 'Batch 37 persistence; no LLM execution while CUSTOMER_AI_EXECUTION_ENABLED is OFF.',
+    },
+    {
+      id: 'customer_ai_workforce',
+      label: 'Customer AI workforce HTTP',
+      backendFlag: 'CUSTOMER_AI_WORKFORCE_ENABLED',
+      flagEnabled: isCustomerAiWorkforceEnabled(),
+      typicalCustomerState: isCustomerAiWorkforceEnabled() ? 'ready_pending_migration' : 'disabled',
+      notes: 'Master gate for customer AI APIs; separate from pilot prep flags.',
+    },
+    {
+      id: 'auto10_workflow_worker',
+      label: 'AUTO-10 workflow worker',
+      backendFlag: 'WORKFLOW_WORKER_ENABLED',
+      flagEnabled: isWorkflowWorkerEnabled(),
+      typicalCustomerState: isWorkflowWorkerEnabled() ? 'unauthorized' : 'disabled',
+      notes: 'Prisma-first jobs; WORKFORCE_TASK_PREPARE handler does not imply live worker cron.',
     },
   ]
 }

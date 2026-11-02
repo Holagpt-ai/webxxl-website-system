@@ -15,6 +15,12 @@ export const PILOT_MODULE_MIGRATIONS = {
     '20261031140000_batch28a_2_intake_payload_fingerprint',
   ],
   crmAudience: ['20261031120000_mkt25_crm_audience_planning'],
+  customerAi: ['20261020140000_ai_customer_13_foundation'],
+  customerAiPilot: ['20261102130000_batch37_customer_ai_pilot_persistence'],
+  workflowAuto10: [
+    '20261018280000_auto10_workflow_foundation',
+    '20261018290000_auto10c_outbox_dispatch_lease',
+  ],
 } as const
 
 /** Batch 31 customer pilot foundation — CRM, leads, analytics, platform identity (not full chain). */
@@ -43,4 +49,14 @@ export function allPilotMigrationFolders(): string[] {
 
 export function batch31FoundationMigrationFolders(): string[] {
   return BATCH31_PILOT_FOUNDATION_MODULES.flatMap((key) => [...PILOT_MODULE_MIGRATIONS[key]])
+}
+
+/** Batch 38 staging acceptance — foundation pilot modules plus AI pilot + AUTO-10 (inventory only). */
+export function batch38ReleaseMigrationFolders(): string[] {
+  return [
+    ...batch31FoundationMigrationFolders(),
+    ...PILOT_MODULE_MIGRATIONS.customerAi,
+    ...PILOT_MODULE_MIGRATIONS.customerAiPilot,
+    ...PILOT_MODULE_MIGRATIONS.workflowAuto10,
+  ]
 }
