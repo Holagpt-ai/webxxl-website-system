@@ -4,9 +4,10 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { validateMigrationOrderingSafeguards } from '@/lib/platform/pilot/migration-ordering-safeguards'
 
 describe('Batch 39A migration BOM guard', () => {
-  it('passes when no migration.sql contains UTF-8 BOM', () => {
+  it('passes when no migration.sql contains UTF-8 BOM or single-line swallowed SQL', () => {
     const result = validateMigrationOrderingSafeguards()
     expect(result.issues.some((i) => i.code === 'UTF8_BOM_IN_SQL')).toBe(false)
+    expect(result.issues.some((i) => i.code === 'SINGLE_LINE_MIGRATION_SQL')).toBe(false)
     expect(result.ok).toBe(true)
   })
 

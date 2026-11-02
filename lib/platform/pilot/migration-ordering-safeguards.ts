@@ -5,6 +5,7 @@ import { allRepositoryMigrationFolders } from '@/lib/platform/pilot/migration-re
 export type MigrationOrderingIssueCode =
   | 'MISSING_SQL'
   | 'UTF8_BOM_IN_SQL'
+  | 'SINGLE_LINE_MIGRATION_SQL'
   | 'DUPLICATE_TIMESTAMP_PREFIX'
   | 'UNSORTED_CHAIN'
   | 'EMPTY_CHAIN'
@@ -14,6 +15,14 @@ const UTF8_BOM = Buffer.from([0xef, 0xbb, 0xbf])
 function migrationSqlHasUtf8Bom(sqlPath: string): boolean {
   const head = fs.readFileSync(sqlPath).subarray(0, 3)
   return head.length >= 3 && head.equals(UTF8_BOM)
+}
+
+/** Postgres `--` comments to end-of-line; one-line files with `-- CreateEnum CREATE …` execute zero DDL. */
+function migrationSqlIsSingleLineSwallowed(sqlPath: string): boolean {
+  const raw = fs.readFileSync(sqlPath, 'utf8')
+  const lines = raw.split(/\r?\n/).filter((l) => l.trim().length > 0)
+  if (lines.length !== 1) return false
+  return lines[0]!.length > 200 && /-- Create(Enum|Table|Index|ForeignKey)\s+CREATE/i.test(lines[0]!)
 }
 
 export type MigrationOrderingIssue = {
@@ -48,10 +57,12 @@ export function validateMigrationOrderingSafeguards(cwd = process.cwd()): {
 
   const missingSql: string[] = []
   const bomInSql: string[] = []
+  const singleLineSql: string[] = []
   for (const folder of orderedFolders) {
     const sqlPath = path.join(cwd, 'prisma', 'migrations', folder, 'migration.sql')
     if (!fs.existsSync(sqlPath)) missingSql.push(folder)
     else if (migrationSqlHasUtf8Bom(sqlPath)) bomInSql.push(folder)
+    else if (migrationSqlIsSingleLineSwallowed(sqlPath)) singleLineSql.push(folder)
   }
   if (missingSql.length) {
     issues.push({
@@ -66,6 +77,14 @@ export function validateMigrationOrderingSafeguards(cwd = process.cwd()): {
       message:
         'migration.sql must be UTF-8 without BOM (Postgres rejects U+FEFF); strip EF BB BF from affected files',
       folders: bomInSql,
+    })
+  }
+  if (singleLineSql.length) {
+    issues.push({
+      code: 'SINGLE_LINE_MIGRATION_SQL',
+      message:
+        'migration.sql is a single physical line with inline Prisma comments — Postgres treats the entire file as one comment; split statements onto separate lines',
+      folders: singleLineSql,
     })
   }
 
@@ -87,7 +106,11 @@ export function validateMigrationOrderingSafeguards(cwd = process.cwd()): {
   }
 
   const blocking = issues.some(
-    (i) => i.code === 'MISSING_SQL' || i.code === 'UTF8_BOM_IN_SQL' || i.code === 'EMPTY_CHAIN',
+    (i) =>
+      i.code === 'MISSING_SQL' ||
+      i.code === 'UTF8_BOM_IN_SQL' ||
+      i.code === 'SINGLE_LINE_MIGRATION_SQL' ||
+      i.code === 'EMPTY_CHAIN',
   )
   return { ok: !blocking, folderCount: orderedFolders.length, issues, orderedFolders }
 }
