@@ -86,6 +86,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-11-02 | Batch 39D Staging CRM recovery attempt | Staging `vcgibefnhneaqhcguhnt` | **STOPPED** P3012 on foundation rollback; `crm05a` rolled back; no deploy |
 | 2026-11-02 | Batch 39E Clean migration rehearsal prep | [PR #96](https://github.com/Holagpt-ai/webxxl-website-system/pull/96), `a0d03aa` | **39** SQL files scanned, **0** formatting defects; inline SQL guard — **no DB writes** |
 | 2026-11-02 | Batch 39F Staging public reset + migrate deploy | Staging `vcgibefnhneaqhcguhnt` @ `a0d03aa` | **22/39** applied; **STOPPED** `comms06a_integrity` **42710** (duplicate enum `PROCESSING`); CRM **`CrmImportJob`** present |
-| 2026-11-02 | Batch 39G Comms migration repair (Phase 1) | PR TBD @ `a0d03aa` | Remove duplicate enum ADD VALUE; `DUPLICATE_ENUM_ADD_VALUE` guard; 39F docs — **no DB writes** |
+| 2026-11-02 | Batch 39G Comms migration repair (Phase 1) | [PR #97](https://github.com/Holagpt-ai/webxxl-website-system/pull/97), `2590565` | Remove duplicate enum ADD VALUE; `DUPLICATE_ENUM_ADD_VALUE` guard; 39F docs |
+| 2026-11-02 | Batch 39G Phase 2 staging deploy | Staging `vcgibefnhneaqhcguhnt` @ `2590565` | **resolve --rolled-back** OK; **deploy STOPPED** `comms06a` **42701**; **22/39**; readiness **false** |
+| 2026-11-02 | Batch 39H Comms migration consolidation | PR TBD @ `2590565` | Remove redundant comms06a DDL; `REDUNDANT_MIGRATION_DDL` guard; Phase 2 docs — **no DB writes** |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

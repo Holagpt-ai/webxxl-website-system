@@ -8,6 +8,7 @@ export type MigrationOrderingIssueCode =
   | 'SINGLE_LINE_MIGRATION_SQL'
   | 'INLINE_PRISMA_COMMENT_DDL'
   | 'DUPLICATE_ENUM_ADD_VALUE'
+  | 'REDUNDANT_MIGRATION_DDL'
   | 'DUPLICATE_TIMESTAMP_PREFIX'
   | 'UNSORTED_CHAIN'
   | 'EMPTY_CHAIN'
@@ -99,6 +100,95 @@ export type MigrationOrderingIssue = {
   folders?: string[]
 }
 
+const CREATE_TABLE_RE = /CREATE TABLE\s+"([^"]+)"\s*\(([\s\S]*?)\)\s*;/gi
+const CREATE_INDEX_RE = /CREATE (?:UNIQUE )?INDEX\s+"([^"]+)"/gi
+
+function ingestCreateTables(sql: string, tableColumns: Map<string, Set<string>>) {
+  CREATE_TABLE_RE.lastIndex = 0
+  let m: RegExpExecArray | null
+  while ((m = CREATE_TABLE_RE.exec(sql)) !== null) {
+    const table = m[1]!
+    const body = m[2]!
+    const cols = tableColumns.get(table) ?? new Set<string>()
+    const colRe = /"([^"]+)"\s+(?:"[^"]+"|[A-Za-z0-9_.]+(?:\([^)]*\))?)/g
+    let cm: RegExpExecArray | null
+    while ((cm = colRe.exec(body)) !== null) {
+      const name = cm[1]!
+      if (name.endsWith('_pkey') || name.endsWith('_key')) continue
+      cols.add(name)
+    }
+    tableColumns.set(table, cols)
+  }
+}
+
+function collectAddColumns(sql: string): { table: string; column: string }[] {
+  const out: { table: string; column: string }[] = []
+  const alterBlocks = sql.split(/(?=ALTER TABLE)/i)
+  for (const block of alterBlocks) {
+    const tableMatch = block.match(/ALTER TABLE\s+"([^"]+)"/i)
+    if (!tableMatch) continue
+    const table = tableMatch[1]!
+    const colRe = /ADD COLUMN\s+"([^"]+)"/gi
+    let m: RegExpExecArray | null
+    while ((m = colRe.exec(block)) !== null) out.push({ table, column: m[1]! })
+  }
+  return out
+}
+
+function ingestAddColumns(sql: string, tableColumns: Map<string, Set<string>>) {
+  for (const { table, column } of collectAddColumns(sql)) {
+    const cols = tableColumns.get(table) ?? new Set<string>()
+    cols.add(column)
+    tableColumns.set(table, cols)
+  }
+}
+
+function collectCreateIndexes(sql: string): string[] {
+  const names: string[] = []
+  CREATE_INDEX_RE.lastIndex = 0
+  let m: RegExpExecArray | null
+  while ((m = CREATE_INDEX_RE.exec(sql)) !== null) names.push(m[1]!)
+  return names
+}
+
+/** ADD COLUMN / CREATE INDEX in a later migration that repeats objects from an earlier migration in the chain. */
+export function findRedundantMigrationDdlIssues(
+  orderedFolders: string[],
+  cwd = process.cwd(),
+): MigrationOrderingIssue[] {
+  const tableColumns = new Map<string, Set<string>>()
+  const indexNames = new Set<string>()
+  const overlapFolders = new Set<string>()
+
+  for (const folder of orderedFolders) {
+    const sqlPath = path.join(cwd, 'prisma', 'migrations', folder, 'migration.sql')
+    if (!fs.existsSync(sqlPath)) continue
+    const raw = fs.readFileSync(sqlPath, 'utf8')
+
+    for (const { table, column } of collectAddColumns(raw)) {
+      const existing = tableColumns.get(table)
+      if (existing?.has(column)) overlapFolders.add(folder)
+    }
+    for (const indexName of collectCreateIndexes(raw)) {
+      if (indexNames.has(indexName)) overlapFolders.add(folder)
+    }
+
+    ingestCreateTables(raw, tableColumns)
+    ingestAddColumns(raw, tableColumns)
+    for (const indexName of collectCreateIndexes(raw)) indexNames.add(indexName)
+  }
+
+  if (overlapFolders.size === 0) return []
+  return [
+    {
+      code: 'REDUNDANT_MIGRATION_DDL',
+      message:
+        'Migration re-adds a column or index already created in an earlier migration — fails on clean deploy (42701 / duplicate index)',
+      folders: [...overlapFolders],
+    },
+  ]
+}
+
 /** Read-only validation before owner-authorized `prisma migrate deploy` on staging. */
 export function validateMigrationOrderingSafeguards(cwd = process.cwd()): {
   ok: boolean
@@ -184,6 +274,7 @@ export function validateMigrationOrderingSafeguards(cwd = process.cwd()): {
   }
 
   issues.push(...findDuplicateEnumAddValueIssues(orderedFolders, cwd))
+  issues.push(...findRedundantMigrationDdlIssues(orderedFolders, cwd))
 
   const blocking = issues.some(
     (i) =>
@@ -192,6 +283,7 @@ export function validateMigrationOrderingSafeguards(cwd = process.cwd()): {
       i.code === 'SINGLE_LINE_MIGRATION_SQL' ||
       i.code === 'INLINE_PRISMA_COMMENT_DDL' ||
       i.code === 'DUPLICATE_ENUM_ADD_VALUE' ||
+      i.code === 'REDUNDANT_MIGRATION_DDL' ||
       i.code === 'EMPTY_CHAIN',
   )
   return { ok: !blocking, folderCount: orderedFolders.length, issues, orderedFolders }

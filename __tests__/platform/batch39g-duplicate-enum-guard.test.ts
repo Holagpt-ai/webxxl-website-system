@@ -20,7 +20,7 @@ describe('Batch 39G duplicate enum ADD VALUE guard', () => {
       'utf8',
     )
     expect(sql).not.toMatch(/ADD VALUE 'PROCESSING'/)
-    expect(sql).toContain('ALTER TABLE "CommsWebhookReceipt"')
+    expect(sql).not.toMatch(/ADD COLUMN/)
   })
 
   it('detects duplicate ADD VALUE when injected', () => {

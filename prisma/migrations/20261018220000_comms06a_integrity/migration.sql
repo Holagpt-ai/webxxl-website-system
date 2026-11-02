@@ -1,18 +1,5 @@
--- CommsWebhookProcessingStatus already includes PROCESSING in comms06_foundation (Batch 39G).
+-- COMMS-06A integrity: consolidated into comms06_foundation (Batch 39H).
+-- Foundation already defines CommsWebhookReceipt columns, dedupe index, and provider composite index.
+-- Retain idempotent drop of legacy unique index for databases that predated eventDedupeKey.
 
--- AlterTable
-ALTER TABLE "CommsWebhookReceipt" ADD COLUMN     "tenantMappingId" TEXT,
-ADD COLUMN     "externalAccountId" TEXT,
-ADD COLUMN     "eventDedupeKey" TEXT,
-ADD COLUMN     "relayTimestampSeconds" INTEGER,
-ADD COLUMN     "claimedAt" TIMESTAMP(3),
-ADD COLUMN     "claimedBy" TEXT;
-
--- CreateIndex
-CREATE UNIQUE INDEX "CommsWebhookReceipt_eventDedupeKey_key" ON "CommsWebhookReceipt"("eventDedupeKey");
-
--- CreateIndex
-CREATE INDEX "CommsWebhookReceipt_providerKey_providerInstanceId_externalA_idx" ON "CommsWebhookReceipt"("providerKey", "providerInstanceId", "externalAccountId", "eventType");
-
--- DropIndex
-DROP INDEX "CommsWebhookReceipt_providerKey_externalEventId_key";
+DROP INDEX IF EXISTS "CommsWebhookReceipt_providerKey_externalEventId_key";

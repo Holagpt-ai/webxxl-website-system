@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-02 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `a0d03aa2324a17d655bb1929e20f3fb1c3fdd810` (PR #96)
+**Evidence review:** 2026-11-02 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `2590565f3b3a705097f3484345e19dae4af2b967` (PR #97)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,12 +35,12 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **Batch 39G** comms enum repair **IN PR**; staging still **22/39** @ failed `comms06a` (39F) until Phase 2 |
-| 2 | GitHub SHA, branch, active PR | `a0d03aa2324a17d655bb1929e20f3fb1c3fdd810` on `main`; Batch **39G** PR open |
+| 1 | Last verified checkpoint | **Batch 39H** comms consolidation **IN PR**; staging **22/39** until post-merge deploy |
+| 2 | GitHub SHA, branch, active PR | `2590565f3b3a705097f3484345e19dae4af2b967` on `main`; Batch **39H** PR open |
 | 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` (last verified); post–#90 deploy **UNVERIFIED**. SHA only — not migration, AI activation, Chatwoot/Twilio/Resend live outbound |
 | 4 | Last updated | 2026-11-02 |
-| 5 | Next task / responsible platform | Merge **39G** → owner authorize **39G Phase 2** staging resolve/deploy — **Cursor** |
-| 6 | Open blocker / gate IDs | Staging **16** migrations pending after merge; edited migration + resolve policy; production **UNVERIFIED** |
+| 5 | Next task / responsible platform | Merge **39H** → owner authorize staging resolve/deploy — **Cursor** |
+| 6 | Open blocker / gate IDs | Staging failed `comms06a` until 39H merge + deploy; production **UNVERIFIED** |
 
 ### Evidence table
 
