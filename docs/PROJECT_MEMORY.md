@@ -36,7 +36,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | **37** **MERGED** (PR #89 @ `8c2e5df…`); **Batch 38** release readiness **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `8c2e5df7f79eb7538e1fe6d513316f70026bbe6d` on `main`; **Batch 38** on `feature/batch-38-release-readiness` (open) |
+| 2 | GitHub SHA, branch, active PR | `8c2e5df7f79eb7538e1fe6d513316f70026bbe6d` on `main`; **PR #90** on `feature/batch-38-release-readiness` @ `d2f3703cc37f74f2e3f140f6217b5c7a56180723` (open) |
 | 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` (last verified); post–#89 deploy **UNVERIFIED**. SHA only — not migration, AI activation, Chatwoot/Twilio/Resend live outbound |
 | 4 | Last updated | 2026-11-02 |
 | 5 | Next task / responsible platform | **Owner** review/merge **Batch 38** PR (**Cursor**); isolated staging DB + `pnpm release:readiness` / migrate deploy rehearsal — **Owner** |
