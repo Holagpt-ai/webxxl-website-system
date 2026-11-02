@@ -23,6 +23,7 @@ import type {
 } from '@/lib/platform/customer-ai-workforce/pilot-types'
 import { findPilotTaskByIdempotency, savePilotTask } from '@/lib/platform/customer-ai-workforce/pilot-task-store'
 import { maybeEnqueueCustomerAiPilotWorkflowTask } from '@/lib/platform/customer-ai-workforce/pilot-workflow-integration'
+import { isPilotIdempotencyConflict } from '@/lib/platform/customer-ai-workforce/pilot-workflow-transition'
 import type { CustomerAiPilotTaskRecord } from '@/lib/platform/customer-ai-workforce/pilot-types'
 import { buildPilotWorkflowDraft, type PilotWorkflowContext } from '@/lib/platform/customer-ai-workforce/pilot-workflows'
 import { getCustomerAiTool } from '@/lib/platform/customer-ai-workforce/tool-catalog'
@@ -60,6 +61,7 @@ export type CustomerAiPilotTaskDto = {
   durable: boolean
   workflowSyncState: CustomerAiPilotTaskRecord['workflowSyncState']
   workflowJobId: string | null
+  workflowEnqueue?: { queued: boolean; reason?: string; recovery?: string }
 }
 
 async function assertAccountAccess(
@@ -72,7 +74,10 @@ async function assertAccountAccess(
   return { ok: false, error: 'FORBIDDEN', message: 'Operating membership required' }
 }
 
-function toDto(task: CustomerAiPilotTaskRecord): CustomerAiPilotTaskDto {
+function toDto(
+  task: CustomerAiPilotTaskRecord,
+  workflowEnqueue?: CustomerAiPilotTaskDto['workflowEnqueue'],
+): CustomerAiPilotTaskDto {
   return {
     taskId: task.id,
     publicId: task.publicId,
@@ -89,6 +94,7 @@ function toDto(task: CustomerAiPilotTaskRecord): CustomerAiPilotTaskDto {
     durable: task.provenance.durable === true,
     workflowSyncState: task.workflowSyncState,
     workflowJobId: task.workflowJobId,
+    ...(workflowEnqueue ? { workflowEnqueue } : {}),
   }
 }
 
@@ -275,35 +281,47 @@ export async function prepareCustomerAiPilotTask(
   const outcome: CustomerAiPilotOutcomeLabel = workflow.outcomeHint
   const correlationId = randomUUID()
 
-  const task = await savePilotTask({
-    customerAccountId: input.customerAccountId,
-    managedSiteId: effectiveSiteId,
-    employeeId: input.employeeId,
-    workflowKind: input.workflowKind,
-    toolKey: workflow.toolKey,
-    accessMode: workflow.accessMode,
-    idempotencyKey: input.idempotencyKey,
-    requestFingerprint,
-    outcome,
-    actionHash,
-    draftPayload: workflow.draftPayload,
-    provenance: {
-      source: dataSource.value === 'TEST_SYNTHETIC' ? 'DETERMINISTIC_PILOT_V1_TEST' : 'DETERMINISTIC_PILOT_V1',
-      contentLabel: outcome === 'UNVERIFIED' ? 'UNVERIFIED' : 'PREPARED_DRAFT',
-      locale: input.context.locale,
-      correlationId,
-      preparedAt: new Date().toISOString(),
-      actorUserId: actor.userId,
-      durable: pilotPersistenceDurable(),
-    },
-    requiresHumanApproval: workflow.requiresHumanApproval,
-    approvalId: null,
-    estimatedCostUnits: workflow.estimatedCostUnits,
-    blockedReason: null,
-    workflowJobId: null,
-    workflowSyncState: 'NOT_QUEUED',
-    workflowValidatedAt: null,
-  })
+  let task: CustomerAiPilotTaskRecord
+  try {
+    task = await savePilotTask({
+      customerAccountId: input.customerAccountId,
+      managedSiteId: effectiveSiteId,
+      employeeId: input.employeeId,
+      workflowKind: input.workflowKind,
+      toolKey: workflow.toolKey,
+      accessMode: workflow.accessMode,
+      idempotencyKey: input.idempotencyKey,
+      requestFingerprint,
+      outcome,
+      actionHash,
+      draftPayload: workflow.draftPayload,
+      provenance: {
+        source: dataSource.value === 'TEST_SYNTHETIC' ? 'DETERMINISTIC_PILOT_V1_TEST' : 'DETERMINISTIC_PILOT_V1',
+        contentLabel: outcome === 'UNVERIFIED' ? 'UNVERIFIED' : 'PREPARED_DRAFT',
+        locale: input.context.locale,
+        correlationId,
+        preparedAt: new Date().toISOString(),
+        actorUserId: actor.userId,
+        durable: pilotPersistenceDurable(),
+      },
+      requiresHumanApproval: workflow.requiresHumanApproval,
+      approvalId: null,
+      estimatedCostUnits: workflow.estimatedCostUnits,
+      blockedReason: null,
+      workflowJobId: null,
+      workflowSyncState: 'NOT_QUEUED',
+      workflowValidatedAt: null,
+    })
+  } catch (error) {
+    if (isPilotIdempotencyConflict(error)) {
+      return {
+        ok: false,
+        error: 'VALIDATION',
+        message: 'Idempotency key reused with a different request fingerprint',
+      }
+    }
+    throw error
+  }
 
   await store.appendEmployeeAudit({
     employeeId: input.employeeId,
@@ -328,7 +346,7 @@ export async function prepareCustomerAiPilotTask(
     await store.incrementTokenReservation(input.employeeId, input.customerAccountId, workflow.estimatedCostUnits)
   }
 
-  await maybeEnqueueCustomerAiPilotWorkflowTask(task)
+  const enqueueResult = await maybeEnqueueCustomerAiPilotWorkflowTask(task)
 
   const refreshed = (await findPilotTaskByIdempotency(
     input.customerAccountId,
@@ -336,7 +354,31 @@ export async function prepareCustomerAiPilotTask(
     input.idempotencyKey,
   )) ?? task
 
-  return { ok: true, value: toDto(refreshed) }
+  if (!enqueueResult.queued && enqueueResult.recovery) {
+    await store.appendEmployeeAudit({
+      employeeId: input.employeeId,
+      customerAccountId: input.customerAccountId,
+      action: 'PILOT_WORKFLOW_ENQUEUE_FAILED',
+      fromStatus: null,
+      toStatus: null,
+      actorUserId: actor.userId,
+      metadata: {
+        taskId: refreshed.id,
+        reason: enqueueResult.reason,
+        recovery: enqueueResult.recovery,
+        workflowSyncState: refreshed.workflowSyncState,
+      },
+    })
+  }
+
+  return {
+    ok: true,
+    value: toDto(refreshed, {
+      queued: enqueueResult.queued,
+      ...(enqueueResult.reason ? { reason: enqueueResult.reason } : {}),
+      ...(enqueueResult.recovery ? { recovery: enqueueResult.recovery } : {}),
+    }),
+  }
 }
 
 async function blockedTask(

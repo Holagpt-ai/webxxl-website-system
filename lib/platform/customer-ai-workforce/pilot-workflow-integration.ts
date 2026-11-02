@@ -2,6 +2,7 @@ import { isCustomerAiPilotWorkflowEnqueueEnabled } from '@/config/customer-ai-wo
 import { enqueueWorkflowJob } from '@/lib/platform/workflow/enqueue-service'
 import type { CustomerAiPilotTaskRecord } from '@/lib/platform/customer-ai-workforce/pilot-types'
 import { updatePilotTaskWorkflow } from '@/lib/platform/customer-ai-workforce/pilot-task-store'
+import { PILOT_WORKFLOW_ENQUEUE_FAILURE_RECOVERY } from '@/lib/platform/customer-ai-workforce/pilot-workflow-transition'
 
 /**
  * Enqueues AUTO-10 WORKFORCE_TASK_PREPARE for post-preparation validation.
@@ -9,7 +10,7 @@ import { updatePilotTaskWorkflow } from '@/lib/platform/customer-ai-workforce/pi
  */
 export async function maybeEnqueueCustomerAiPilotWorkflowTask(
   task: CustomerAiPilotTaskRecord,
-): Promise<{ queued: boolean; workflowJobId?: string; reason?: string }> {
+): Promise<{ queued: boolean; workflowJobId?: string; reason?: string; recovery?: string }> {
   if (task.outcome === 'BLOCKED' || task.outcome === 'UNVERIFIED') {
     return { queued: false, reason: 'outcome_not_queueable' }
   }
@@ -38,13 +39,24 @@ export async function maybeEnqueueCustomerAiPilotWorkflowTask(
   })
 
   if (!enqueue.ok) {
-    await updatePilotTaskWorkflow(task.id, { workflowSyncState: 'FAILED' })
-    return { queued: false, reason: enqueue.message ?? enqueue.error }
+    const reason = enqueue.message ?? enqueue.error
+    await updatePilotTaskWorkflow(task.id, {
+      workflowSyncState: 'FAILED',
+      blockedReason: `ENQUEUE_FAILED:${reason}`,
+      ifCurrentSyncStateIn: ['NOT_QUEUED'],
+    })
+    return {
+      queued: false,
+      reason,
+      recovery: PILOT_WORKFLOW_ENQUEUE_FAILURE_RECOVERY,
+    }
   }
 
   await updatePilotTaskWorkflow(task.id, {
     workflowJobId: enqueue.value.id,
     workflowSyncState: 'QUEUED',
+    blockedReason: null,
+    ifCurrentSyncStateIn: ['NOT_QUEUED', 'FAILED'],
   })
   return { queued: true, workflowJobId: enqueue.value.id }
 }

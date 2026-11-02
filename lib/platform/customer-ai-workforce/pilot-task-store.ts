@@ -67,7 +67,7 @@ export async function findPilotApprovalById(id: string): Promise<CustomerAiPilot
 export async function updatePilotApproval(
   id: string,
   patch: Partial<CustomerAiPilotApprovalRecord>,
-  options?: { consumeIfUnset?: boolean },
+  options?: { consumeIfUnset?: boolean; customerAccountId?: string },
 ): Promise<CustomerAiPilotApprovalRecord | null> {
   return activePersistence.updatePilotApproval(id, patch, options)
 }

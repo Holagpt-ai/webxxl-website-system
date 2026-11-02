@@ -8,6 +8,7 @@ import type {
   SavePilotTaskInput,
   PilotTaskWorkflowPatch,
 } from '@/lib/platform/customer-ai-workforce/pilot-task-persistence'
+import { pilotWorkflowTransitionAllowed } from '@/lib/platform/customer-ai-workforce/pilot-workflow-transition'
 
 const tasks = new Map<string, CustomerAiPilotTaskRecord>()
 const tasksByIdempotency = new Map<string, string>()
@@ -36,6 +37,17 @@ export const memoryPilotTaskPersistence: PilotTaskPersistence = {
   },
 
   async savePilotTask(record: SavePilotTaskInput) {
+    const idemKey = `${record.customerAccountId}:${record.employeeId}:${record.idempotencyKey}`
+    const existingId = tasksByIdempotency.get(idemKey)
+    if (existingId) {
+      const existing = tasks.get(existingId)
+      if (existing) {
+        if (existing.requestFingerprint !== record.requestFingerprint) {
+          throw Object.assign(new Error('Idempotency fingerprint conflict'), { code: 'PILOT_IDEMPOTENCY_CONFLICT' })
+        }
+        return existing
+      }
+    }
     const id = nextPublicId('pilot_task')
     const full: CustomerAiPilotTaskRecord = {
       ...record,
@@ -58,7 +70,19 @@ export const memoryPilotTaskPersistence: PilotTaskPersistence = {
   async updatePilotTaskWorkflow(taskId: string, patch: PilotTaskWorkflowPatch) {
     const existing = tasks.get(taskId)
     if (!existing) return null
-    const next = { ...existing, ...patch }
+    if (!pilotWorkflowTransitionAllowed(existing.workflowSyncState, patch)) {
+      return existing
+    }
+    if (patch.ifCurrentSyncStateIn && !patch.ifCurrentSyncStateIn.includes(existing.workflowSyncState)) {
+      return existing
+    }
+    const next: CustomerAiPilotTaskRecord = {
+      ...existing,
+      ...(patch.workflowJobId !== undefined ? { workflowJobId: patch.workflowJobId } : {}),
+      ...(patch.workflowSyncState !== undefined ? { workflowSyncState: patch.workflowSyncState } : {}),
+      ...(patch.workflowValidatedAt !== undefined ? { workflowValidatedAt: patch.workflowValidatedAt } : {}),
+      ...(patch.blockedReason !== undefined ? { blockedReason: patch.blockedReason } : {}),
+    }
     tasks.set(taskId, next)
     return next
   },
@@ -77,6 +101,9 @@ export const memoryPilotTaskPersistence: PilotTaskPersistence = {
   async updatePilotApproval(id, patch, options) {
     const existing = approvals.get(id)
     if (!existing) return null
+    if (options?.consumeIfUnset && options.customerAccountId && existing.customerAccountId !== options.customerAccountId) {
+      return null
+    }
     if (options?.consumeIfUnset && existing.consumedAt) return null
     if (options?.consumeIfUnset && existing.revokedAt) return null
     const next = { ...existing, ...patch }

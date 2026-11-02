@@ -184,7 +184,11 @@ export async function validateCustomerAiPilotApproval(
   }
 
   if (input.consume) {
-    const consumed = await updatePilotApproval(input.approvalId, { consumedAt: new Date() }, { consumeIfUnset: true })
+    const consumed = await updatePilotApproval(
+      input.approvalId,
+      { consumedAt: new Date() },
+      { consumeIfUnset: true, customerAccountId: input.customerAccountId },
+    )
     if (!consumed) return { ok: false, error: 'FORBIDDEN', message: 'Approval already consumed' }
   }
   return { ok: true, value: { approvalId: input.approvalId } }

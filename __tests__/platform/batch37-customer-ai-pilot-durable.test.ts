@@ -26,6 +26,8 @@ import {
   updatePilotTaskWorkflow,
 } from '@/lib/platform/customer-ai-workforce/pilot-task-store'
 import { maybeEnqueueCustomerAiPilotWorkflowTask } from '@/lib/platform/customer-ai-workforce/pilot-workflow-integration'
+import { PILOT_WORKFLOW_ENQUEUE_FAILURE_RECOVERY } from '@/lib/platform/customer-ai-workforce/pilot-workflow-transition'
+import { updatePilotApproval, savePilotApproval } from '@/lib/platform/customer-ai-workforce/pilot-task-store'
 import type { CustomerAiPilotTaskRecord } from '@/lib/platform/customer-ai-workforce/pilot-types'
 import * as workflowEnqueue from '@/lib/platform/workflow/enqueue-service'
 import * as prepService from '@/lib/platform/customer-ai-workforce/pilot-prep-service'
@@ -310,13 +312,202 @@ describe('Batch 37 — durable pilot persistence + AUTO-10 integration', () => {
     expect(found?.workflowKind).toBe('receptionist_preparation')
   })
 
-  it('recovery: handler is idempotent when task already validated', async () => {
+  it('enqueue failure marks FAILED with recovery and does not overwrite VALIDATED', async () => {
+    vi.stubEnv('CUSTOMER_AI_PILOT_WORKFLOW_ENQUEUE_ENABLED', 'true')
+    vi.spyOn(workflowEnqueue, 'enqueueWorkflowJob').mockResolvedValue({
+      ok: false,
+      error: 'NOT_CONFIGURED',
+      message: 'Workflow enqueue disabled',
+    })
+    const validated = await savePilotTask(
+      toSaveInput(sampleTask({ workflowSyncState: 'VALIDATED', workflowValidatedAt: new Date() })),
+    )
+    const result = await maybeEnqueueCustomerAiPilotWorkflowTask(validated)
+    expect(result.queued).toBe(false)
+    expect(result.recovery).toBe(PILOT_WORKFLOW_ENQUEUE_FAILURE_RECOVERY)
+    const row = await memoryPilotTaskPersistence.findPilotTaskById(validated.id)
+    expect(row?.workflowSyncState).toBe('VALIDATED')
+
+    const fresh = await savePilotTask(toSaveInput(sampleTask({ idempotencyKey: 'enqueue-fail-idem' })))
+    const fail = await maybeEnqueueCustomerAiPilotWorkflowTask(fresh)
+    expect(fail.recovery).toBe(PILOT_WORKFLOW_ENQUEUE_FAILURE_RECOVERY)
+    const failed = await memoryPilotTaskPersistence.findPilotTaskById(fresh.id)
+    expect(failed?.workflowSyncState).toBe('FAILED')
+    expect(failed?.blockedReason).toMatch(/^ENQUEUE_FAILED:/)
+  })
+
+  it('savePilotTask rejects idempotency fingerprint conflicts', async () => {
+    await savePilotTask(toSaveInput(sampleTask({ idempotencyKey: 'dup-key', requestFingerprint: 'a' })))
+    await expect(
+      savePilotTask(toSaveInput(sampleTask({ idempotencyKey: 'dup-key', requestFingerprint: 'b' }))),
+    ).rejects.toMatchObject({ code: 'PILOT_IDEMPOTENCY_CONFLICT' })
+  })
+
+  it('approval consume is atomic and tenant-bound', async () => {
+    const task = await savePilotTask(toSaveInput(sampleTask()))
+    const approval = await savePilotApproval({
+      preparedTaskId: task.id,
+      customerAccountId: task.customerAccountId,
+      managedSiteId: task.managedSiteId,
+      employeeId: task.employeeId,
+      toolKey: task.toolKey,
+      workflowKind: task.workflowKind,
+      actionHash: task.actionHash,
+      allowedAction: 'execute_prepared_draft',
+      destinationRef: null,
+      approvedByUserId: 'staff',
+      approverPlatformRole: 'ADMIN',
+      maxCostUnits: 10,
+      expiresAt: new Date(Date.now() + 60_000),
+      consumedAt: null,
+      revokedAt: null,
+    })
+    const wrongTenant = await updatePilotApproval(
+      approval.id,
+      { consumedAt: new Date() },
+      { consumeIfUnset: true, customerAccountId: 'other_acct' },
+    )
+    expect(wrongTenant).toBeNull()
+    const ok = await updatePilotApproval(
+      approval.id,
+      { consumedAt: new Date() },
+      { consumeIfUnset: true, customerAccountId: task.customerAccountId },
+    )
+    expect(ok?.consumedAt).not.toBeNull()
+    const replay = await updatePilotApproval(
+      approval.id,
+      { consumedAt: new Date() },
+      { consumeIfUnset: true, customerAccountId: task.customerAccountId },
+    )
+    expect(replay).toBeNull()
+  })
+
+  it('stale workers cannot downgrade VALIDATED without invalidation', async () => {
+    const saved = await savePilotTask(toSaveInput(sampleTask()))
+    await updatePilotTaskWorkflow(saved.id, {
+      workflowSyncState: 'VALIDATED',
+      workflowValidatedAt: new Date(),
+      ifCurrentSyncStateIn: ['NOT_QUEUED', 'QUEUED'],
+    })
+    const after = await updatePilotTaskWorkflow(saved.id, {
+      workflowSyncState: 'FAILED',
+      ifCurrentSyncStateIn: ['QUEUED'],
+    })
+    expect(after?.workflowSyncState).toBe('VALIDATED')
+  })
+
+  it('validated workflow retry re-checks pause and does not complete when ineligible', async () => {
+    vi.stubEnv('CUSTOMER_AI_PILOT_PREP_ENABLED', 'true')
+    const saved = await savePilotTask(toSaveInput(sampleTask()))
+    await updatePilotTaskWorkflow(saved.id, {
+      workflowSyncState: 'VALIDATED',
+      workflowValidatedAt: new Date(),
+      ifCurrentSyncStateIn: ['NOT_QUEUED', 'QUEUED'],
+    })
+    vi.spyOn(prismaStore.prismaCustomerAiStore, 'findEmployeeById').mockResolvedValue({
+      id: saved.employeeId,
+      publicId: 'emp_pub',
+      customerAccountId: saved.customerAccountId,
+      managedSiteId: saved.managedSiteId,
+      projectId: null,
+      displayName: 'Agent',
+      roleTitle: 'Assistant',
+      description: null,
+      configJson: {},
+      primaryLocale: 'en',
+      secondaryLocales: [],
+      status: 'ACTIVE',
+      entitlementKey: 'future.ai-employee',
+      emergencyPaused: true,
+      createdByUserId: null,
+      updatedByUserId: null,
+      archivedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    vi.spyOn(prepService, 'recheckPilotPreparationEligibility')
+    const outcome = await executeWorkforceTaskPrepareWorkflow(
+      {
+        job: {
+          id: 'wf_pause',
+          jobKind: 'WORKFORCE_TASK_PREPARE',
+          customerAccountId: saved.customerAccountId,
+          managedSiteId: saved.managedSiteId,
+          billingGroupId: null,
+          correlationId: 'c',
+          sourceType: 'CustomerAiPilotTask',
+          sourceId: saved.id,
+          sourceRevisionHash: saved.actionHash,
+          idempotencyKey: 'k-pause',
+          requestFingerprint: 'fp',
+          status: 'RUNNING',
+          priority: 0,
+          scheduledAt: new Date(),
+          nextAttemptAt: new Date(),
+          attemptCount: 2,
+          maxAttempts: 8,
+          leaseOwner: 'worker',
+          leaseToken: 'tok',
+          leaseExpiresAt: new Date(Date.now() + 60_000),
+          leaseFence: 2,
+          lastErrorCode: null,
+          lastErrorClass: null,
+          resultRef: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          completedAt: null,
+        },
+        attemptNumber: 2,
+        workerId: 'worker-test',
+        leaseToken: 'tok',
+        leaseFence: 2,
+      },
+      { pilotTaskId: saved.id, actionHash: saved.actionHash },
+    )
+    expect(outcome.outcome).toBe('RETRY')
+    expect(prepService.recheckPilotPreparationEligibility).toHaveBeenCalled()
+    const row = await memoryPilotTaskPersistence.findPilotTaskById(saved.id)
+    expect(row?.workflowSyncState).toBe('FAILED')
+  })
+
+  it('recovery: handler completes when already validated and still eligible', async () => {
     vi.stubEnv('CUSTOMER_AI_PILOT_PREP_ENABLED', 'true')
     const saved = await savePilotTask(toSaveInput(sampleTask()))
     const validatedAt = new Date()
     await updatePilotTaskWorkflow(saved.id, {
       workflowSyncState: 'VALIDATED',
       workflowValidatedAt: validatedAt,
+      ifCurrentSyncStateIn: ['NOT_QUEUED', 'QUEUED'],
+    })
+    vi.spyOn(prismaStore.prismaCustomerAiStore, 'findEmployeeById').mockResolvedValue({
+      id: saved.employeeId,
+      publicId: 'emp_pub',
+      customerAccountId: saved.customerAccountId,
+      managedSiteId: saved.managedSiteId,
+      projectId: null,
+      displayName: 'Agent',
+      roleTitle: 'Assistant',
+      description: null,
+      configJson: {},
+      primaryLocale: 'en',
+      secondaryLocales: [],
+      status: 'ACTIVE',
+      entitlementKey: 'future.ai-employee',
+      emergencyPaused: false,
+      createdByUserId: null,
+      updatedByUserId: null,
+      archivedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    vi.spyOn(prismaStore.prismaCustomerAiStore, 'getUsagePolicy').mockResolvedValue({
+      customerAccountId: saved.customerAccountId,
+      maxActiveEmployees: 5,
+      monthlyMessageBudget: null,
+      monthlyTokenBudget: 500,
+      rateLimitPerMinute: 100,
+      executionEnabled: false,
+      emergencyDisabled: false,
     })
     const recheckSpy = vi.spyOn(prepService, 'recheckPilotPreparationEligibility')
     const outcome = await executeWorkforceTaskPrepareWorkflow(
@@ -358,6 +549,6 @@ describe('Batch 37 — durable pilot persistence + AUTO-10 integration', () => {
       { pilotTaskId: saved.id, actionHash: saved.actionHash },
     )
     expect(outcome.outcome).toBe('COMPLETED')
-    expect(recheckSpy).not.toHaveBeenCalled()
+    expect(recheckSpy).toHaveBeenCalled()
   })
 })

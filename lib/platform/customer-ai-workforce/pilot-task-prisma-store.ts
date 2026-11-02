@@ -18,6 +18,7 @@ import type {
   SavePilotTaskInput,
   PilotTaskWorkflowPatch,
 } from '@/lib/platform/customer-ai-workforce/pilot-task-persistence'
+import { pilotWorkflowTransitionAllowed } from '@/lib/platform/customer-ai-workforce/pilot-workflow-transition'
 
 function isP2002(error: unknown): boolean {
   return typeof error === 'object' && error !== null && 'code' in error && (error as { code: string }).code === 'P2002'
@@ -153,15 +154,34 @@ export const prismaPilotTaskPersistence: PilotTaskPersistence = {
   },
 
   async updatePilotTaskWorkflow(taskId: string, patch: PilotTaskWorkflowPatch) {
-    try {
-      const updated = await prisma.customerAiPilotTask.update({
-        where: { id: taskId },
-        data: {
-          workflowJobId: patch.workflowJobId,
-          workflowSyncState: patch.workflowSyncState,
-          workflowValidatedAt: patch.workflowValidatedAt,
-        },
+    const existing = await prisma.customerAiPilotTask.findUnique({ where: { id: taskId } })
+    if (!existing) return null
+    if (!pilotWorkflowTransitionAllowed(existing.workflowSyncState, patch)) {
+      return mapTask(existing)
+    }
+
+    const data = {
+      ...(patch.workflowJobId !== undefined ? { workflowJobId: patch.workflowJobId } : {}),
+      ...(patch.workflowSyncState !== undefined ? { workflowSyncState: patch.workflowSyncState } : {}),
+      ...(patch.workflowValidatedAt !== undefined ? { workflowValidatedAt: patch.workflowValidatedAt } : {}),
+      ...(patch.blockedReason !== undefined ? { blockedReason: patch.blockedReason } : {}),
+    }
+
+    if (patch.ifCurrentSyncStateIn?.length) {
+      const result = await prisma.customerAiPilotTask.updateMany({
+        where: { id: taskId, workflowSyncState: { in: patch.ifCurrentSyncStateIn } },
+        data,
       })
+      if (result.count < 1) {
+        const current = await prisma.customerAiPilotTask.findUnique({ where: { id: taskId } })
+        return current ? mapTask(current) : null
+      }
+      const updated = await prisma.customerAiPilotTask.findUnique({ where: { id: taskId } })
+      return updated ? mapTask(updated) : null
+    }
+
+    try {
+      const updated = await prisma.customerAiPilotTask.update({ where: { id: taskId }, data })
       return mapTask(updated)
     } catch {
       return null
@@ -206,7 +226,12 @@ export const prismaPilotTaskPersistence: PilotTaskPersistence = {
   async updatePilotApproval(id, patch, options) {
     if (options?.consumeIfUnset) {
       const result = await prisma.customerAiPilotApproval.updateMany({
-        where: { id, consumedAt: null, revokedAt: null },
+        where: {
+          id,
+          ...(options.customerAccountId ? { customerAccountId: options.customerAccountId } : {}),
+          consumedAt: null,
+          revokedAt: null,
+        },
         data: { consumedAt: patch.consumedAt ?? new Date() },
       })
       if (result.count < 1) return null

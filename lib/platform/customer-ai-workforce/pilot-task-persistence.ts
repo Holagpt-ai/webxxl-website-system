@@ -11,6 +11,11 @@ export type PilotTaskWorkflowPatch = {
   workflowJobId?: string | null
   workflowSyncState?: CustomerAiPilotTaskRecord['workflowSyncState']
   workflowValidatedAt?: Date | null
+  blockedReason?: string | null
+  /** Apply only when the row is currently in one of these sync states (compare-and-set). */
+  ifCurrentSyncStateIn?: CustomerAiPilotTaskRecord['workflowSyncState'][]
+  /** Allow leaving VALIDATED (e.g. eligibility revoked after prior validation). */
+  invalidateValidated?: boolean
 }
 
 export interface PilotTaskPersistence {
@@ -28,7 +33,7 @@ export interface PilotTaskPersistence {
   updatePilotApproval(
     id: string,
     patch: Partial<CustomerAiPilotApprovalRecord>,
-    options?: { consumeIfUnset?: boolean },
+    options?: { consumeIfUnset?: boolean; customerAccountId?: string },
   ): Promise<CustomerAiPilotApprovalRecord | null>
   linkPilotTaskApproval(taskId: string, approvalId: string): Promise<void>
 }

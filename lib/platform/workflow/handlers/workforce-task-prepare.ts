@@ -38,12 +38,11 @@ export async function executeWorkforceTaskPrepareWorkflow(
     return { outcome: 'FAILED_TERMINAL', errorClass: 'PERMANENT', errorCode: 'SOURCE_BINDING_MISMATCH' }
   }
 
-  if (task.workflowSyncState === 'VALIDATED' && task.workflowValidatedAt) {
-    return { outcome: 'COMPLETED', resultRef: `pilot_validated:${task.id}` }
-  }
-
   if (task.outcome === 'BLOCKED' || task.outcome === 'UNVERIFIED') {
-    await updatePilotTaskWorkflow(task.id, { workflowSyncState: 'FAILED' })
+    await updatePilotTaskWorkflow(task.id, {
+      workflowSyncState: 'FAILED',
+      ifCurrentSyncStateIn: ['NOT_QUEUED', 'QUEUED', 'FAILED'],
+    })
     return { outcome: 'FAILED_TERMINAL', errorClass: 'PERMANENT', errorCode: 'PILOT_OUTCOME_NOT_VALIDATABLE' }
   }
 
@@ -60,8 +59,14 @@ export async function executeWorkforceTaskPrepareWorkflow(
       trustedDataSource: 'SERVER',
     },
   })
+
   if (!recheck.ok) {
-    await updatePilotTaskWorkflow(task.id, { workflowSyncState: 'FAILED' })
+    await updatePilotTaskWorkflow(task.id, {
+      workflowSyncState: 'FAILED',
+      workflowValidatedAt: null,
+      invalidateValidated: true,
+      ifCurrentSyncStateIn: ['QUEUED', 'NOT_QUEUED', 'VALIDATED', 'FAILED'],
+    })
     return {
       outcome: 'RETRY',
       errorClass: 'TRANSIENT',
@@ -70,11 +75,25 @@ export async function executeWorkforceTaskPrepareWorkflow(
     }
   }
 
-  const validatedAt = new Date()
+  if (task.workflowSyncState === 'VALIDATED' && task.workflowValidatedAt) {
+    return { outcome: 'COMPLETED', resultRef: `pilot_validated:${task.id}` }
+  }
+
   await updatePilotTaskWorkflow(task.id, {
     workflowSyncState: 'VALIDATED',
-    workflowValidatedAt: validatedAt,
+    workflowValidatedAt: new Date(),
+    ifCurrentSyncStateIn: ['QUEUED', 'NOT_QUEUED'],
   })
 
-  return { outcome: 'COMPLETED', resultRef: `pilot_validated:${task.id}` }
+  const after = await findPilotTaskById(task.id)
+  if (after?.workflowSyncState === 'VALIDATED') {
+    return { outcome: 'COMPLETED', resultRef: `pilot_validated:${task.id}` }
+  }
+
+  return {
+    outcome: 'RETRY',
+    errorClass: 'TRANSIENT',
+    errorCode: 'WORKFLOW_TRANSITION_RACE',
+    retryAfterMs: 5_000,
+  }
 }

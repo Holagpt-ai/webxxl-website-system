@@ -19,7 +19,7 @@ Requires `CUSTOMER_AI_WORKFORCE_ENABLED` and `CUSTOMER_AI_PILOT_PREP_ENABLED` fo
 
 ## AUTO-10 integration
 
-After preparation (when enqueue flag on), jobs use kind `WORKFORCE_TASK_PREPARE`, `sourceType` `CustomerAiPilotTask`, idempotency `customer-ai-pilot:prepare:{taskId}`. Handler revalidates employee ACTIVE/pause/policy and tenant binding; marks task `workflowSyncState=VALIDATED`. Retries are idempotent when already validated. No external provider calls.
+After preparation (when enqueue flag on), jobs use kind `WORKFORCE_TASK_PREPARE`, `sourceType` `CustomerAiPilotTask`, idempotency `customer-ai-pilot:prepare:{taskId}`. Handler revalidates employee ACTIVE/pause/policy and tenant binding on **every** attempt (including retries after `VALIDATED`); marks task `workflowSyncState=VALIDATED` with compare-and-set from `QUEUED`/`NOT_QUEUED` only. `VALIDATED` cannot be downgraded except via explicit eligibility failure (`invalidateValidated`). Enqueue failure sets `FAILED` + `blockedReason=ENQUEUE_FAILED:*` only from `NOT_QUEUED` and returns documented recovery text on the prepare DTO (`workflowEnqueue.recovery`). No external provider calls.
 
 ## Tests
 
