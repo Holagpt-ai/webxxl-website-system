@@ -6,6 +6,7 @@ export type MigrationOrderingIssueCode =
   | 'MISSING_SQL'
   | 'UTF8_BOM_IN_SQL'
   | 'SINGLE_LINE_MIGRATION_SQL'
+  | 'INLINE_PRISMA_COMMENT_DDL'
   | 'DUPLICATE_TIMESTAMP_PREFIX'
   | 'UNSORTED_CHAIN'
   | 'EMPTY_CHAIN'
@@ -18,11 +19,19 @@ function migrationSqlHasUtf8Bom(sqlPath: string): boolean {
 }
 
 /** Postgres `--` comments to end-of-line; one-line files with `-- CreateEnum CREATE …` execute zero DDL. */
+const INLINE_PRISMA_COMMENT_DDL = /-- Create(Enum|Table|Index|ForeignKey)\s+CREATE/i
+
 function migrationSqlIsSingleLineSwallowed(sqlPath: string): boolean {
   const raw = fs.readFileSync(sqlPath, 'utf8')
   const lines = raw.split(/\r?\n/).filter((l) => l.trim().length > 0)
   if (lines.length !== 1) return false
-  return lines[0]!.length > 200 && /-- Create(Enum|Table|Index|ForeignKey)\s+CREATE/i.test(lines[0]!)
+  return lines[0]!.length > 200 && INLINE_PRISMA_COMMENT_DDL.test(lines[0]!)
+}
+
+/** Any physical line where `-- CreateEnum CREATE TYPE …` makes Postgres ignore the DDL token. */
+function migrationSqlInlineSwallowedLineCount(sqlPath: string): number {
+  const raw = fs.readFileSync(sqlPath, 'utf8')
+  return raw.split(/\r?\n/).filter((line) => INLINE_PRISMA_COMMENT_DDL.test(line)).length
 }
 
 export type MigrationOrderingIssue = {
@@ -58,11 +67,13 @@ export function validateMigrationOrderingSafeguards(cwd = process.cwd()): {
   const missingSql: string[] = []
   const bomInSql: string[] = []
   const singleLineSql: string[] = []
+  const inlineCommentDdl: string[] = []
   for (const folder of orderedFolders) {
     const sqlPath = path.join(cwd, 'prisma', 'migrations', folder, 'migration.sql')
     if (!fs.existsSync(sqlPath)) missingSql.push(folder)
     else if (migrationSqlHasUtf8Bom(sqlPath)) bomInSql.push(folder)
     else if (migrationSqlIsSingleLineSwallowed(sqlPath)) singleLineSql.push(folder)
+    else if (migrationSqlInlineSwallowedLineCount(sqlPath) > 0) inlineCommentDdl.push(folder)
   }
   if (missingSql.length) {
     issues.push({
@@ -85,6 +96,14 @@ export function validateMigrationOrderingSafeguards(cwd = process.cwd()): {
       message:
         'migration.sql is a single physical line with inline Prisma comments — Postgres treats the entire file as one comment; split statements onto separate lines',
       folders: singleLineSql,
+    })
+  }
+  if (inlineCommentDdl.length) {
+    issues.push({
+      code: 'INLINE_PRISMA_COMMENT_DDL',
+      message:
+        'migration.sql line(s) combine Prisma `-- Create*` comments with CREATE on the same physical line — Postgres comments out the DDL; put comments on their own line',
+      folders: inlineCommentDdl,
     })
   }
 
@@ -110,6 +129,7 @@ export function validateMigrationOrderingSafeguards(cwd = process.cwd()): {
       i.code === 'MISSING_SQL' ||
       i.code === 'UTF8_BOM_IN_SQL' ||
       i.code === 'SINGLE_LINE_MIGRATION_SQL' ||
+      i.code === 'INLINE_PRISMA_COMMENT_DDL' ||
       i.code === 'EMPTY_CHAIN',
   )
   return { ok: !blocking, folderCount: orderedFolders.length, issues, orderedFolders }
