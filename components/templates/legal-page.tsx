@@ -48,10 +48,12 @@ export function createLegalRoute(slug: string) {
           </Container>
         </header>
         <Container className="flex max-w-3xl flex-col gap-8 py-12">
-          <p className="flex items-start gap-3 rounded-xl border bg-secondary p-4 text-sm text-secondary-foreground">
-            <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-            {t(reviewNotice, locale)}
-          </p>
+          {!doc.lastUpdated && (
+            <p className="flex items-start gap-3 rounded-xl border bg-secondary p-4 text-sm text-secondary-foreground">
+              <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              {t(reviewNotice, locale)}
+            </p>
+          )}
           {doc.sections.map((section) => (
             <section key={t(section.heading, 'en')} className="flex flex-col gap-2">
               <h2 className="text-xl font-bold">{t(section.heading, locale)}</h2>
