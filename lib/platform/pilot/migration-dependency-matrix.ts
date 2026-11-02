@@ -96,6 +96,27 @@ const ENTRY_META: Record<string, Omit<MigrationPlanEntry, 'folder' | 'dependsOn'
     risk: 'additive',
     rollbackNotes: 'Audience planning drafts invalid if rolled back.',
   },
+  '20261020140000_ai_customer_13_foundation': {
+    phase: 'portal_batches',
+    module: 'customer_ai',
+    summary: 'Customer AI workforce foundation (AI-CUSTOMER-13)',
+    risk: 'additive',
+    rollbackNotes: 'Restore snapshot; employee/knowledge rows lost if dropped.',
+  },
+  '20261102130000_batch37_customer_ai_pilot_persistence': {
+    phase: 'portal_batches',
+    module: 'customer_ai',
+    summary: 'Durable CustomerAiPilotTask / approval persistence (Batch 37)',
+    risk: 'additive',
+    rollbackNotes: 'Apply after ai_customer_13_foundation; pilot tasks lost if rolled back.',
+  },
+  '20261018280000_auto10_workflow_foundation': {
+    phase: 'wallet_analytics_workflow',
+    module: 'workflow',
+    summary: 'AUTO-10 WorkflowJob foundation',
+    risk: 'additive',
+    rollbackNotes: 'Workflow job history lost on rollback.',
+  },
 }
 
 function scanSqlRisk(folder: string, cwd = process.cwd()): MigrationRiskLevel {
