@@ -36,7 +36,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | **36** **MERGED** + **Cloud Workforce Config V1** **MERGED** (PR #88 @ `3a33e54…`); **Batch 37** durable pilot persistence **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `3a33e542f5fa0f284c84c17ad54b1840a21c0ecc` on `main`; **Batch 37** on `feature/batch-37-customer-ai-pilot-durable` (open) |
+| 2 | GitHub SHA, branch, active PR | `3a33e542f5fa0f284c84c17ad54b1840a21c0ecc` on `main`; **PR #89** on `feature/batch-37-customer-ai-pilot-durable` @ `2c46858e731c6388ab7f01c7749eb3b3f1788ff0` (open) |
 | 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` (prior); post–#88 deploy **UNVERIFIED** until owner/Vercel record. SHA only — not migration, AI activation, Chatwoot/Twilio/Resend live outbound |
 | 4 | Last updated | 2026-11-02 |
 | 5 | Next task / responsible platform | **Owner** review/merge **Batch 37** PR (**Cursor**); staging migration rehearsal for `20261102130000_batch37_customer_ai_pilot_persistence` — **Owner** |

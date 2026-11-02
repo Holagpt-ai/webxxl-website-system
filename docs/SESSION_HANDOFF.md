@@ -7,7 +7,7 @@
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | **36** + **Cloud Workforce Config V1** **MERGED** on `main` @ `3a33e54`; **Batch 37** durable pilot + AUTO-10 **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `3a33e542f5fa0f284c84c17ad54b1840a21c0ecc` on `main`; **Batch 37** @ `feature/batch-37-customer-ai-pilot-durable` (open) |
+| 2 | GitHub SHA, branch, active PR | `3a33e542f5fa0f284c84c17ad54b1840a21c0ecc` on `main`; **PR #89** @ `2c46858e731c6388ab7f01c7749eb3b3f1788ff0` on `feature/batch-37-customer-ai-pilot-durable` (open) |
 | 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` (last verified); post–PR #88 deploy **UNVERIFIED** |
 | 4 | Last updated | 2026-11-02 |
 | 5 | Next task / responsible platform | **Owner** merge **Batch 37** PR — **Cursor**; staging apply Batch 37 migration — **Owner** |
@@ -26,7 +26,7 @@ None after Batch 37 PR is opened.
 ```
 Date / scope / owner: 2026-11-02 / BATCH-37 Durable AI pilot persistence + AUTO-10 / Cursor
 Repo / main SHA: Holagpt-ai/webxxl-website-system / 3a33e542f5fa0f284c84c17ad54b1840a21c0ecc
-Branch / PR / head: feature/batch-37-customer-ai-pilot-durable / <PR#> / <head sha>
+Branch / PR / head: feature/batch-37-customer-ai-pilot-durable / PR #89 / 2c46858e731c6388ab7f01c7749eb3b3f1788ff0
 Merged / deployed: Batch 36 PR #87; Cloud Workforce PR #88 @ 3a33e54; Vercel dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF @ f620e4f (prior)
 Migration / flags / activation: 20261102130000_batch37_customer_ai_pilot_persistence in Git only; CUSTOMER_AI_PILOT_DURABLE_ENABLED OFF; no LLM/worker cron
 Next exact assignment / owning tool: Owner merge Batch 37 PR — Owner + Cursor

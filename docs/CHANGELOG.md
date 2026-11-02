@@ -76,6 +76,6 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-11-01 | Batch 36 Customer AI Workforce pilot prep V1 | [PR #87](https://github.com/Holagpt-ai/webxxl-website-system/pull/87), `f620e4f1c7a0c6cbcecf2bca8365b8e4cae6c646` | MERGED. Preparation + approval binding only. No LLM execution |
 | 2026-11-01 | Vercel production deployment of `f620e4f` (PR #87) | Vercel `dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY | DEPLOYED SHA only |
 | 2026-11-01 | Cursor Cloud Workforce operating instructions V1 | [PR #88](https://github.com/Holagpt-ai/webxxl-website-system/pull/88), `3a33e542f5fa0f284c84c17ad54b1840a21c0ecc` | MERGED. Configuration docs only. No agent activation |
-| 2026-11-02 | Batch 37 Durable AI pilot persistence + AUTO-10 integration | `feature/batch-37-customer-ai-pilot-durable` | IN PR. Migration in Git only. Not applied production |
+| 2026-11-02 | Batch 37 Durable AI pilot persistence + AUTO-10 integration | [PR #89](https://github.com/Holagpt-ai/webxxl-website-system/pull/89), `2c46858e731c6388ab7f01c7749eb3b3f1788ff0` | IN PR. Migration in Git only. Not applied production |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
