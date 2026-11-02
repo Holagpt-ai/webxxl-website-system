@@ -2,12 +2,13 @@
 
 **Purpose:** Document the **exact reproducible binding** for a controlled WebXXL staging pilot. **No** infrastructure was provisioned in Batch 31.
 
-## Current evidence (2026-10-31)
+## Current evidence (2026-11-02)
 
 | Component | State |
 |---|---|
-| Isolated staging Postgres/Supabase | **NOT IDENTIFIED** — no `STAGING_DATABASE_URL` / `WEBXXL_STAGING_DATABASE_URL` in repo |
-| WebXXL staging/preview app | Vercel Preview deploys app SHA; **does not** imply isolated DB |
+| Isolated staging Postgres/Supabase | **IDENTIFIED** — Supabase project `vcgibefnhneaqhcguhnt` (see [`STAGING-SUPABASE-BINDING.md`](STAGING-SUPABASE-BINDING.md)); credentials **host-only** |
+| Production Supabase (collision guard only) | Project `txfxeehglqfszletuumn` — fingerprint in `WEBXXL_PRODUCTION_DATABASE_IDENTITY`; **never** bind staging URLs to this project |
+| WebXXL staging/preview app | Vercel Preview deploys app SHA; **does not** imply isolated DB until env vars bound |
 | INFRA-02 isolated services (Chatwoot/Postiz/Paperclip) | Compose manifests ready; **live staging BLOCKED** per [`infra/services/shared/STAGING-GATE.md`](../infra/services/shared/STAGING-GATE.md) |
 
 ## Required owner binding (when authorized)
@@ -15,19 +16,19 @@
 ### 1. Database
 
 ```env
-# Staging-only — never commit literals
-WEBXXL_STAGING_DATABASE_IDENTITY=db.staging.example.com:5432/webxxl_staging
-DATABASE_URL=postgresql://…/webxxl_staging?schema=public
-DIRECT_URL=postgresql://…/webxxl_staging?schema=public
+# Staging-only — never commit literals (full template: infra/services/shared/webxxl-staging-database.env.example)
+WEBXXL_STAGING_DATABASE_IDENTITY=supabase:vcgibefnhneaqhcguhnt/postgres
+WEBXXL_PRODUCTION_DATABASE_IDENTITY=supabase:txfxeehglqfszletuumn/postgres
+DATABASE_URL=postgresql://postgres.vcgibefnhneaqhcguhnt:<staging-password>@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require
+DIRECT_URL=postgresql://postgres.vcgibefnhneaqhcguhnt:<staging-password>@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require
 ```
 
-`DATABASE_URL` and `DIRECT_URL` must reference the **same** host and database. The identity line is a fingerprint (no password) used by preflight — it must match both URLs.
+`DATABASE_URL` and `DIRECT_URL` must reference the **same authorized Supabase project** (project ref in `postgres.{ref}` for Session Pooler). Preflight identity is `supabase:{ref}/postgres`, not the shared pooler hostname.
 
 After independent verification that this identity is not production:
 
 ```env
 WEBXXL_STAGING_BOUNDARIES_CONFIRMED=1
-WEBXXL_PRODUCTION_DATABASE_IDENTITY=db.prod.example.com:5432/webxxl_prod
 ```
 
 Vercel **Preview** or **Staging** project environment variables must reference the staging host only. Production Supabase project ID must differ.
@@ -73,6 +74,8 @@ PILOT_READINESS_DB_PROBE=1 pnpm pilot:readiness
 
 ## Missing owner authorization (recorded)
 
-- Create or designate isolated staging database project.
-- Bind Vercel staging/preview to that database.
+- Staging database **password** and host-only env file (not in repo).
+- `WEBXXL_STAGING_BOUNDARIES_CONFIRMED=1` after verifying project refs differ.
+- Staging snapshot; then authorized `prisma migrate deploy` on staging only.
+- Bind Vercel staging/preview to staging database env vars.
 - Optional: INFRA-02 VPS `staging-up` for Chatwoot/Postiz — separate from WebXXL app DB.
