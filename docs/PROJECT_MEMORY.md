@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-02 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `965eca9f384823f66302c8bb08d38c71642acbd9` (PR #91)
+**Evidence review:** 2026-11-02 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `3c7f16497d6ba017a62c6b94dafb917fb4f72f1a` (PR #94; migration chain through PR #93 @ `8082ae1`)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,12 +35,12 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **Batch 39C** CRM migration SQL repair **IN PR**; staging **20/39** + `crm05a_integrity` failed; production **untouched** |
-| 2 | GitHub SHA, branch, active PR | `e809506f57135a9835e10a803166706e0a83cb34` on `main`; **Batch 39C** PR (open after push) |
+| 1 | Last verified checkpoint | **Batch 39E** clean rehearsal **prep** (repo scan + guards); **39D** staging still **partial** @ P3012 |
+| 2 | GitHub SHA, branch, active PR | `3c7f16497d6ba017a62c6b94dafb917fb4f72f1a` on `main`; Batch **39E** PR open after push |
 | 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` (last verified); post–#90 deploy **UNVERIFIED**. SHA only — not migration, AI activation, Chatwoot/Twilio/Resend live outbound |
 | 4 | Last updated | 2026-11-02 |
-| 5 | Next task / responsible platform | **Owner** merge **39C** → staging recovery per `BATCH39C-STAGING-CRM-MIGRATION-RECOVERY.md` |
-| 6 | Open blocker / gate IDs | `crm05_foundation` no-op on staging; **no Crm* tables**; failed `crm05a_integrity`; production migrations **UNVERIFIED** |
+| 5 | Next task / responsible platform | **Owner** authorize **new rehearsal Supabase project** (or Docker) + staging-only `migrate deploy` — **Owner** |
+| 6 | Open blocker / gate IDs | **P3012** on `vcgibefnhneaqhcguhnt`; repo **39/39 SQL clean**; production migrations **UNVERIFIED** |
 
 ### Evidence table
 

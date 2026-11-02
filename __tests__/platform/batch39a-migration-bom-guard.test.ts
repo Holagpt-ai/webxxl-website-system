@@ -8,6 +8,7 @@ describe('Batch 39A migration BOM guard', () => {
     const result = validateMigrationOrderingSafeguards()
     expect(result.issues.some((i) => i.code === 'UTF8_BOM_IN_SQL')).toBe(false)
     expect(result.issues.some((i) => i.code === 'SINGLE_LINE_MIGRATION_SQL')).toBe(false)
+    expect(result.issues.some((i) => i.code === 'INLINE_PRISMA_COMMENT_DDL')).toBe(false)
     expect(result.ok).toBe(true)
   })
 
@@ -23,6 +24,23 @@ describe('Batch 39A migration BOM guard', () => {
       expect(result.ok).toBe(false)
       const bom = result.issues.find((i) => i.code === 'UTF8_BOM_IN_SQL')
       expect(bom?.folders).toContain('20251008120000_customer_portal_core')
+    } finally {
+      writeFileSync(sqlPath, original)
+    }
+  })
+
+  it('fails when a migration line inline-swallows CREATE after a Prisma comment', () => {
+    const sqlPath = join(
+      process.cwd(),
+      'prisma/migrations/20261011200000_restrict_supabase_api_access/migration.sql',
+    )
+    const original = readFileSync(sqlPath, 'utf8')
+    writeFileSync(sqlPath, `${original}\n-- CreateTable CREATE TABLE "ProbeInlineSwallow" ("id" TEXT NOT NULL);\n`)
+    try {
+      const result = validateMigrationOrderingSafeguards()
+      expect(result.ok).toBe(false)
+      const inline = result.issues.find((i) => i.code === 'INLINE_PRISMA_COMMENT_DDL')
+      expect(inline?.folders).toContain('20261011200000_restrict_supabase_api_access')
     } finally {
       writeFileSync(sqlPath, original)
     }

@@ -1,6 +1,6 @@
 # BATCH39C — CRM migration dependency investigation and staging recovery (doc only)
 
-**Status:** IN PR · **Baseline `main`:** `e809506f57135a9835e10a803166706e0a83cb34`  
+**Status:** MERGED (PR #93 @ `8082ae164600a2af0fe5bdc1fb64dc8cb202f468`) · **Baseline `main`:** `8082ae1`+  
 **Scope:** Root-cause analysis, repository SQL repair, CI guard, **documented** staging recovery. **No** DB writes in this batch.
 
 ## Root cause
@@ -61,6 +61,8 @@ Portal/platform objects from migrations 1–19 **are** present; CRM layer absent
    ```bash
    pnpm exec prisma migrate resolve --rolled-back 20261018190000_crm05_foundation
    ```
+
+   **Batch 39D evidence:** Prisma **P3012** rejects this when the row is **finished** (not failed). If step 5 fails, **stop** — see [`BATCH39D-STAGING-RECOVERY-RESULT.md`](BATCH39D-STAGING-RECOVERY-RESULT.md).
 
 6. Deploy remainder of chain:
 
