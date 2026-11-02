@@ -10,13 +10,17 @@
 | Duplicate enum `PROCESSING` | `comms06a_integrity` (39G) | Removed `ADD VALUE` |
 | Redundant columns/indexes vs foundation | `comms06a_integrity` (39H) | Kept only `DROP INDEX IF EXISTS` legacy index |
 | `anon` / `authenticated` REVOKE on plain Postgres | `restrict_supabase_api_access`, `website_preview` | Wrapped in `DO $$ … IF EXISTS (pg_roles)` |
-| No local full-chain proof | — | `pnpm migration:chain-rehearsal` (embedded Postgres) |
+| No local full-chain proof | — | `pnpm migration:chain-rehearsal` (optional `embedded-postgres` install) |
 
 ## Local rehearsal evidence
 
-Command: `pnpm migration:chain-rehearsal`  
+```bash
+pnpm add -D embedded-postgres@18.6.0-beta.19   # local only — omitted from CI/Vercel install graph
+pnpm migration:chain-rehearsal
+```
+
 Engine: **embedded-postgres** (PostgreSQL **18.6** binary on Windows dev host)  
-Result: **`prisma migrate deploy` — 39/39 applied**, no pending migrations.
+Result: **`prisma migrate deploy` — 39/39 applied**, no pending migrations (Batch 40 dev run).
 
 ### Environment vs Supabase staging
 

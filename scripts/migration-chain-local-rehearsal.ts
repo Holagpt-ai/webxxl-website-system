@@ -1,19 +1,47 @@
 #!/usr/bin/env tsx
 /**
  * Disposable local Postgres — full `prisma migrate deploy` rehearsal (39 folders).
- * Requires devDependency `embedded-postgres`. Does not touch staging/production.
+ * Optional dev install: `pnpm add -D embedded-postgres@18.6.0-beta.19` (not in CI/Vercel graph).
+ * Does not touch staging/production.
  */
 import { execSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
-import EmbeddedPostgres from 'embedded-postgres'
+import { createRequire } from 'node:module'
 import { allRepositoryMigrationFolders } from '@/lib/platform/pilot/migration-repository-chain'
+
+const require = createRequire(import.meta.url)
+
+type EmbeddedPostgresCtor = new (opts: {
+  databaseDir: string
+  user: string
+  password: string
+  port: number
+  persistent: boolean
+}) => {
+  initialise(): Promise<void>
+  start(): Promise<void>
+  stop(): Promise<void>
+}
+
+function loadEmbeddedPostgres(): EmbeddedPostgresCtor {
+  try {
+    const mod = require('embedded-postgres') as { default: EmbeddedPostgresCtor }
+    return mod.default
+  } catch {
+    console.error(
+      'Missing optional devDependency "embedded-postgres". Install locally:\n  pnpm add -D embedded-postgres@18.6.0-beta.19\nThen re-run: pnpm migration:chain-rehearsal',
+    )
+    process.exit(1)
+  }
+}
 
 const runId = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`
 const DATA_DIR = path.join(process.cwd(), `.tmp-embedded-pg-rehearsal-${runId}`)
 const PORT = 55432 + Math.floor(Math.random() * 100)
 
 async function main() {
+  const EmbeddedPostgres = loadEmbeddedPostgres()
   const expected = allRepositoryMigrationFolders().length
   if (fs.existsSync(DATA_DIR)) fs.rmSync(DATA_DIR, { recursive: true, force: true })
 
@@ -39,7 +67,9 @@ async function main() {
       process.exitCode = 1
       return
     }
-    console.log(`Migration chain rehearsal OK: ${expected} folders deployed on embedded Postgres @ ${url.replace(/:[^:@]+@/, ':***@')}`)
+    console.log(
+      `Migration chain rehearsal OK: ${expected} folders deployed on embedded Postgres @ ${url.replace(/:[^:@]+@/, ':***@')}`,
+    )
   } finally {
     await pg.stop()
     fs.rmSync(DATA_DIR, { recursive: true, force: true })
