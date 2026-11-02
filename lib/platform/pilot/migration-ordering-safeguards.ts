@@ -4,9 +4,17 @@ import { allRepositoryMigrationFolders } from '@/lib/platform/pilot/migration-re
 
 export type MigrationOrderingIssueCode =
   | 'MISSING_SQL'
+  | 'UTF8_BOM_IN_SQL'
   | 'DUPLICATE_TIMESTAMP_PREFIX'
   | 'UNSORTED_CHAIN'
   | 'EMPTY_CHAIN'
+
+const UTF8_BOM = Buffer.from([0xef, 0xbb, 0xbf])
+
+function migrationSqlHasUtf8Bom(sqlPath: string): boolean {
+  const head = fs.readFileSync(sqlPath).subarray(0, 3)
+  return head.length >= 3 && head.equals(UTF8_BOM)
+}
 
 export type MigrationOrderingIssue = {
   code: MigrationOrderingIssueCode
@@ -39,15 +47,25 @@ export function validateMigrationOrderingSafeguards(cwd = process.cwd()): {
   }
 
   const missingSql: string[] = []
+  const bomInSql: string[] = []
   for (const folder of orderedFolders) {
     const sqlPath = path.join(cwd, 'prisma', 'migrations', folder, 'migration.sql')
     if (!fs.existsSync(sqlPath)) missingSql.push(folder)
+    else if (migrationSqlHasUtf8Bom(sqlPath)) bomInSql.push(folder)
   }
   if (missingSql.length) {
     issues.push({
       code: 'MISSING_SQL',
       message: 'Migration folder(s) missing migration.sql',
       folders: missingSql,
+    })
+  }
+  if (bomInSql.length) {
+    issues.push({
+      code: 'UTF8_BOM_IN_SQL',
+      message:
+        'migration.sql must be UTF-8 without BOM (Postgres rejects U+FEFF); strip EF BB BF from affected files',
+      folders: bomInSql,
     })
   }
 
@@ -68,6 +86,8 @@ export function validateMigrationOrderingSafeguards(cwd = process.cwd()): {
     }
   }
 
-  const blocking = issues.some((i) => i.code === 'MISSING_SQL' || i.code === 'EMPTY_CHAIN')
+  const blocking = issues.some(
+    (i) => i.code === 'MISSING_SQL' || i.code === 'UTF8_BOM_IN_SQL' || i.code === 'EMPTY_CHAIN',
+  )
   return { ok: !blocking, folderCount: orderedFolders.length, issues, orderedFolders }
 }

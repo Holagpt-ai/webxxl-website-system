@@ -1,27 +1,24 @@
 # Session Handoff
 
-**Compiled:** 2026-11-02 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (staging Session Pooler preflight)
+**Compiled:** 2026-11-02 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 39A BOM repair)
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **38** **MERGED** @ `2656eeb`; Session Pooler preflight **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `main` @ `2656eeb…`; branch `fix/staging-session-pooler-preflight` |
-| 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` (last verified); post–PR #90 deploy **UNVERIFIED** |
+| 1 | Last verified checkpoint | **Batch 39A** BOM strip + CI guard **IN PR**; staging P3018 documented |
+| 2 | GitHub SHA, branch, active PR | `965eca9…` on `main`; branch `batch39a-migration-bom-repair` |
+| 3 | Production deployment | Unchanged · **`txfxeehglqfszletuumn` not accessed** |
 | 4 | Last updated | 2026-11-02 |
-| 5 | Next task / responsible platform | **Owner** merge pooler preflight PR; load Session Pooler env; `--verify-db` — **Owner** |
-| 6 | Open blocker / gate IDs | Staging password + boundaries **UNVERIFIED**; migrations **UNVERIFIED**; AI/workflow flags OFF |
+| 5 | Next task / responsible platform | **Owner** merge 39A → staging recovery per `BATCH39A-STAGING-MIGRATION-BOM-RECOVERY.md` |
+| 6 | Open blocker / gate IDs | Staging `_prisma_migrations` failed row; **0/39** applied |
 
 ## This session
 
-Supabase Session Pooler support in `staging-database-preflight.ts` (`supabase:{ref}/postgres` identity from `postgres.{ref}` username); staging binding docs + env example; Vitest pooler regression suite. **No** migrate, production, deploy, or credentials.
-
-## PENDING REPOSITORY SYNC
-
-None after pooler PR is opened.
+Removed UTF-8 BOM from **2** migration SQL files; added `UTF8_BOM_IN_SQL` ordering guard + CI `release:readiness --verify-ordering`; staging recovery runbook; read-only staging inventory (`_prisma_migrations` only). **No** DB writes, migrate, or production.
 
 ## Next assignment
 
-- **Owner:** merge Session Pooler preflight PR; copy `webxxl-staging-database.env.example` to gitignored local env with staging password only.
-- **Owner:** `WEBXXL_STAGING_BOUNDARIES_CONFIRMED=1`; `pnpm migration:rehearsal --verify-db`; then snapshot + staging-only `migrate deploy`.
+1. Merge Batch **39A** PR.
+2. Staging: `pnpm exec prisma migrate resolve --rolled-back 20251008120000_customer_portal_core`
+3. Staging: `pnpm exec prisma migrate deploy` from `.env.staging.local`.

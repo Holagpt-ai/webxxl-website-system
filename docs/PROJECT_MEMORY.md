@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-02 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `2656eebca7bf8b312e483165b0a0eaaa3f785322` (PR #90)
+**Evidence review:** 2026-11-02 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `965eca9f384823f66302c8bb08d38c71642acbd9` (PR #91)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,12 +35,12 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **38** **MERGED** (PR #90 @ `2656eeb…`); **staging Session Pooler preflight** **IN PR** |
-| 2 | GitHub SHA, branch, active PR | `2656eeb…` on `main`; **PR** `fix/staging-session-pooler-preflight` (open after push) |
+| 1 | Last verified checkpoint | **Batch 39A** migration BOM repair **IN PR**; staging deploy failed @ `965eca9` (BOM); production **untouched** |
+| 2 | GitHub SHA, branch, active PR | `965eca9f384823f66302c8bb08d38c71642acbd9` on `main`; **Batch 39A** PR (open after push) |
 | 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` (last verified); post–#90 deploy **UNVERIFIED**. SHA only — not migration, AI activation, Chatwoot/Twilio/Resend live outbound |
 | 4 | Last updated | 2026-11-02 |
-| 5 | Next task / responsible platform | **Owner** — staging DB password, Vercel env bind, snapshot, `--verify-db`, then staging-only `migrate deploy` — **Owner** |
-| 6 | Open blocker / gate IDs | Staging credentials + `WEBXXL_STAGING_BOUNDARIES_CONFIRMED=1` **UNVERIFIED**; migrations **UNVERIFIED**; all `CUSTOMER_AI_*` execution flags OFF; `WORKFLOW_WORKER_ENABLED` OFF |
+| 5 | Next task / responsible platform | **Owner** merge **39A** → staging `migrate resolve --rolled-back` + `migrate deploy` per `BATCH39A-STAGING-MIGRATION-BOM-RECOVERY.md` |
+| 6 | Open blocker / gate IDs | Staging failed row `20251008120000_customer_portal_core`; **0/39** complete; staging public tables: **`_prisma_migrations` only**; production migrations **UNVERIFIED** |
 
 ### Evidence table
 

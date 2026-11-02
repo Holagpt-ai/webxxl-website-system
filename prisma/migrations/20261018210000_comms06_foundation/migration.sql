@@ -1,4 +1,4 @@
-﻿-- CreateEnum
+-- CreateEnum
 CREATE TYPE "ChatwootMappingVerificationState" AS ENUM ('PENDING', 'VERIFIED', 'REVOKED');
 
 -- CreateEnum

@@ -78,6 +78,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-11-01 | Cursor Cloud Workforce operating instructions V1 | [PR #88](https://github.com/Holagpt-ai/webxxl-website-system/pull/88), `3a33e542f5fa0f284c84c17ad54b1840a21c0ecc` | MERGED. Configuration docs only. No agent activation |
 | 2026-11-02 | Batch 37 Durable AI pilot persistence + AUTO-10 integration | [PR #89](https://github.com/Holagpt-ai/webxxl-website-system/pull/89), `8c2e5df7f79eb7538e1fe6d513316f70026bbe6d` | MERGED. Migration in Git only. Not applied production |
 | 2026-11-02 | Batch 38 Release readiness + staging acceptance tooling | [PR #90](https://github.com/Holagpt-ai/webxxl-website-system/pull/90), `2656eebca7bf8b312e483165b0a0eaaa3f785322` | MERGED. Read-only CLI; no production migrate |
-| 2026-11-02 | Staging Supabase Session Pooler preflight + binding docs | PR (staging pooler fix) | IN PR. Preflight identity by project ref; no migrate |
+| 2026-11-02 | Staging Supabase Session Pooler preflight + binding docs | [PR #91](https://github.com/Holagpt-ai/webxxl-website-system/pull/91), `965eca9` | MERGED. Preflight identity by project ref |
+| 2026-11-02 | Staging `prisma migrate deploy` (authorized) | `965eca9` @ Supabase `vcgibefnhneaqhcguhnt` | **FAILED** P3018 on `20251008120000_customer_portal_core` (UTF-8 BOM in SQL). **0/39** applied. Production untouched |
+| 2026-11-02 | Batch 39A Migration BOM repair + staging recovery doc | PR Batch 39A | IN PR. Strip BOM from 2 SQL files; CI guard; no DB execute |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
