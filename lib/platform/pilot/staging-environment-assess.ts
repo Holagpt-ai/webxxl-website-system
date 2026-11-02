@@ -47,6 +47,7 @@ export function assessStagingEnvironment(
 
   const artifacts = [
     'infra/services/shared/webxxl-staging.env.example',
+    'infra/services/shared/webxxl-staging-database.env.example',
     'infra/services/shared/STAGING-GATE.md',
     'docs/PILOT-21C-STAGING-PREFLIGHT.md',
     'docs/BATCH31-CONTROLLED-STAGING-PILOT.md',
@@ -54,7 +55,7 @@ export function assessStagingEnvironment(
   ]
 
   const ownerAuthorizationRequired = [
-    'Record WEBXXL_STAGING_DATABASE_IDENTITY (host/database fingerprint, no secrets).',
+    'Record WEBXXL_STAGING_DATABASE_IDENTITY (supabase:{project-ref}/database or host fingerprint, no secrets).',
     'Bind DATABASE_URL and DIRECT_URL to the same staging target.',
     'Set WEBXXL_STAGING_BOUNDARIES_CONFIRMED=1 only after independent staging vs production verification.',
     'Owner sign-off on INFRA-02 STAGING-GATE checklist before compose/staging-up on VPS.',

@@ -1,8 +1,8 @@
 # BATCH38 — Release readiness and staging acceptance
 
-**Status:** IN PR · **Scope:** read-only release checks, migration ordering safeguards, staging rollout checklist, AI/workflow guardrails. **Not** production migration, deploy activation, or live providers.
+**Status:** **MERGED** (PR #90) · **Scope:** read-only release checks, migration ordering safeguards, staging rollout checklist, AI/workflow guardrails. **Not** production migration, deploy activation, or live providers.
 
-**Baseline `main`:** `8c2e5df7f79eb7538e1fe6d513316f70026bbe6d` (Batch 37 merged via PR #89).
+**Baseline `main`:** `2656eebca7bf8b312e483165b0a0eaaa3f785322` (PR #90). Staging Supabase binding: [`STAGING-SUPABASE-BINDING.md`](STAGING-SUPABASE-BINDING.md).
 
 ## CLI (read-only)
 
