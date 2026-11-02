@@ -80,6 +80,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-11-02 | Batch 38 Release readiness + staging acceptance tooling | [PR #90](https://github.com/Holagpt-ai/webxxl-website-system/pull/90), `2656eebca7bf8b312e483165b0a0eaaa3f785322` | MERGED. Read-only CLI; no production migrate |
 | 2026-11-02 | Staging Supabase Session Pooler preflight + binding docs | [PR #91](https://github.com/Holagpt-ai/webxxl-website-system/pull/91), `965eca9` | MERGED. Preflight identity by project ref |
 | 2026-11-02 | Staging `prisma migrate deploy` (authorized) | `965eca9` @ Supabase `vcgibefnhneaqhcguhnt` | **FAILED** P3018 on `20251008120000_customer_portal_core` (UTF-8 BOM in SQL). **0/39** applied. Production untouched |
-| 2026-11-02 | Batch 39A Migration BOM repair + staging recovery doc | PR Batch 39A | IN PR. Strip BOM from 2 SQL files; CI guard; no DB execute |
+| 2026-11-02 | Batch 39A Migration BOM repair + staging recovery doc | [PR #92](https://github.com/Holagpt-ai/webxxl-website-system/pull/92), `e809506` | MERGED |
+| 2026-11-02 | Staging migrate deploy (authorized) | Supabase `vcgibefnhneaqhcguhnt` | **20/39** applied; failed `crm05a_integrity` (CrmImportJob missing) |
+| 2026-11-02 | Batch 39C CRM foundation migration SQL repair | PR Batch 39C | IN PR. Multi-line SQL + single-line guard; recovery doc only |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
