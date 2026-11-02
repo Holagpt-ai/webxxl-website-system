@@ -59,7 +59,7 @@ Prisma applies migrations in **lexicographic order by full folder name**. `_batc
 
 ## CI guard
 
-`validateMigrationOrderingSafeguards()` fails with **`UTF8_BOM_IN_SQL`** if any `migration.sql` starts with BOM; **`SINGLE_LINE_MIGRATION_SQL`** and **`INLINE_PRISMA_COMMENT_DDL`** catch Postgres comment-swallowed DDL (Batch 39C/39E). Wired in `pnpm release:readiness --verify-ordering` and application validate workflow.
+`validateMigrationOrderingSafeguards()` fails with **`UTF8_BOM_IN_SQL`** if any `migration.sql` starts with BOM; **`SINGLE_LINE_MIGRATION_SQL`** and **`INLINE_PRISMA_COMMENT_DDL`** catch Postgres comment-swallowed DDL (Batch 39C/39E); **`DUPLICATE_ENUM_ADD_VALUE`** catches redundant `ALTER TYPE ADD VALUE` (Batch 39G). Wired in `pnpm release:readiness --verify-ordering` and application validate workflow.
 
 ## Related
 

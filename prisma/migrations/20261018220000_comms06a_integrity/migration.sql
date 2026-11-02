@@ -1,5 +1,4 @@
--- AlterEnum
-ALTER TYPE "CommsWebhookProcessingStatus" ADD VALUE 'PROCESSING';
+-- CommsWebhookProcessingStatus already includes PROCESSING in comms06_foundation (Batch 39G).
 
 -- AlterTable
 ALTER TABLE "CommsWebhookReceipt" ADD COLUMN     "tenantMappingId" TEXT,

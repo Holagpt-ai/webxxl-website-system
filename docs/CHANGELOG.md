@@ -84,6 +84,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-11-02 | Staging migrate deploy (authorized) | Supabase `vcgibefnhneaqhcguhnt` | **20/39** applied; failed `crm05a_integrity` (CrmImportJob missing) |
 | 2026-11-02 | Batch 39C CRM foundation migration SQL repair | [PR #93](https://github.com/Holagpt-ai/webxxl-website-system/pull/93), `8082ae1` | MERGED |
 | 2026-11-02 | Batch 39D Staging CRM recovery attempt | Staging `vcgibefnhneaqhcguhnt` | **STOPPED** P3012 on foundation rollback; `crm05a` rolled back; no deploy |
-| 2026-11-02 | Batch 39E Clean migration rehearsal prep | PR TBD @ `3c7f164` base | **39** SQL files scanned, **0** defects; `INLINE_PRISMA_COMMENT_DDL` guard; rehearsal env doc — **no DB writes** |
+| 2026-11-02 | Batch 39E Clean migration rehearsal prep | [PR #96](https://github.com/Holagpt-ai/webxxl-website-system/pull/96), `a0d03aa` | **39** SQL files scanned, **0** formatting defects; inline SQL guard — **no DB writes** |
+| 2026-11-02 | Batch 39F Staging public reset + migrate deploy | Staging `vcgibefnhneaqhcguhnt` @ `a0d03aa` | **22/39** applied; **STOPPED** `comms06a_integrity` **42710** (duplicate enum `PROCESSING`); CRM **`CrmImportJob`** present |
+| 2026-11-02 | Batch 39G Comms migration repair (Phase 1) | PR TBD @ `a0d03aa` | Remove duplicate enum ADD VALUE; `DUPLICATE_ENUM_ADD_VALUE` guard; 39F docs — **no DB writes** |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
