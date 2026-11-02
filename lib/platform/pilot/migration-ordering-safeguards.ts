@@ -36,7 +36,7 @@ function migrationSqlInlineSwallowedLineCount(sqlPath: string): number {
 }
 
 const CREATE_TYPE_ENUM_RE =
-  /CREATE TYPE\s+"([^"]+)"\s+AS ENUM\s*\(\s*([^;]+?)\s*\)\s*;/gis
+  /CREATE TYPE\s+"([^"]+)"\s+AS ENUM\s*\(\s*([^)]+)\s*\)\s*;/gi
 const ALTER_TYPE_ADD_VALUE_RE =
   /ALTER TYPE\s+"([^"]+)"\s+ADD VALUE\s+'([^']+)'/gi
 
