@@ -241,8 +241,8 @@ describe('Batch 36 — Customer AI Workforce pilot prep', () => {
     })
     expect(issued.ok).toBe(true)
     if (!issued.ok) return
-    updatePilotApproval(issued.value.approvalId, { expiresAt: new Date(Date.now() - 1000) })
-    const expired = validateCustomerAiPilotApproval({
+    await updatePilotApproval(issued.value.approvalId, { expiresAt: new Date(Date.now() - 1000) })
+    const expired = await validateCustomerAiPilotApproval({
       approvalId: issued.value.approvalId,
       preparedTaskId: prep.value.taskId,
       customerAccountId: acct,
@@ -266,7 +266,7 @@ describe('Batch 36 — Customer AI Workforce pilot prep', () => {
     })
     expect(fresh.ok).toBe(true)
     if (!fresh.ok) return
-    const tampered = validateCustomerAiPilotApproval({
+    const tampered = await validateCustomerAiPilotApproval({
       approvalId: fresh.value.approvalId,
       preparedTaskId: prep.value.taskId,
       customerAccountId: acct,
@@ -280,7 +280,7 @@ describe('Batch 36 — Customer AI Workforce pilot prep', () => {
     })
     expect(tampered.ok).toBe(false)
 
-    const consumed = validateCustomerAiPilotApproval({
+    const consumed = await validateCustomerAiPilotApproval({
       approvalId: fresh.value.approvalId,
       preparedTaskId: prep.value.taskId,
       customerAccountId: acct,
@@ -294,7 +294,7 @@ describe('Batch 36 — Customer AI Workforce pilot prep', () => {
       consume: true,
     })
     expect(consumed.ok).toBe(true)
-    const again = validateCustomerAiPilotApproval({
+    const again = await validateCustomerAiPilotApproval({
       approvalId: fresh.value.approvalId,
       preparedTaskId: prep.value.taskId,
       customerAccountId: acct,

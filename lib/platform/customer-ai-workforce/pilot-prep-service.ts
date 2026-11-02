@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import {
   isCustomerAiExecutionEnabled,
+  isCustomerAiPilotDurableEnabled,
   isCustomerAiPilotPrepEnabled,
   isCustomerAiPilotTestSyntheticEnabled,
 } from '@/config/customer-ai-workforce'
@@ -21,6 +22,7 @@ import type {
   CustomerAiPilotWorkflowKind,
 } from '@/lib/platform/customer-ai-workforce/pilot-types'
 import { findPilotTaskByIdempotency, savePilotTask } from '@/lib/platform/customer-ai-workforce/pilot-task-store'
+import { maybeEnqueueCustomerAiPilotWorkflowTask } from '@/lib/platform/customer-ai-workforce/pilot-workflow-integration'
 import type { CustomerAiPilotTaskRecord } from '@/lib/platform/customer-ai-workforce/pilot-types'
 import { buildPilotWorkflowDraft, type PilotWorkflowContext } from '@/lib/platform/customer-ai-workforce/pilot-workflows'
 import { getCustomerAiTool } from '@/lib/platform/customer-ai-workforce/tool-catalog'
@@ -55,7 +57,9 @@ export type CustomerAiPilotTaskDto = {
   requiresHumanApproval: boolean
   executionAuthorized: false
   externalExecutionBlocked: true
-  durable: false
+  durable: boolean
+  workflowSyncState: CustomerAiPilotTaskRecord['workflowSyncState']
+  workflowJobId: string | null
 }
 
 async function assertAccountAccess(
@@ -82,8 +86,14 @@ function toDto(task: CustomerAiPilotTaskRecord): CustomerAiPilotTaskDto {
     requiresHumanApproval: task.requiresHumanApproval,
     executionAuthorized: false,
     externalExecutionBlocked: true,
-    durable: false,
+    durable: task.provenance.durable === true,
+    workflowSyncState: task.workflowSyncState,
+    workflowJobId: task.workflowJobId,
   }
+}
+
+function pilotPersistenceDurable(): boolean {
+  return isCustomerAiPilotDurableEnabled()
 }
 
 function resolveTrustedDataSource(context: PilotWorkflowContext): CustomerAiResult<CustomerAiPilotTrustedDataSource> {
@@ -96,7 +106,7 @@ function resolveTrustedDataSource(context: PilotWorkflowContext): CustomerAiResu
   return { ok: true, value: 'SERVER' }
 }
 
-async function recheckPilotPreparationEligibility(
+export async function recheckPilotPreparationEligibility(
   store: CustomerAiStore,
   input: PrepareCustomerAiPilotTaskInput,
 ): Promise<CustomerAiResult<true>> {
@@ -145,7 +155,7 @@ export async function prepareCustomerAiPilotTask(
         : null,
   })
 
-  const existing = findPilotTaskByIdempotency(input.customerAccountId, input.employeeId, input.idempotencyKey)
+  const existing = await findPilotTaskByIdempotency(input.customerAccountId, input.employeeId, input.idempotencyKey)
   if (existing) {
     if (existing.requestFingerprint !== requestFingerprint) {
       return {
@@ -265,7 +275,7 @@ export async function prepareCustomerAiPilotTask(
   const outcome: CustomerAiPilotOutcomeLabel = workflow.outcomeHint
   const correlationId = randomUUID()
 
-  const task = savePilotTask({
+  const task = await savePilotTask({
     customerAccountId: input.customerAccountId,
     managedSiteId: effectiveSiteId,
     employeeId: input.employeeId,
@@ -284,12 +294,15 @@ export async function prepareCustomerAiPilotTask(
       correlationId,
       preparedAt: new Date().toISOString(),
       actorUserId: actor.userId,
-      durable: false,
+      durable: pilotPersistenceDurable(),
     },
     requiresHumanApproval: workflow.requiresHumanApproval,
     approvalId: null,
     estimatedCostUnits: workflow.estimatedCostUnits,
     blockedReason: null,
+    workflowJobId: null,
+    workflowSyncState: 'NOT_QUEUED',
+    workflowValidatedAt: null,
   })
 
   await store.appendEmployeeAudit({
@@ -315,7 +328,15 @@ export async function prepareCustomerAiPilotTask(
     await store.incrementTokenReservation(input.employeeId, input.customerAccountId, workflow.estimatedCostUnits)
   }
 
-  return { ok: true, value: toDto(task) }
+  await maybeEnqueueCustomerAiPilotWorkflowTask(task)
+
+  const refreshed = (await findPilotTaskByIdempotency(
+    input.customerAccountId,
+    input.employeeId,
+    input.idempotencyKey,
+  )) ?? task
+
+  return { ok: true, value: toDto(refreshed) }
 }
 
 async function blockedTask(
@@ -325,7 +346,7 @@ async function blockedTask(
   requestFingerprint: string,
   reason: string,
 ): Promise<CustomerAiResult<CustomerAiPilotTaskDto>> {
-  const task = savePilotTask({
+  const task = await savePilotTask({
     customerAccountId: input.customerAccountId,
     managedSiteId: input.managedSiteId,
     employeeId: input.employeeId,
@@ -352,12 +373,15 @@ async function blockedTask(
       correlationId: randomUUID(),
       preparedAt: new Date().toISOString(),
       actorUserId: actor.userId,
-      durable: false,
+      durable: pilotPersistenceDurable(),
     },
     requiresHumanApproval: false,
     approvalId: null,
     estimatedCostUnits: null,
     blockedReason: reason,
+    workflowJobId: null,
+    workflowSyncState: 'NOT_QUEUED',
+    workflowValidatedAt: null,
   })
   await store.appendEmployeeAudit({
     employeeId: input.employeeId,

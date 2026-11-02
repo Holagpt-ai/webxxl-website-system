@@ -5,6 +5,8 @@ export type CustomerAiPilotWorkflowKind =
 
 export type CustomerAiPilotOutcomeLabel = 'PREPARED' | 'PENDING_APPROVAL' | 'BLOCKED' | 'UNVERIFIED'
 
+export type CustomerAiPilotWorkflowSyncState = 'NOT_QUEUED' | 'QUEUED' | 'VALIDATED' | 'FAILED'
+
 export type CustomerAiPilotTrustedDataSource = 'SERVER' | 'TEST_SYNTHETIC'
 
 export type CustomerAiPilotTaskRecord = {
@@ -28,12 +30,15 @@ export type CustomerAiPilotTaskRecord = {
     correlationId: string
     preparedAt: string
     actorUserId: string
-    durable: false
+    durable: boolean
   }
   requiresHumanApproval: boolean
   approvalId: string | null
   estimatedCostUnits: number | null
   blockedReason: string | null
+  workflowJobId: string | null
+  workflowSyncState: CustomerAiPilotWorkflowSyncState
+  workflowValidatedAt: Date | null
   createdAt: Date
 }
 

@@ -17,7 +17,7 @@ export async function POST(request: Request, { params }: Params) {
     if (disabled) return disabled
     const user = await requireUser()
     const { accountId, taskId } = await params
-    const task = findPilotTaskById(taskId)
+    const task = await findPilotTaskById(taskId)
     if (!task || task.customerAccountId !== accountId) {
       return customerAiResultResponse({ ok: false, error: 'NOT_FOUND', message: 'Task not found' })
     }

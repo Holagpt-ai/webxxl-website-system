@@ -6,6 +6,7 @@ import { executeSeoSyncPrepareWorkflow } from '@/lib/platform/workflow/handlers/
 import { executeAnalyticsProviderSyncWorkflow } from '@/lib/platform/workflow/handlers/analytics-provider-sync'
 import { executeAnalyticsConversionAggregateWorkflow } from '@/lib/platform/workflow/handlers/analytics-conversion-aggregate'
 import { executeCommerceWorkflow } from '@/lib/platform/workflow/handlers/commerce-fulfillment'
+import { executeWorkforceTaskPrepareWorkflow } from '@/lib/platform/workflow/handlers/workforce-task-prepare'
 
 export type WorkflowHandler = (ctx: HandlerExecutionContext, payload: Record<string, unknown>) => Promise<HandlerExecutionResult>
 
@@ -22,7 +23,7 @@ const REGISTRY: Record<WorkflowJobKind, WorkflowHandler> = {
   ANALYTICS_CONVERSION_AGGREGATE: executeAnalyticsConversionAggregateWorkflow,
   MARKETING_DRAFT_PREPARE: DISABLED_HANDLER,
   SOCIAL_STATUS_RECONCILE: DISABLED_HANDLER,
-  WORKFORCE_TASK_PREPARE: DISABLED_HANDLER,
+  WORKFORCE_TASK_PREPARE: executeWorkforceTaskPrepareWorkflow,
   WALLET_RECONCILIATION_REVIEW: DISABLED_HANDLER,
   NOTIFICATION_DELIVERY: DISABLED_HANDLER,
   COMMERCE_PAYMENT_FULFILL: executeCommerceWorkflow,

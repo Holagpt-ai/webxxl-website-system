@@ -582,6 +582,8 @@ model CustomerAccount {
   customerAiKnowledgeItems     CustomerAiKnowledgeItem[]
   customerAiChatSessions       CustomerAiChatSession[]
   customerAiUsagePolicy        CustomerAiAccountUsagePolicy?
+  customerAiPilotTasks         CustomerAiPilotTask[]
+  customerAiPilotApprovals       CustomerAiPilotApproval[]
   analyticsConversionDefinitions AnalyticsConversionDefinition[]
   analyticsConversionObservations AnalyticsConversionObservation[]
   webxxlConversionEvents       WebxxlConversionEvent[]
@@ -963,6 +965,7 @@ model ManagedSite {
   siteSpendingPolicies      SiteSpendingPolicy[]
   customerAiEmployees       CustomerAiEmployee[]
   customerAiChatSessions    CustomerAiChatSession[]
+  customerAiPilotTasks      CustomerAiPilotTask[]
   analyticsConversionDefinitions AnalyticsConversionDefinition[]
   analyticsConversionObservations AnalyticsConversionObservation[]
   webxxlConversionEvents    WebxxlConversionEvent[]
@@ -4637,6 +4640,7 @@ model CustomerAiEmployee {
   toolPermissions CustomerAiEmployeeToolPermission[]
   chatSessions    CustomerAiChatSession[]
   usageCounters   CustomerAiEmployeeUsageCounter[]
+  pilotTasks      CustomerAiPilotTask[]
 
   @@index([customerAccountId, status])
   @@index([customerAccountId, createdAt])
@@ -4826,6 +4830,89 @@ model CustomerAiEmployeeUsageCounter {
 
   @@unique([employeeId, periodKey])
   @@index([customerAccountId, periodKey])
+}
+
+enum CustomerAiPilotWorkflowKind {
+  crm_lead_intelligence
+  marketing_seo_assistant
+  receptionist_preparation
+}
+
+enum CustomerAiPilotOutcome {
+  PREPARED
+  PENDING_APPROVAL
+  BLOCKED
+  UNVERIFIED
+}
+
+enum CustomerAiPilotWorkflowSyncState {
+  NOT_QUEUED
+  QUEUED
+  VALIDATED
+  FAILED
+}
+
+/// Durable prepared pilot task (Batch 37). Tenant-scoped; not live LLM execution.
+model CustomerAiPilotTask {
+  id                   String                         @id @default(cuid())
+  publicId             String                         @unique
+  customerAccountId    String
+  managedSiteId        String?
+  employeeId           String
+  workflowKind         CustomerAiPilotWorkflowKind
+  toolKey              String
+  accessMode           CustomerAiToolAccessMode
+  idempotencyKey       String
+  requestFingerprint   String
+  outcome              CustomerAiPilotOutcome
+  actionHash           String
+  draftPayload         Json                         @default("{}")
+  provenanceJson       Json                         @default("{}")
+  requiresHumanApproval Boolean                     @default(false)
+  approvalId           String?
+  estimatedCostUnits   Int?
+  blockedReason        String?
+  workflowJobId        String?                        @unique
+  workflowSyncState    CustomerAiPilotWorkflowSyncState @default(NOT_QUEUED)
+  workflowValidatedAt  DateTime?
+  createdAt            DateTime                       @default(now())
+  updatedAt            DateTime                       @updatedAt
+
+  customerAccount CustomerAccount         @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  managedSite     ManagedSite?            @relation(fields: [managedSiteId], references: [id], onDelete: SetNull)
+  employee        CustomerAiEmployee      @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  pilotApproval   CustomerAiPilotApproval?
+
+  @@unique([customerAccountId, employeeId, idempotencyKey])
+  @@index([customerAccountId, createdAt])
+  @@index([employeeId, createdAt])
+}
+
+/// Human approval binding for a prepared pilot task (staff-only issuance).
+model CustomerAiPilotApproval {
+  id                     String                    @id @default(cuid())
+  preparedTaskId         String                    @unique
+  customerAccountId      String
+  managedSiteId          String?
+  employeeId             String
+  toolKey                String
+  workflowKind           CustomerAiPilotWorkflowKind
+  actionHash             String
+  allowedAction          String
+  destinationRef         String?
+  approvedByUserId       String
+  approverPlatformRole   String
+  maxCostUnits           Int?
+  expiresAt              DateTime
+  consumedAt             DateTime?
+  revokedAt              DateTime?
+  createdAt              DateTime                  @default(now())
+  updatedAt              DateTime                  @updatedAt
+
+  preparedTask    CustomerAiPilotTask @relation(fields: [preparedTaskId], references: [id], onDelete: Cascade)
+  customerAccount CustomerAccount     @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+
+  @@index([customerAccountId, createdAt])
 }
 
 enum AnalyticsConversionSourceKind {

@@ -33,9 +33,22 @@ export function isCustomerAiPilotPrepEnabled(): boolean {
   return envFlag('CUSTOMER_AI_PILOT_PREP_ENABLED', false)
 }
 
+/** PostgreSQL-backed pilot task + approval persistence (Batch 37). Default off until migration applied. */
+export function isCustomerAiPilotDurableEnabled(): boolean {
+  return envFlag('CUSTOMER_AI_PILOT_DURABLE_ENABLED', false)
+}
+
 /**
- * HTTP routes for non-durable in-process pilot tasks. Default off — unsuitable for Vercel production.
- * Library preparation (e.g. Vitest) may use CUSTOMER_AI_PILOT_PREP_ENABLED without this flag.
+ * Enqueue AUTO-10 WORKFORCE_TASK_PREPARE after durable pilot task preparation.
+ * Requires workflow enqueue flags; does not activate worker cron or LLM execution.
+ */
+export function isCustomerAiPilotWorkflowEnqueueEnabled(): boolean {
+  return envFlag('CUSTOMER_AI_PILOT_WORKFLOW_ENQUEUE_ENABLED', false)
+}
+
+/**
+ * HTTP routes for pilot tasks (require durable persistence). Default off.
+ * Library preparation (e.g. Vitest) may use CUSTOMER_AI_PILOT_PREP_ENABLED with in-memory store.
  */
 export function isCustomerAiPilotHttpEnabled(): boolean {
   return envFlag('CUSTOMER_AI_PILOT_HTTP_ENABLED', false)

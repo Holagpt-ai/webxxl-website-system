@@ -1,6 +1,6 @@
 # BATCH36 — Customer AI Workforce Pilot V1 (preparation only)
 
-**Status:** IN PR · **Scope:** guarded task preparation, human approval binding, three deterministic pilot workflows. **Not** live LLM execution, outbound messaging, Chatwoot bridge, or AUTO-10 dispatch.
+**Status:** MERGED (PR #87 @ `f620e4f`) · **Scope:** guarded task preparation, human approval binding, three deterministic pilot workflows. **Not** live LLM execution, outbound messaging, Chatwoot bridge, or AUTO-10 dispatch. Durable persistence: see **BATCH37**.
 
 ## Feature flag
 
@@ -32,7 +32,7 @@ Labels: `PREPARED`, `PENDING_APPROVAL`, `BLOCKED`, `UNVERIFIED`. Drafts are **no
 | POST | `/api/v1/customer-ai/accounts/{accountId}/pilot-tasks/{taskId}/approvals` |
 | POST | `/api/v1/customer-ai/accounts/{accountId}/pilot-tasks/{taskId}/execution-attempt` |
 
-Prepared tasks and approvals use an **in-process pilot task store** (Batch 36). Durable persistence is deferred; production migration not required for this batch.
+Batch 36 used an in-process store for Vitest. **Batch 37** replaces production paths with PostgreSQL persistence when `CUSTOMER_AI_PILOT_DURABLE_ENABLED` is on (migration in Git only).
 
 ## Human approval binding
 

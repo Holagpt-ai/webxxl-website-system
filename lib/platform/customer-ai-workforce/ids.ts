@@ -1,6 +1,6 @@
 let seq = 0
 
-export function nextCustomerAiPublicId(prefix: 'wae' | 'wak' | 'wacs'): string {
+export function nextCustomerAiPublicId(prefix: 'wae' | 'wak' | 'wacs' | 'wapt' | 'wapa'): string {
   seq += 1
   return `${prefix}_${Date.now().toString(36)}_${seq.toString(36)}`
 }

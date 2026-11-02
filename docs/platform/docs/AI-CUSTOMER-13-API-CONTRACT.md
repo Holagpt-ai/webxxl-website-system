@@ -79,7 +79,9 @@ Optional future link: `chatwootConversationMappingId` on session (COMMS-06 mappi
 
 ## Pilot task preparation (Batch 36)
 
-When `CUSTOMER_AI_PILOT_HTTP_ENABLED` is off (default), pilot HTTP routes return **503** `EXECUTION_DISABLED` with a non-durable boundary message. Workforce/prep flags must also be on for HTTP to respond with success.
+When `CUSTOMER_AI_PILOT_HTTP_ENABLED` or `CUSTOMER_AI_PILOT_DURABLE_ENABLED` is off (default), pilot HTTP routes return **503** `EXECUTION_DISABLED`. Workforce/prep flags must also be on for HTTP to respond with success. Prepared tasks persist in PostgreSQL when durable flag is on (Batch 37 migration in Git only).
+
+Optional `CUSTOMER_AI_PILOT_WORKFLOW_ENQUEUE_ENABLED` enqueues AUTO-10 `WORKFORCE_TASK_PREPARE` for post-preparation validation (requires existing `WORKFLOW_*` enqueue gates; does not activate worker cron).
 
 Prepare bodies must **not** include client snapshots or data classification; the server resolves employee locale/site from persistence.
 
@@ -89,7 +91,7 @@ Prepare bodies must **not** include client snapshots or data classification; the
 | POST | `/api/v1/customer-ai/accounts/{accountId}/pilot-tasks/{taskId}/approvals` | Trusted human approval binding for prepared consequential drafts |
 | POST | `/api/v1/customer-ai/accounts/{accountId}/pilot-tasks/{taskId}/execution-attempt` | Always blocked while execution flags off |
 
-See [`BATCH36-CUSTOMER-AI-PILOT-V1.md`](BATCH36-CUSTOMER-AI-PILOT-V1.md).
+See [`BATCH36-CUSTOMER-AI-PILOT-V1.md`](BATCH36-CUSTOMER-AI-PILOT-V1.md) and [`BATCH37-CUSTOMER-AI-PILOT-DURABLE.md`](BATCH37-CUSTOMER-AI-PILOT-DURABLE.md).
 
 ## Usage
 

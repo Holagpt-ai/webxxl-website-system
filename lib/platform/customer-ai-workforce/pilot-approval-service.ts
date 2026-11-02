@@ -67,7 +67,7 @@ export async function issueCustomerAiPilotApproval(
   const cost = validateBoundedCost(input.maxCostUnits)
   if (!cost.ok) return cost
 
-  const task = findPilotTaskById(input.preparedTaskId)
+  const task = await findPilotTaskById(input.preparedTaskId)
   if (!task || task.customerAccountId !== input.customerAccountId) {
     return { ok: false, error: 'NOT_FOUND', message: 'Prepared task not found' }
   }
@@ -100,7 +100,7 @@ export async function issueCustomerAiPilotApproval(
   }
 
   const expiresAt = new Date(Date.now() + ttl.value * 1000)
-  const approval = savePilotApproval({
+  const approval = await savePilotApproval({
     preparedTaskId: task.id,
     customerAccountId: task.customerAccountId,
     managedSiteId: task.managedSiteId,
@@ -117,7 +117,7 @@ export async function issueCustomerAiPilotApproval(
     consumedAt: null,
     revokedAt: null,
   })
-  linkPilotTaskApproval(task.id, approval.id)
+  await linkPilotTaskApproval(task.id, approval.id)
 
   return { ok: true, value: { approvalId: approval.id, expiresAt: expiresAt.toISOString() } }
 }
@@ -136,10 +136,10 @@ export type ValidatePilotApprovalInput = {
   consume?: boolean
 }
 
-export function validateCustomerAiPilotApproval(
+export async function validateCustomerAiPilotApproval(
   input: ValidatePilotApprovalInput,
-): CustomerAiResult<{ approvalId: string }> {
-  const task = findPilotTaskById(input.preparedTaskId)
+): Promise<CustomerAiResult<{ approvalId: string }>> {
+  const task = await findPilotTaskById(input.preparedTaskId)
   if (!task || task.customerAccountId !== input.customerAccountId) {
     return { ok: false, error: 'NOT_FOUND', message: 'Prepared task not found' }
   }
@@ -147,7 +147,7 @@ export function validateCustomerAiPilotApproval(
     return { ok: false, error: 'FORBIDDEN', message: 'Blocked task cannot be executed' }
   }
 
-  const approval = findPilotApprovalById(input.approvalId)
+  const approval = await findPilotApprovalById(input.approvalId)
   if (!approval) return { ok: false, error: 'NOT_FOUND', message: 'Approval not found' }
   if (approval.preparedTaskId !== input.preparedTaskId) {
     return { ok: false, error: 'FORBIDDEN', message: 'Approval task binding mismatch' }
@@ -184,7 +184,8 @@ export function validateCustomerAiPilotApproval(
   }
 
   if (input.consume) {
-    updatePilotApproval(input.approvalId, { consumedAt: new Date() })
+    const consumed = await updatePilotApproval(input.approvalId, { consumedAt: new Date() }, { consumeIfUnset: true })
+    if (!consumed) return { ok: false, error: 'FORBIDDEN', message: 'Approval already consumed' }
   }
   return { ok: true, value: { approvalId: input.approvalId } }
 }
