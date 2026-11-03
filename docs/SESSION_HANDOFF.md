@@ -7,7 +7,7 @@
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | **Batch 42** merged (PR **#103** @ `bb7165f`); staging **39/39** on `vcgibefnhneaqhcguhnt` |
-| 2 | GitHub SHA, branch, active PR | **`bb7165fb7709dd3ef612842af9bf5b53375cc473`** on `main`; Batch **43** IN PR — **Cursor** |
+| 2 | GitHub SHA, branch, active PR | **`bb7165fb7709dd3ef612842af9bf5b53375cc473`** on `main`; Batch **43** [PR #104](https://github.com/Holagpt-ai/webxxl-website-system/pull/104) @ `a2ab248` — **Cursor** |
 | 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` (last verified). Deploy of `bb7165f` **UNVERIFIED**. **`txfxeehglqfszletuumn` not accessed**. SHA only — not migration, activation, or provider live state. |
 | 4 | Last updated | 2026-11-03 |
 | 5 | Next task / responsible platform | Batch **43** safeguards — owner PR review — **Cursor**; owner-authorized staging apply + EN/ES smoke — **Owner** |

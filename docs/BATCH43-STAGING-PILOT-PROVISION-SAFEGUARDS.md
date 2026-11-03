@@ -14,7 +14,7 @@ Complete mandatory pre-apply gates **PILOT-42-PRE-001..003** from [`BATCH42-STAG
 | **PILOT-42-PRE-002** | `__tests__/platform/batch43-staging-pilot-provision-safeguards.test.ts` (mocked execute path) |
 | **PILOT-42-PRE-003** | Extended guard tests in same file |
 
-Focused vitest (Batch 41–43 pilot tests): **29/29 pass** locally on this branch before PR open. Live staging `--apply` remains a separate owner gate.
+Focused vitest (Batch 41–43 pilot tests): **29/29 pass** locally before [PR #104](https://github.com/Holagpt-ai/webxxl-website-system/pull/104) open. Live staging `--apply` remains a separate owner gate.
 
 **Not in scope:** live staging apply, production access, migrations, flags, UI, providers.
 
