@@ -20,6 +20,7 @@ export const STAGING_PILOT_FORBIDDEN_ACCOUNT_ID_PREFIXES = ['acct_abmed_'] as co
 
 export const STAGING_PILOT_FIXTURE_PLAN_VERSION = 'batch41-staging-pilot-v1' as const
 export const STAGING_PILOT_EXECUTION_VERSION = 'batch42-staging-pilot-v1' as const
+export const STAGING_PILOT_SAFEGUARDS_VERSION = 'batch43-staging-pilot-v1' as const
 
 /** Explicit owner gate — env alone is insufficient without CLI confirmation. */
 export const STAGING_PILOT_APPLY_AUTHORIZATION_ENV = 'WEBXXL_STAGING_PILOT_FIXTURE_APPLY_AUTHORIZED' as const

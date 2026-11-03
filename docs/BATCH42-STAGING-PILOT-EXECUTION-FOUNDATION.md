@@ -1,6 +1,6 @@
 # Batch 42 — Staging pilot execution foundation
 
-**Status:** IN PR (implementation; no live staging writes in Cursor session)  
+**Status:** MERGED @ `bb7165f` (PR #103)  
 **Depends on:** Batch 41 merged @ `9d32717` (PR #102)  
 **ADR:** Not required — extends Batch 41 dry-run planner with guarded apply path.
 
@@ -55,4 +55,4 @@ Merging Batch 42 **does not** authorize live fixture apply. Before the first rea
 | **PILOT-42-PRE-002** | Execute-path tests — unit coverage for `executeStagingPilotFixtureApply` (create-only, skip existing, transaction rollback on conflict). |
 | **PILOT-42-PRE-003** | Extended environment-guard tests — production in `DIRECT_URL`, `PRODUCTION_IDENTITY_COLLISION`, missing `WEBXXL_STAGING_BOUNDARIES_CONFIRMED`, apply without staging URL. |
 
-Until **PILOT-42-PRE-001..003** are satisfied or explicitly waived with owner evidence, treat staging apply as **BLOCKED** even when apply env vars and CLI flags are set.
+**Batch 43 (IN PR):** **PILOT-42-PRE-001..003** implemented and covered by focused tests — see [`BATCH43-STAGING-PILOT-PROVISION-SAFEGUARDS.md`](BATCH43-STAGING-PILOT-PROVISION-SAFEGUARDS.md). Live staging `--apply` still requires separate owner authorization; tooling alone does not authorize writes.

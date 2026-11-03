@@ -9,6 +9,7 @@ import {
   STAGING_PILOT_SUBSCRIBER_SUBSCRIPTION_PUBLIC_ID,
   STAGING_PILOT_SUBSCRIBER_USER_ID,
 } from '@/lib/platform/pilot/staging-pilot-fixture-ids'
+import { detectStagingPilotFixtureCollisions } from '@/lib/platform/pilot/staging-pilot-fixture-collision'
 import { stagingPilotFixturePayloadSpec } from '@/lib/platform/pilot/staging-pilot-fixture-payloads'
 
 export type StagingPilotFixtureEntitySnapshot = {
@@ -32,6 +33,8 @@ export type StagingPilotFixtureState = {
   billingGroupMemberships: Record<string, StagingPilotFixtureEntitySnapshot>
   subscriptions: Record<string, StagingPilotFixtureEntitySnapshot & { customerAccountId?: string | null }>
   catalog: StagingPilotFixtureCatalogSnapshot
+  /** PILOT-42-PRE-001 collision preflight messages (read-only). */
+  collisionConflicts: string[]
 }
 
 function missing(id: string): StagingPilotFixtureEntitySnapshot {
@@ -197,6 +200,8 @@ export async function loadStagingPilotFixtureState(
         },
   }
 
+  const collisionReport = await detectStagingPilotFixtureCollisions(prisma)
+
   return {
     billingGroups: billingGroupMap,
     customerAccounts: accountMap,
@@ -205,5 +210,6 @@ export async function loadStagingPilotFixtureState(
     billingGroupMemberships: bgMembershipMap,
     subscriptions: subscriptionMap,
     catalog,
+    collisionConflicts: collisionReport.conflicts,
   }
 }
