@@ -6,27 +6,20 @@
  *   pnpm pilot:staging-fixture-plan
  *   pnpm pilot:staging-fixture-plan --json
  *
- * Apply mode is refused in Batch 41.
+ * For apply / inventory use pnpm pilot:staging-fixture-provision (Batch 42).
  */
-import { assertStagingPilotFixtureEnvironment } from '@/lib/platform/pilot/staging-pilot-environment-guard'
 import { buildStagingPilotFixturePlan } from '@/lib/platform/pilot/staging-pilot-fixture-plan'
 
 function wantsJson(argv: string[]): boolean {
   return argv.includes('--json')
 }
 
-function wantsApply(argv: string[]): boolean {
-  return argv.includes('--apply') || process.env.WEBXXL_STAGING_PILOT_FIXTURE_APPLY === '1'
-}
-
 function main(): void {
-  if (wantsApply(process.argv.slice(2))) {
-    const guard = assertStagingPilotFixtureEnvironment(process.env, { mode: 'apply' })
-    if (!guard.ok) {
-      process.stderr.write(`${guard.code}: ${guard.message}\n`)
-      process.exit(guard.code === 'APPLY_NOT_AUTHORIZED' ? 2 : 1)
-    }
-    process.exit(0)
+  if (process.argv.slice(2).includes('--apply')) {
+    process.stderr.write(
+      'Use pnpm pilot:staging-fixture-provision --apply --confirm-staging-provision for Batch 42 apply gate.\n',
+    )
+    process.exit(2)
   }
 
   const result = buildStagingPilotFixturePlan({ env: process.env })

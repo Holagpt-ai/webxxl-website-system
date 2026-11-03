@@ -90,11 +90,11 @@ describe('Batch 41 staging pilot tenant fixture (dry-run)', () => {
     expect(result.plan.accounts.subscriber.customerAccountId.startsWith('acct_abmed_')).toBe(false)
   })
 
-  it('refuses apply mode and production database targets', () => {
+  it('refuses apply without confirmation and production database targets', () => {
     const apply = assertStagingPilotFixtureEnvironment({}, { mode: 'apply' })
     expect(apply.ok).toBe(false)
     if (apply.ok) return
-    expect(apply.code).toBe('APPLY_NOT_AUTHORIZED')
+    expect(apply.code).toBe('APPLY_CONFIRMATION_REQUIRED')
 
     const production = assertStagingPilotFixtureEnvironment(
       {

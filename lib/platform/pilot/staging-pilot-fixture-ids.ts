@@ -19,3 +19,7 @@ export const WEBXXL_RECORDED_PRODUCTION_SUPABASE_REF = 'txfxeehglqfszletuumn' as
 export const STAGING_PILOT_FORBIDDEN_ACCOUNT_ID_PREFIXES = ['acct_abmed_'] as const
 
 export const STAGING_PILOT_FIXTURE_PLAN_VERSION = 'batch41-staging-pilot-v1' as const
+export const STAGING_PILOT_EXECUTION_VERSION = 'batch42-staging-pilot-v1' as const
+
+/** Explicit owner gate — env alone is insufficient without CLI confirmation. */
+export const STAGING_PILOT_APPLY_AUTHORIZATION_ENV = 'WEBXXL_STAGING_PILOT_FIXTURE_APPLY_AUTHORIZED' as const
