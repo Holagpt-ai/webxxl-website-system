@@ -1,6 +1,6 @@
 # Batch 41 — Staging pilot tenant fixture (dry-run only)
 
-**Status:** IN PR · **Baseline `main`:** `22fa338196925f8b0e314f231a58aa179bb08257` (PR #101)  
+**Status:** MERGED · **Squash `main`:** `9d32717d635b6c1684ed6fda66219db59b0ea535` (PR #102)  
 **ADR:** not required (extends PILOT-21B / OPEN-001 tenancy; no policy change)
 
 ## Scope
@@ -29,7 +29,7 @@ pnpm pilot:staging-fixture-plan
 pnpm pilot:staging-fixture-plan --json
 ```
 
-`--apply` and `WEBXXL_STAGING_PILOT_FIXTURE_APPLY=1` are **refused** in Batch 41. Owner authorization is required for any future staging apply gate.
+Apply is implemented in Batch 42 (`pnpm pilot:staging-fixture-provision`); Batch 41 CLI remains plan-only.
 
 ## Guards
 

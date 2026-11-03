@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-03 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `f8261810244a21f3f92cde3b9a757fd8f0f77783` (PR #100)
+**Evidence review:** 2026-11-03 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `9d32717d635b6c1684ed6fda66219db59b0ea535` (PR #102)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,11 +35,11 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **Batch 40** merged (PR **#99** @ `691e0e52`); staging **39/39** on `vcgibefnhneaqhcguhnt`; closeout PR **#100** @ `f826181` |
-| 2 | GitHub SHA, branch, active PR | **`f8261810244a21f3f92cde3b9a757fd8f0f77783`** on `main`; PR **#100** merged; PR **#99** merged; **#98** closed superseded |
-| 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` (last verified). Deploy of `f826181` **UNVERIFIED**. **`txfxeehglqfszletuumn` not accessed**. SHA only — not migration, activation, or provider live state. |
+| 1 | Last verified checkpoint | **Batch 41** merged (PR **#102** @ `9d32717`); staging **39/39** on `vcgibefnhneaqhcguhnt`; Batch **40** @ `691e0e52` |
+| 2 | GitHub SHA, branch, active PR | **`9d32717d635b6c1684ed6fda66219db59b0ea535`** on `main`; Batch **42** [PR #103](https://github.com/Holagpt-ai/webxxl-website-system/pull/103) @ `5bb0421` — **Cursor** |
+| 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` (last verified). Deploy of `9d32717` **UNVERIFIED**. **`txfxeehglqfszletuumn` not accessed**. SHA only — not migration, activation, or provider live state. |
 | 4 | Last updated | 2026-11-03 |
-| 5 | Next task / responsible platform | Batch **41** staging pilot fixture dry-run — open [PR #102](https://github.com/Holagpt-ai/webxxl-website-system/pull/102), awaiting owner squash merge — **Cursor**; then owner authenticated staging smoke — **Owner** |
+| 5 | Next task / responsible platform | Batch **42** staging pilot execution foundation — open PR, owner review — **Cursor**; authorized staging fixture apply + EN/ES auth smoke — **Owner** |
 | 6 | Open blocker / gate IDs | Staging migrations **complete (39/39)**. Controlled pilot readiness **false** (auth smoke BLOCKED). Production migrate **UNVERIFIED**. Flags **not activated**. |
 
 ### Evidence table
