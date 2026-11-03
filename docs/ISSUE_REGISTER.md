@@ -12,5 +12,6 @@ Status words: REPORTED, VERIFIED, IN PR, IN PROGRESS, BLOCKED, DEFERRED, RESOLVE
 | CONT-005 | RESOLVED | Documentation overlap between **PR #64** and **CONTINUITY-02** reconciled on rebase of `docs/webxxl-continuity-02` onto `c6d122` | PR #65 push | Reopen if PR #65 reintroduces conflicting checkpoint facts without merge |
 | POLICY-SUB-001 | REPORTED | Commercial treatment of `PAST_DUE` and `CANCEL_SCHEDULED` website subscriptions for OPEN-001 eligibility (grace vs hard deny) | `subscriber-eligibility.ts` qualifies all three today; no separate owner grace policy recorded | Owner commercial clarification — do not change status semantics without decision |
 | RELEASE-001 | DEFERRED | Production migration proof, provider activation, and real send tests | Separate owner authorization | Launch or activation gate |
+| PILOT-42-PRE | IN PR | Pre-apply safeguard gates PRE-001..003 (collision, execute tests, guard matrix) | Batch 43 branch + focused vitest | Mark RESOLVED after Batch 43 merge and green CI |
 
 Source defects need a path and a reproduction. Production defects need an environment, a date, and evidence. Do not reopen a deferred integration without an owner decision or a launch gate.

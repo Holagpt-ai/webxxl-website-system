@@ -86,6 +86,13 @@ export function buildStagingPilotFixtureApplyReport(input: {
   for (const value of Object.values(input.state.billingGroupMemberships)) {
     if (value.conflict) conflicts.push(value.conflict)
   }
+  for (const value of Object.values(input.state.users)) {
+    if (value.conflict) conflicts.push(value.conflict)
+  }
+  for (const value of Object.values(input.state.customerMemberships)) {
+    if (value.conflict) conflicts.push(value.conflict)
+  }
+  conflicts.push(...input.state.collisionConflicts)
   for (const value of Object.values(input.state.subscriptions)) {
     if (value.conflict) conflicts.push(value.conflict)
   }
@@ -129,7 +136,15 @@ function reconcileBillingGroups(
   for (const group of payload.billingGroups) {
     const snap = state.billingGroups[group.id]
     const stepId = group.id === payload.billingGroups[0]!.id ? '01-billing-group-subscriber' : '02-billing-group-non-subscriber'
-    if (snap?.present) {
+    if (snap?.conflict) {
+      actions.push({
+        stepId,
+        entity: 'BillingGroup',
+        kind: 'blocked',
+        naturalKey: { id: group.id },
+        detail: snap.conflict,
+      })
+    } else if (snap?.present) {
       pushNoop(actions, stepId, 'BillingGroup', { id: group.id }, snap.summary)
     } else {
       pushCreate(actions, stepId, 'BillingGroup', { id: group.id }, `Create BillingGroup ${group.slug}`)
@@ -148,7 +163,15 @@ function reconcileAccounts(
       account.id === STAGING_PILOT_SUBSCRIBER_ACCOUNT_ID
         ? '03-customer-account-subscriber'
         : '04-customer-account-non-subscriber'
-    if (snap?.present) {
+    if (snap?.conflict) {
+      actions.push({
+        stepId,
+        entity: 'CustomerAccount',
+        kind: 'blocked',
+        naturalKey: { id: account.id },
+        detail: snap.conflict,
+      })
+    } else if (snap?.present) {
       pushNoop(actions, stepId, 'CustomerAccount', { id: account.id }, snap.summary)
     } else {
       pushCreate(actions, stepId, 'CustomerAccount', { id: account.id }, `Create CustomerAccount ${account.slug}`)
@@ -164,7 +187,15 @@ function reconcileUsers(
   for (const user of payload.users) {
     const snap = state.users[user.id]
     const stepId = user.id === payload.users[0]!.id ? '05a-user-subscriber' : '05b-user-non-subscriber'
-    if (snap?.present) {
+    if (snap?.conflict) {
+      actions.push({
+        stepId,
+        entity: 'User',
+        kind: 'blocked',
+        naturalKey: { id: user.id },
+        detail: snap.conflict,
+      })
+    } else if (snap?.present) {
       pushNoop(actions, stepId, 'User', { id: user.id }, snap.summary)
     } else {
       pushCreate(actions, stepId, 'User', { id: user.id }, `Create User ${user.email} (identity only — no OAuth)`)
@@ -184,7 +215,15 @@ function reconcileCustomerMemberships(
       membership.customerAccountId === STAGING_PILOT_SUBSCRIBER_ACCOUNT_ID
         ? '05-membership-subscriber'
         : '06-membership-non-subscriber'
-    if (snap?.present) {
+    if (snap?.conflict) {
+      actions.push({
+        stepId,
+        entity: 'CustomerMembership',
+        kind: 'blocked',
+        naturalKey: { userId: membership.userId, customerAccountId: membership.customerAccountId },
+        detail: snap.conflict,
+      })
+    } else if (snap?.present) {
       pushNoop(actions, stepId, 'CustomerMembership', { userId: membership.userId, customerAccountId: membership.customerAccountId }, snap.summary)
     } else {
       pushCreate(
@@ -206,7 +245,15 @@ function reconcileBillingGroupMemberships(
   for (const link of payload.billingGroupMemberships) {
     const snap = state.billingGroupMemberships[link.customerAccountId]
     const stepId = `bgm-${link.customerAccountId}`
-    if (snap?.present) {
+    if (snap?.conflict) {
+      actions.push({
+        stepId,
+        entity: 'BillingGroupMembership',
+        kind: 'blocked',
+        naturalKey: { id: link.id },
+        detail: snap.conflict,
+      })
+    } else if (snap?.present) {
       pushNoop(actions, stepId, 'BillingGroupMembership', { id: link.id }, snap.summary)
     } else {
       pushCreate(actions, stepId, 'BillingGroupMembership', { id: link.id }, 'Link account to isolated payer group')

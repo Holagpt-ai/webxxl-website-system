@@ -93,6 +93,7 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-11-03 | Batch 40 staging migrate deploy | Staging `vcgibefnhneaqhcguhnt` @ `691e0e5` | **`resolve --rolled-back` comms06a** then **deploy SUCCESS 39/39**; production untouched; [`BATCH40-STAGING-ROLLOUT-RESULT.md`](BATCH40-STAGING-ROLLOUT-RESULT.md) |
 | 2026-11-03 | Batch 40 documentation closeout | [PR #100](https://github.com/Holagpt-ai/webxxl-website-system/pull/100) merged @ `f8261810244a21f3f92cde3b9a757fd8f0f77783` | Documentation only. Deploy of this SHA UNVERIFIED. No new migration. Not activation. |
 | 2026-11-03 | Batch 41 Staging pilot tenant fixture (dry-run) | [PR #102](https://github.com/Holagpt-ai/webxxl-website-system/pull/102) merged @ `9d32717` | Planner only; `pnpm pilot:staging-fixture-plan`; no DB writes in merge |
-| 2026-11-03 | Batch 42 Staging pilot execution foundation | Open PR on `feature/batch42-staging-pilot-execution-foundation` | Guarded provision CLI; default dry-run; apply gated; no Cursor session writes |
+| 2026-11-03 | Batch 42 Staging pilot execution foundation | [PR #103](https://github.com/Holagpt-ai/webxxl-website-system/pull/103) merged @ `bb7165f` | Guarded provision CLI; default dry-run; apply gated |
+| 2026-11-03 | Batch 43 Staging pilot provision safeguards | Open PR on `feature/batch43-staging-pilot-provision-safeguards` | PILOT-42-PRE-001..003; no live apply |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

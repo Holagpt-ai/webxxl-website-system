@@ -52,6 +52,7 @@ function emptyState(): StagingPilotFixtureState {
         summary: 'catalog ok',
       },
     },
+    collisionConflicts: [],
   }
 }
 
@@ -194,6 +195,7 @@ describe('Batch 42 staging pilot fixture provision', () => {
       billingGroupMembership: { findMany: vi.fn().mockResolvedValue([]) },
       commerceSubscription: { findMany: vi.fn().mockResolvedValue([]) },
       commerceProduct: { findUnique: vi.fn().mockResolvedValue({ id: 'p', prices: [{ id: 'pr' }] }) },
+      account: { findMany: vi.fn().mockResolvedValue([]) },
       $disconnect: vi.fn(),
     }
     const result = await runStagingPilotFixtureProvision({
