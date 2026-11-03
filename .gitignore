@@ -14,6 +14,7 @@ infra/services/**/postiz.env
 
 # Common ignores
 node_modules
+.tmp-embedded-pg-rehearsal*
 .next/
 .DS_Store
 tsconfig.tsbuildinfo

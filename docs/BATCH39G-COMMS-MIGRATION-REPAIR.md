@@ -1,6 +1,6 @@
 # BATCH39G — Comms migration repair (repository + proposed staging recovery)
 
-**Status:** IN PR · **Baseline `main`:** `a0d03aa2324a17d655bb1929e20f3fb1c3fdd810`  
+**Status:** MERGED (PR #97) · **Baseline `main`:** `2590565f3b3a705097f3484345e19dae4af2b967`  
 **Staging:** `vcgibefnhneaqhcguhnt` · **Production:** not accessed in Phase 1
 
 ## Phase 1 — Repository repair (this PR)
@@ -46,9 +46,9 @@ Removed **only** the redundant `ALTER TYPE … ADD VALUE 'PROCESSING'` from `com
 | Staging with failed `comms06a` row | **Medium** | Requires Phase 2 resolve + redeploy; migration SQL **edited** after partial failure — owner authorization |
 | Production | **UNVERIFIED** | Confirm history before any production deploy |
 
-## Phase 2 — Staging recovery (NOT executed in Phase 1)
+## Phase 2 — Staging recovery (executed 2026-11-02 — stopped @ redeploy)
 
-**Requires:** PR #39G merged + separate owner authorization.
+**Requires:** PR #97 merged + owner authorization. Full outcome: [`BATCH39G-PHASE2-STAGING-RESULT.md`](BATCH39G-PHASE2-STAGING-RESULT.md).
 
 1. Load `.env.staging.local`; preflight `supabase:vcgibefnhneaqhcguhnt/postgres`.
 2. Confirm **22** finished migrations + **failed** `20261018220000_comms06a_integrity` (39F state).
