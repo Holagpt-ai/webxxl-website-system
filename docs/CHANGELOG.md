@@ -88,7 +88,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-11-02 | Batch 39F Staging public reset + migrate deploy | Staging `vcgibefnhneaqhcguhnt` @ `a0d03aa` | **22/39** applied; **STOPPED** `comms06a_integrity` **42710** (duplicate enum `PROCESSING`); CRM **`CrmImportJob`** present |
 | 2026-11-02 | Batch 39G Comms migration repair (Phase 1) | [PR #97](https://github.com/Holagpt-ai/webxxl-website-system/pull/97), `2590565` | Remove duplicate enum ADD VALUE; `DUPLICATE_ENUM_ADD_VALUE` guard; 39F docs |
 | 2026-11-02 | Batch 39G Phase 2 staging deploy | Staging `vcgibefnhneaqhcguhnt` @ `2590565` | **resolve --rolled-back** OK; **deploy STOPPED** `comms06a` **42701**; **22/39**; readiness **false** |
-| 2026-11-02 | Batch 39H Comms migration consolidation | PR #98 open @ `2590565` | Superseded by Batch **40** consolidated PR |
-| 2026-11-02 | Batch 40 Final migration chain recovery | PR TBD @ `2590565` | Comms consolidation + Supabase revoke guards; local **39/39** rehearsal; **no staging/production DB** |
+| 2026-11-02 | Batch 39H Comms migration consolidation | PR #98 closed superseded | Not merged; included in PR **#99** |
+| 2026-11-02 | Batch 40 Final migration chain recovery | [PR #99](https://github.com/Holagpt-ai/webxxl-website-system/pull/99) merged @ `691e0e52e95d003d78e209f39d2f885251f913ed` | Comms consolidation + Supabase revoke guards; local **39/39** rehearsal |
+| 2026-11-03 | Batch 40 staging migrate deploy | Staging `vcgibefnhneaqhcguhnt` @ `691e0e5` | **`resolve --rolled-back` comms06a** then **deploy SUCCESS 39/39**; production untouched; [`BATCH40-STAGING-ROLLOUT-RESULT.md`](BATCH40-STAGING-ROLLOUT-RESULT.md) |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

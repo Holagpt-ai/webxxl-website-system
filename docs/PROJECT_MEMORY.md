@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-02 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `a0d03aa2324a17d655bb1929e20f3fb1c3fdd810` (PR #96)
+**Evidence review:** 2026-11-03 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `691e0e52e95d003d78e209f39d2f885251f913ed` (PR #99)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,12 +35,12 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **Batch 40** consolidated migration chain **IN PR**; local **39/39** rehearsal; staging **22/39** until post-merge deploy |
-| 2 | GitHub SHA, branch, active PR | Base `2590565f3b3a705097f3484345e19dae4af2b967`; Batch **40** PR open (supersedes #98) |
-| 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` (last verified); post–#90 deploy **UNVERIFIED**. SHA only — not migration, AI activation, Chatwoot/Twilio/Resend live outbound |
-| 4 | Last updated | 2026-11-02 |
-| 5 | Next task / responsible platform | Merge **40** → owner authorize staging resolve/deploy — **Cursor** |
-| 6 | Open blocker / gate IDs | Staging failed `comms06a` until merge; production **UNVERIFIED** |
+| 1 | Last verified checkpoint | **Batch 40** merged; staging **39/39** on `vcgibefnhneaqhcguhnt` ([rollout result](BATCH40-STAGING-ROLLOUT-RESULT.md)) |
+| 2 | GitHub SHA, branch, active PR | **`691e0e52e95d003d78e209f39d2f885251f913ed`** on `main`; PR **#99** merged; **#98** closed superseded |
+| 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` (last verified); post–#90 deploy **UNVERIFIED**. **`txfxeehglqfszletuumn` not accessed** |
+| 4 | Last updated | 2026-11-03 |
+| 5 | Next task / responsible platform | Owner authenticated staging smoke; gated module flags — **Owner** |
+| 6 | Open blocker / gate IDs | Staging migrations **complete**; controlled pilot readiness **false** (auth smoke BLOCKED); production migrate **UNVERIFIED** |
 
 ### Evidence table
 
