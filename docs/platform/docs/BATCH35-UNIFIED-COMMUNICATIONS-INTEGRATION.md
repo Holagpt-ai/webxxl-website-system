@@ -1,6 +1,6 @@
 # Batch 35 — Unified Communications Integration V1
 
-**Status:** IN PR (Cursor) · **ADR:** not required (extends COMMS-06, WALLET-09, Batch 20A/20C)
+**Status:** MERGED ([PR #86](https://github.com/Holagpt-ai/webxxl-website-system/pull/86) @ `3386ac6a5ca8c406ad1bc8c6259726a4c134060e`). **ADR:** not required (extends COMMS-06, WALLET-09, Batch 20A/20C). No live sends. Production migration and provider activation **UNVERIFIED**.
 
 ## Scope
 

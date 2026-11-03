@@ -1,30 +1,30 @@
 # Session Handoff
 
-**Compiled:** 2026-11-03 · **Repository:** `Holagpt-ai/webxxl-website-system` · **Owner:** Cursor (Batch 40 staging rollout)
+**Compiled:** 2026-11-03 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `f8261810244a21f3f92cde3b9a757fd8f0f77783` (PR #100)
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **40** — staging **39/39** migrate deploy on `vcgibefnhneaqhcguhnt`; PR **#99** merged |
-| 2 | GitHub SHA, branch, active PR | **`691e0e52e95d003d78e209f39d2f885251f913ed`** on `main`; no open Batch 40 PR; **#98** closed superseded |
-| 3 | Production deployment | Unchanged · **`txfxeehglqfszletuumn` not accessed** |
+| 1 | Last verified checkpoint | **Batch 40** merged (PR **#99** @ `691e0e52`); staging **39/39** on `vcgibefnhneaqhcguhnt`; closeout PR **#100** @ `f826181` |
+| 2 | GitHub SHA, branch, active PR | **`f8261810244a21f3f92cde3b9a757fd8f0f77783`** on `main`; PR **#100** merged; PR **#99** merged; **#98** closed superseded |
+| 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` (last verified). Deploy of `f826181` **UNVERIFIED**. **`txfxeehglqfszletuumn` not accessed**. SHA only — not migration, activation, or provider live state. |
 | 4 | Last updated | 2026-11-03 |
-| 5 | Next task / responsible platform | Owner authenticated staging smoke + gated flag activation — **Owner** |
-| 6 | Open blocker / gate IDs | Migration chain **clear** on staging; pilot readiness **false** until auth smoke / activation decisions |
+| 5 | Next task / responsible platform | Owner authenticated staging smoke; gated module flags — **Owner** |
+| 6 | Open blocker / gate IDs | Staging migrations **complete (39/39)**. Controlled pilot readiness **false** (auth smoke BLOCKED). Production migrate **UNVERIFIED**. Flags **not activated**. |
 
 ## This session
 
-Batch 40 staging-only recovery: preflight, `resolve --rolled-back` on failed `comms06a_integrity`, `migrate deploy` **39/39**, `PILOT_READINESS_DB_PROBE=1 release:readiness`. See [`BATCH40-STAGING-ROLLOUT-RESULT.md`](BATCH40-STAGING-ROLLOUT-RESULT.md).
+Documentation closeout for Batch 40 at `f8261810244a21f3f92cde3b9a757fd8f0f77783` ([PR #100](https://github.com/Holagpt-ai/webxxl-website-system/pull/100)). PR #100 records the staging rollout already in [`BATCH40-STAGING-ROLLOUT-RESULT.md`](BATCH40-STAGING-ROLLOUT-RESULT.md). It does not deploy, migrate, or activate anything. Staging remains **39/39** on `vcgibefnhneaqhcguhnt`. Production database `txfxeehglqfszletuumn` was not accessed.
 
 ## Handoff template
 
 ```
-Date / scope / owner: 2026-11-03 / BATCH-40 staging rollout / Cursor
-Repo / main SHA: Holagpt-ai/webxxl-website-system / 691e0e52e95d003d78e209f39d2f885251f913ed
-Branch / PR / head: main / PR #99 merged; #98 closed superseded
-Merged / deployed: Batch 40 merged; staging migrated 39/39; production DB untouched; no Vercel action
-Migration / flags / activation: Staging MIGRATED full chain; all backend/provider flags OFF in readiness run
-Next exact assignment / owning tool: Owner authenticated EN/ES staging smoke — Owner
-Do NOT touch: production DB, staging reset, resolve --applied bypass, live providers without authorization
+Date / scope / owner: 2026-11-03 / BATCH-40 documentation closeout / Cursor
+Repo / main SHA: Holagpt-ai/webxxl-website-system / f8261810244a21f3f92cde3b9a757fd8f0f77783
+Branch / PR / head: main / PR #100 merged; PR #99 merged; #98 closed superseded / f8261810244a21f3f92cde3b9a757fd8f0f77783
+Merged / deployed: PR #100 documentation closeout only; deploy of f826181 UNVERIFIED; Batch 40 code merged at 691e0e52; staging 39/39; production DB not accessed
+Migration / flags / activation: Staging migrations complete (39/39); production migrate UNVERIFIED; flags not activated
+Next exact assignment / owning tool: Owner authenticated EN/ES staging smoke; gated module flags — Owner
+Do NOT touch: production DB, Vercel, flags, providers, staging reset, resolve --applied bypass
 ```

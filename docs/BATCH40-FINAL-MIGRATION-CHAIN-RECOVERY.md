@@ -26,12 +26,12 @@ Result: **`prisma migrate deploy` — 39/39 applied**, no pending migrations (Ba
 
 | Aspect | Local embedded | Supabase `vcgibefnhneaqhcguhnt` |
 |---|---|---|
-| Postgres major | **18** (embedded bundle) | **15** (typical Supabase; verify in dashboard) |
+| Postgres major | **18** (embedded bundle) | **17.11** (staging rollout, 2026-11-03) |
 | `anon` / `authenticated` roles | Absent — revoke migrations **no-op** | Present — revokes **apply** |
 | Extensions (`pgcrypto`, etc.) | Minimal default | Supabase-managed set |
 | Session pooler | N/A | Required for some networks |
 
-Rehearsal proves **SQL portability** and **ordering**; post-merge staging deploy still requires owner authorization and preflight.
+Rehearsal proves **SQL portability** and **ordering**. Post-merge staging recovery is **COMPLETE** (**39/39** on `vcgibefnhneaqhcguhnt`, PostgreSQL **17.11**); see the rollout result. Production migrate stays **UNVERIFIED**.
 
 ## Regression safeguards (CI)
 

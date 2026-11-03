@@ -1,6 +1,6 @@
 # Batch 31 — Controlled staging readiness + core customer pilot foundation
 
-**Status:** IN PR until merged. **No** production migrations, flag activation, provider provisioning, or live customer data mutation.
+**Status:** MERGED ([PR #82](https://github.com/Holagpt-ai/webxxl-website-system/pull/82) @ `93e3010d097b3e08fa47be9492c57ed3999d2f03`). **No** production migrations, flag activation, provider provisioning, or live customer data mutation.
 
 **Baseline `main`:** `3a7d011466aeabcf4c2d3bdfe8a669d42e448957` (PR #81 / Batch 30C merged).
 
