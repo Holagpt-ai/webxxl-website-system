@@ -1,6 +1,6 @@
 # BATCH39A — Prisma migration BOM repair and staging recovery (documentation)
 
-**Status:** IN PR · **Baseline `main`:** `965eca9f384823f66302c8bb08d38c71642acbd9`  
+**Status:** MERGED ([PR #92](https://github.com/Holagpt-ai/webxxl-website-system/pull/92), `e809506`). **Baseline `main` at authoring:** `965eca9f384823f66302c8bb08d38c71642acbd9`  
 **Scope:** Repository SQL encoding fix + CI guard + **documented** staging recovery. **No** database writes from this batch.
 
 ## Failure evidence (staging `vcgibefnhneaqhcguhnt`, 2026-11-02)

@@ -1,6 +1,6 @@
 # BATCH37 — Durable AI Pilot Persistence and AUTO-10 Integration
 
-**Status:** IN PR · **Scope:** PostgreSQL-backed pilot task + approval persistence, guarded `WORKFORCE_TASK_PREPARE` handler, optional workflow enqueue after preparation. **Not** live LLM execution, worker cron activation, or production migration apply.
+**Status:** MERGED ([PR #89](https://github.com/Holagpt-ai/webxxl-website-system/pull/89) @ `8c2e5df7f79eb7538e1fe6d513316f70026bbe6d`). **Scope:** PostgreSQL-backed pilot task + approval persistence, guarded `WORKFORCE_TASK_PREPARE` handler, optional workflow enqueue after preparation. **Not** live LLM execution, worker cron activation, or production migration apply.
 
 ## Feature flags
 
@@ -13,9 +13,9 @@
 
 Requires `CUSTOMER_AI_WORKFORCE_ENABLED` and `CUSTOMER_AI_PILOT_PREP_ENABLED` for library preparation. Does **not** enable `CUSTOMER_AI_EXECUTION_ENABLED`.
 
-## Migration (Git only)
+## Migration
 
-`prisma/migrations/20261102130000_batch37_customer_ai_pilot_persistence` — `CustomerAiPilotTask`, `CustomerAiPilotApproval`, workflow sync columns (`workflowJobId`, `workflowSyncState`, `workflowValidatedAt`). **Not applied** production/staging without owner authorization.
+`prisma/migrations/20261102130000_batch37_customer_ai_pilot_persistence` — `CustomerAiPilotTask`, `CustomerAiPilotApproval`, workflow sync columns (`workflowJobId`, `workflowSyncState`, `workflowValidatedAt`). Staging apply is included in the **39/39** chain on `vcgibefnhneaqhcguhnt` ([rollout result](../../BATCH40-STAGING-ROLLOUT-RESULT.md); pending migrations applied through batch37). Production apply stays **UNVERIFIED**.
 
 ## AUTO-10 integration
 

@@ -32,7 +32,7 @@ Labels: `PREPARED`, `PENDING_APPROVAL`, `BLOCKED`, `UNVERIFIED`. Drafts are **no
 | POST | `/api/v1/customer-ai/accounts/{accountId}/pilot-tasks/{taskId}/approvals` |
 | POST | `/api/v1/customer-ai/accounts/{accountId}/pilot-tasks/{taskId}/execution-attempt` |
 
-Batch 36 used an in-process store for Vitest. **Batch 37** replaces production paths with PostgreSQL persistence when `CUSTOMER_AI_PILOT_DURABLE_ENABLED` is on (migration in Git only).
+Batch 36 used an in-process store for Vitest. **Batch 37** uses PostgreSQL persistence when `CUSTOMER_AI_PILOT_DURABLE_ENABLED` is on. That migration is included in the staging **39/39** chain on `vcgibefnhneaqhcguhnt` ([rollout result](../../BATCH40-STAGING-ROLLOUT-RESULT.md)). Production apply stays **UNVERIFIED**. The durable flag stays off.
 
 ## Human approval binding
 

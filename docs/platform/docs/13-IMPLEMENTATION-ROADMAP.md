@@ -128,13 +128,13 @@ Next: owner-approved Paperclip staging pilot + Cursor/GitHub scoped integration 
 | **30A + 30A.1** (Cursor) | **MERGED** | [PR #80](https://github.com/Holagpt-ai/webxxl-website-system/pull/80) @ `cb8d785…`; `GET /api/v1/site-leads/funnel-report`; Business Command Center website-lead summary |
 | **30B** (v0.app) | **DELIVERED** | `v0/lead-funnel-30b` @ `e4e85b2af0db01fb76bf23854dbe834bdb3af1a0` |
 | **30C** (Cursor integration) | **MERGED** | [PR #81](https://github.com/Holagpt-ai/webxxl-website-system/pull/81) @ `3a7d011…` |
-| **31** (Cursor staging/pilot) | **IN PR** | Migration rehearsal, synthetic pilot workflow, feature matrix — [`BATCH31-CONTROLLED-STAGING-PILOT.md`](../../BATCH31-CONTROLLED-STAGING-PILOT.md) |
+| **31** (Cursor staging/pilot) | **MERGED** | [PR #82](https://github.com/Holagpt-ai/webxxl-website-system/pull/82) @ `93e3010d097b3e08fa47be9492c57ed3999d2f03`. Readiness tooling only. Not activation. [`BATCH31-CONTROLLED-STAGING-PILOT.md`](../../BATCH31-CONTROLLED-STAGING-PILOT.md) |
 
 Reporting merge is not intake activation, migration apply, or live customer form wiring.
 
-## Proposed Batches 31–38 (consolidated remaining work)
+## Batches 31–38 (consolidated remaining work)
 
-**Not approved implementation.** Owner selects sequencing. Full table: `docs/PROJECT_MEMORY.md` § Proposed remaining work (Batches 31–38).
+Source merge status is the table in `docs/PROJECT_MEMORY.md`. Recorded merges are not activation, deployment, or production verification. Owner selects sequencing for any still-gated runtime work.
 
 | Batch | Focus |
 |---|---|

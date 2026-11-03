@@ -1,6 +1,6 @@
 # Batch 34 — Marketing Studio Execution Gates V1
 
-**Status:** IN PR (Cursor) · **ADR:** not required (extends SOCIAL-04 / MKT-08 gated workflows)
+**Status:** MERGED ([PR #85](https://github.com/Holagpt-ai/webxxl-website-system/pull/85) @ `e400c49df62b99069110cadd59c0f721e676ea35`). **ADR:** not required (extends SOCIAL-04 / MKT-08 gated workflows). Not live Postiz publish or flag activation.
 
 ## Scope
 

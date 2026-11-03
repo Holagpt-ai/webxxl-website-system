@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-03 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `691e0e52e95d003d78e209f39d2f885251f913ed` (PR #99)
+**Evidence review:** 2026-11-03 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `f8261810244a21f3f92cde3b9a757fd8f0f77783` (PR #100)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,12 +35,12 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **Batch 40** merged; staging **39/39** on `vcgibefnhneaqhcguhnt` ([rollout result](BATCH40-STAGING-ROLLOUT-RESULT.md)) |
-| 2 | GitHub SHA, branch, active PR | **`691e0e52e95d003d78e209f39d2f885251f913ed`** on `main`; PR **#99** merged; **#98** closed superseded |
-| 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` (last verified); post–#90 deploy **UNVERIFIED**. **`txfxeehglqfszletuumn` not accessed** |
+| 1 | Last verified checkpoint | **Batch 40** merged (PR **#99** @ `691e0e52`); staging **39/39** on `vcgibefnhneaqhcguhnt`; closeout PR **#100** @ `f826181` |
+| 2 | GitHub SHA, branch, active PR | **`f8261810244a21f3f92cde3b9a757fd8f0f77783`** on `main`; PR **#100** merged; PR **#99** merged; **#98** closed superseded |
+| 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` (last verified). Deploy of `f826181` **UNVERIFIED**. **`txfxeehglqfszletuumn` not accessed**. SHA only — not migration, activation, or provider live state. |
 | 4 | Last updated | 2026-11-03 |
 | 5 | Next task / responsible platform | Owner authenticated staging smoke; gated module flags — **Owner** |
-| 6 | Open blocker / gate IDs | Staging migrations **complete**; controlled pilot readiness **false** (auth smoke BLOCKED); production migrate **UNVERIFIED** |
+| 6 | Open blocker / gate IDs | Staging migrations **complete (39/39)**. Controlled pilot readiness **false** (auth smoke BLOCKED). Production migrate **UNVERIFIED**. Flags **not activated**. |
 
 ### Evidence table
 
@@ -123,6 +123,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Vercel production SHA (2026-11-01, PR #86) | DEPLOYED | Vercel `dpl_DB2fCd4wt9C6htqVNU125jCUUYJh` **READY** @ `3386ac6`. SHA only. Superseded by PR #87 row |
 | Batch 36 Customer AI Workforce pilot prep V1 | MERGED | [PR #87](https://github.com/Holagpt-ai/webxxl-website-system/pull/87), `f620e4f1c7a0c6cbcecf2bca8365b8e4cae6c646`. [`BATCH36-CUSTOMER-AI-PILOT-V1.md`](platform/docs/BATCH36-CUSTOMER-AI-PILOT-V1.md). Preparation + approval binding only; no LLM execution |
 | Vercel production SHA (2026-11-01, PR #87) | DEPLOYED | Owner-verified Vercel `dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` **READY** @ `f620e4f`. SHA only. Not migration or activation |
+| PR #100 Batch 40 documentation closeout | MERGED | [PR #100](https://github.com/Holagpt-ai/webxxl-website-system/pull/100), `f8261810244a21f3f92cde3b9a757fd8f0f77783`. Docs closeout only. Deploy UNVERIFIED. No new migration. |
 | Vercel production SHA (2026-10-31, PR #79) | DEPLOYED | Vercel `dpl_AQ2v84aWrtDkogkczTeuMM24CHc9` **READY** @ `3905994ebbb8c4b423481c961a65e938dfc76a59`. Superseded by PR #80 row |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |
 
@@ -147,18 +148,18 @@ Batch 16 customer workspace UI is **MERGED** (PR #54). Batch 17A extends native 
 
 ## Proposed remaining work (Batches 31–38) — not approved implementation
 
-Consolidated **directional** roadmap for owner planning. These batches are **PROPOSED** unless a separate merge record exists above. They do not override Master TAD or ADR-001..017. No production migration, flag activation, or provider connection is implied.
+Consolidated **directional** roadmap for owner planning. Status is **MERGED** only where an evidence row or changelog entry already records that merge. A merge is not activation, deployment, or production verification. These batches do not override Master TAD or ADR-001..017. No production migration, flag activation, or provider connection is implied.
 
 | Batch | Theme | Primary owner | Depends on | Status |
 |---|---|---|---|---|
-| **31** | Controlled staging pilot execution (OPEN-001 cohort, read-only → gated writes) | Cursor + Owner | 21B/21C, INFRA-02 gate | PROPOSED |
-| **32** | Commerce & wallet fulfillment (group checkout, reservations, reconciliation hardening) | Cursor | WALLET-09/COMMERCE-11 source on `main` | PROPOSED |
-| **33** | SEO & analytics activation prep (ingestion flags, GSC/GA4 connection UX, conversion integrity) | Cursor + v0 | ANALYTICS-14/15 merged source | PROPOSED |
-| **34** | Marketing Studio execution gates (draft → approval → guarded publish/send boundaries) | Cursor + v0 | MKT-08, SOCIAL-04 | PROPOSED |
-| **35** | Communications live pilot (Chatwoot relay, consent-aware inbox, no broadcast bypass) | Cursor + v0 | COMMS-06, Batch 20C UI | PROPOSED |
-| **36** | Customer AI workforce pilot (scoped tools, human approval, no autonomous outreach) | Cursor + v0 | AI-CUSTOMER-13, AGENT-03 | PROPOSED |
-| **37** | Infrastructure & durable execution fulfillment (worker cron, outbox, AUTO-10 provider decision) | Cursor | AUTO-10, owner VPS/worker approval | PROPOSED |
-| **38** | Release stabilization & customer acceptance (staging e2e, migration rehearsal, signoff gate) | Owner + Cursor | Prior batches owner-selected for pilot | PROPOSED |
+| **31** | Controlled staging pilot execution (OPEN-001 cohort, read-only → gated writes) | Cursor + Owner | 21B/21C, INFRA-02 gate | MERGED |
+| **32** | Commerce & wallet fulfillment (group checkout, reservations, reconciliation hardening) | Cursor | WALLET-09/COMMERCE-11 source on `main` | MERGED |
+| **33** | SEO & analytics activation prep (ingestion flags, GSC/GA4 connection UX, conversion integrity) | Cursor + v0 | ANALYTICS-14/15 merged source | MERGED |
+| **34** | Marketing Studio execution gates (draft → approval → guarded publish/send boundaries) | Cursor + v0 | MKT-08, SOCIAL-04 | MERGED |
+| **35** | Communications live pilot (Chatwoot relay, consent-aware inbox, no broadcast bypass) | Cursor + v0 | COMMS-06, Batch 20C UI | MERGED |
+| **36** | Customer AI workforce pilot (scoped tools, human approval, no autonomous outreach) | Cursor + v0 | AI-CUSTOMER-13, AGENT-03 | MERGED |
+| **37** | Infrastructure & durable execution fulfillment (worker cron, outbox, AUTO-10 provider decision) | Cursor | AUTO-10, owner VPS/worker approval | MERGED |
+| **38** | Release stabilization & customer acceptance (staging e2e, migration rehearsal, signoff gate) | Owner + Cursor | Prior batches owner-selected for pilot | MERGED |
 
 ## Update protocol
 
