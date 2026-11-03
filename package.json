@@ -14,6 +14,7 @@
     "migration:chain-rehearsal": "tsx scripts/migration-chain-local-rehearsal.ts",
     "release:readiness": "tsx scripts/release-readiness.ts",
     "synthetic-pilot:report": "tsx scripts/synthetic-customer-pilot-report.ts",
+    "pilot:staging-fixture-plan": "tsx scripts/staging-pilot-fixture-plan.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "prisma db seed"

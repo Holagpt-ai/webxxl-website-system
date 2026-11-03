@@ -20,8 +20,8 @@ Website **subscribers** receive included FREE business software (CRM, Marketing 
 
 | Role | Suggested ID | Purpose |
 |---|---|---|
-| Pilot subscriber A | `acct_pilot_staging_a` (to be provisioned) | Active `website.subscription` on same CustomerAccount |
-| Pilot non-subscriber B | `acct_pilot_staging_b` (to be provisioned) | Login + membership only — must not access module APIs |
+| Pilot subscriber A | `acct_pilot_staging_a` | Active `website.subscription` on same CustomerAccount — dry-run plan in Batch 41 (`pnpm pilot:staging-fixture-plan`); apply not authorized in Batch 41 |
+| Pilot non-subscriber B | `acct_pilot_staging_b` | Login + membership only — must not access module APIs; dry-run plan in Batch 41 |
 
 Do **not** reuse or mutate ABMED production/synthetic fixture accounts (`acct_abmed_*`).
 

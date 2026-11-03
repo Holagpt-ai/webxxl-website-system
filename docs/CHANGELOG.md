@@ -92,5 +92,6 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-11-02 | Batch 40 Final migration chain recovery | [PR #99](https://github.com/Holagpt-ai/webxxl-website-system/pull/99) merged @ `691e0e52e95d003d78e209f39d2f885251f913ed` | Comms consolidation + Supabase revoke guards; local **39/39** rehearsal |
 | 2026-11-03 | Batch 40 staging migrate deploy | Staging `vcgibefnhneaqhcguhnt` @ `691e0e5` | **`resolve --rolled-back` comms06a** then **deploy SUCCESS 39/39**; production untouched; [`BATCH40-STAGING-ROLLOUT-RESULT.md`](BATCH40-STAGING-ROLLOUT-RESULT.md) |
 | 2026-11-03 | Batch 40 documentation closeout | [PR #100](https://github.com/Holagpt-ai/webxxl-website-system/pull/100) merged @ `f8261810244a21f3f92cde3b9a757fd8f0f77783` | Documentation only. Deploy of this SHA UNVERIFIED. No new migration. Not activation. |
+| 2026-11-03 | Batch 41 Staging pilot tenant fixture (dry-run) | IN PR on `feature/batch41-staging-pilot-fixture` | Planner only; `pnpm pilot:staging-fixture-plan`; apply refused; no DB writes |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
