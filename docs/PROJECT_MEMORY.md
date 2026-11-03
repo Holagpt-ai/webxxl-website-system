@@ -36,7 +36,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | **Batch 41** merged (PR **#102** @ `9d32717`); staging **39/39** on `vcgibefnhneaqhcguhnt`; Batch **40** @ `691e0e52` |
-| 2 | GitHub SHA, branch, active PR | **`9d32717d635b6c1684ed6fda66219db59b0ea535`** on `main`; Batch **42** open PR — **Cursor** |
+| 2 | GitHub SHA, branch, active PR | **`9d32717d635b6c1684ed6fda66219db59b0ea535`** on `main`; Batch **42** [PR #103](https://github.com/Holagpt-ai/webxxl-website-system/pull/103) @ `5bb0421` — **Cursor** |
 | 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` (last verified). Deploy of `9d32717` **UNVERIFIED**. **`txfxeehglqfszletuumn` not accessed**. SHA only — not migration, activation, or provider live state. |
 | 4 | Last updated | 2026-11-03 |
 | 5 | Next task / responsible platform | Batch **42** staging pilot execution foundation — open PR, owner review — **Cursor**; authorized staging fixture apply + EN/ES auth smoke — **Owner** |
