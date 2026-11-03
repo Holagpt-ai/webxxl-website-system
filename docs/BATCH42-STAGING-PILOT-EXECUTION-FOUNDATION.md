@@ -43,3 +43,16 @@ See `lib/platform/pilot/staging-pilot-operator-checklist.ts` (printed by provisi
 ## Tests
 
 - `__tests__/platform/batch42-staging-pilot-fixture-provision.test.ts`
+- `__tests__/platform/batch41-staging-pilot-fixture.test.ts` (CI)
+
+## Mandatory before owner-authorized staging apply
+
+Merging Batch 42 **does not** authorize live fixture apply. Before the first real `--apply` on staging, the owner must confirm:
+
+| Gate | Requirement |
+|---|---|
+| **PILOT-42-PRE-001** | Email/slug collision preflight — detect existing `User.email`, `CustomerAccount.slug`, or `BillingGroup.slug` rows that collide with pilot fixture payloads but use different ids. |
+| **PILOT-42-PRE-002** | Execute-path tests — unit coverage for `executeStagingPilotFixtureApply` (create-only, skip existing, transaction rollback on conflict). |
+| **PILOT-42-PRE-003** | Extended environment-guard tests — production in `DIRECT_URL`, `PRODUCTION_IDENTITY_COLLISION`, missing `WEBXXL_STAGING_BOUNDARIES_CONFIRMED`, apply without staging URL. |
+
+Until **PILOT-42-PRE-001..003** are satisfied or explicitly waived with owner evidence, treat staging apply as **BLOCKED** even when apply env vars and CLI flags are set.
