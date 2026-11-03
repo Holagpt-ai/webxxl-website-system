@@ -1,7 +1,7 @@
 # BATCH40 — Final migration chain recovery (consolidated)
 
-**Status:** IN PR · **Baseline `main`:** `2590565f3b3a705097f3484345e19dae4af2b967`  
-**Scope:** One PR superseding piecemeal 39G/39H patches. **No** staging/production DB access in this batch.
+**Status:** MERGED · **PR:** [#99](https://github.com/Holagpt-ai/webxxl-website-system/pull/99) @ `691e0e52e95d003d78e209f39d2f885251f913ed`  
+**Staging rollout:** [`BATCH40-STAGING-ROLLOUT-RESULT.md`](BATCH40-STAGING-ROLLOUT-RESULT.md) — **39/39** on `vcgibefnhneaqhcguhnt` (2026-11-03). Production not accessed.
 
 ## Defects fixed (repository)
 
@@ -40,14 +40,9 @@ Rehearsal proves **SQL portability** and **ordering**; post-merge staging deploy
 - **`UNGUARDED_SUPABASE_REVOKE`** (40)
 - Existing BOM / single-line / inline-comment guards (39A–39E)
 
-## Post-merge staging recovery (owner — not in this batch)
+## Post-merge staging recovery — COMPLETE
 
-1. Preflight `supabase:vcgibefnhneaqhcguhnt/postgres`.
-2. If `comms06a_integrity` failed: `migrate resolve --rolled-back 20261018220000_comms06a_integrity`.
-3. `pnpm exec prisma migrate deploy` through **39/39**.
-4. `PILOT_READINESS_DB_PROBE=1 pnpm release:readiness`.
-
-Supersedes open PR **#98** (same comms consolidation, included here).
+Executed 2026-11-03 per [`BATCH40-STAGING-ROLLOUT-RESULT.md`](BATCH40-STAGING-ROLLOUT-RESULT.md). PR **#98** closed superseded (not merged).
 
 ## Related
 
