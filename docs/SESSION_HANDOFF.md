@@ -30,9 +30,10 @@ Owner reviews Batch 1 PR. v0 may wire the new summary API on `/dashboard/busines
 ```
 Date / scope / owner: 2026-11-07 / Issue #111 Batch 1 / Cursor
 Repo / main SHA: Holagpt-ai/webxxl-website-system / fcceade889cefd1c14f86bdbb723f5a0ad97c547
-Branch / PR: feature/issue-111-batch1-customer-operations / PR #112 (4d92403, not merged)
-Merged / deployed: PR #110 MERGED; Vercel dpl_4mt42VeQg7aMDHhv7Pb8x5w5xg93 (SHA only, owner-reported)
+Branch / PR: feature/issue-111-batch1-customer-operations / PR #112 (open, not merged)
+Merged / deployed: PR #110 MERGED on main; Batch 1 PR #112 not merged; Vercel dpl_4mt42VeQg7aMDHhv7Pb8x5w5xg93 @ fcceade (SHA only, owner-reported)
+Migration / flags / activation: UNVERIFIED / not activated / UNVERIFIED
 Tests: batch1-customer-operations.test.ts (5); typecheck pass
-Next: owner review; optional v0 UI integration
+Next exact assignment / owning tool: Owner review PR #112 — Cursor; optional v0 Business Command Center UI — v0.app
 Do NOT touch: production DB, flags, providers, DNS, browser QA, auto-merge
 ```
