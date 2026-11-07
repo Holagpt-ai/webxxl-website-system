@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-03 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `bb7165fb7709dd3ef612842af9bf5b53375cc473` (PR #103)
+**Evidence review:** 2026-11-07 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `a43b276d1005d29e9928c40fb66d6874bd7f06d8` (PR #95)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,12 +35,12 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **Batch 42** merged (PR **#103** @ `bb7165f`); staging **39/39** on `vcgibefnhneaqhcguhnt` |
-| 2 | GitHub SHA, branch, active PR | **`bb7165fb7709dd3ef612842af9bf5b53375cc473`** on `main`; Batch **43** [PR #104](https://github.com/Holagpt-ai/webxxl-website-system/pull/104) @ `a2ab248` — **Cursor** |
-| 3 | Production deployment | Vercel **`dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY** @ `f620e4f` (last verified). Deploy of `bb7165f` **UNVERIFIED**. **`txfxeehglqfszletuumn` not accessed**. SHA only — not migration, activation, or provider live state. |
-| 4 | Last updated | 2026-11-03 |
-| 5 | Next task / responsible platform | Batch **43** pre-apply safeguards — owner PR review — **Cursor**; owner-authorized staging apply + EN/ES auth smoke — **Owner** |
-| 6 | Open blocker / gate IDs | Staging migrations **complete (39/39)**. Controlled pilot readiness **false** (auth smoke BLOCKED). Production migrate **UNVERIFIED**. Flags **not activated**. |
+| 1 | Last verified checkpoint | GitHub `main` `a43b276d1005d29e9928c40fb66d6874bd7f06d8` (PR **#95** legal-page notice, MERGED 2026-11-06). Batch **43** MERGED ([PR #104](https://github.com/Holagpt-ai/webxxl-website-system/pull/104) @ `19b935a7471244009347ad2b25aea57c89b3cc21`). Staging CRM acceptance reported in Issue **#105** (2026-11-07) is partial. |
+| 2 | GitHub SHA, branch, active PR | **`a43b276d1005d29e9928c40fb66d6874bd7f06d8`** on `main`. Issue **#105** [PR #106](https://github.com/Holagpt-ai/webxxl-website-system/pull/106) on `feature/issue-105-crm-page-entitlement` — **Cursor** |
+| 3 | Production deployment | GitHub deployment **`7608137512`**, `vercel[bot]`, Production **success**, 2026-11-06T18:47:08Z, SHA `a43b276d1005d29e9928c40fb66d6874bd7f06d8` (PR **#95**). SHA only. Vercel deployment id was not in that payload. Historical Vercel `dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` READY @ `f620e4f` stays a prior SHA record. **`txfxeehglqfszletuumn` not accessed**. Not migration, activation, or provider live state. |
+| 4 | Last updated | 2026-11-07 |
+| 5 | Next task / responsible platform | Owner review of [PR #106](https://github.com/Holagpt-ai/webxxl-website-system/pull/106) (v0 layout integrated). Authorized staging Pilot A/B acceptance — **Owner** |
+| 6 | Open blocker / gate IDs | Staging migrations last recorded **39/39** on `vcgibefnhneaqhcguhnt` (2026-11-03); not re-counted 2026-11-07. Authenticated staging smoke is no longer blocked: Issue #105 reports Pilot A and Pilot B signed in. Full CRUD and cross-tenant staging reads **UNVERIFIED**. CRM page still shows the FREE badge to non-subscribers until the v0 layout handoff. CRM subnav click defect **UNVERIFIED**. Production migrate **UNVERIFIED**. Flags **not activated**. |
 
 ### Evidence table
 
@@ -123,6 +123,12 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Vercel production SHA (2026-11-01, PR #86) | DEPLOYED | Vercel `dpl_DB2fCd4wt9C6htqVNU125jCUUYJh` **READY** @ `3386ac6`. SHA only. Superseded by PR #87 row |
 | Batch 36 Customer AI Workforce pilot prep V1 | MERGED | [PR #87](https://github.com/Holagpt-ai/webxxl-website-system/pull/87), `f620e4f1c7a0c6cbcecf2bca8365b8e4cae6c646`. [`BATCH36-CUSTOMER-AI-PILOT-V1.md`](platform/docs/BATCH36-CUSTOMER-AI-PILOT-V1.md). Preparation + approval binding only; no LLM execution |
 | Vercel production SHA (2026-11-01, PR #87) | DEPLOYED | Owner-verified Vercel `dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` **READY** @ `f620e4f`. SHA only. Not migration or activation |
+| Batch 43 staging pilot provision safeguards | MERGED | [PR #104](https://github.com/Holagpt-ai/webxxl-website-system/pull/104) merge `19b935a7471244009347ad2b25aea57c89b3cc21` on 2026-11-03. Branch head before merge `299a0fe09b3b9c792705c412240707ae77d8cdfa`. No live staging apply in that PR |
+| Vercel production SHA (2026-11-03, PR #104) | DEPLOYED | GitHub deployment `7526284530`, Production **success**, 2026-11-03T17:45:04Z, SHA `19b935a7471244009347ad2b25aea57c89b3cc21`. SHA only. Superseded for current production by the PR #95 row |
+| PR #95 legal placeholder notice | MERGED | `a43b276d1005d29e9928c40fb66d6874bd7f06d8`. Legal copy only. Not a CRM, migration, or flag change |
+| Vercel production SHA (2026-11-06, PR #95) | DEPLOYED | GitHub deployment `7608137512`, `vercel[bot]`, Production **success**, 2026-11-06T18:47:08Z, SHA `a43b276d1005d29e9928c40fb66d6874bd7f06d8`. SHA only. Vercel deployment id was not in the GitHub payload. Not migration or activation |
+| Staging Preview (Batch 43 source, 2026-11-05) | DEPLOYED | GitHub deployment `7526261591`, Preview **success**, latest status 2026-11-05T18:30:43Z, SHA `299a0fe09b3b9c792705c412240707ae77d8cdfa`. SHA only. Issue #105 names Vercel `dpl_FqymPkk81pgYqpk35mrPyEMUTDgR`; that id was not in the GitHub payload |
+| Issue #105 CRM page entitlement + layout | Owner-review [PR #106](https://github.com/Holagpt-ai/webxxl-website-system/pull/106) @ integrated head (v0 `212fdf4` on `v0/crm-entitlement-ui-105`) | `lib/platform/crm/page-entitlement.ts`, `app/[locale]/dashboard/crm/layout.tsx`, `components/crm/crm-locked-state.tsx`, [`CRM-PAGE-ENTITLEMENT-CONTRACT.md`](platform/docs/CRM-PAGE-ENTITLEMENT-CONTRACT.md). Staging browser acceptance **UNVERIFIED** on integrated build |
 | PR #100 Batch 40 documentation closeout | MERGED | [PR #100](https://github.com/Holagpt-ai/webxxl-website-system/pull/100), `f8261810244a21f3f92cde3b9a757fd8f0f77783`. Docs closeout only. Deploy UNVERIFIED. No new migration. |
 | Vercel production SHA (2026-10-31, PR #79) | DEPLOYED | Vercel `dpl_AQ2v84aWrtDkogkczTeuMM24CHc9` **READY** @ `3905994ebbb8c4b423481c961a65e938dfc76a59`. Superseded by PR #80 row |
 | ADR-018, ADR-019, ADR-020 | PROPOSED | [`docs/adr/INDEX.md`](adr/INDEX.md). Not approved |

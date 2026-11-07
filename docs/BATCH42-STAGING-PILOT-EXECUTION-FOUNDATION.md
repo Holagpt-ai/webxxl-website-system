@@ -55,4 +55,4 @@ Merging Batch 42 **does not** authorize live fixture apply. Before the first rea
 | **PILOT-42-PRE-002** | Execute-path tests — unit coverage for `executeStagingPilotFixtureApply` (create-only, skip existing, transaction rollback on conflict). |
 | **PILOT-42-PRE-003** | Extended environment-guard tests — production in `DIRECT_URL`, `PRODUCTION_IDENTITY_COLLISION`, missing `WEBXXL_STAGING_BOUNDARIES_CONFIRMED`, apply without staging URL. |
 
-**Batch 43 (IN PR):** **PILOT-42-PRE-001..003** implemented and covered by focused tests — see [`BATCH43-STAGING-PILOT-PROVISION-SAFEGUARDS.md`](BATCH43-STAGING-PILOT-PROVISION-SAFEGUARDS.md). Live staging `--apply` still requires separate owner authorization; tooling alone does not authorize writes.
+**Batch 43 (MERGED, PR #104 @ `19b935a`):** **PILOT-42-PRE-001..003** — see [`BATCH43-STAGING-PILOT-PROVISION-SAFEGUARDS.md`](BATCH43-STAGING-PILOT-PROVISION-SAFEGUARDS.md). Live staging `--apply` still requires separate owner authorization; tooling alone does not authorize writes.
