@@ -94,6 +94,10 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-11-03 | Batch 40 documentation closeout | [PR #100](https://github.com/Holagpt-ai/webxxl-website-system/pull/100) merged @ `f8261810244a21f3f92cde3b9a757fd8f0f77783` | Documentation only. Deploy of this SHA UNVERIFIED. No new migration. Not activation. |
 | 2026-11-03 | Batch 41 Staging pilot tenant fixture (dry-run) | [PR #102](https://github.com/Holagpt-ai/webxxl-website-system/pull/102) merged @ `9d32717` | Planner only; `pnpm pilot:staging-fixture-plan`; no DB writes in merge |
 | 2026-11-03 | Batch 42 Staging pilot execution foundation | [PR #103](https://github.com/Holagpt-ai/webxxl-website-system/pull/103) merged @ `bb7165f` | Guarded provision CLI; default dry-run; apply gated |
-| 2026-11-03 | Batch 43 Staging pilot provision safeguards | Open PR on `feature/batch43-staging-pilot-provision-safeguards` | PILOT-42-PRE-001..003; no live apply |
+| 2026-11-03 | Batch 43 Staging pilot provision safeguards | [PR #104](https://github.com/Holagpt-ai/webxxl-website-system/pull/104) merged @ `19b935a7471244009347ad2b25aea57c89b3cc21` | MERGED. PILOT-42-PRE-001..003. No live apply |
+| 2026-11-03 | Vercel production deployment of `19b935a` (PR #104) | GitHub deployment `7526284530`, Production success, 2026-11-03T17:45:04Z | DEPLOYED SHA only. Superseded for current production by the PR #95 row |
+| 2026-11-06 | Legal placeholder notice hidden on finalized legal pages | [PR #95](https://github.com/Holagpt-ai/webxxl-website-system/pull/95) merged @ `a43b276d1005d29e9928c40fb66d6874bd7f06d8` | MERGED. Legal copy only. Not a CRM, migration, or flag change |
+| 2026-11-06 | Vercel production deployment of `a43b276d` (PR #95) | GitHub deployment `7608137512`, `vercel[bot]`, Production success, 2026-11-06T18:47:08Z | DEPLOYED SHA only. Vercel deployment id was not in the GitHub payload. Not migration or activation |
+| 2026-11-07 | Issue #105 CRM page entitlement contract | `feature/issue-105-crm-page-entitlement` | Server contract and focused tests. UI locked state remains with v0.app. No deployment |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

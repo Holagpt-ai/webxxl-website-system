@@ -1,6 +1,6 @@
 # Batch 43 — Staging pilot provision safeguards
 
-**Status:** IN PR  
+**Status:** MERGED — [PR #104](https://github.com/Holagpt-ai/webxxl-website-system/pull/104) @ `19b935a7471244009347ad2b25aea57c89b3cc21` (2026-11-03). Live staging apply remains a separate owner gate.  
 **Baseline `main`:** `bb7165fb7709dd3ef612842af9bf5b53375cc473` (PR #103 squash merge)  
 **ADR:** not required (extends Batch 42 apply path; no policy change)
 
