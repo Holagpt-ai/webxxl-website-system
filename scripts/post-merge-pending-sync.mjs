@@ -39,7 +39,7 @@ export function buildPostMergePendingSyncArtifact(result) {
     status: result?.status ?? 'UNKNOWN',
     tracking_issue: POST_MERGE_PENDING_SYNC_ISSUE,
     detection_only: true,
-    issue_writer: 'none (owner updates Issue #107 or next docs PR)',
+    issue_writer: `none (owner updates Issue #${POST_MERGE_PENDING_SYNC_ISSUE} or next docs PR)`,
     post_merge_items: postMerge,
     all_pending_items: pending,
     conflicts: result?.conflicts ?? [],
