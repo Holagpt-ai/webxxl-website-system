@@ -1,6 +1,6 @@
 # CRM page entitlement contract (Issue #105)
 
-**Status:** server contract on the owner-review branch. **UI consumption is not in this change.**  
+**Status:** server contract + CRM layout on owner-review [PR #106](https://github.com/Holagpt-ai/webxxl-website-system/pull/106). v0 integration fast-forwarded from `v0/crm-entitlement-ui-105` @ `212fdf43d3dafeec906a5527cbefea0d78983cb5`. Staging browser acceptance **UNVERIFIED** on the integrated build.  
 **Decisions:** ADR-003 (Cursor backend, v0.app UI), ADR-004 (CustomerAccount isolation), ADR-007 (included CRM), ADR-014 (English and Spanish), OPEN-001 `SUBSCRIBER_ONLY`. No new ADR.  
 **API:** `requireCrmApiActor` in `lib/platform/crm/route-auth.ts` stays the CRM HTTP gate. This contract does not replace it.
 
