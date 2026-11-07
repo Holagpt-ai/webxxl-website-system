@@ -5,6 +5,7 @@ on:
     branches: [main]
 permissions:
   contents: read
+  pull-requests: read
 concurrency:
   group: continuity-${{ github.ref }}
   cancel-in-progress: true
@@ -25,6 +26,17 @@ jobs:
         run: node scripts/check-branch-divergence.mjs
       - name: Stale operational status advisory
         run: node scripts/check-stale-operational-status.mjs
+      - name: Continuity reconcile (blocking contradictions)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/check-continuity-reconcile.mjs
+      - name: Upload post-merge pending sync artifact (detection only)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-merge-pending-sync
+          path: post-merge-pending-sync.json
+          if-no-files-found: ignore
       - name: Continuity documents
         run: node scripts/validate-continuity.mjs
       - name: Routes and navigation
