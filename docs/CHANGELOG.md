@@ -101,6 +101,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-11-07 | Issue #105 CRM page entitlement contract | [PR #106](https://github.com/Holagpt-ai/webxxl-website-system/pull/106) merged @ `e37f0a023dd289dc3a9b4e7484f6a1dd34b24276` | Server contract, layout gate, focused tests |
 | 2026-11-07 | Issue #105 v0 CRM locked layout integration | v0 `v0/crm-entitlement-ui-105` @ `212fdf43d3dafeec906a5527cbefea0d78983cb5` in PR #106 | `layout.tsx` + `crm-locked-state.tsx`. Pilot A/B core entitlement acceptance passed on integrated Preview (Issue #105) |
 | 2026-11-07 | Vercel production deployment of `e37f0a0` (PR #106) | Vercel `dpl_AzZVHN5Si3jShjcJf5Gtq1dCxdAb` via GitHub commit status, 2026-11-07T18:01:23Z | DEPLOYED SHA only. Not migration or activation |
-| 2026-11-07 | Issue #107 CONTINUITY-03 session closeout | `feature/continuity-03-issue-107` (open owner-review PR) | `pnpm continuity:close`, `continuity-reconcile.mjs`, CI gate, doc reconciliation |
+| 2026-11-07 | Issue #107 CONTINUITY-03 session closeout | [PR #108](https://github.com/Holagpt-ai/webxxl-website-system/pull/108) merged @ `5d90c124b1c7a884f7a61f16e5b9d263f0c08081` | `pnpm continuity:close`, CI reconcile, Issue #107 closed |
+| 2026-11-07 | Vercel production deployment of `5d90c124` (PR #108) | Vercel `dpl_HR1qq83Cz2ARKUvaRf8URt2Piwpo` via GitHub commit status, 2026-11-07T19:07:53Z | DEPLOYED SHA only. Not migration or activation |
+| 2026-11-07 | Issue #109 build-first execution roadmap | `feature/issue-109-roadmap-closeout` (open owner-review PR) | Post-merge checkpoint, consolidated Batches 0–8, Batch 1 delta prep |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

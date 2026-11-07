@@ -7,7 +7,30 @@
 The batch table and later status blocks keep their original planning wording, including "In PR" and "In progress".
 GitHub `main` at `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` (PR #52) has moved past that wording. Use this checkpoint and `docs/PROJECT_MEMORY.md` for current source status. A merge or a Vercel production deployment is not migration application, flag activation, or a live provider test.
 
-**2026-11-07:** Issue #105 CRM page entitlement is **MERGED** on `main` @ `e37f0a0` ([PR #106](https://github.com/Holagpt-ai/webxxl-website-system/pull/106)). Issue #107 CONTINUITY-03 session closeout is in owner review. Batch 43 safeguards remain on `main`. See `docs/PROJECT_MEMORY.md` for the SHA, deployment, migration, and activation split.
+**2026-11-07 (current):** GitHub `main` @ `5d90c124b1c7a884f7a61f16e5b9d263f0c08081` ([PR #108](https://github.com/Holagpt-ai/webxxl-website-system/pull/108) CONTINUITY-03 **MERGED**). Issue **#107** **CLOSED**. Issue **#109** registers the owner-approved **build-first** completion sequence below. CRM page entitlement ([PR #106](https://github.com/Holagpt-ai/webxxl-website-system/pull/106)) remains merged. Prior batch tables in this file are **historical** planning records — they are not reopened for rework.
+
+## Current execution plan (Issue #109 — owner-approved 2026-11-07)
+
+**Policy:** Finish approved scope as substantial non-overlapping workstreams. **Mandatory during build:** focused automated tests, TypeScript check, CI, tenant/consent/money/approval/idempotency regressions per PR. **Deferred to Batch 8:** broad browser QA, CRM end-to-end, live cross-tenant reads, cross-module smoke, performance/security release certification. Issue #105 broad QA is **deferred**, not cancelled. **Do not** re-merge or rebuild Batches 1–43 already on `main`.
+
+| Order | Workstream | Consolidates (prior roadmap items) | Goal |
+|---|---|---|---|
+| 0 | Continuity & memory integrity | 1–2 | **Complete** — PR #108 @ `5d90c124` |
+| 1 | Customer Operations Engine | 3–6 | CRM, customer project lifecycle, managed-site lead intake/qualification, Business Command Center |
+| 2 | SEO & Analytics Intelligence | 9–10 | Local SEO, competitor/Google data, analytics with honest provenance |
+| 3 | Marketing & Social Execution | 7–8 | Marketing Studio audiences, approvals, guarded Postiz social APIs |
+| 4 | Communications & Messaging Wallet | 11–13 | Chatwoot, SMS/email gateways, consent, group-shared wallet |
+| 5 | Commerce & Managed Services | 14, 18 | Orders, checkout, subscriptions, managed hosting, domains, business email |
+| 6 | AI Workforce & Automation | 15–17 | Internal agents, customer AI employees, durable approval-aware jobs |
+| 7 | Platform Admin & Unified Experience | 19–21 | Admin operations, public conversion, EN/ES/mobile integration |
+| 8 | Release & Activation | 22–26 | Owner decisions, authorized migrations, gated activation, full cross-module QA, launch |
+| DEFERRED | Optional expansion | 27 | Voice/WhatsApp advanced, paid AI catalog, white-label, CMS builder — **no implied approval** |
+
+**Next Cursor implementation (after Issue #109 roadmap PR merges):** Batch **1** — bounded delta per [`BATCH1-CUSTOMER-OPERATIONS-DELTA.md`](BATCH1-CUSTOMER-OPERATIONS-DELTA.md). v0.app owns UI polish on nonoverlapping paths only.
+
+---
+
+**Historical note (2026-11-07 morning):** Issue #105 CRM page entitlement is **MERGED** on `main` @ `e37f0a0` ([PR #106](https://github.com/Holagpt-ai/webxxl-website-system/pull/106)). Batch 43 safeguards remain on `main`.
 
 | Executed batch | Source evidence on `main` | Source state | Runtime |
 |---|---|---|---|

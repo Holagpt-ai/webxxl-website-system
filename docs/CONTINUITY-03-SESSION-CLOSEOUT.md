@@ -1,6 +1,6 @@
 # CONTINUITY-03 — Session closeout protocol
 
-**Issue:** [#107](https://github.com/Holagpt-ai/webxxl-website-system/issues/107)  
+**Issues:** [#107](https://github.com/Holagpt-ai/webxxl-website-system/issues/107) (closed in PR #108); post-merge tracking [#109](https://github.com/Holagpt-ai/webxxl-website-system/issues/109)  
 **ADR:** not required (operational continuity tooling; Master TAD unchanged)
 
 ## Purpose
@@ -37,7 +37,7 @@ CI does **not** require the documentation commit SHA to equal checkpoint field 2
 |---|---|
 | Auto-detection | `POST-MERGE-CHECKPOINT` pending row when `main` advanced past field 2 |
 | Deduplication | `scripts/post-merge-pending-sync.mjs` merges manual `PENDING REPOSITORY SYNC` lines with auto rows |
-| Tracking issue | [#107](https://github.com/Holagpt-ai/webxxl-website-system/issues/107) — **no** CI issue writer |
+| Tracking issue | [#109](https://github.com/Holagpt-ai/webxxl-website-system/issues/109) — **no** CI issue writer |
 | CI artifact | `post-merge-pending-sync.json` uploaded on every Continuity run (`detection_only: true`) |
 
 Pull-request workflows use **`origin/main`**, never the ephemeral `GITHUB_SHA` merge ref.
