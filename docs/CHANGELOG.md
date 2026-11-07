@@ -104,6 +104,6 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-11-07 | Issue #107 CONTINUITY-03 session closeout | [PR #108](https://github.com/Holagpt-ai/webxxl-website-system/pull/108) merged @ `5d90c124b1c7a884f7a61f16e5b9d263f0c08081` | `pnpm continuity:close`, CI reconcile, Issue #107 closed |
 | 2026-11-07 | Vercel production deployment of `5d90c124` (PR #108) | Vercel `dpl_HR1qq83Cz2ARKUvaRf8URt2Piwpo` via GitHub commit status, 2026-11-07T19:07:53Z | DEPLOYED SHA only. Not migration or activation |
 | 2026-11-07 | Issue #109 build-first execution roadmap | [PR #110](https://github.com/Holagpt-ai/webxxl-website-system/pull/110) merged @ `fcceade889cefd1c14f86bdbb723f5a0ad97c547` | Post-merge checkpoint, consolidated Batches 0–8, Batch 1 delta prep |
-| 2026-11-07 | Issue #111 Batch 1 Customer Operations Engine | [PR #112](https://github.com/Holagpt-ai/webxxl-website-system/pull/112) @ `eb8ab14` (open) | `GET /api/v1/customer-operations/summary`; lead→CRM→project lineage |
+| 2026-11-07 | Issue #111 Batch 1 Customer Operations Engine | [PR #112](https://github.com/Holagpt-ai/webxxl-website-system/pull/112) @ `e610ceb` (open) | `GET /api/v1/customer-operations/summary`; lead→CRM→project lineage |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
