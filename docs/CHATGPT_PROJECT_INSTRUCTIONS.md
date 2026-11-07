@@ -24,4 +24,6 @@ End a working session with the handoff template in `docs/SESSION_HANDOFF.md`. Wh
 
 **PENDING REPOSITORY SYNC** means a material decision, status change, or implementation handoff exists in ChatGPT or v0.app and is not yet in GitHub. For each item, name what must be synchronized, the repository file that should receive it, the responsible platform, and the next action. Clear the marker only after the update is committed and the pull request or merge is recorded.
 
+Cursor ends engineering sessions with **`pnpm continuity:close`** (read-only). See [`docs/CONTINUITY-03-SESSION-CLOSEOUT.md`](CONTINUITY-03-SESSION-CLOSEOUT.md).
+
 Cursor owns repository documentation and Git synchronization. v0.app supplies the exact UI paths and verification evidence. ChatGPT coordinates and identifies discrepancies. Do not assign the same files to Cursor and v0.app.

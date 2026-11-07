@@ -18,7 +18,9 @@
     "pilot:staging-fixture-provision": "tsx scripts/staging-pilot-fixture-provision.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "continuity:close": "node scripts/continuity-close.mjs",
+    "continuity:reconcile": "node scripts/check-continuity-reconcile.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -1,0 +1,232 @@
+/**
+ * Evidence-aware continuity reconciliation (CONTINUITY-03).
+ * Read-only. Does not mutate git, production, or remote services except optional GitHub API reads.
+ */
+import { execFileSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { validateAdrs } from './validate-adr.mjs';
+import { collectStaleStatusWarnings, loadOperationalStatus } from './check-stale-operational-status.mjs';
+import {
+  allShas,
+  firstSha,
+  looksLikeOpenPrClaim,
+  parsePendingRepositorySync,
+  parseSixFieldCheckpoint,
+  prNumbers,
+  readCheckpointPair,
+  shasPrefixMatch,
+} from './continuity-parse.mjs';
+
+export const CLOSEOUT_STATUSES = ['SYNCHRONIZED', 'PENDING_REPOSITORY_SYNC', 'CONFLICT'];
+
+function gitSha(root, ref) {
+  try {
+    return execFileSync('git', ['rev-parse', ref], { cwd: root, encoding: 'utf8' }).trim().toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function gitFetchMain(root) {
+  try {
+    execFileSync('git', ['fetch', 'origin', 'main'], { cwd: root, encoding: 'utf8', stdio: 'pipe' });
+  } catch {
+    /* offline or no remote */
+  }
+}
+
+function ghJson(args) {
+  try {
+    const out = execFileSync('gh', args, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
+    return JSON.parse(out);
+  } catch {
+    return null;
+  }
+}
+
+function githubEvidence(sha) {
+  if (!sha) return null;
+  const status = ghJson([
+    'api',
+    `repos/Holagpt-ai/webxxl-website-system/commits/${sha}/status`,
+    '--jq',
+    '{state, vercel: ([.statuses[] | select(.context=="Vercel") | {state, description, target_url}][0])}',
+  ]);
+  return status;
+}
+
+function mergedPrCheck(prNumber) {
+  const pr = ghJson([
+    'pr',
+    'view',
+    String(prNumber),
+    '--repo',
+    'Holagpt-ai/webxxl-website-system',
+    '--json',
+    'state,mergedAt,mergeCommit',
+  ]);
+  if (!pr) return { available: false, merged: false };
+  return {
+    available: true,
+    merged: pr.state === 'MERGED',
+    mergedAt: pr.mergedAt,
+    mergeSha: pr.mergeCommit?.oid?.toLowerCase() ?? null,
+  };
+}
+
+function checkpointFieldsMatch(memoryFields, handoffFields) {
+  const errors = [];
+  for (const key of ['1', '2', '3', '4', '5', '6']) {
+    const a = (memoryFields[key] ?? '').replace(/\s+/g, ' ').trim();
+    const b = (handoffFields[key] ?? '').replace(/\s+/g, ' ').trim();
+    if (a !== b) errors.push(`canonical checkpoint field ${key} differs between PROJECT_MEMORY and SESSION_HANDOFF`);
+  }
+  return errors;
+}
+
+/**
+ * @param {string} root
+ * @param {{ githubSha?: string, eventName?: string, strictExternal?: boolean }} options
+ */
+export function reconcileContinuity(root, options = {}) {
+  const conflicts = [];
+  const pending = [];
+  const advisories = [];
+
+  const { projectMemory, sessionHandoff, memoryFields, handoffFields } = readCheckpointPair(root);
+
+  if (!Object.keys(memoryFields).length) conflicts.push('PROJECT_MEMORY.md missing canonical six-field checkpoint');
+  if (!Object.keys(handoffFields).length) conflicts.push('SESSION_HANDOFF.md missing canonical six-field checkpoint');
+  conflicts.push(...checkpointFieldsMatch(memoryFields, handoffFields));
+
+  const documentedMain = firstSha(memoryFields['2'] ?? '');
+  const headerMain = firstSha(
+    (projectMemory.match(/^\*\*`main`:\*\*\s*`([^`]+)`/m) ?? [])[1] ??
+      (projectMemory.match(/\*\*`main`:\*\*\s*`([^`]+)`/m) ?? [])[1],
+  );
+
+  if (headerMain && documentedMain && !shasPrefixMatch(headerMain, documentedMain)) {
+    conflicts.push('PROJECT_MEMORY header main SHA disagrees with checkpoint field 2');
+  }
+
+  const handoffHeaderMain = firstSha(sessionHandoff.match(/\*\*`main`:\*\*\s*`([^`]+)`/m)?.[1] ?? '');
+  if (handoffHeaderMain && documentedMain && !shasPrefixMatch(handoffHeaderMain, documentedMain)) {
+    conflicts.push('SESSION_HANDOFF header main SHA disagrees with checkpoint field 2');
+  }
+
+  gitFetchMain(root);
+  const originMain = gitSha(root, 'origin/main');
+  const headSha = gitSha(root, 'HEAD');
+  const envGithubSha = (options.githubSha ?? process.env.GITHUB_SHA ?? '').toLowerCase() || null;
+  const referenceMain = envGithubSha ?? originMain;
+
+  const onMain =
+    options.eventName === 'push' ||
+    (headSha && referenceMain && shasPrefixMatch(headSha, referenceMain));
+
+  if (onMain && referenceMain && documentedMain && !shasPrefixMatch(documentedMain, referenceMain)) {
+    conflicts.push(
+      `checkpoint main SHA (${documentedMain}) does not match verified GitHub main (${referenceMain.slice(0, 12)}…)`,
+    );
+  }
+
+  const checkpointBlob = Object.values(memoryFields).join('\n');
+  for (const pr of prNumbers(checkpointBlob)) {
+    if (!looksLikeOpenPrClaim(memoryFields['2'] ?? '') && !looksLikeOpenPrClaim(memoryFields['5'] ?? '')) continue;
+    const check = mergedPrCheck(pr);
+    if (check.available && check.merged) {
+      conflicts.push(`checkpoint still describes PR #${pr} as open but GitHub reports MERGED`);
+    } else if (!check.available && options.strictExternal) {
+      pending.push(`Could not verify PR #${pr} merge state (GitHub API unavailable)`);
+    }
+  }
+
+  const issueRegister = existsSync(join(root, 'docs', 'ISSUE_REGISTER.md'))
+    ? readFileSync(join(root, 'docs', 'ISSUE_REGISTER.md'), 'utf8')
+    : '';
+  if (/\|\s*CRM-PAGE-105\s*\|\s*IN PR\s*\|/i.test(issueRegister)) {
+    const pr106 = mergedPrCheck('106');
+    if (pr106.available && pr106.merged) {
+      conflicts.push('ISSUE_REGISTER CRM-PAGE-105 is IN PR but PR #106 is MERGED on GitHub');
+    }
+  }
+
+  const staleWarnings = collectStaleStatusWarnings(loadOperationalStatus(root));
+  for (const warning of staleWarnings) {
+    conflicts.push(`stale operational status: ${warning}`);
+  }
+
+  const adr = validateAdrs(root);
+  conflicts.push(...adr.errors);
+
+  const pendingSync = parsePendingRepositorySync(sessionHandoff);
+  if (pendingSync.items.length) {
+    for (const item of pendingSync.items) pending.push(`PENDING REPOSITORY SYNC: ${item}`);
+  }
+
+  const vercelEvidence = referenceMain ? githubEvidence(referenceMain) : null;
+  if (!vercelEvidence && options.strictExternal && referenceMain) {
+    pending.push('Vercel/GitHub deployment status for main SHA was not available (not treated as failure)');
+  }
+
+  let status = 'SYNCHRONIZED';
+  if (conflicts.length) status = 'CONFLICT';
+  else if (pending.length) status = 'PENDING_REPOSITORY_SYNC';
+
+  return {
+    status,
+    conflicts,
+    pending,
+    advisories,
+    facts: {
+      documentedMain,
+      originMain,
+      headSha,
+      referenceMain,
+      memoryFields,
+      handoffFields,
+      vercelEvidence,
+    },
+  };
+}
+
+export function formatCloseoutReport(result) {
+  const { status, conflicts, pending, facts } = result;
+  const lines = [
+    'WEBXXL CONTINUITY CLOSEOUT (CONTINUITY-03)',
+    `Status: ${status}`,
+    '',
+    '1. GitHub',
+    `   Documented main (checkpoint field 2): ${facts.documentedMain ?? 'UNKNOWN'}`,
+    `   origin/main: ${facts.originMain ?? 'UNVERIFIED'}`,
+    `   HEAD: ${facts.headSha ?? 'UNVERIFIED'}`,
+    `   Reference main: ${facts.referenceMain ?? 'UNVERIFIED'}`,
+    '',
+    '2. Production / Preview deployment (SHA evidence only)',
+    facts.vercelEvidence?.vercel
+      ? `   Vercel: ${facts.vercelEvidence.vercel.state} — ${facts.vercelEvidence.vercel.description ?? ''} ${facts.vercelEvidence.vercel.target_url ?? ''}`
+      : '   Vercel: UNVERIFIED (gh unavailable or no SHA)',
+    '',
+    '3. Migrations',
+    `   ${facts.memoryFields['6'] ?? '(see checkpoint field 6)'}`,
+    '',
+    '4. Flags / providers / activation',
+    `   ${facts.memoryFields['6'] ?? '(see checkpoint field 6)'}`,
+    '',
+    '5. Checkpoint snapshot',
+    ...['1', '2', '3', '4', '5', '6'].map((k) => `   [${k}] ${facts.memoryFields[k] ?? ''}`),
+    '',
+    '6. Next assignment',
+    `   ${facts.memoryFields['5'] ?? ''}`,
+    '',
+    'Prohibited without owner authorization: production migrate, flags, providers, sends, DNS cutover, merge without review.',
+  ];
+  if (conflicts.length) {
+    lines.push('', 'CONFLICTS:', ...conflicts.map((c) => ` - ${c}`));
+  }
+  if (pending.length) {
+    lines.push('', 'PENDING:', ...pending.map((p) => ` - ${p}`));
+  }
+  return lines.join('\n');
+}

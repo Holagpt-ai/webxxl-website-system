@@ -14,6 +14,12 @@ import { validateGenerated } from '../../scripts/validate-generated.mjs';
 import { validateNavHrefs } from '../../scripts/validate-routes.mjs';
 import { validateRoutes } from '../../scripts/validate-routes.mjs';
 import { validateSeo, validateStaticPaths } from '../../scripts/validate-seo.mjs';
+import {
+  looksLikeOpenPrClaim,
+  parseSixFieldCheckpoint,
+  shasPrefixMatch,
+} from '../../scripts/continuity-parse.mjs';
+import { reconcileContinuity } from '../../scripts/continuity-reconcile.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -138,6 +144,71 @@ test('recorded merged PR numbers still marked open are warned without reading HE
 
 test('the current operational records do not describe the latest merged batch as open', () => {
   assert.deepEqual(collectStaleStatusWarnings(loadOperationalStatus(ROOT)), []);
+});
+
+test('six-field checkpoint parsing reads table cells', () => {
+  const md = [
+    '### Canonical checkpoint (six-field)',
+    '| # | Field | Value |',
+    '|---|---|---|',
+    '| 1 | Last verified checkpoint | main abcdef1 |',
+    '| 2 | GitHub SHA, branch, active PR | `abcdef1234567890` on main |',
+  ].join('\n');
+  const fields = parseSixFieldCheckpoint(md);
+  assert.equal(fields['1'], 'main abcdef1');
+  assert.match(fields['2'], /abcdef1234567890/);
+});
+
+test('open PR claim heuristics detect owner-review wording', () => {
+  assert.equal(looksLikeOpenPrClaim('Owner review of PR #50'), true);
+  assert.equal(looksLikeOpenPrClaim('PR #106 MERGED on main'), false);
+});
+
+test('sha prefix match tolerates short and full hashes', () => {
+  assert.equal(shasPrefixMatch('e37f0a023dd2', 'e37f0a023dd289dc3a9b4e7484f6a1dd34b24276'), true);
+});
+
+test('reconcile reports checkpoint mismatch between memory and handoff', () => {
+  const root = mkdtempSync(join(tmpdir(), 'webxxl-reconcile-'));
+  try {
+    mkdirSync(join(root, 'docs'));
+    mkdirSync(join(root, 'docs', 'adr'));
+    mkdirSync(join(root, 'docs', 'platform', 'docs'), { recursive: true });
+    const table = (field2) =>
+      [
+        '**`main`:** `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`',
+        '### Canonical checkpoint (six-field)',
+        '| # | Field | Value |',
+        '|---|---|---|',
+        '| 1 | Last verified checkpoint | test |',
+        `| 2 | GitHub SHA, branch, active PR | ${field2} |`,
+        '| 3 | Production deployment | UNVERIFIED |',
+        '| 4 | Last updated | 2026-11-07 |',
+        '| 5 | Next task / responsible platform | wait |',
+        '| 6 | Open blocker / gate IDs | none |',
+        '| PR #99 test | MERGED | abc |',
+      ].join('\n');
+    writeFileSync(join(root, 'docs', 'PROJECT_MEMORY.md'), table('field A'));
+    writeFileSync(join(root, 'docs', 'SESSION_HANDOFF.md'), table('field B'));
+    writeFileSync(join(root, 'docs', 'ISSUE_REGISTER.md'), '| x | y | z | w | notes |\n');
+    writeFileSync(join(root, 'docs', 'CHANGELOG.md'), '# changelog\n');
+    writeFileSync(join(root, 'docs', 'adr', 'INDEX.md'), '# ADR index\n');
+    const result = reconcileContinuity(root, { githubSha: '', eventName: '', strictExternal: false });
+    assert.equal(result.status, 'CONFLICT');
+    assert.ok(result.conflicts.some((c) => c.includes('field 2')));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('reconcile does not require doc SHA to match HEAD on a feature branch', () => {
+  const result = reconcileContinuity(ROOT, { githubSha: '', eventName: 'pull_request', strictExternal: false });
+  assert.notEqual(result.status, 'CONFLICT', result.conflicts.join('; '));
+});
+
+test('the current repository reconciles without deterministic conflicts', () => {
+  const result = reconcileContinuity(ROOT, { githubSha: '', eventName: 'pull_request', strictExternal: false });
+  assert.equal(result.conflicts.length, 0, result.conflicts.join('\n'));
 });
 
 test('missing evidence stays unverified', () => {

@@ -98,7 +98,9 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-11-03 | Vercel production deployment of `19b935a` (PR #104) | GitHub deployment `7526284530`, Production success, 2026-11-03T17:45:04Z | DEPLOYED SHA only. Superseded for current production by the PR #95 row |
 | 2026-11-06 | Legal placeholder notice hidden on finalized legal pages | [PR #95](https://github.com/Holagpt-ai/webxxl-website-system/pull/95) merged @ `a43b276d1005d29e9928c40fb66d6874bd7f06d8` | MERGED. Legal copy only. Not a CRM, migration, or flag change |
 | 2026-11-06 | Vercel production deployment of `a43b276d` (PR #95) | GitHub deployment `7608137512`, `vercel[bot]`, Production success, 2026-11-06T18:47:08Z | DEPLOYED SHA only. Vercel deployment id was not in the GitHub payload. Not migration or activation |
-| 2026-11-07 | Issue #105 CRM page entitlement contract | [PR #106](https://github.com/Holagpt-ai/webxxl-website-system/pull/106) on `feature/issue-105-crm-page-entitlement` | Server contract and focused tests |
-| 2026-11-07 | Issue #105 v0 CRM locked layout integration | v0 `v0/crm-entitlement-ui-105` @ `212fdf43d3dafeec906a5527cbefea0d78983cb5` fast-forwarded into PR #106 | `layout.tsx` + `crm-locked-state.tsx`. Layout contract test added. No deployment. Staging browser acceptance **UNVERIFIED** |
+| 2026-11-07 | Issue #105 CRM page entitlement contract | [PR #106](https://github.com/Holagpt-ai/webxxl-website-system/pull/106) merged @ `e37f0a023dd289dc3a9b4e7484f6a1dd34b24276` | Server contract, layout gate, focused tests |
+| 2026-11-07 | Issue #105 v0 CRM locked layout integration | v0 `v0/crm-entitlement-ui-105` @ `212fdf43d3dafeec906a5527cbefea0d78983cb5` in PR #106 | `layout.tsx` + `crm-locked-state.tsx`. Pilot A/B core entitlement acceptance passed on integrated Preview (Issue #105) |
+| 2026-11-07 | Vercel production deployment of `e37f0a0` (PR #106) | Vercel `dpl_AzZVHN5Si3jShjcJf5Gtq1dCxdAb` via GitHub commit status, 2026-11-07T18:01:23Z | DEPLOYED SHA only. Not migration or activation |
+| 2026-11-07 | Issue #107 CONTINUITY-03 session closeout | `feature/continuity-03-issue-107` (open owner-review PR) | `pnpm continuity:close`, `continuity-reconcile.mjs`, CI gate, doc reconciliation |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

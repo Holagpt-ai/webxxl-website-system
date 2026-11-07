@@ -16,6 +16,7 @@
 - [ ] Migration/flags/provider/schedule default OFF unless separately authorized
 - [ ] `docs/PROJECT_MEMORY.md` / `ROUTE_MAP.md` / `DATA_AND_SERVICES.md` updated only as applicable
 - [ ] `docs/ISSUE_REGISTER.md` / `CHANGELOG.md` / `SESSION_HANDOFF.md` reconciled as applicable
+- [ ] `pnpm continuity:close` run (read-only); **CONFLICT** resolved or explained in PR body
 
 ## Rollout (do not conflate stages)
 - Merged? NO pending review
