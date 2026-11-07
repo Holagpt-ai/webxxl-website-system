@@ -325,6 +325,7 @@ test('push:main after feature merge: stale checkpoint is PENDING not CONFLICT', 
     const artifact = buildPostMergePendingSyncArtifact(result);
     assert.equal(artifact.detection_only, true);
     assert.equal(artifact.tracking_issue, 109);
+    assert.match(artifact.issue_writer, new RegExp(`Issue #${artifact.tracking_issue}\\b`));
     assert.ok(artifact.post_merge_items.length >= 1);
   } finally {
     rmSync(root, { recursive: true, force: true });
