@@ -42,9 +42,8 @@ export async function getCustomerOperationsSummary(portal: PortalUser): Promise<
           rejected: counts.rejected?.value ?? 0,
           duplicateReview: counts.duplicateReview?.value ?? 0,
         })
-        const evidenceTotal = Object.values(metrics)
-          .filter((m) => m.scope === 'account_total')
-          .reduce((sum, m) => sum + m.value, 0)
+        // Lifecycle statuses partition the total; adding them to leadsReceived would double-count.
+        const evidenceTotal = counts.leadsReceived?.value ?? 0
         leadPipeline = {
           readiness: {
             state: 'available',
