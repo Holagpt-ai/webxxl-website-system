@@ -7,6 +7,8 @@
 The batch table and later status blocks keep their original planning wording, including "In PR" and "In progress".
 GitHub `main` at `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` (PR #52) has moved past that wording. Use this checkpoint and `docs/PROJECT_MEMORY.md` for current source status. A merge or a Vercel production deployment is not migration application, flag activation, or a live provider test.
 
+**2026-11-07:** Issue #105 adds the CRM page entitlement server contract. v0.app still renders the locked CRM layout. Batch 43 safeguards and the PR #95 legal-page change are on `main`. See `docs/PROJECT_MEMORY.md` for the SHA, deployment, migration, and activation split.
+
 | Executed batch | Source evidence on `main` | Source state | Runtime |
 |---|---|---|---|
 | DOC-00 | PR #32 | MERGED | Documentation only |

@@ -48,6 +48,8 @@ All of these exist as `app/[locale]/dashboard/**/page.tsx`. They are authenticat
 
 `getDashboardNavModules()` includes CRM → `/dashboard/crm`, **Communications** → `/dashboard/communications`, Marketing Studio → `/dashboard/marketing`, and Local SEO → `/dashboard/seo`, plus the overview, project, core portal, marketplace, billing, analytics, and AI employees routes. Infrastructure and notification links are present in source because `infrastructureManagement` and `automationNotifications` are `true` in `config/features.ts`. Registry keys such as `scheduler` have no `route` and are not pages. Nav visibility is not authorization; CRM, Marketing, and SEO APIs remain flag-disabled at source defaults.
 
+**Issue #105 CRM page entitlement:** `resolveCrmPageEntitlement()` in `lib/platform/crm/page-entitlement.ts` is the server decision for `/dashboard/crm` and the nested pages under it (English unprefixed, Spanish `/es/...`). Direct nested URLs use the same decision via `crmPageGateForPath`. v0.app still has to consume that decision in `app/[locale]/dashboard/crm/layout.tsx`. Until that layout change, the route files themselves are unchanged. Contract: [`docs/platform/docs/CRM-PAGE-ENTITLEMENT-CONTRACT.md`](platform/docs/CRM-PAGE-ENTITLEMENT-CONTRACT.md).
+
 ## Admin
 
 `noindex` from `app/[locale]/admin/layout.tsx`. Shell links resolve to pages: `/admin`, `/admin/customers`, `/admin/leads`, `/admin/service-orders`, `/admin/commerce`, `/admin/infrastructure`, `/admin/automation`, `/admin/projects`, `/admin/sites`, `/admin/approvals`, `/admin/requests`, `/admin/support`. Detail routes (`[customerId]`, `[leadId]`, `[projectId]`, `[siteId]`, `[orderId]`) and `/admin/onboarding` exist and are not top-level shell hrefs.

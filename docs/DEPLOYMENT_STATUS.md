@@ -1,6 +1,6 @@
 # Deployment and Activation Register
 
-**Reviewed:** 2026-10-29. Update a row only when the evidence changes. Each production row is a separate SHA record. A later row does not replace the October 21 evidence.
+**Reviewed:** 2026-11-07. Update a row only when the evidence changes. Each production row is a separate SHA record. A later row does not replace the October 21 evidence.
 
 | Surface | Source | Deployed SHA | Migrations | Flags / providers | Verification |
 |---|---|---|---|---|---|
@@ -40,7 +40,10 @@
 | WebXXL app, 2026-11-01 PR #84 | `1ae7c0a1e13748969ead7f3b177a74fcc68ed5d8` | DEPLOYED (SHA only). GitHub deployment `7478496108`, `vercel[bot]`, environment Production, state success, 2026-11-01T20:17:09Z | UNVERIFIED | UNVERIFIED | Superseded by PR #85 row |
 | WebXXL app, 2026-11-01 PR #85 | `e400c49df62b99069110cadd59c0f721e676ea35` | DEPLOYED (SHA only). Owner-reported Vercel `dpl_A7yAQkZD7T994YnSjGwhae1PuBL1` **READY** | UNVERIFIED | UNVERIFIED | Superseded by PR #86 row |
 | WebXXL app, 2026-11-01 PR #86 | `3386ac6a5ca8c406ad1bc8c6259726a4c134060e` | DEPLOYED (SHA only). Vercel `dpl_DB2fCd4wt9C6htqVNU125jCUUYJh` **READY** | UNVERIFIED | UNVERIFIED | Batch 35 unified comms integration on `main`. No live sends. Superseded by PR #87 row |
-| WebXXL app, 2026-11-01 PR #87 | `f620e4f1c7a0c6cbcecf2bca8365b8e4cae6c646` | DEPLOYED (SHA only). Owner-verified Vercel `dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` **READY** | UNVERIFIED | UNVERIFIED | Batch 36 customer AI pilot prep on `main`. Flags source-default OFF; production activation UNVERIFIED |
+| WebXXL app, 2026-11-01 PR #87 | `f620e4f1c7a0c6cbcecf2bca8365b8e4cae6c646` | DEPLOYED (SHA only). Owner-verified Vercel `dpl_Hr8m2PMTYFoEoDN38M8czCi39TJF` **READY** | UNVERIFIED | UNVERIFIED | Batch 36 customer AI pilot prep on `main`. Flags source-default OFF; production activation UNVERIFIED. Superseded for current production SHA by the PR #95 row |
+| WebXXL app, 2026-11-03 PR #104 | `19b935a7471244009347ad2b25aea57c89b3cc21` | DEPLOYED (SHA only). GitHub deployment `7526284530`, Production **success**, 2026-11-03T17:45:04Z | UNVERIFIED | UNVERIFIED | Batch 43 safeguards on `main`. SHA only. Superseded for current production by the PR #95 row |
+| WebXXL app, 2026-11-06 PR #95 | `a43b276d1005d29e9928c40fb66d6874bd7f06d8` | DEPLOYED (SHA only). GitHub deployment `7608137512`, `vercel[bot]`, Production **success**, 2026-11-06T18:47:08Z. Target URL on that status: `https://webxxl-website-system-7gpt03ipn-tone4real-7828s-projects.vercel.app`. Vercel deployment id was not in the GitHub payload | UNVERIFIED | UNVERIFIED | Legal-page notice only. Not a migration, flag change, or provider activation |
+| Staging Preview, Batch 43 source | `299a0fe09b3b9c792705c412240707ae77d8cdfa` | DEPLOYED to Preview (SHA only). GitHub deployment `7526261591`, Preview **success**, latest status 2026-11-05T18:30:43Z. Issue #105 names Vercel `dpl_FqymPkk81pgYqpk35mrPyEMUTDgR`; that id was not in the GitHub payload | Not re-counted on 2026-11-07. Last staging migration record remains **39/39** on `vcgibefnhneaqhcguhnt` (2026-11-03) | UNVERIFIED | Issue #105 reports partial authenticated CRM acceptance on this Preview. Not production |
 | Analytics backend and dashboard | PRs #48 and #49 are inside `c0a21db` | Included in deployment `7233002736` | `20261021120000_analytics14_foundation` apply UNVERIFIED | Source defaults off | No authenticated analytics smoke test in this review |
 | Analytics ingestion | PR #51 is inside `f315e897218a48bfac44a0d50724c91d32b6c9c9` | Included in deployment `7319975513` as code | `20261025120000_analytics15_ingestion` and `20261025180000_analytics151_rate_limit` apply UNVERIFIED | Source defaults off | No authenticated analytics smoke test in this review |
 | AUTO-10 worker | PR #42 on `main` | Included only as code in the app SHA | UNVERIFIED | Source contract default off | No live execution inferred |
