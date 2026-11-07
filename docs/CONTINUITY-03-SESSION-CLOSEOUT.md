@@ -29,9 +29,20 @@ Prevent WebXXL sessions from treating stale memory, outdated PR statuses, incomp
 3. **Stale operational rows** — MERGED items in `PROJECT_MEMORY` must not still read **IN PR** in scanned operational docs.
 4. **ADR registry** — PROPOSED records cannot carry false APPROVED signals (`validate-adr.mjs`).
 
-CI does **not** require the documentation commit SHA to equal checkpoint field 2. After a merge, the next PR may update the checkpoint while branch `HEAD` is still behind until docs land; post-merge pushes to `main` compare checkpoint field 2 to `GITHUB_SHA`.
+CI does **not** require the documentation commit SHA to equal checkpoint field 2. On **`push:main`**, checkpoint field 2 must be an **ancestor** of the current `GITHUB_SHA` (or match). A newer `main` with an older but valid checkpoint is **`PENDING_REPOSITORY_SYNC`** (post-merge doc catch-up), not a blocking **CONFLICT**, so documentation reconciliation cannot loop forever.
 
-Unavailable GitHub or Vercel API data produces a **notice**, not a failure.
+### Post-merge pending sync (deduplicated, detection only)
+
+| Piece | Behavior |
+|---|---|
+| Auto-detection | `POST-MERGE-CHECKPOINT` pending row when `main` advanced past field 2 |
+| Deduplication | `scripts/post-merge-pending-sync.mjs` merges manual `PENDING REPOSITORY SYNC` lines with auto rows |
+| Tracking issue | [#107](https://github.com/Holagpt-ai/webxxl-website-system/issues/107) — **no** CI issue writer |
+| CI artifact | `post-merge-pending-sync.json` uploaded on every Continuity run (`detection_only: true`) |
+
+Pull-request workflows use **`origin/main`**, never the ephemeral `GITHUB_SHA` merge ref.
+
+`SYNCHRONIZED` does **not** imply Vercel or deployment proof; deployment evidence is labeled **AVAILABLE** or **UNVERIFIED** separately. Unavailable `gh` data is a **notice**, not a blocking failure offline.
 
 ## Session end checklist (Cursor)
 

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { cpSync, mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,13 +16,78 @@ import { validateNavHrefs } from '../../scripts/validate-routes.mjs';
 import { validateRoutes } from '../../scripts/validate-routes.mjs';
 import { validateSeo, validateStaticPaths } from '../../scripts/validate-seo.mjs';
 import {
+  firstSha,
   looksLikeOpenPrClaim,
   parseSixFieldCheckpoint,
   shasPrefixMatch,
 } from '../../scripts/continuity-parse.mjs';
-import { reconcileContinuity } from '../../scripts/continuity-reconcile.mjs';
+import {
+  evaluateCheckpointMainLineage,
+  gitIsAncestor,
+  reconcileContinuity,
+} from '../../scripts/continuity-reconcile.mjs';
+import {
+  buildPostMergePendingSyncArtifact,
+  dedupePendingItems,
+  postMergeCheckpointPendingItem,
+} from '../../scripts/post-merge-pending-sync.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+
+function gitCmd(root, ...args) {
+  return execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: 'pipe' }).trim();
+}
+
+function writeCheckpointDocs(root, mainSha) {
+  const table = [
+    `**Evidence review:** 2026-11-07 · **\`main\`:** \`${mainSha}\``,
+    '### Canonical checkpoint (six-field)',
+    '| # | Field | Value |',
+    '|---|---|---|',
+    '| 1 | Last verified checkpoint | test |',
+    `| 2 | GitHub SHA, branch, active PR | **\`${mainSha}\`** on \`main\` |`,
+    '| 3 | Production deployment | UNVERIFIED |',
+    '| 4 | Last updated | 2026-11-07 |',
+    '| 5 | Next task / responsible platform | wait |',
+    '| 6 | Open blocker / gate IDs | none |',
+    '| PR #99 fixture | MERGED | abc |',
+  ].join('\n');
+  const handoff = [
+    `**\`main\`:** \`${mainSha}\``,
+    '## Canonical checkpoint (six-field)',
+    table.split('### Canonical checkpoint (six-field)')[1],
+    '## PENDING REPOSITORY SYNC',
+    '(none)',
+  ].join('\n');
+  mkdirSync(join(root, 'docs'), { recursive: true });
+  writeFileSync(join(root, 'docs', 'PROJECT_MEMORY.md'), table);
+  writeFileSync(join(root, 'docs', 'SESSION_HANDOFF.md'), handoff);
+  writeFileSync(join(root, 'docs', 'ISSUE_REGISTER.md'), '| id | status | notes | evidence | action |\n');
+  writeFileSync(join(root, 'docs', 'CHANGELOG.md'), '# changelog\n');
+  writeFileSync(join(root, 'docs', 'CHATGPT_PROJECT_INSTRUCTIONS.md'), '# chatgpt\n');
+  writeFileSync(join(root, 'docs', 'DATA_AND_SERVICES.md'), '# data\n');
+  mkdirSync(join(root, 'docs', 'platform', 'docs'), { recursive: true });
+  writeFileSync(join(root, 'docs', 'platform', 'docs', '02-CURRENT-STATE.md'), '# state\n');
+  writeFileSync(join(root, 'docs', 'platform', 'docs', '13-IMPLEMENTATION-ROADMAP.md'), '# roadmap\n');
+  if (!existsSync(join(root, 'docs', 'adr', 'INDEX.md'))) {
+    cpSync(join(ROOT, 'docs', 'adr'), join(root, 'docs', 'adr'), { recursive: true });
+    const decisions = join(ROOT, 'docs', 'platform', 'docs', '15-DECISIONS-CHANGELOG.md');
+    if (existsSync(decisions)) {
+      mkdirSync(join(root, 'docs', 'platform', 'docs'), { recursive: true });
+      writeFileSync(join(root, 'docs', 'platform', 'docs', '15-DECISIONS-CHANGELOG.md'), readFileSync(decisions));
+    }
+  }
+}
+
+function initFixtureRepo(root) {
+  gitCmd(root, 'init', '-b', 'main');
+  gitCmd(root, 'config', 'user.email', 'continuity@test.local');
+  gitCmd(root, 'config', 'user.name', 'continuity-test');
+  writeFileSync(join(root, 'README.md'), 'application v1\n');
+  gitCmd(root, 'add', 'README.md');
+  gitCmd(root, 'commit', '-m', 'application base');
+  return gitCmd(root, 'rev-parse', 'HEAD');
+}
 
 test('continuity documents and ADR proposals validate', () => {
   assert.deepEqual(validateContinuity(ROOT).errors, []);
@@ -193,7 +259,7 @@ test('reconcile reports checkpoint mismatch between memory and handoff', () => {
     writeFileSync(join(root, 'docs', 'ISSUE_REGISTER.md'), '| x | y | z | w | notes |\n');
     writeFileSync(join(root, 'docs', 'CHANGELOG.md'), '# changelog\n');
     writeFileSync(join(root, 'docs', 'adr', 'INDEX.md'), '# ADR index\n');
-    const result = reconcileContinuity(root, { githubSha: '', eventName: '', strictExternal: false });
+    const result = reconcileContinuity(root, { eventName: 'pull_request', strictExternal: false, skipGitFetch: true });
     assert.equal(result.status, 'CONFLICT');
     assert.ok(result.conflicts.some((c) => c.includes('field 2')));
   } finally {
@@ -202,13 +268,92 @@ test('reconcile reports checkpoint mismatch between memory and handoff', () => {
 });
 
 test('reconcile does not require doc SHA to match HEAD on a feature branch', () => {
-  const result = reconcileContinuity(ROOT, { githubSha: '', eventName: 'pull_request', strictExternal: false });
+  const result = reconcileContinuity(ROOT, { eventName: 'pull_request', isMainPush: false, strictExternal: false });
   assert.notEqual(result.status, 'CONFLICT', result.conflicts.join('; '));
 });
 
 test('the current repository reconciles without deterministic conflicts', () => {
-  const result = reconcileContinuity(ROOT, { githubSha: '', eventName: 'pull_request', strictExternal: false });
+  const result = reconcileContinuity(ROOT, { eventName: 'pull_request', isMainPush: false, strictExternal: false });
   assert.equal(result.conflicts.length, 0, result.conflicts.join('\n'));
+});
+
+test('dedupePendingItems collapses duplicate post-merge rows', () => {
+  const row = postMergeCheckpointPendingItem('aaaa', 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
+  const merged = dedupePendingItems([row, row, `- manual`, `- manual`]);
+  assert.equal(merged.length, 2);
+});
+
+test('pull_request reconcile ignores GITHUB_SHA merge ref', () => {
+  const previous = process.env.GITHUB_SHA;
+  process.env.GITHUB_SHA = 'ffffffffffffffffffffffffffffffffffffffff';
+  try {
+    const result = reconcileContinuity(ROOT, {
+      eventName: 'pull_request',
+      isMainPush: false,
+      strictExternal: false,
+    });
+    assert.notEqual(result.facts.referenceMain, 'ffffffffffffffffffffffffffffffffffffffff');
+    assert.equal(result.facts.referenceMainSource, 'origin/main (not PR merge ref)');
+    if (result.facts.originMain) assert.equal(result.facts.referenceMain, result.facts.originMain);
+  } finally {
+    if (previous === undefined) delete process.env.GITHUB_SHA;
+    else process.env.GITHUB_SHA = previous;
+  }
+});
+
+test('push:main after feature merge: stale checkpoint is PENDING not CONFLICT', () => {
+  const root = mkdtempSync(join(tmpdir(), 'webxxl-merge-lag-'));
+  try {
+    const baseSha = initFixtureRepo(root);
+    writeCheckpointDocs(root, baseSha);
+    gitCmd(root, 'add', 'docs');
+    gitCmd(root, 'commit', '-m', 'document checkpoint at application base');
+    writeFileSync(join(root, 'README.md'), 'application v2\n');
+    gitCmd(root, 'add', 'README.md');
+    gitCmd(root, 'commit', '-m', 'merge batch code without bumping checkpoint');
+    const mainTip = gitCmd(root, 'rev-parse', 'HEAD');
+    assert.equal(evaluateCheckpointMainLineage(root, baseSha, mainTip), 'checkpoint_lags_main');
+    const result = reconcileContinuity(root, {
+      isMainPush: true,
+      ciGitHubSha: mainTip,
+      eventName: 'push',
+      skipGitFetch: true,
+    });
+    assert.equal(result.conflicts.length, 0, result.conflicts.join('\n'));
+    assert.equal(result.status, 'PENDING_REPOSITORY_SYNC');
+    assert.ok(result.pending.some((p) => /POST-MERGE-CHECKPOINT/i.test(p)));
+    const artifact = buildPostMergePendingSyncArtifact(result);
+    assert.equal(artifact.detection_only, true);
+    assert.equal(artifact.tracking_issue, 107);
+    assert.ok(artifact.post_merge_items.length >= 1);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('push:main exact checkpoint match yields SYNCHRONIZED', () => {
+  const memory = readFileSync(join(ROOT, 'docs', 'PROJECT_MEMORY.md'), 'utf8');
+  const documented = firstSha(parseSixFieldCheckpoint(memory)['2'] ?? '');
+  const result = reconcileContinuity(ROOT, {
+    isMainPush: true,
+    ciGitHubSha: documented,
+    referenceMain: documented,
+    eventName: 'push',
+    skipGitFetch: true,
+  });
+  assert.equal(result.conflicts.length, 0, result.conflicts.join('\n'));
+  assert.equal(result.status, 'SYNCHRONIZED');
+  assert.equal(result.pending.length, 0);
+});
+
+test('evaluateCheckpointMainLineage synced when SHAs match', () => {
+  const root = mkdtempSync(join(tmpdir(), 'webxxl-lineage-'));
+  try {
+    const sha = initFixtureRepo(root);
+    assert.equal(evaluateCheckpointMainLineage(root, sha, sha), 'synced');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test('missing evidence stays unverified', () => {

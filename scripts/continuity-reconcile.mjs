@@ -8,7 +8,6 @@ import { join } from 'node:path';
 import { validateAdrs } from './validate-adr.mjs';
 import { collectStaleStatusWarnings, loadOperationalStatus } from './check-stale-operational-status.mjs';
 import {
-  allShas,
   firstSha,
   looksLikeOpenPrClaim,
   parsePendingRepositorySync,
@@ -17,6 +16,7 @@ import {
   readCheckpointPair,
   shasPrefixMatch,
 } from './continuity-parse.mjs';
+import { dedupePendingItems, postMergeCheckpointPendingItem } from './post-merge-pending-sync.mjs';
 
 export const CLOSEOUT_STATUSES = ['SYNCHRONIZED', 'PENDING_REPOSITORY_SYNC', 'CONFLICT'];
 
@@ -34,6 +34,31 @@ function gitFetchMain(root) {
   } catch {
     /* offline or no remote */
   }
+}
+
+export function gitIsAncestor(root, ancestorSha, descendantSha) {
+  if (!ancestorSha || !descendantSha) return false;
+  if (shasPrefixMatch(ancestorSha, descendantSha)) return true;
+  try {
+    execFileSync('git', ['merge-base', '--is-ancestor', ancestorSha, descendantSha], {
+      cwd: root,
+      stdio: 'pipe',
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * @returns {'synced' | 'checkpoint_lags_main' | 'impossible_ahead' | 'divergent'}
+ */
+export function evaluateCheckpointMainLineage(root, documentedMain, referenceMain) {
+  if (!documentedMain || !referenceMain) return 'synced';
+  if (shasPrefixMatch(documentedMain, referenceMain)) return 'synced';
+  if (gitIsAncestor(root, documentedMain, referenceMain)) return 'checkpoint_lags_main';
+  if (gitIsAncestor(root, referenceMain, documentedMain)) return 'impossible_ahead';
+  return 'divergent';
 }
 
 function ghJson(args) {
@@ -85,14 +110,30 @@ function checkpointFieldsMatch(memoryFields, handoffFields) {
   return errors;
 }
 
+function resolveReferenceMain(root, options, originMain, headSha) {
+  if (options.referenceMain !== undefined) return options.referenceMain;
+  if (options.isMainPush === true && options.ciGitHubSha) {
+    return options.ciGitHubSha.toLowerCase();
+  }
+  if (options.eventName === 'pull_request') {
+    return originMain;
+  }
+  return originMain ?? headSha;
+}
+
 /**
  * @param {string} root
- * @param {{ githubSha?: string, eventName?: string, strictExternal?: boolean }} options
+ * @param {{
+ *   eventName?: string,
+ *   isMainPush?: boolean,
+ *   ciGitHubSha?: string | null,
+ *   referenceMain?: string | null,
+ *   strictExternal?: boolean,
+ * }} options
  */
 export function reconcileContinuity(root, options = {}) {
   const conflicts = [];
   const pending = [];
-  const advisories = [];
 
   const { projectMemory, sessionHandoff, memoryFields, handoffFields } = readCheckpointPair(root);
 
@@ -115,20 +156,29 @@ export function reconcileContinuity(root, options = {}) {
     conflicts.push('SESSION_HANDOFF header main SHA disagrees with checkpoint field 2');
   }
 
-  gitFetchMain(root);
+  if (!options.skipGitFetch) gitFetchMain(root);
   const originMain = gitSha(root, 'origin/main');
   const headSha = gitSha(root, 'HEAD');
-  const envGithubSha = (options.githubSha ?? process.env.GITHUB_SHA ?? '').toLowerCase() || null;
-  const referenceMain = envGithubSha ?? originMain;
+  const referenceMain = resolveReferenceMain(root, options, originMain, headSha);
 
-  const onMain =
-    options.eventName === 'push' ||
-    (headSha && referenceMain && shasPrefixMatch(headSha, referenceMain));
-
-  if (onMain && referenceMain && documentedMain && !shasPrefixMatch(documentedMain, referenceMain)) {
-    conflicts.push(
-      `checkpoint main SHA (${documentedMain}) does not match verified GitHub main (${referenceMain.slice(0, 12)}…)`,
-    );
+  if (options.isMainPush === true && referenceMain && documentedMain) {
+    const lineage = evaluateCheckpointMainLineage(root, documentedMain, referenceMain);
+    if (lineage === 'checkpoint_lags_main') {
+      pending.push(postMergeCheckpointPendingItem(documentedMain, referenceMain));
+    } else if (lineage === 'impossible_ahead') {
+      conflicts.push(
+        `checkpoint main SHA (${documentedMain.slice(0, 12)}…) is ahead of current GitHub main (${referenceMain.slice(0, 12)}…)`,
+      );
+    } else if (lineage === 'divergent') {
+      conflicts.push(
+        `checkpoint main SHA (${documentedMain.slice(0, 12)}…) is not an ancestor of current GitHub main (${referenceMain.slice(0, 12)}…)`,
+      );
+    }
+  } else if (referenceMain && documentedMain && !shasPrefixMatch(documentedMain, referenceMain)) {
+    const lineage = evaluateCheckpointMainLineage(root, documentedMain, referenceMain);
+    if (lineage === 'checkpoint_lags_main') {
+      pending.push(postMergeCheckpointPendingItem(documentedMain, referenceMain));
+    }
   }
 
   const checkpointBlob = Object.values(memoryFields).join('\n');
@@ -161,32 +211,39 @@ export function reconcileContinuity(root, options = {}) {
   conflicts.push(...adr.errors);
 
   const pendingSync = parsePendingRepositorySync(sessionHandoff);
-  if (pendingSync.items.length) {
-    for (const item of pendingSync.items) pending.push(`PENDING REPOSITORY SYNC: ${item}`);
-  }
+  for (const item of pendingSync.items) pending.push(`PENDING REPOSITORY SYNC: ${item}`);
 
-  const vercelEvidence = referenceMain ? githubEvidence(referenceMain) : null;
-  if (!vercelEvidence && options.strictExternal && referenceMain) {
-    pending.push('Vercel/GitHub deployment status for main SHA was not available (not treated as failure)');
+  const dedupedPending = dedupePendingItems(pending);
+
+  const evidenceSha = documentedMain ?? referenceMain;
+  const vercelEvidence = evidenceSha ? githubEvidence(evidenceSha) : null;
+  let deploymentEvidence = 'UNVERIFIED';
+  if (vercelEvidence?.vercel) deploymentEvidence = 'AVAILABLE';
+  else if (options.strictExternal && evidenceSha) {
+    dedupedPending.push(
+      `Vercel/GitHub deployment status for documented main SHA was not available (UNVERIFIED; not a blocking failure)`,
+    );
   }
 
   let status = 'SYNCHRONIZED';
   if (conflicts.length) status = 'CONFLICT';
-  else if (pending.length) status = 'PENDING_REPOSITORY_SYNC';
+  else if (dedupedPending.length) status = 'PENDING_REPOSITORY_SYNC';
 
   return {
     status,
     conflicts,
-    pending,
-    advisories,
+    pending: dedupePendingItems(dedupedPending),
     facts: {
       documentedMain,
       originMain,
       headSha,
       referenceMain,
+      referenceMainSource:
+        options.isMainPush === true && options.ciGitHubSha ? 'push:main GITHUB_SHA' : 'origin/main (not PR merge ref)',
       memoryFields,
       handoffFields,
       vercelEvidence,
+      deploymentEvidence,
     },
   };
 }
@@ -201,12 +258,12 @@ export function formatCloseoutReport(result) {
     `   Documented main (checkpoint field 2): ${facts.documentedMain ?? 'UNKNOWN'}`,
     `   origin/main: ${facts.originMain ?? 'UNVERIFIED'}`,
     `   HEAD: ${facts.headSha ?? 'UNVERIFIED'}`,
-    `   Reference main: ${facts.referenceMain ?? 'UNVERIFIED'}`,
+    `   Reference main (${facts.referenceMainSource}): ${facts.referenceMain ?? 'UNVERIFIED'}`,
     '',
     '2. Production / Preview deployment (SHA evidence only)',
-    facts.vercelEvidence?.vercel
-      ? `   Vercel: ${facts.vercelEvidence.vercel.state} — ${facts.vercelEvidence.vercel.description ?? ''} ${facts.vercelEvidence.vercel.target_url ?? ''}`
-      : '   Vercel: UNVERIFIED (gh unavailable or no SHA)',
+    facts.deploymentEvidence === 'AVAILABLE' && facts.vercelEvidence?.vercel
+      ? `   Vercel (documented SHA): ${facts.vercelEvidence.vercel.state} — ${facts.vercelEvidence.vercel.description ?? ''} ${facts.vercelEvidence.vercel.target_url ?? ''}`
+      : `   Vercel (documented SHA): ${facts.deploymentEvidence} (SYNCHRONIZED does not imply live deployment proof)`,
     '',
     '3. Migrations',
     `   ${facts.memoryFields['6'] ?? '(see checkpoint field 6)'}`,
