@@ -1,6 +1,6 @@
 # Batch 1 — Customer Operations Engine (pre-implementation delta)
 
-**Status:** planning only (Issue **#109** Step 3). **No implementation authorization** until the Issue #109 roadmap closeout PR merges.  
+**Status:** Batch 1 backend integration in owner-review PR (Issue **#111**). Roadmap closeout merged in PR #110 @ `fcceade`.  
 **ADR:** not required for this delta record (no architecture change).
 
 ## Scope (Issue #109)

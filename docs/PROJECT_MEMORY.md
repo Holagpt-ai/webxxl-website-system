@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-07 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `5d90c124b1c7a884f7a61f16e5b9d263f0c08081` (PR #108)
+**Evidence review:** 2026-11-07 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `fcceade889cefd1c14f86bdbb723f5a0ad97c547` (PR #110)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,11 +35,11 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | GitHub `main` `5d90c124b1c7a884f7a61f16e5b9d263f0c08081` ([PR **#108**](https://github.com/Holagpt-ai/webxxl-website-system/pull/108) CONTINUITY-03, MERGED 2026-11-07). [PR **#106**](https://github.com/Holagpt-ai/webxxl-website-system/pull/106) Issue **#105** CRM page entitlement remains on `main`. Issue **#107** **CLOSED** (delivered in PR #108). Issue **#109** owner-approved build-first execution plan. Pilot A/B **core** CRM entitlement acceptance **passed** (Issue #105, 2026-11-07). Broad Issue #105 QA **deferred** to final release stabilization. |
-| 2 | GitHub SHA, branch, active PR | **`5d90c124b1c7a884f7a61f16e5b9d263f0c08081`** on `main`. Issue **#109** Steps 1–2 roadmap closeout on `feature/issue-109-roadmap-closeout` (open owner-review PR) — **Cursor** |
-| 3 | Production deployment | Vercel **`dpl_HR1qq83Cz2ARKUvaRf8URt2Piwpo`**, context **Vercel**, state **success** (“Deployment has completed”), 2026-11-07T19:07:53Z, SHA `5d90c124b1c7a884f7a61f16e5b9d263f0c08081` ([PR **#108**](https://github.com/Holagpt-ai/webxxl-website-system/pull/108)). SHA only. Prior Vercel `dpl_AzZVHN5Si3jShjcJf5Gtq1dCxdAb` @ `e37f0a0` (PR **#106**) is a historical row. Post-merge GitHub CI **green**. Not migration, activation, or provider live state. |
+| 1 | Last verified checkpoint | GitHub `main` `fcceade889cefd1c14f86bdbb723f5a0ad97c547` ([PR **#110**](https://github.com/Holagpt-ai/webxxl-website-system/pull/110) Issue **#109** roadmap, MERGED 2026-11-07). [PR **#108**](https://github.com/Holagpt-ai/webxxl-website-system/pull/108) CONTINUITY-03 on `main`. Issue **#111** Batch 1 Customer Operations Engine in owner-review PR. Build-first execution plan active. Issue #105 broad QA **deferred** to Batch 8. |
+| 2 | GitHub SHA, branch, active PR | **`fcceade889cefd1c14f86bdbb723f5a0ad97c547`** on `main`. Issue **#111** Batch 1 [PR **#112**](https://github.com/Holagpt-ai/webxxl-website-system/pull/112) head `d1fb162` on `feature/issue-111-batch1-customer-operations` (open, **not merged**) — **Cursor** |
+| 3 | Production deployment | Vercel **`dpl_4mt42VeQg7aMDHhv7Pb8x5w5xg93`** (owner-reported READY @ `fcceade`, 2026-11-07). Prior Vercel `dpl_HR1qq83Cz2ARKUvaRf8URt2Piwpo` @ `5d90c124` (PR **#108**) is a historical row. SHA deploy only. Not migration, activation, or provider live state. |
 | 4 | Last updated | 2026-11-07 |
-| 5 | Next task / responsible platform | Owner review of Issue **#109** roadmap closeout PR. After merge, **Batch 1 — Customer Operations Engine** bounded implementation — **Cursor** (backend); v0.app UI only on nonoverlapping paths |
+| 5 | Next task / responsible platform | Owner review Issue **#111** Batch 1 PR. Optional v0 handoff for Business Command Center consumption of `/api/v1/customer-operations/summary` — **v0.app** |
 | 6 | Open blocker / gate IDs | **Build-first policy:** broad browser QA, CRM E2E, cross-module acceptance deferred to **Batch 8 — Release & Activation** (Issue #109). Issue **#105** QA items **deferred**, not cancelled. CRM-SUBNAV-105 **REPORTED**, not resolved. Staging migrations last **39/39** (2026-11-03); not re-counted 2026-11-07. Production migrate **UNVERIFIED**. Flags **not activated**. Provider activation **UNVERIFIED**. |
 
 ### Evidence table
@@ -129,6 +129,8 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Vercel production SHA (2026-11-06, PR #95) | DEPLOYED | GitHub deployment `7608137512`, `vercel[bot]`, Production **success**, 2026-11-06T18:47:08Z, SHA `a43b276d1005d29e9928c40fb66d6874bd7f06d8`. SHA only. Vercel deployment id was not in the GitHub payload. Not migration or activation |
 | Staging Preview (Batch 43 source, 2026-11-05) | DEPLOYED | GitHub deployment `7526261591`, Preview **success**, latest status 2026-11-05T18:30:43Z, SHA `299a0fe09b3b9c792705c412240707ae77d8cdfa`. SHA only. Issue #105 names Vercel `dpl_FqymPkk81pgYqpk35mrPyEMUTDgR`; that id was not in the GitHub payload |
 | Issue #105 CRM page entitlement + layout | MERGED | [PR #106](https://github.com/Holagpt-ai/webxxl-website-system/pull/106), `e37f0a023dd289dc3a9b4e7484f6a1dd34b24276`, merge 2026-11-07. v0 integration `212fdf43d3dafeec906a5527cbefea0d78983cb5`. Pilot A/B core entitlement acceptance **passed** on integrated staging Preview (Issue #105). Broader Issue #105 QA **deferred** to release stabilization (Issue #109) |
+| Issue #109 execution roadmap | MERGED | [PR #110](https://github.com/Holagpt-ai/webxxl-website-system/pull/110), `fcceade889cefd1c14f86bdbb723f5a0ad97c547`, merge 2026-11-07. Build-first batches 0–8 registered |
+| Batch 1 Customer Operations Engine | IN PR | [PR **#112**](https://github.com/Holagpt-ai/webxxl-website-system/pull/112) Issue **#111** @ `d1fb162` — `GET /api/v1/customer-operations/summary`, `lib/platform/customer-operations/**` | [`BATCH1-CUSTOMER-OPERATIONS-API-CONTRACT.md`](platform/docs/BATCH1-CUSTOMER-OPERATIONS-API-CONTRACT.md) |
 | CONTINUITY-03 session closeout | MERGED | [PR #108](https://github.com/Holagpt-ai/webxxl-website-system/pull/108), `5d90c124b1c7a884f7a61f16e5b9d263f0c08081`, merge 2026-11-07. Issue **#107** **CLOSED**. `pnpm continuity:close` + CI reconcile |
 | Vercel production SHA (2026-11-07, PR #106) | DEPLOYED | Vercel `dpl_AzZVHN5Si3jShjcJf5Gtq1dCxdAb` **success** @ `e37f0a023dd289dc3a9b4e7484f6a1dd34b24276`. GitHub commit status via `vercel[bot]`, 2026-11-07T18:01:23Z. SHA only. Superseded for current production by PR #108 row |
 | Vercel production SHA (2026-11-07, PR #108) | DEPLOYED | Vercel `dpl_HR1qq83Cz2ARKUvaRf8URt2Piwpo` **success** @ `5d90c124b1c7a884f7a61f16e5b9d263f0c08081`. GitHub commit status via `vercel[bot]`, 2026-11-07T19:07:53Z. SHA only. Not migration or activation |

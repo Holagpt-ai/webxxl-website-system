@@ -26,7 +26,9 @@ GitHub `main` at `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` (PR #52) has moved p
 | 8 | Release & Activation | 22–26 | Owner decisions, authorized migrations, gated activation, full cross-module QA, launch |
 | DEFERRED | Optional expansion | 27 | Voice/WhatsApp advanced, paid AI catalog, white-label, CMS builder — **no implied approval** |
 
-**Next Cursor implementation (after Issue #109 roadmap PR merges):** Batch **1** — bounded delta per [`BATCH1-CUSTOMER-OPERATIONS-DELTA.md`](BATCH1-CUSTOMER-OPERATIONS-DELTA.md). v0.app owns UI polish on nonoverlapping paths only.
+**Batch 1 (Issue #111):** Customer Operations Engine — owner-review PR adds `GET /api/v1/customer-operations/summary` per [`BATCH1-CUSTOMER-OPERATIONS-API-CONTRACT.md`](BATCH1-CUSTOMER-OPERATIONS-API-CONTRACT.md). v0.app owns optional Business Command Center UI wiring.
+
+**Next after Batch 1 merge:** Batch **2** — SEO & Analytics Intelligence (execution table above).
 
 ---
 
