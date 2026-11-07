@@ -130,7 +130,7 @@ describe('Batch 1 customer operations engine', () => {
 
     expect(summary.customerAccountId).toBe('acct_a')
     expect(summary.businessOverview.customerAccountId).toBe('acct_a')
-    expect(summary.leadPipeline.readiness.state).toBe('available')
+    expect(summary.leadPipeline.readiness).toMatchObject({ state: 'available', evidenceCount: 2, empty: false })
     expect(summary.recentLineage).toHaveLength(1)
     expect(summary.recentLineage[0]?.crm?.openTasks).toBe(2)
     expect(summary.recentLineage[0]?.project?.nextMilestoneTitle).toBe('Design review')
@@ -145,6 +145,44 @@ describe('Batch 1 customer operations engine', () => {
     const summary = await getCustomerOperationsSummary(portalStub())
     expect(summary.leadPipeline.readiness).toMatchObject({ state: 'disabled', reasonCode: 'CRM_DISABLED' })
     expect(summary.recentLineage).toEqual([])
+    const { prisma } = await import('@/lib/db')
+    expect(prisma.managedSiteLead.findMany).not.toHaveBeenCalled()
+  })
+
+  it('reports true zero-lead empty state without double-counting lifecycle buckets', async () => {
+    const { getManagedSiteLeadSummary } = await import('@/lib/platform/site-leads/summary-service')
+    vi.mocked(getManagedSiteLeadSummary).mockResolvedValueOnce({
+      ok: true,
+      value: {
+        summary: {
+          leadsReceived: { value: 0, scope: 'account_total' },
+          awaitingReview: { value: 0, scope: 'account_total' },
+          qualified: { value: 0, scope: 'account_total' },
+          converted: { value: 0, scope: 'account_total' },
+          rejected: { value: 0, scope: 'account_total' },
+          duplicateReview: { value: 0, scope: 'account_total' },
+        },
+      },
+    } as never)
+    const { getCustomerOperationsSummary } = await import('@/lib/platform/customer-operations/service')
+    const result = await getCustomerOperationsSummary(portalStub())
+    expect(result.leadPipeline.readiness).toMatchObject({ state: 'available', empty: true, evidenceCount: 0 })
+  })
+
+  it('does not read lead lineage for account without CRM subscriber eligibility', async () => {
+    const { loadSubscriberEvidenceForAccount } = await import('@/lib/platform/open001/load-subscriber-evidence')
+    vi.mocked(loadSubscriberEvidenceForAccount).mockResolvedValueOnce({
+      customerAccountId: 'acct_a',
+      subscriptions: [],
+      legacyWebsiteServices: [],
+      loadOutcome: 'ok',
+    } as never)
+    const { prisma } = await import('@/lib/db')
+    const { getCustomerOperationsSummary } = await import('@/lib/platform/customer-operations/service')
+    const result = await getCustomerOperationsSummary(portalStub())
+    expect(result.leadPipeline.readiness.state).not.toBe('available')
+    expect(result.recentLineage).toEqual([])
+    expect(prisma.managedSiteLead.findMany).not.toHaveBeenCalled()
   })
 
   it('subscriber evidence helper stays isolated per account in unit fixtures', () => {
