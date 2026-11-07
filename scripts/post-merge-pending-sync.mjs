@@ -1,9 +1,9 @@
 /**
  * Single deduplicated post-merge pending-sync model (CONTINUITY-03).
  * Detection and CI artifacts only — no repository writes, no auto issue creation.
- * Owner-approved tracking: Issue #107 (CONTINUITY-03).
+ * Owner-approved tracking: Issue #109 (execution roadmap; CONTINUITY-03 closed in PR #108).
  */
-export const POST_MERGE_PENDING_SYNC_ISSUE = 107;
+export const POST_MERGE_PENDING_SYNC_ISSUE = 109;
 
 export function normalizePendingKey(text) {
   return (text ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
@@ -39,7 +39,7 @@ export function buildPostMergePendingSyncArtifact(result) {
     status: result?.status ?? 'UNKNOWN',
     tracking_issue: POST_MERGE_PENDING_SYNC_ISSUE,
     detection_only: true,
-    issue_writer: 'none (owner updates Issue #107 or next docs PR)',
+    issue_writer: `none (owner updates Issue #${POST_MERGE_PENDING_SYNC_ISSUE} or next docs PR)`,
     post_merge_items: postMerge,
     all_pending_items: pending,
     conflicts: result?.conflicts ?? [],
