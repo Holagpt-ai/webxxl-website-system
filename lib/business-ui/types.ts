@@ -7,6 +7,8 @@ import type { Locale } from '@/lib/i18n/config'
 
 export const BUSINESS_API = {
   overview: '/api/v1/business/overview',
+  /** Batch 1 (`BATCH1-CUSTOMER-OPERATIONS-API-CONTRACT.md`); embeds the full overview as `businessOverview`. */
+  customerOperations: '/api/v1/customer-operations/summary',
 } as const
 
 export const BUSINESS_MODULES = ['crm', 'marketing', 'local_seo', 'communications', 'website_projects'] as const
@@ -65,6 +67,98 @@ export type BusinessOverview = {
 }
 
 export type BusinessOverviewResponse = { overview: BusinessOverview }
+
+export type OperationsCrmLinkage = {
+  contactId: string
+  openDeals: number
+  openTasks: number
+  destination: { path: string }
+}
+
+export type OperationsProjectContext = {
+  projectId: string
+  projectName: string
+  progressPercent: number
+  estimatedCompletionDate: string | null
+  pendingApprovals: number
+  openDependencies: number
+  nextMilestoneTitle: string | null
+  destination: { path: string }
+}
+
+export type OperationsLeadLineage = {
+  leadId: string
+  status: string
+  managedSiteId: string
+  managedSiteName: string | null
+  submittedAt: string
+  qualification: { qualifiedAt: string | null; convertedAt: string | null; rejectedAt: string | null }
+  crm: OperationsCrmLinkage | null
+  project: OperationsProjectContext | null
+  destinations: { leadReview: { path: string } }
+}
+
+export type CustomerOperationsSummary = {
+  customerAccountId: string
+  generatedAt: string
+  accountScope: 'session_membership'
+  /** The inner overview object, not `{ overview }`. */
+  businessOverview: BusinessOverview
+  leadPipeline: { readiness: ModuleReadiness; summary?: Record<string, SummaryMetric> }
+  /** Bounded sample of the most recent leads, never an account total. */
+  recentLineage: OperationsLeadLineage[]
+  navigation: { businessCommandCenter: string; crmLeads: string; crmFunnel: string; projectDashboard: string }
+}
+
+export type CustomerOperationsResponse = { summary: CustomerOperationsSummary }
+
+/** Mirrors `CUSTOMER_OPERATIONS_MAX_LINEAGE`; used only to describe the sample. */
+export const OPERATIONS_MAX_LINEAGE = 8
+
+export const LEAD_PIPELINE_TOTAL = 'websiteLeadsReceived'
+/** Lifecycle totals in display order. Awaiting review already includes duplicate review, so these never sum to the total. */
+export const LEAD_PIPELINE_METRICS = [
+  'websiteLeadsAwaitingReview',
+  'websiteLeadsQualified',
+  'websiteLeadsConverted',
+  'websiteLeadsDuplicateReview',
+] as const
+
+const READINESS_STATES: readonly ReadinessState[] = [
+  'available',
+  'disabled',
+  'not_configured',
+  'policy_unresolved',
+  'not_eligible',
+  'unauthorized',
+  'unavailable',
+]
+
+/** An unrecognised or malformed readiness is treated as unavailable rather than guessed. */
+export function normalizeReadiness(value: unknown): ModuleReadiness {
+  const r = value as Partial<Record<string, unknown>> | null | undefined
+  const state = r?.state
+  if (typeof state !== 'string' || !(READINESS_STATES as readonly string[]).includes(state)) {
+    return { state: 'unavailable', reasonCode: 'READINESS_MISSING', message: '' }
+  }
+  if (state === 'available') {
+    return {
+      state,
+      empty: r?.empty === true,
+      sourceCheckedAt: typeof r?.sourceCheckedAt === 'string' ? r.sourceCheckedAt : '',
+      evidenceCount: finiteCount(r?.evidenceCount) ?? 0,
+    }
+  }
+  return {
+    state: state as Exclude<ReadinessState, 'available'>,
+    reasonCode: typeof r?.reasonCode === 'string' ? r.reasonCode : '',
+    message: typeof r?.message === 'string' ? r.message : '',
+  }
+}
+
+export function finiteCount(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null
+}
 
 /** Headline metrics per module, in display order. Only `account_total` values are ever shown as totals. */
 export const HEADLINE_METRICS: Record<BusinessModule, readonly string[]> = {
