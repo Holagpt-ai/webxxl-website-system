@@ -85,11 +85,18 @@ export function looksLikeOpenPrClaim(text) {
 }
 
 function prMarkedMergedInField(text, pr) {
-  const seg =
-    text.match(
-      new RegExp(`(?:PR\\s*#${pr}|\\[\\s*PR\\s*(?:\\*{1,2})?\\s*#${pr})[\\s\\S]{0,280}`, 'i'),
-    )?.[0] ?? '';
-  return /\bMERGED\b/i.test(seg) && !/\bnot merged\b/i.test(seg);
+  const anchor = new RegExp(`(?:PR\\s*#${pr}|\\[\\s*PR\\s*(?:\\*{1,2})?\\s*#${pr})`, 'gi');
+  for (const match of text.matchAll(anchor)) {
+    if (match.index === undefined) continue;
+    const before = text.slice(Math.max(0, match.index - 120), match.index);
+    const after = text.slice(match.index + match[0].length, match.index + match[0].length + 160);
+    const local = `${before}${match[0]}${after}`;
+    if (/\bnot merged\b/i.test(local)) continue;
+    if (/\bMERGED\b/.test(local)) return true;
+    if (/\bmerged\s*@/i.test(after)) return true;
+    if (/\bmerged\s+(?:via|as|in|on)\b/i.test(before)) return true;
+  }
+  return false;
 }
 
 /** PR numbers explicitly described as open in this text (excludes MERGED mentions on the same line). */
