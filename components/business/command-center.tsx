@@ -16,10 +16,11 @@ import {
   snapshotFor,
   type BusinessAction,
   type BusinessModule,
-  type BusinessOverviewResponse,
+  type CustomerOperationsResponse,
 } from '@/lib/business-ui/types'
 import { ModuleCard } from './module-card'
 import { ActionList, type ModuleFilter } from './action-list'
+import { CustomerOperationsSection } from './customer-operations-section'
 
 /** Remounting per account drops filters and any previous account's cached view. */
 export function BusinessCommandCenter(props: BusinessViewProps) {
@@ -28,10 +29,11 @@ export function BusinessCommandCenter(props: BusinessViewProps) {
 
 function CommandCenterBody({ accountId, locale, copy }: BusinessViewProps) {
   // The session account is sent so the API rejects the request if the active account changed elsewhere.
-  const url = withQuery(BUSINESS_API.overview, { customerAccountId: accountId })
-  const { data, error, isLoading, isValidating, mutate } = useSWR<BusinessOverviewResponse, WorkspaceError>(
-    ['business-overview', accountId, url],
-    ([, , path]: [string, string, string]) => workspaceGet<BusinessOverviewResponse>(path),
+  // One summary request replaces the separate overview fetch; its `businessOverview` is the same payload.
+  const url = withQuery(BUSINESS_API.customerOperations, { customerAccountId: accountId })
+  const { data, error, isLoading, isValidating, mutate } = useSWR<CustomerOperationsResponse, WorkspaceError>(
+    ['customer-operations-summary', accountId, url],
+    ([, , path]: [string, string, string]) => workspaceGet<CustomerOperationsResponse>(path),
     { revalidateOnFocus: false, revalidateOnReconnect: false, shouldRetryOnError: false },
   )
 
@@ -39,7 +41,10 @@ function CommandCenterBody({ accountId, locale, copy }: BusinessViewProps) {
   const [highOnly, setHighOnly] = useState(false)
   const actionsRef = useRef<HTMLElement>(null)
 
-  const overview = data?.overview && data.overview.customerAccountId === accountId ? data.overview : null
+  // A response for any other account (outer summary or embedded overview) is discarded, never shown.
+  const summary = data?.summary && data.summary.customerAccountId === accountId ? data.summary : null
+  const overview =
+    summary?.businessOverview && summary.businessOverview.customerAccountId === accountId ? summary.businessOverview : null
   const actions = useMemo(
     () =>
       (overview?.actions ?? []).filter(
@@ -159,6 +164,8 @@ function CommandCenterBody({ accountId, locale, copy }: BusinessViewProps) {
         locale={locale}
         copy={copy}
       />
+
+      {summary && <CustomerOperationsSection summary={summary} locale={locale} copy={copy} />}
     </div>
   )
 }
