@@ -24,7 +24,101 @@ export const MKT_API = {
   connections: '/api/v1/social/connections',
   crmSegments: '/api/v1/marketing/crm-segments',
   audiencePreview: (segmentId: string) => `/api/v1/marketing/crm-segments/${enc(segmentId)}/audience-preview`,
+  /** Account comes from the session; only an owned managed site may narrow the scope. */
+  executionSummary: (managedSiteId?: string | null) =>
+    managedSiteId
+      ? `/api/v1/marketing/execution/summary?managedSiteId=${enc(managedSiteId)}`
+      : '/api/v1/marketing/execution/summary',
 } as const
+
+/** Client mirror of `lib/platform/marketing-execution/types.ts` (Batch 3 contract). */
+export type ExecutionSlice<T> =
+  | { status: 'AVAILABLE'; sourceModule: string; data: T }
+  | { status: 'UNAVAILABLE'; sourceModule: string; reasonCode: string; message: string }
+
+export const EXECUTION_LADDER_STEPS = [
+  'DRAFT',
+  'SUBMITTED',
+  'APPROVED',
+  'PREPARED',
+  'SCHEDULED',
+  'PUBLISHED',
+  'RECONCILIATION_REQUIRED',
+] as const
+
+export type ExecutionLadderStep = (typeof EXECUTION_LADDER_STEPS)[number]
+
+export type WorkflowLifecycleCounts = {
+  requestStatus: Record<string, number>
+  reviewEffectiveStatus: Record<string, number>
+  publicationStatus: Record<string, number>
+  executionLadder: Record<ExecutionLadderStep, number>
+}
+
+export type ReviewEvidenceRow = {
+  reviewId: string
+  marketingRequestId: string
+  marketingArtifactId: string
+  managedSiteId: string | null
+  effectiveStatus: string
+  revisionHash: string
+  expiresAt: string | null
+  decidedAt: string | null
+  revokedAt: string | null
+  allowedChannel: string | null
+}
+
+export type CrmAudiencePlanningData = {
+  planningOnly: true
+  notSendAuthorization: true
+  segmentCatalogCount: number
+  eligibleSegmentCount: number
+  latestPreview: Pick<AudiencePreview, 'segmentId' | 'segmentName' | 'evaluatedAt' | 'audience' | 'disclosures'> | null
+}
+
+export type SocialChannelReadiness = {
+  connectionId: string
+  platform: string
+  displayName: string
+  connectionState: string
+  dispatchAllowed: boolean
+  blockReason?: string
+}
+
+export type SocialProviderReadinessData = {
+  assessedAt: string
+  moduleEnabled: boolean
+  postizApiEnabled: boolean
+  livePublishingEnabled: boolean
+  credentialsConfigured: boolean
+  workspaceConnected: boolean
+  dispatchBlockedCode: string
+  dispatchBlockedMessage: string
+  channels: SocialChannelReadiness[]
+}
+
+export type SocialHandoffPolicyData = {
+  dispatchBlocked: boolean
+  handoffMode: 'PREPARATION_ONLY'
+  livePublishingEnabled: boolean
+  postizApiEnabled: boolean
+}
+
+export type MarketingExecutionSummary = {
+  customerAccountId: string
+  managedSiteId: string | null
+  assembledAt: string
+  accountScope: 'session_membership'
+  provenanceNotice: string
+  planningDisclosure: string
+  workflowCounts: ExecutionSlice<WorkflowLifecycleCounts>
+  reviewEvidence: ExecutionSlice<{ items: ReviewEvidenceRow[]; truncated: boolean }>
+  crmAudiencePlanning: ExecutionSlice<CrmAudiencePlanningData>
+  socialProviderReadiness: ExecutionSlice<SocialProviderReadinessData>
+  socialHandoffPolicy: ExecutionSlice<SocialHandoffPolicyData>
+}
+
+export type MarketingExecutionSummaryEnvelope = { summary: MarketingExecutionSummary }
 
 /** `GET /api/v1/marketing/crm-segments` (MKT-25 §1). */
 export type CrmSegmentOption = {
