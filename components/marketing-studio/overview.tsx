@@ -30,12 +30,13 @@ import {
 } from '@/lib/marketing-studio-ui/types'
 import type { MarketingViewProps } from '@/lib/marketing-studio-ui/server'
 import { flagBody } from './shared'
+import { MarketingExecutionSummary } from './execution-summary'
 
 const OPEN = new Set(['SUBMITTED', 'VALIDATING', 'PREPARING', 'IN_REVIEW', 'REVISION_REQUESTED'])
 const READY = new Set(['DRAFT_READY', 'AWAITING_REVIEW'])
 const DONE = new Set(['APPROVED', 'HANDED_OFF', 'COMPLETED'])
 
-export function MarketingOverview({ accountId, userId, locale, copy, base }: MarketingViewProps) {
+export function MarketingOverview({ accountId, userId, locale, copy, base, sites }: MarketingViewProps) {
   const requests = useWorkspace<{ requests: MarketingRequest[] }>(MKT_API.requests, accountId)
   const followUps = useWorkspace<{ evaluations: FollowUpEvaluation[] }>(MKT_API.followUps, accountId)
   const evaluate = useAction<EvaluateResult>()
@@ -52,6 +53,8 @@ export function MarketingOverview({ accountId, userId, locale, copy, base }: Mar
   return (
     <div className="flex flex-col gap-6">
       <GapNotice title={copy.title} body={copy.flags.deterministic} />
+
+      <MarketingExecutionSummary key={accountId} accountId={accountId} locale={locale} copy={copy} base={base} sites={sites} />
 
       <Section
         title={o.requestsTitle}
