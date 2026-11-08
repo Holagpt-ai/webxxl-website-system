@@ -465,6 +465,87 @@ test('issue register IN PR cites only historical merged PR without blocking acti
   assert.deepEqual(openPrNumbersInText(row), ['123']);
 });
 
+test('mixed-status issue register row resolves only the active open PR citation', () => {
+  const row =
+    '| CONT-121 | IN PR | CONTINUITY-04 | [PR **#124**](https://example/pull/124) current correction IN PR; [PR **#123**](https://example/pull/123) MERGED @ 259f6be | notes |';
+  assert.deepEqual(openPrNumbersInText(row), ['124']);
+});
+
+test('live CONT-121 issue register row exposes PR #124 as the active open citation', () => {
+  const register = readFileSync(join(ROOT, 'docs', 'ISSUE_REGISTER.md'), 'utf8');
+  const row = register.split('\n').find((line) => line.includes('CONT-121'));
+  assert.ok(row);
+  assert.deepEqual(openPrNumbersInText(row), ['124']);
+});
+
+test('push:main mixed-status CONT-121 row yields POST-MERGE-ISSUE-PR for active PR only', () => {
+  const root = mkdtempSync(join(tmpdir(), 'webxxl-mixed-reg-push-'));
+  try {
+    const baseSha = initFixtureRepo(root);
+    writeCheckpointDocs(root, baseSha);
+    const registerRow = `| CONT-121 | IN PR | CONTINUITY-04 | [PR **#124**](https://example/pull/124) current correction IN PR; [PR **#123**](https://example/pull/123) MERGED @ 259f6be | notes |`;
+    writeFileSync(join(root, 'docs', 'ISSUE_REGISTER.md'), `| id | status | item | evidence | action |\n${registerRow}\n`);
+    const field2 = `| 2 | GitHub SHA, branch, active PR | **\`${baseSha}\`** on main. [PR **#124**](https://example/pull/124) open until docs catch up |`;
+    for (const rel of ['docs/PROJECT_MEMORY.md', 'docs/SESSION_HANDOFF.md']) {
+      writeFileSync(
+        join(root, rel),
+        readFileSync(join(root, rel), 'utf8').replace(/\| 2 \| GitHub SHA, branch, active PR \|[^\n]+\|/, field2),
+      );
+    }
+    writeFileSync(join(root, 'README.md'), 'application v2 after merge\n');
+    gitCmd(root, 'add', '.');
+    gitCmd(root, 'commit', '-m', 'squash merge');
+    const referenceMain = gitCmd(root, 'rev-parse', 'HEAD');
+    const mergedPrCheckFn = (pr) =>
+      pr === '124'
+        ? { available: true, merged: true, mergeSha: referenceMain }
+        : pr === '123'
+          ? { available: true, merged: true, mergeSha: '259f6be259f6be259f6be259f6be259f6be259f6be' }
+          : { available: true, merged: false, mergeSha: null };
+    const pushResult = reconcileContinuity(root, {
+      isMainPush: true,
+      ciGitHubSha: referenceMain,
+      referenceMain,
+      skipGitFetch: true,
+      mergedPrCheckFn,
+    });
+    assert.equal(pushResult.status, 'PENDING_REPOSITORY_SYNC');
+    assert.equal(pushResult.conflicts.length, 0);
+    assert.ok(pushResult.pending.some((p) => /POST-MERGE-ISSUE-PR-#124/.test(p)));
+    assert.equal(
+      pushResult.pending.some((p) => /POST-MERGE-ISSUE-PR-#123/.test(p)),
+      false,
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('reconciled checkpoint with mixed-status register still IN PR for merged active PR is CONFLICT', () => {
+  const root = mkdtempSync(join(tmpdir(), 'webxxl-mixed-reg-conflict-'));
+  const documented = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  try {
+    writeCheckpointDocs(root, documented);
+    writeFileSync(
+      join(root, 'docs', 'ISSUE_REGISTER.md'),
+      `| id | status | item | evidence | action |\n| CONT-121 | IN PR | lifecycle | [PR **#124**](https://example/pull/124) current correction IN PR; [PR **#123**](https://example/pull/123) MERGED @ 259f6be | notes |\n`,
+    );
+    const result = reconcileContinuity(root, {
+      referenceMain: documented,
+      lifecyclePhase: 'close',
+      skipGitFetch: true,
+      mergedPrCheckFn: (pr) =>
+        pr === '124'
+          ? { available: true, merged: true, mergeSha: documented }
+          : { available: true, merged: true, mergeSha: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' },
+    });
+    assert.equal(result.status, 'CONFLICT');
+    assert.ok(result.conflicts.some((c) => /ISSUE_REGISTER row still IN PR but PR #124/.test(c)));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('push:main with ISSUE_REGISTER IN PR row after squash merge is PENDING not CONFLICT', () => {
   const root = mkdtempSync(join(tmpdir(), 'webxxl-issue-reg-post-merge-'));
   try {
