@@ -11,6 +11,7 @@ import { collectStaleStatusWarnings, loadOperationalStatus } from './check-stale
 import {
   firstSha,
   looksLikeOpenPrClaim,
+  openPrNumbersInText,
   parsePendingRepositorySync,
   parseSixFieldCheckpoint,
   prNumbers,
@@ -82,7 +83,7 @@ function githubEvidence(sha) {
   return status;
 }
 
-function mergedPrCheck(prNumber) {
+export function mergedPrCheck(prNumber) {
   const pr = ghJson([
     'pr',
     'view',
@@ -99,6 +100,21 @@ function mergedPrCheck(prNumber) {
     mergedAt: pr.mergedAt,
     mergeSha: pr.mergeCommit?.oid?.toLowerCase() ?? null,
   };
+}
+
+/**
+ * @returns {'post_merge_sync' | 'contradiction'}
+ */
+export function classifyStaleOpenMergedPr(root, documentedMain, referenceMain, mergeSha, isMainPush) {
+  if (!documentedMain || !referenceMain || !mergeSha) return 'contradiction';
+  if (shasPrefixMatch(documentedMain, referenceMain)) return 'contradiction';
+  if (gitIsAncestor(root, mergeSha, documentedMain)) return 'contradiction';
+  const lags = evaluateCheckpointMainLineage(root, documentedMain, referenceMain) === 'checkpoint_lags_main';
+  const mergeOnRef =
+    shasPrefixMatch(mergeSha, referenceMain) ||
+    (gitIsAncestor(root, mergeSha, referenceMain) && gitIsAncestor(root, documentedMain, mergeSha));
+  if (isMainPush === true && lags && mergeOnRef) return 'post_merge_sync';
+  return 'contradiction';
 }
 
 function checkpointFieldsMatch(memoryFields, handoffFields) {
@@ -132,9 +148,11 @@ function resolveReferenceMain(root, options, originMain, headSha) {
  *   strictExternal?: boolean,
  *   lifecyclePhase?: 'start' | 'checkpoint' | 'close' | 'ci',
  *   skipGitFetch?: boolean,
+ *   mergedPrCheckFn?: (pr: string) => ReturnType<typeof mergedPrCheck>,
  * }} options
  */
 export function reconcileContinuity(root, options = {}) {
+  const checkMergedPr = options.mergedPrCheckFn ?? mergedPrCheck;
   const conflicts = [];
   const pending = [];
 
@@ -188,13 +206,25 @@ export function reconcileContinuity(root, options = {}) {
     options.strictExternal || options.lifecyclePhase === 'close' || options.lifecyclePhase === 'start';
   const openPrs = new Set();
   for (const value of Object.values(memoryFields)) {
-    if (!looksLikeOpenPrClaim(value ?? '')) continue;
-    for (const pr of prNumbers(value ?? '')) openPrs.add(pr);
+    for (const pr of openPrNumbersInText(value ?? '')) openPrs.add(pr);
   }
   for (const pr of openPrs) {
-    const check = mergedPrCheck(pr);
+    const check = checkMergedPr(pr);
     if (check.available && check.merged) {
-      conflicts.push(`checkpoint still describes PR #${pr} as open but GitHub reports MERGED`);
+      const kind = classifyStaleOpenMergedPr(
+        root,
+        documentedMain,
+        referenceMain,
+        check.mergeSha,
+        options.isMainPush === true,
+      );
+      if (kind === 'post_merge_sync') {
+        pending.push(
+          `POST-MERGE-PR-#${pr} | PR #${pr} merged on current main; refresh checkpoint open wording (not a stale contradiction)`,
+        );
+      } else {
+        conflicts.push(`checkpoint still describes PR #${pr} as open but GitHub reports MERGED`);
+      }
     } else if (!check.available && verifyOpenPrs) {
       pending.push(`Could not verify PR #${pr} merge state (GitHub API unavailable)`);
     }
@@ -206,15 +236,15 @@ export function reconcileContinuity(root, options = {}) {
   for (const line of issueRegister.split('\n')) {
     if (!line.trim().startsWith('|')) continue;
     if (!/\|\s*IN PR\s*\|/i.test(line)) continue;
-    const prMatch = line.match(/PR\s*#(\d+)/i);
-    if (!prMatch) continue;
-    const check = mergedPrCheck(prMatch[1]);
+    const nums = prNumbers(line);
+    if (!nums.length) continue;
+    const check = checkMergedPr(nums[0]);
     if (check.available && check.merged) {
-      conflicts.push(`ISSUE_REGISTER row still IN PR but PR #${prMatch[1]} is MERGED on GitHub`);
+      conflicts.push(`ISSUE_REGISTER row still IN PR but PR #${nums[0]} is MERGED on GitHub`);
     }
   }
   if (/\|\s*CRM-PAGE-105\s*\|\s*IN PR\s*\|/i.test(issueRegister)) {
-    const pr106 = mergedPrCheck('106');
+    const pr106 = checkMergedPr('106');
     if (pr106.available && pr106.merged) {
       conflicts.push('ISSUE_REGISTER CRM-PAGE-105 is IN PR but PR #106 is MERGED on GitHub');
     }

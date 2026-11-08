@@ -19,6 +19,33 @@ const HEADINGS = [
 const STATES = new Set(['PROPOSED', 'DEFERRED', 'APPROVED', 'REJECTED', 'SUPERSEDED']);
 const FILE_PATTERN = /^ADR-(\d{3})-([a-z0-9]+(?:-[a-z0-9]+)*)\.md$/;
 
+/** Owner approval in the canonical log — a bare PROPOSED mention is not evidence. */
+export function adrHasApprovedCitationInDecisionLog(decisions, adrId, approvalEvidence) {
+  if (!decisions) return false;
+  const lines = decisions.split(/\r?\n/).filter((line) => line.includes(adrId));
+  const approvedLine = lines.some(
+    (line) =>
+      line.includes(adrId) &&
+      (/\bAPPROVED\b/i.test(line) || /\bSUPERSEDED\b/i.test(line) || /\bREJECTED\b/i.test(line)),
+  );
+  if (approvedLine) return true;
+  if (approvalEvidence && approvalEvidence !== 'NONE') {
+    const evLines = decisions.split(/\r?\n/).filter((line) => line.includes(approvalEvidence));
+    if (
+      evLines.some(
+        (line) =>
+          /\bAPPROVED\b/i.test(line) ||
+          (/\bowner\b/i.test(line) && !/\bPROPOSED\b/i.test(line)),
+      )
+    ) {
+      return true;
+    }
+  }
+  const proposedOnly = lines.some((line) => /\bPROPOSED\b/i.test(line));
+  if (proposedOnly) return false;
+  return false;
+}
+
 export function validateAdrs(root) {
   const errors = [];
   const adrDir = join(root, 'docs', 'adr');
@@ -69,11 +96,10 @@ export function validateAdrs(root) {
     }
     if (fields.status === 'APPROVED') {
       const evidence = fields.approval_evidence ?? '';
-      const citedInLog =
-        decisions.includes(fields.id)
-        || (evidence !== 'NONE' && evidence.length > 0 && decisions.includes(evidence));
-      if (!citedInLog) {
-        errors.push(`${name}: APPROVED requires ${fields.id} or approval_evidence in 15-DECISIONS-CHANGELOG.md`);
+      if (!adrHasApprovedCitationInDecisionLog(decisions, fields.id, evidence)) {
+        errors.push(
+          `${name}: APPROVED requires explicit owner approval for ${fields.id} in 15-DECISIONS-CHANGELOG.md (PROPOSED-only mention is insufficient)`,
+        );
       }
     }
     if (fields.status === 'SUPERSEDED' && (!fields.superseded_by || fields.superseded_by === 'NONE')) {
@@ -95,6 +121,23 @@ export function validateAdrs(root) {
     if (count !== 1) errors.push(`INDEX.md: duplicate index rows for ${id}`);
   }
   for (const [id, { fields }] of frontmatterById) {
+    const supersededBy = fields.superseded_by;
+    if (supersededBy && supersededBy !== 'NONE') {
+      for (const replacer of supersededBy.split(/[;,]/).map((s) => s.trim()).filter(Boolean)) {
+        const repl = frontmatterById.get(replacer);
+        if (!repl) {
+          errors.push(`${id}: superseded_by ${replacer} but no matching ADR file`);
+          continue;
+        }
+        const supersedesList = (repl.fields.supersedes ?? '')
+          .split(/[;,]/)
+          .map((s) => s.trim())
+          .filter((s) => s && s !== 'NONE');
+        if (!supersedesList.includes(id)) {
+          errors.push(`${id}: superseded_by ${replacer} but ${replacer} supersedes does not reciprocate ${id}`);
+        }
+      }
+    }
     const supersedes = fields.supersedes;
     if (!supersedes || supersedes === 'NONE') continue;
     for (const target of supersedes.split(/[;,]/).map((s) => s.trim()).filter(Boolean)) {

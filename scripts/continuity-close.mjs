@@ -5,14 +5,14 @@
  */
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseContinuityCliArgs } from './continuity-cli-args.mjs';
 import { lifecycleExitCode, runContinuityLifecycle } from './continuity-lifecycle.mjs';
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const root = resolve(process.argv[2] || process.cwd());
+  const { root, json } = parseContinuityCliArgs(process.argv);
   const eventName = process.env.GITHUB_EVENT_NAME ?? '';
   const isMainPush = eventName === 'push' && (process.env.GITHUB_REF ?? '').endsWith('/main');
   const ciGitHubSha = isMainPush ? (process.env.GITHUB_SHA ?? '').toLowerCase() || null : null;
-  const json = process.argv.includes('--json');
   const { payload, humanReport } = runContinuityLifecycle(root, {
     phase: 'close',
     eventName,

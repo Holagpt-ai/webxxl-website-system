@@ -35,9 +35,31 @@ export function allShas(text) {
   return [...text.matchAll(SHA_RE)].map((m) => m[1].toLowerCase());
 }
 
+/** Plain `PR #N`, Markdown `[PR **#N**]`, and parenthetical `(PR #N)` forms. */
 export function prNumbers(text) {
   if (!text) return [];
-  return [...text.matchAll(/\bPR\s*#(\d+)\b/gi)].map((m) => m[1]);
+  const found = new Set();
+  const patterns = [
+    /\bPR\s*#(\d+)\b/gi,
+    /\[\s*PR\s*(?:\*{1,2})?\s*#(\d+)\s*(?:\*{1,2})?\s*\]/gi,
+    /\(\s*PR\s*#(\d+)\s*\)/gi,
+  ];
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern)) found.add(match[1]);
+  }
+  return [...found];
+}
+
+function prMentionChunk(text, pr) {
+  const patterns = [
+    new RegExp(`\\[\\s*PR\\s*(?:\\*{1,2})?\\s*#${pr}\\s*(?:\\*{1,2})?\\s*\\][^\\n]{0,120}`, 'i'),
+    new RegExp(`\\bPR\\s*#${pr}\\b[^\\n]{0,120}`, 'i'),
+  ];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return match[0];
+  }
+  return '';
 }
 
 /** Wording that implies a pull request is still open for owner review. */
@@ -46,9 +68,37 @@ export function looksLikeOpenPrClaim(text) {
   if (/\bactive PR\b/i.test(text)) return true;
   if (/\bOwner review of \[?PR\s*#\d+/i.test(text)) return true;
   if (/\bPR\s*#\d+\b[^.\n]*\bopen\b/i.test(text)) return true;
-  if (/\bon `feature\//i.test(text) && /\bPR\s*#\d+/i.test(text)) return true;
-  if (/\bIN PR\b/.test(text) && /\bPR\s*#\d+/.test(text)) return true;
+  if (/\[\s*PR\s*(?:\*{1,2})?\s*#\d+/i.test(text) && /\bopen\b/i.test(text)) return true;
+  if (/\bon `feature\//i.test(text) && (/\bPR\s*#\d+/i.test(text) || /\[\s*PR\s*(?:\*{1,2})?\s*#\d+/i.test(text))) return true;
+  if (/\bIN PR\b/.test(text)) {
+    const numbered = prNumbers(text);
+    if (!numbered.length) return true;
+    for (const pr of numbered) {
+      const chunk = prMentionChunk(text, pr);
+      if (!chunk) continue;
+      if (/\bMERGED\b/i.test(chunk)) continue;
+      if (/\bIN PR\b/i.test(text) || /\bopen\b/i.test(chunk) || /\bnot merged\b/i.test(chunk)) return true;
+    }
+    return false;
+  }
   return false;
+}
+
+function prMarkedMergedInField(text, pr) {
+  const seg =
+    text.match(
+      new RegExp(`(?:PR\\s*#${pr}|\\[\\s*PR\\s*(?:\\*{1,2})?\\s*#${pr})[\\s\\S]{0,280}`, 'i'),
+    )?.[0] ?? '';
+  return /\bMERGED\b/i.test(seg) && !/\bnot merged\b/i.test(seg);
+}
+
+/** PR numbers explicitly described as open in this text (excludes MERGED mentions on the same line). */
+export function openPrNumbersInText(text) {
+  if (!text || !looksLikeOpenPrClaim(text)) return [];
+  const candidates = prNumbers(text).filter((pr) => !prMarkedMergedInField(text, pr));
+  if (/\b(?:open|not merged)\b/i.test(text)) return candidates;
+  if (/\bIN PR\b/i.test(text)) return candidates.length ? candidates : [];
+  return [];
 }
 
 export function readCheckpointPair(root) {

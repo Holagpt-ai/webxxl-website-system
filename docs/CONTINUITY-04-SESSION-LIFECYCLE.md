@@ -62,6 +62,6 @@ On every Continuity workflow run, Actions uploads `continuity-live-status.json` 
 
 - `scripts/continuity-lifecycle.mjs` — shared phases
 - `scripts/continuity-live.mjs` — read-only GitHub facts
-- `scripts/continuity-docs-snapshot.mjs` — idempotent snapshot helper (manual `--write` only)
+- `pnpm continuity:docs-snapshot` — print current six-field snapshot JSON; `pnpm continuity:docs-snapshot -- --write --file snapshot.json` applies edits idempotently to PROJECT_MEMORY + SESSION_HANDOFF (owner-local only)
 - `scripts/validate-operational-anchors.mjs` — false-current anchor checks
 - `scripts/validate-adr.mjs` — index status + supersession reciprocity
