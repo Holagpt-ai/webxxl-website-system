@@ -36,7 +36,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | GitHub `main` `6015d907262fd655919b8419369716a8f40d41dd` ([PR **#118**](https://github.com/Holagpt-ai/webxxl-website-system/pull/118) Batch 3 backend @ `c9a67b0` + [PR **#120**](https://github.com/Holagpt-ai/webxxl-website-system/pull/120) Batch 3 UI, MERGED 2026-11-08). Prior Batch 1–2 @ `7f94757` / `9f3fc66`. Issue **#121** CONTINUITY-04 lifecycle IN PR. Build-first active; Issue #105 QA **deferred** to Batch 8. |
-| 2 | GitHub SHA, branch, active PR | **`6015d907262fd655919b8419369716a8f40d41dd`** on `main`. Issue **#121** CONTINUITY-04 on `feature/issue-121-continuity-04` (open implementation PR, owner review) — **Cursor** |
+| 2 | GitHub SHA, branch, active PR | **`6015d907262fd655919b8419369716a8f40d41dd`** on `main`. Issue **#121** [PR **#122**](https://github.com/Holagpt-ai/webxxl-website-system/pull/122) head `30a757f` on `feature/issue-121-continuity-04` (open, owner review) — **Cursor** |
 | 3 | Production deployment | Vercel **`dpl_HaRLJcFCRwZCLNZz8FLPYLQDoEST`** (owner-reported READY @ `6015d90`, 2026-11-08). Prior Vercel `dpl_5EfjweLaVKHWQ5naopk381yuAAv3` @ `7f94757` is a historical row. SHA deploy only. Not migration, activation, or provider live state. |
 | 4 | Last updated | 2026-11-08 |
 | 5 | Next task / responsible platform | Owner review Issue **#121** CONTINUITY-04 PR; then **Batch 4** per Issue **#109** roadmap — **Cursor** |
