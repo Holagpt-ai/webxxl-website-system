@@ -106,6 +106,7 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-11-07 | Issue #109 build-first execution roadmap | [PR #110](https://github.com/Holagpt-ai/webxxl-website-system/pull/110) merged @ `fcceade889cefd1c14f86bdbb723f5a0ad97c547` | Post-merge checkpoint, consolidated Batches 0–8, Batch 1 delta prep |
 | 2026-11-07 | Issue #111 Batch 1 Customer Operations Engine | [PR #112](https://github.com/Holagpt-ai/webxxl-website-system/pull/112) merged @ `52e6bb631d5b8621f737d1fe7f3a8050a0d82a08` | `GET /api/v1/customer-operations/summary`; lead→CRM→project lineage |
 | 2026-11-08 | Issue #114 Batch 2 site intelligence | [PR #115](https://github.com/Holagpt-ai/webxxl-website-system/pull/115) merged @ `9f3fc66844b7f78ac9a09dfcf793cbfc0430ed16` | Per-site SEO/Analytics/Google readiness summary; seo.read policy parity, no live provider activation |
-| 2026-11-08 | Issue #113 Batch 1 Business Command Center UI | [PR #116](https://github.com/Holagpt-ai/webxxl-website-system/pull/116) @ `8391d2e` (open) | v0 customer-operations summary + lead lineage EN/ES; awaiting merge |
+| 2026-11-08 | Issue #113 Batch 1 Business Command Center UI | [PR #116](https://github.com/Holagpt-ai/webxxl-website-system/pull/116) merged @ `7f947574dd9eedb05648a0d7c73b68c515f10c44` | v0 customer-operations summary + lead lineage EN/ES on `main` |
+| 2026-11-08 | Issue #117 Batch 3 marketing & social execution | Issue **#117** IN PR | `GET /api/v1/marketing/execution/summary`; guarded handoff; not publish/send |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
