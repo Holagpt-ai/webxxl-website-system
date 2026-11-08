@@ -32,7 +32,7 @@ GitHub `main` at `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` (PR #52) has moved p
 
 **Batch 3 (Issue #117):** Marketing & Social Execution — **MERGED** ([PR #118](https://github.com/Holagpt-ai/webxxl-website-system/pull/118) backend, [PR #120](https://github.com/Holagpt-ai/webxxl-website-system/pull/120) UI). `GET /api/v1/marketing/execution/summary` per [`BATCH3-MARKETING-EXECUTION-API-CONTRACT.md`](BATCH3-MARKETING-EXECUTION-API-CONTRACT.md).
 
-**Batch 4 (Issue #109):** Communications & Messaging Wallet — **IN PR** (`feat/batch4-comms-messaging-wallet`). `GET /api/v1/communications/execution/summary` + guarded prepare + shared wallet bridge per [`BATCH4-COMMS-MESSAGING-WALLET-API-CONTRACT.md`](BATCH4-COMMS-MESSAGING-WALLET-API-CONTRACT.md). No live send/activation. Optional v0 on `dashboard/communications/**`.
+**Batch 4 (Issue #109):** Communications & Messaging Wallet — **IN PR** ([PR #125](https://github.com/Holagpt-ai/webxxl-website-system/pull/125) on `feat/batch4-comms-messaging-wallet`). `GET /api/v1/communications/execution/summary` + guarded prepare + shared wallet bridge per [`BATCH4-COMMS-MESSAGING-WALLET-API-CONTRACT.md`](BATCH4-COMMS-MESSAGING-WALLET-API-CONTRACT.md). No live send/activation. Optional v0 on `dashboard/communications/**`.
 
 ---
 
