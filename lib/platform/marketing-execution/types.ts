@@ -83,6 +83,7 @@ export type MarketingExecutionSummaryResponse = {
   socialProviderReadiness: MarketingExecutionSlice<{
     assessedAt: string
     moduleEnabled: boolean
+    postizApiEnabled: boolean
     livePublishingEnabled: boolean
     credentialsConfigured: boolean
     workspaceConnected: boolean

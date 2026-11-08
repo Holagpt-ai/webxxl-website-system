@@ -25,6 +25,7 @@ import type {
   MarketingExecutionSlice,
   MarketingExecutionSummaryResponse,
 } from '@/lib/platform/marketing-execution/types'
+import { mapPostizReadinessForExecutionSummary } from '@/lib/platform/marketing-execution/postiz-readiness-summary'
 import { buildPostizProviderReadiness } from '@/lib/platform/social/postiz-provider-readiness'
 
 export type MarketingExecutionResult =
@@ -193,36 +194,10 @@ export async function getMarketingExecutionSummary(input: {
           readiness.message,
         )
       } else {
-        const {
-          assessedAt,
-          moduleEnabled,
-          livePublishingEnabled,
-          credentialsConfigured,
-          workspaceConnected,
-          dispatchBlockedCode,
-          dispatchBlockedMessage,
-          channels,
-        } = readiness.value
         socialProviderReadiness = {
           status: 'AVAILABLE',
           sourceModule: 'marketing.social_provider_readiness',
-          data: {
-            assessedAt,
-            moduleEnabled,
-            livePublishingEnabled,
-            credentialsConfigured,
-            workspaceConnected,
-            dispatchBlockedCode,
-            dispatchBlockedMessage,
-            channels: channels.map((row) => ({
-              connectionId: row.connectionId,
-              platform: row.platform,
-              displayName: row.displayName,
-              connectionState: row.connectionState,
-              dispatchAllowed: false,
-              blockReason: row.blockReason ?? 'PREPARATION_ONLY_DISPATCH_BLOCKED',
-            })),
-          },
+          data: mapPostizReadinessForExecutionSummary(readiness.value),
         }
       }
     } catch (error) {

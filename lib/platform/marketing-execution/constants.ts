@@ -11,3 +11,9 @@ export const MARKETING_EXECUTION_PROVENANCE_NOTICE =
 
 export const MARKETING_EXECUTION_PLANNING_DISCLOSURE =
   'Audience planning references are point-in-time consent snapshots. Outbound execution requires fresh evaluation and explicit approval workflows.'
+
+/** Execution summary never authorizes live dispatch — flags are reported for owner visibility only. */
+export const PREPARATION_ONLY_DISPATCH_BLOCKED_CODE = 'PREPARATION_ONLY_DISPATCH_BLOCKED'
+
+export const PREPARATION_ONLY_DISPATCH_BLOCKED_MESSAGE =
+  'Marketing execution summary is preparation-only; provider dispatch remains blocked on this route regardless of environment flag values'

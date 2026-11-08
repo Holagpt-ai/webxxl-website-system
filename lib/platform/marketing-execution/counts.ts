@@ -1,6 +1,6 @@
-import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { computeReviewEffectiveStatus } from '@/lib/platform/marketing/review-presentation'
+import { countReviewEffectiveStatuses } from '@/lib/platform/marketing-execution/review-effective-counts'
 import type { MarketingWorkflowLifecycleCounts } from '@/lib/platform/marketing-execution/types'
 
 const REVIEW_EVIDENCE_TAKE = 25
@@ -16,57 +16,6 @@ function publicationScopeWhere(customerAccountId: string, managedSiteId?: string
   return {
     customerAccountId,
     ...(managedSiteId ? { campaign: { managedSiteId } } : {}),
-  }
-}
-
-async function countReviewEffectiveStatuses(
-  baseWhere: Prisma.MarketingArtifactReviewWhereInput,
-  now: Date,
-): Promise<Record<string, number>> {
-  const [
-    draft,
-    submitted,
-    approved,
-    rejected,
-    revoked,
-    expiredStored,
-    submittedPastExpiry,
-  ] = await Promise.all([
-    prisma.marketingArtifactReview.count({ where: { AND: [baseWhere, { status: 'DRAFT' }] } }),
-    prisma.marketingArtifactReview.count({
-      where: {
-        AND: [
-          baseWhere,
-          { status: 'SUBMITTED', revokedAt: null },
-          { OR: [{ expiresAt: null }, { expiresAt: { gte: now } }] },
-        ],
-      },
-    }),
-    prisma.marketingArtifactReview.count({
-      where: { AND: [baseWhere, { status: 'APPROVED', revokedAt: null }] },
-    }),
-    prisma.marketingArtifactReview.count({ where: { AND: [baseWhere, { status: 'REJECTED' }] } }),
-    prisma.marketingArtifactReview.count({
-      where: { AND: [baseWhere, { OR: [{ status: 'REVOKED' }, { revokedAt: { not: null } }] }] },
-    }),
-    prisma.marketingArtifactReview.count({ where: { AND: [baseWhere, { status: 'EXPIRED' }] } }),
-    prisma.marketingArtifactReview.count({
-      where: {
-        AND: [
-          baseWhere,
-          { status: 'SUBMITTED', revokedAt: null, expiresAt: { lt: now } },
-        ],
-      },
-    }),
-  ])
-
-  return {
-    DRAFT: draft,
-    SUBMITTED: submitted,
-    APPROVED: approved,
-    REJECTED: rejected,
-    REVOKED: revoked,
-    EXPIRED: expiredStored + submittedPastExpiry,
   }
 }
 

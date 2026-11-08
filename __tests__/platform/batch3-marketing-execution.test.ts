@@ -100,11 +100,10 @@ describe('Batch 3 marketing execution integration', () => {
     prismaMock.marketingRequest.groupBy.mockResolvedValue([{ status: 'APPROVED', _count: { _all: 2 } }])
     prismaMock.marketingArtifactReview.count
       .mockResolvedValueOnce(0)
-      .mockResolvedValueOnce(1)
       .mockResolvedValueOnce(2)
       .mockResolvedValueOnce(0)
       .mockResolvedValueOnce(0)
-      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(1)
       .mockResolvedValueOnce(0)
       .mockResolvedValue(0)
     prismaMock.marketingArtifactReview.findMany.mockResolvedValue([
@@ -261,10 +260,12 @@ describe('Batch 3 marketing execution integration', () => {
     expect(result.value.workflowCounts.data.executionLadder.SCHEDULED).toBe(2)
   })
 
-  it('uses count queries for review effective status aggregates', async () => {
+  it('uses mutually exclusive count queries for review effective status aggregates', async () => {
     const { getMarketingExecutionSummary } = await import('@/lib/platform/marketing-execution/service')
     await getMarketingExecutionSummary({ portal: portalStub('acct_a') })
-    expect(prismaMock.marketingArtifactReview.count.mock.calls.length).toBeGreaterThanOrEqual(7)
+    expect(prismaMock.marketingArtifactReview.count.mock.calls.length).toBeGreaterThanOrEqual(6)
+    const firstCallWhere = prismaMock.marketingArtifactReview.count.mock.calls[0]?.[0]?.where
+    expect(JSON.stringify(firstCallWhere)).toMatch(/REVOKED|revokedAt/)
   })
 
   it('returns UNAVAILABLE social readiness slice when Postiz assess throws', async () => {
@@ -314,6 +315,8 @@ describe('Batch 3 marketing execution integration', () => {
       expect(result.value.socialHandoffPolicy.data.dispatchBlocked).toBe(true)
     }
     if (result.value.socialProviderReadiness.status === 'AVAILABLE') {
+      expect(result.value.socialProviderReadiness.data.dispatchBlockedCode).toBe('PREPARATION_ONLY_DISPATCH_BLOCKED')
+      expect(result.value.socialProviderReadiness.data.livePublishingEnabled).toBe(true)
       expect(result.value.socialProviderReadiness.data.channels[0]?.dispatchAllowed).toBe(false)
     }
   })

@@ -31,7 +31,7 @@ Denied gates return per-slice `UNAVAILABLE` with `reasonCode` — the route does
 | `workflowCounts` | Prisma aggregates + DB-side review effective counts | Publication counts scoped via `SocialCampaign.managedSiteId` when `managedSiteId` query is set. Execution ladder: `SCHEDULED` uses `SCHEDULED` publications only (`PENDING` stays in `publicationStatus` only). `PUBLISHED` requires `publishedUrl`. |
 | `reviewEvidence` | `MarketingArtifactReview` rows (bounded, no artifact bodies) | Expiry/revocation reflected in `effectiveStatus` |
 | `crmAudiencePlanning` | `listCrmSegmentsForAudiencePlanning`, `previewCrmSegmentAudience` | `planningOnly` + `notSendAuthorization: true` |
-| `socialProviderReadiness` | `buildPostizProviderReadiness` | Omits secret refs; summary always reports `dispatchAllowed: false` (preparation-only boundary) |
+| `socialProviderReadiness` | `buildPostizProviderReadiness` → `mapPostizReadinessForExecutionSummary` | Omits secret refs; `dispatchBlockedCode` always `PREPARATION_ONLY_DISPATCH_BLOCKED`; `postizApiEnabled` / `livePublishingEnabled` reflect env truthfully; channel `dispatchAllowed` always false |
 | `socialHandoffPolicy` | `prepareSocialHandoffFromApprovedCreative` policy surface | Always `PREPARATION_ONLY` with `dispatchBlocked: true`; flags reported honestly but do not authorize dispatch on this route |
 
 ### Creative → social handoff (server)
