@@ -171,6 +171,47 @@ const MERGED_MEMORY = [
   '| Batch 16 dashboards | PLANNED | direction only |',
 ].join('\n');
 
+test('handoff template fenced examples are excluded from stale-status line scans', () => {
+  const warnings = collectStaleStatusWarnings({
+    projectMemory: '| CONTINUITY-04 | MERGED | [PR #122](https://github.com/Holagpt-ai/webxxl-website-system/pull/122) `c488b10a6143a7b358e0f88158ac09ea91289815` |',
+    handoff: '## Handoff template\n(skipped by section title)\n',
+    documents: [
+      {
+        name: 'docs/SESSION_HANDOFF.md',
+        text: [
+          '## Canonical checkpoint (six-field)',
+          '| 2 | GitHub SHA | merged [PR **#122**](https://github.com/Holagpt-ai/webxxl-website-system/pull/122) on `main` |',
+          '## Handoff template',
+          '```',
+          'Branch / PR: feature/issue-121-continuity-04 / PR #122 (owner review, not merged)',
+          '```',
+        ].join('\n'),
+      },
+    ],
+    liveMergedPrs: new Set(['122']),
+  });
+  assert.equal(
+    warnings.some((warning) => warning.includes('docs/SESSION_HANDOFF.md') && warning.includes('PR #122')),
+    false,
+  );
+});
+
+test('canonical checkpoint open wording for a merged PR still warns', () => {
+  const warnings = collectStaleStatusWarnings({
+    projectMemory: '| CONTINUITY-04 | MERGED | PR #122 `c488b10` |',
+    handoff: '',
+    documents: [
+      {
+        name: 'docs/SESSION_HANDOFF.md',
+        text: '| 2 | GitHub SHA, branch, active PR | **6015d90** on `main`. Issue #121 PR #122 on `feature/issue-121-continuity-04` (open, owner review; not merged) |',
+      },
+    ],
+    liveMergedPrs: new Set(['122']),
+  });
+  assert.match(warnings.join('\n'), /PR #122/);
+  assert.match(warnings.join('\n'), /stale open status/);
+});
+
 test('stale open wording is warned only for the latest merged batch or a recorded merged PR', () => {
   const warnings = collectStaleStatusWarnings({
     projectMemory: MERGED_MEMORY,

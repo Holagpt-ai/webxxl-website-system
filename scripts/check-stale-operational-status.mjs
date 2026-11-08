@@ -49,6 +49,16 @@ export function prNumbers(text) {
   return [...text.matchAll(/\bPR #(\d+)\b/g)].map((match) => match[1]);
 }
 
+/** Fenced blocks under ## Handoff template are copy-paste examples, not live status. */
+export function stripInactiveHandoffExamples(markdown) {
+  const normalized = (markdown || '').replace(/\r\n/g, '\n');
+  const match = normalized.match(/^## Handoff template\b/im);
+  if (!match || match.index === undefined) return normalized;
+  const before = normalized.slice(0, match.index);
+  const tail = normalized.slice(match.index).replace(/```[\s\S]*?```/g, '```\n(historical handoff template example — excluded from stale-status scan)\n```');
+  return before + tail;
+}
+
 export function parseMergedCheckpoint(projectMemory) {
   const rows = [];
   for (const line of projectMemory.replace(/\r\n/g, '\n').split('\n')) {
@@ -93,7 +103,9 @@ export function collectStaleStatusWarnings({ projectMemory, documents, handoff, 
   if (liveMergedPrs) for (const number of liveMergedPrs) prs.add(number);
   const warnings = [];
   for (const doc of documents || []) {
-    const lines = (doc.text || '').replace(/\r\n/g, '\n').split('\n');
+    const raw = doc.text || '';
+    const scanned = doc.name === 'docs/SESSION_HANDOFF.md' ? stripInactiveHandoffExamples(raw) : raw;
+    const lines = scanned.replace(/\r\n/g, '\n').split('\n');
     lines.forEach((line, index) => {
       if (!isStaleOpenClaim(line)) return;
       const hits = mergedHits(line, batch, prs);
@@ -120,10 +132,11 @@ export function loadOperationalStatus(root) {
     projectMemory: existsSync(memoryPath) ? readFileSync(memoryPath, 'utf8') : '',
     handoff: existsSync(handoffPath) ? readFileSync(handoffPath, 'utf8') : '',
     liveMergedPrs: liveMergedPullRequestNumbers(),
-    documents: OPERATIONAL_DOCS.filter((rel) => existsSync(join(root, rel))).map((rel) => ({
-      name: rel,
-      text: readFileSync(join(root, rel), 'utf8'),
-    })),
+    documents: OPERATIONAL_DOCS.filter((rel) => existsSync(join(root, rel))).map((rel) => {
+      const raw = readFileSync(join(root, rel), 'utf8');
+      const text = rel === 'docs/SESSION_HANDOFF.md' ? stripInactiveHandoffExamples(raw) : raw;
+      return { name: rel, text };
+    }),
   };
 }
 
