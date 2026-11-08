@@ -122,6 +122,76 @@ export function postMergeSyncEligible(options = {}) {
   return ['start', 'checkpoint', 'close', 'ci'].includes(options.lifecyclePhase ?? '');
 }
 
+/**
+ * Classify drift when docs still cite an open PR that GitHub reports merged.
+ * @returns {{ outcome: 'noop' | 'pending' | 'conflict', messages?: string[] }}
+ */
+export function resolveMergedOpenPrDrift(root, documentedMain, referenceMain, pr, check, options, context = 'checkpoint') {
+  if (!check.available) {
+    const verify =
+      options.strictExternal || options.lifecyclePhase === 'close' || options.lifecyclePhase === 'start';
+    if (verify) {
+      return { outcome: 'pending', messages: [`Could not verify PR #${pr} merge state (GitHub API unavailable)`] };
+    }
+    return { outcome: 'noop' };
+  }
+  if (!check.merged) return { outcome: 'noop' };
+  const kind = classifyStaleOpenMergedPr(
+    root,
+    documentedMain,
+    referenceMain,
+    check.mergeSha,
+    postMergeSyncEligible(options),
+  );
+  if (kind === 'post_merge_sync') {
+    const messages =
+      context === 'issue_register'
+        ? [
+            `POST-MERGE-ISSUE-PR-#${pr} | ISSUE_REGISTER row still IN PR for merged PR #${pr}; refresh register status (not a stale contradiction)`,
+          ]
+        : [
+            `POST-MERGE-PR-#${pr} | PR #${pr} merged on current main; refresh checkpoint open wording (not a stale contradiction)`,
+          ];
+    return { outcome: 'pending', messages };
+  }
+  const messages =
+    context === 'issue_register'
+      ? [`ISSUE_REGISTER row still IN PR but PR #${pr} is MERGED on GitHub`]
+      : [`checkpoint still describes PR #${pr} as open but GitHub reports MERGED`];
+  return { outcome: 'conflict', messages };
+}
+
+function prNumbersFromStaleHits(hitsText) {
+  const found = new Set();
+  for (const match of (hitsText ?? '').matchAll(/PR\s*#(\d+)/gi)) found.add(match[1]);
+  return [...found];
+}
+
+function classifyStaleWarning(root, warning, options, documentedMain, referenceMain, checkMergedPr) {
+  const registerMatch = warning.match(/^docs\/ISSUE_REGISTER\.md:\d+ stale open status for merged work \((.+)\)$/);
+  if (!registerMatch) return { outcome: 'conflict', messages: [`stale operational status: ${warning}`] };
+  const prs = prNumbersFromStaleHits(registerMatch[1]);
+  if (!prs.length) return { outcome: 'conflict', messages: [`stale operational status: ${warning}`] };
+  const pending = [];
+  const conflicts = [];
+  for (const pr of prs) {
+    const resolved = resolveMergedOpenPrDrift(
+      root,
+      documentedMain,
+      referenceMain,
+      pr,
+      checkMergedPr(pr),
+      options,
+      'issue_register',
+    );
+    if (resolved.outcome === 'pending') pending.push(...(resolved.messages ?? []));
+    else if (resolved.outcome === 'conflict') conflicts.push(`stale operational status: ${warning}`);
+  }
+  if (conflicts.length) return { outcome: 'conflict', messages: conflicts };
+  if (pending.length) return { outcome: 'pending', messages: pending };
+  return { outcome: 'conflict', messages: [`stale operational status: ${warning}`] };
+}
+
 function checkpointFieldsMatch(memoryFields, handoffFields) {
   const errors = [];
   for (const key of ['1', '2', '3', '4', '5', '6']) {
@@ -214,25 +284,9 @@ export function reconcileContinuity(root, options = {}) {
     for (const pr of openPrNumbersInText(value ?? '')) openPrs.add(pr);
   }
   for (const pr of openPrs) {
-    const check = checkMergedPr(pr);
-    if (check.available && check.merged) {
-      const kind = classifyStaleOpenMergedPr(
-        root,
-        documentedMain,
-        referenceMain,
-        check.mergeSha,
-        postMergeSyncEligible(options),
-      );
-      if (kind === 'post_merge_sync') {
-        pending.push(
-          `POST-MERGE-PR-#${pr} | PR #${pr} merged on current main; refresh checkpoint open wording (not a stale contradiction)`,
-        );
-      } else {
-        conflicts.push(`checkpoint still describes PR #${pr} as open but GitHub reports MERGED`);
-      }
-    } else if (!check.available && verifyOpenPrs) {
-      pending.push(`Could not verify PR #${pr} merge state (GitHub API unavailable)`);
-    }
+    const resolved = resolveMergedOpenPrDrift(root, documentedMain, referenceMain, pr, checkMergedPr(pr), options, 'checkpoint');
+    if (resolved.outcome === 'pending') pending.push(...(resolved.messages ?? []));
+    else if (resolved.outcome === 'conflict') conflicts.push(...(resolved.messages ?? []));
   }
 
   const issueRegister = existsSync(join(root, 'docs', 'ISSUE_REGISTER.md'))
@@ -241,16 +295,34 @@ export function reconcileContinuity(root, options = {}) {
   for (const line of issueRegister.split('\n')) {
     if (!line.trim().startsWith('|')) continue;
     if (!/\|\s*IN PR\s*\|/i.test(line)) continue;
-    const nums = prNumbers(line);
-    if (!nums.length) continue;
-    const check = checkMergedPr(nums[0]);
-    if (check.available && check.merged) {
-      conflicts.push(`ISSUE_REGISTER row still IN PR but PR #${nums[0]} is MERGED on GitHub`);
+    const openCitations = openPrNumbersInText(line);
+    if (!openCitations.length) continue;
+    for (const pr of openCitations) {
+      const resolved = resolveMergedOpenPrDrift(
+        root,
+        documentedMain,
+        referenceMain,
+        pr,
+        checkMergedPr(pr),
+        options,
+        'issue_register',
+      );
+      if (resolved.outcome === 'pending') pending.push(...(resolved.messages ?? []));
+      else if (resolved.outcome === 'conflict') conflicts.push(...(resolved.messages ?? []));
     }
   }
   if (/\|\s*CRM-PAGE-105\s*\|\s*IN PR\s*\|/i.test(issueRegister)) {
-    const pr106 = checkMergedPr('106');
-    if (pr106.available && pr106.merged) {
+    const resolved = resolveMergedOpenPrDrift(
+      root,
+      documentedMain,
+      referenceMain,
+      '106',
+      checkMergedPr('106'),
+      options,
+      'issue_register',
+    );
+    if (resolved.outcome === 'pending') pending.push(...(resolved.messages ?? []));
+    else if (resolved.outcome === 'conflict') {
       conflicts.push('ISSUE_REGISTER CRM-PAGE-105 is IN PR but PR #106 is MERGED on GitHub');
     }
   }
@@ -267,7 +339,13 @@ export function reconcileContinuity(root, options = {}) {
   const operational = loadOperationalStatus(root);
   const staleWarnings = collectStaleStatusWarnings(operational);
   for (const warning of staleWarnings) {
-    conflicts.push(`stale operational status: ${warning}`);
+    if (warning.startsWith('docs/ISSUE_REGISTER.md:')) {
+      const classified = classifyStaleWarning(root, warning, options, documentedMain, referenceMain, checkMergedPr);
+      if (classified.outcome === 'pending') pending.push(...(classified.messages ?? []));
+      else conflicts.push(...(classified.messages ?? [`stale operational status: ${warning}`]));
+    } else {
+      conflicts.push(`stale operational status: ${warning}`);
+    }
   }
 
   const adr = validateAdrs(root);

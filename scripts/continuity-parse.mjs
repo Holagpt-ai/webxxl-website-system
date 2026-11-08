@@ -50,7 +50,31 @@ export function prNumbers(text) {
   return [...found];
 }
 
+const NEXT_PR_REFERENCE = /(?:\[\s*PR\s*(?:\*{1,2})?\s*#|\bPR\s*#\d+)/gi;
+
+function nextPrReferenceIndex(text, fromIndex) {
+  NEXT_PR_REFERENCE.lastIndex = fromIndex;
+  const match = NEXT_PR_REFERENCE.exec(text);
+  return match?.index ?? text.length;
+}
+
+function prAnchorPattern(pr) {
+  return new RegExp(`(?:PR\\s*#${pr}|\\[\\s*PR\\s*(?:\\*{1,2})?\\s*#${pr})`, 'gi');
+}
+
+/** Semantic span for one PR citation: anchor through the next PR reference (or line end). */
+function prReferenceSegment(text, pr) {
+  const pattern = prAnchorPattern(pr);
+  const match = pattern.exec(text);
+  if (!match || match.index === undefined) return '';
+  const afterStart = match.index + match[0].length;
+  const segmentEnd = nextPrReferenceIndex(text, afterStart);
+  return text.slice(match.index, segmentEnd);
+}
+
 function prMentionChunk(text, pr) {
+  const segment = prReferenceSegment(text, pr);
+  if (segment) return segment;
   const patterns = [
     new RegExp(`\\[\\s*PR\\s*(?:\\*{1,2})?\\s*#${pr}\\s*(?:\\*{1,2})?\\s*\\][^\\n]{0,120}`, 'i'),
     new RegExp(`\\bPR\\s*#${pr}\\b[^\\n]{0,120}`, 'i'),
@@ -76,7 +100,7 @@ export function looksLikeOpenPrClaim(text) {
     for (const pr of numbered) {
       const chunk = prMentionChunk(text, pr);
       if (!chunk) continue;
-      if (/\bMERGED\b/i.test(chunk)) continue;
+      if (/\bMERGED\b/.test(chunk)) continue;
       if (/\bIN PR\b/i.test(text) || /\bopen\b/i.test(chunk) || /\bnot merged\b/i.test(chunk)) return true;
     }
     return false;
@@ -85,11 +109,23 @@ export function looksLikeOpenPrClaim(text) {
 }
 
 function prMarkedMergedInField(text, pr) {
-  const seg =
-    text.match(
-      new RegExp(`(?:PR\\s*#${pr}|\\[\\s*PR\\s*(?:\\*{1,2})?\\s*#${pr})[\\s\\S]{0,280}`, 'i'),
-    )?.[0] ?? '';
-  return /\bMERGED\b/i.test(seg) && !/\bnot merged\b/i.test(seg);
+  for (const match of text.matchAll(prAnchorPattern(pr))) {
+    if (match.index === undefined) continue;
+    const before = text.slice(Math.max(0, match.index - 64), match.index);
+    const afterStart = match.index + match[0].length;
+    const after = text.slice(afterStart, nextPrReferenceIndex(text, afterStart));
+    const local = `${before}${match[0]}${after}`;
+    if (/\bnot merged\b/i.test(local)) continue;
+    if (/\bMERGED\b/.test(after)) return true;
+    if (/\bmerged\s*@/i.test(after)) return true;
+    if (/\bmerged\s+(?:via|as|in|on)\b/i.test(before)) return true;
+    if (/\bmerged\s+(?:via|as|in|on)\b/i.test(after)) {
+      const viaIdx = after.search(/\bmerged\s+(?:via|as|in|on)\b/i);
+      const prefix = after.slice(0, viaIdx);
+      if (!/\bIN PR\b/i.test(prefix) && !/\bopen\b/i.test(prefix)) return true;
+    }
+  }
+  return false;
 }
 
 /** PR numbers explicitly described as open in this text (excludes MERGED mentions on the same line). */
