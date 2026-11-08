@@ -22,7 +22,8 @@ export type SiteIntelligenceSummaryResponse = {
   customerAccountId: string
   managedSiteId: string
   assembledAt: string
-  dateRange: { start: string; end: string; timezone: string }
+  /** Query window for the analytics slice only; SEO uses stored/source-specific ranges inside `seo.data`. */
+  analyticsDateRange: { start: string; end: string; timezone: string }
   provenanceNotice: string
   seo: SiteIntelligenceSlice<SeoSiteOverviewDto>
   analytics: SiteIntelligenceSlice<AnalyticsOverviewDto>

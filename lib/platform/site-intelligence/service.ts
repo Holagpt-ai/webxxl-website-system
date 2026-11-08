@@ -101,7 +101,17 @@ export async function getSiteIntelligenceSummary(input: {
     'READINESS_MODULE_DISABLED',
     'Google provider readiness module disabled',
   )
-  if (isGoogleProviderReadinessEnabled()) {
+  if (!isGoogleProviderReadinessEnabled()) {
+    googleReadiness = unavailable(
+      'google.readiness',
+      'READINESS_MODULE_DISABLED',
+      'Google provider readiness module disabled',
+    )
+  } else if (!isSeoBackendEnabled()) {
+    googleReadiness = unavailable('google.readiness', 'SEO_DISABLED', 'Local SEO backend is disabled')
+  } else if (!seoEntitlement.allowed) {
+    googleReadiness = unavailable('google.readiness', seoEntitlement.code, seoEntitlement.message)
+  } else {
     const readiness = await buildGoogleAccountReadiness({
       customerAccountId,
       managedSiteId: site.id,
@@ -127,7 +137,7 @@ export async function getSiteIntelligenceSummary(input: {
       customerAccountId,
       managedSiteId: site.id,
       assembledAt,
-      dateRange: {
+      analyticsDateRange: {
         start: input.range.startIso,
         end: input.range.endIso,
         timezone: ANALYTICS_DEFAULT_TIMEZONE,

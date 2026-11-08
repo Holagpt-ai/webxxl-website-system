@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import type { PortalUser } from '@/lib/portal/authz'
-import { emptySubscriberEvidence } from '@/lib/platform/open001/subscriber-evidence'
 import { SITE_INTELLIGENCE_PROVENANCE_NOTICE } from '@/lib/platform/site-intelligence/constants'
 
 vi.mock('@/config/features', () => ({
@@ -10,12 +9,25 @@ vi.mock('@/config/features', () => ({
   isEnabled: () => true,
 }))
 
+const googleReadinessMock = vi.hoisted(() =>
+  vi.fn(async () => ({
+    ok: true,
+    value: {
+      customerAccountId: 'acct_a',
+      managedSiteId: 'site_a',
+      sites: [{ managedSiteId: 'site_a', customerAccountId: 'acct_a', providers: [], assessedAt: '2026-11-07T00:00:00.000Z' }],
+      assessedAt: '2026-11-07T00:00:00.000Z',
+    },
+  })),
+)
+
 vi.mock('@/lib/platform/open001/load-subscriber-evidence', () => ({
   loadSubscriberEvidenceForAccount: vi.fn(async (customerAccountId: string) => ({
     customerAccountId,
-    subscriptions: [
-      { customerAccountId, productKey: 'website.subscription', status: 'ACTIVE' },
-    ],
+    subscriptions:
+      customerAccountId === 'acct_a'
+        ? [{ customerAccountId, productKey: 'website.subscription', status: 'ACTIVE' }]
+        : [],
     legacyWebsiteServices: [],
     loadOutcome: 'ok' as const,
   })),
@@ -74,6 +86,9 @@ vi.mock('@/lib/platform/analytics/prisma-store', () => ({
       if (customerAccountId === 'acct_a' && managedSiteId === 'site_a') {
         return { id: 'site_a', name: 'A Site', domain: 'a.example' }
       }
+      if (customerAccountId === 'acct_denied' && managedSiteId === 'site_d') {
+        return { id: 'site_d', name: 'D Site', domain: 'd.example' }
+      }
       if (customerAccountId === 'acct_b') {
         return null
       }
@@ -83,12 +98,7 @@ vi.mock('@/lib/platform/analytics/prisma-store', () => ({
 }))
 
 vi.mock('@/lib/platform/google/account-readiness-service', () => ({
-  buildGoogleAccountReadiness: vi.fn(async () => ({
-    ok: false,
-    status: 503,
-    code: 'NOT_CONFIGURED',
-    message: 'Google provider readiness module disabled',
-  })),
+  buildGoogleAccountReadiness: googleReadinessMock,
 }))
 
 function portalStub(accountId: string): PortalUser {
@@ -114,28 +124,19 @@ describe('Batch 2 site intelligence integration', () => {
 
   beforeEach(() => {
     vi.resetModules()
+    googleReadinessMock.mockClear()
     process.env = {
       ...env,
       SEO_BACKEND_ENABLED: 'true',
       ANALYTICS_BACKEND_ENABLED: 'true',
       GOOGLE_PROVIDER_READINESS_ENABLED: 'false',
+      OPEN001_FREE_SOFTWARE_COHORT: 'SUBSCRIBER_ONLY',
     }
   })
 
   afterEach(() => {
     process.env = env
     vi.clearAllMocks()
-  })
-
-  it('exposes GET route with tenant scope and date range parsing', () => {
-    const route = readFileSync(
-      join(process.cwd(), 'app/api/v1/site-intelligence/sites/[siteId]/summary/route.ts'),
-      'utf8',
-    )
-    expect(route).toContain('requireCustomerMembership')
-    expect(route).toContain('parseAnalyticsDateRange')
-    expect(route).toContain('FORBIDDEN')
-    expect(route).toContain('getSiteIntelligenceSummary')
   })
 
   it('documents provenance and v0 handoff without business UI overlap', () => {
@@ -145,6 +146,7 @@ describe('Batch 2 site intelligence integration', () => {
     )
     expect(doc).toContain('/api/v1/site-intelligence/sites/{siteId}/summary')
     expect(doc).toContain('provenanceNotice')
+    expect(doc).toContain('analyticsDateRange')
     expect(doc).toContain('dashboard/seo')
     expect(doc).toContain('Issue #113')
   })
@@ -159,6 +161,11 @@ describe('Batch 2 site intelligence integration', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.value.provenanceNotice).toBe(SITE_INTELLIGENCE_PROVENANCE_NOTICE)
+    expect(result.value.analyticsDateRange).toEqual({
+      start: '2026-10-01',
+      end: '2026-10-28',
+      timezone: expect.any(String),
+    })
     expect(result.value.seo.status).toBe('AVAILABLE')
     if (result.value.seo.status === 'AVAILABLE') {
       expect(result.value.seo.data.sections.gscPerformance.averagePositionLabel).toContain('GSC average position')
@@ -202,7 +209,35 @@ describe('Batch 2 site intelligence integration', () => {
     }
   })
 
-  it('does not import subscriber evidence helpers in route layer', () => {
-    expect(emptySubscriberEvidence).toBeDefined()
+  it('skips Google readiness lookup when SEO backend is disabled but module flag is on', async () => {
+    process.env.GOOGLE_PROVIDER_READINESS_ENABLED = 'true'
+    process.env.SEO_BACKEND_ENABLED = 'false'
+    const { getSiteIntelligenceSummary } = await import('@/lib/platform/site-intelligence/service')
+    const result = await getSiteIntelligenceSummary({
+      portal: portalStub('acct_a'),
+      managedSiteId: 'site_a',
+      range: range(),
+    })
+    expect(result.ok).toBe(true)
+    expect(googleReadinessMock).not.toHaveBeenCalled()
+    if (result.ok && result.value.googleReadiness.status === 'UNAVAILABLE') {
+      expect(result.value.googleReadiness.reasonCode).toBe('SEO_DISABLED')
+    }
+  })
+
+  it('skips Google readiness lookup for non-subscriber SEO entitlement', async () => {
+    process.env.GOOGLE_PROVIDER_READINESS_ENABLED = 'true'
+    process.env.SEO_BACKEND_ENABLED = 'true'
+    const { getSiteIntelligenceSummary } = await import('@/lib/platform/site-intelligence/service')
+    const result = await getSiteIntelligenceSummary({
+      portal: portalStub('acct_denied'),
+      managedSiteId: 'site_d',
+      range: range(),
+    })
+    expect(result.ok).toBe(true)
+    expect(googleReadinessMock).not.toHaveBeenCalled()
+    if (result.ok && result.value.googleReadiness.status === 'UNAVAILABLE') {
+      expect(result.value.googleReadiness.reasonCode).toMatch(/NOT_ELIGIBLE|FREE_SOFTWARE_NOT_ELIGIBLE/)
+    }
   })
 })

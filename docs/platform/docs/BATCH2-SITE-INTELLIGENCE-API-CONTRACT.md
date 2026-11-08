@@ -28,7 +28,9 @@
 |---|---|---|
 | `seo` | `loadSeoSiteOverview` | GSC avg position label unchanged; competitors carry `source` |
 | `analytics` | `buildAnalyticsOverview` | GA4 `traffic` vs GSC `search` remain separate DTO sections |
-| `googleReadiness` | `buildGoogleAccountReadiness` (site-scoped) | `UNAVAILABLE` when `GOOGLE_PROVIDER_READINESS_ENABLED` is false |
+| `googleReadiness` | `buildGoogleAccountReadiness` (site-scoped) | Same **SEO** gate as `GET /api/v1/seo/sites/{siteId}/google/readiness` (`seo.read` + OPEN-001 `core.local-seo` + `SEO_BACKEND_ENABLED`); module flag `GOOGLE_PROVIDER_READINESS_ENABLED` additionally required |
+
+`analyticsDateRange` on the response applies **only** to the `analytics` slice (`start`/`end` query params). The `seo` slice retains each provider’s stored `dateRange` / `observedAt` inside `seo.data` (not aligned to the query window).
 
 `provenanceNotice` documents that metrics must not be blended across providers.
 
