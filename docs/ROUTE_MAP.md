@@ -67,6 +67,7 @@ Route handlers under `app/api`, MERGED, not indexed:
 | CRM, marketing, social, SEO | `/api/v1/crm/*`, `/api/v1/marketing/*`, `/api/v1/social/*`, `/api/v1/seo/*` |
 | Business overview (Batch 27A) | `/api/v1/business/overview` |
 | Customer operations summary (Batch 1) | `GET /api/v1/customer-operations/summary` — [`BATCH1-CUSTOMER-OPERATIONS-API-CONTRACT.md`](platform/docs/BATCH1-CUSTOMER-OPERATIONS-API-CONTRACT.md) |
+| Site intelligence summary (Batch 2) | `GET /api/v1/site-intelligence/sites/[siteId]/summary` — [`BATCH2-SITE-INTELLIGENCE-API-CONTRACT.md`](platform/docs/BATCH2-SITE-INTELLIGENCE-API-CONTRACT.md) |
 | Business Command Center UI (Batch 27C) | `/dashboard/business` |
 | Managed-site lead intake (Batch 28A) | `POST /api/v1/site-leads/intake` |
 | Managed-site lead inbox (Batch 28A) | `/api/v1/site-leads`, `/api/v1/site-leads/summary`, `/api/v1/site-leads/[id]/*` |
