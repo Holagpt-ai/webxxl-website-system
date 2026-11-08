@@ -19,31 +19,67 @@ const HEADINGS = [
 const STATES = new Set(['PROPOSED', 'DEFERRED', 'APPROVED', 'REJECTED', 'SUPERSEDED']);
 const FILE_PATTERN = /^ADR-(\d{3})-([a-z0-9]+(?:-[a-z0-9]+)*)\.md$/;
 
-/** Owner approval in the canonical log — a bare PROPOSED mention is not evidence. */
-export function adrHasApprovedCitationInDecisionLog(decisions, adrId, approvalEvidence) {
-  if (!decisions) return false;
-  const lines = decisions.split(/\r?\n/).filter((line) => line.includes(adrId));
-  const approvedLine = lines.some(
-    (line) =>
-      line.includes(adrId) &&
-      (/\bAPPROVED\b/i.test(line) || /\bSUPERSEDED\b/i.test(line) || /\bREJECTED\b/i.test(line)),
-  );
-  if (approvedLine) return true;
-  if (approvalEvidence && approvalEvidence !== 'NONE') {
-    const evLines = decisions.split(/\r?\n/).filter((line) => line.includes(approvalEvidence));
-    if (
-      evLines.some(
-        (line) =>
-          /\bAPPROVED\b/i.test(line) ||
-          (/\bowner\b/i.test(line) && !/\bPROPOSED\b/i.test(line)),
-      )
-    ) {
-      return true;
-    }
+const ADR_ID_PATTERN = /ADR-\d{3}\b/g;
+
+function adrIdsOnLine(line) {
+  return [...line.matchAll(ADR_ID_PATTERN)].map((match) => match[0]);
+}
+
+/** Explicit positive owner approval for this ADR ID on the line. */
+export function lineExplicitApprovedForAdr(line, adrId) {
+  if (!line.includes(adrId)) return false;
+  const patterns = [
+    new RegExp(`${adrId}[^\\n]*\\bAPPROVED\\b`, 'i'),
+    new RegExp(`\\bAPPROVED\\b[^\\n]*${adrId}`, 'i'),
+  ];
+  for (const pattern of patterns) {
+    const match = line.match(pattern);
+    if (!match) continue;
+    const chunk = match[0];
+    if (/\bNOT\s+APPROVED\b/i.test(chunk) || /\bUNAPPROVED\b/i.test(chunk)) continue;
+    if (/\bPROPOSED\b/i.test(chunk)) continue;
+    if (/\bREJECTED\b/i.test(chunk)) continue;
+    return true;
   }
-  const proposedOnly = lines.some((line) => /\bPROPOSED\b/i.test(line));
-  if (proposedOnly) return false;
   return false;
+}
+
+/**
+ * Approval evidence must approve the same ADR, not a sibling record.
+ */
+export function lineExplicitApprovedForEvidence(line, adrId, approvalEvidence) {
+  if (!approvalEvidence || approvalEvidence === 'NONE') return false;
+  if (!line.includes(approvalEvidence) || !line.includes(adrId)) return false;
+  const adrs = adrIdsOnLine(line);
+  if (adrs.length && !adrs.includes(adrId)) return false;
+  const patterns = [
+    new RegExp(`${adrId}[^\\n]*${approvalEvidence}[^\\n]*\\bAPPROVED\\b`, 'i'),
+    new RegExp(`${approvalEvidence}[^\\n]*${adrId}[^\\n]*\\bAPPROVED\\b`, 'i'),
+    new RegExp(`\\bAPPROVED\\b[^\\n]*${adrId}[^\\n]*${approvalEvidence}`, 'i'),
+  ];
+  for (const pattern of patterns) {
+    const match = line.match(pattern);
+    if (!match) continue;
+    const chunk = match[0];
+    if (/\bNOT\s+APPROVED\b/i.test(chunk) || /\bUNAPPROVED\b/i.test(chunk)) continue;
+    if (/\bPROPOSED\b/i.test(chunk)) continue;
+    if (/\bREJECTED\b/i.test(chunk)) continue;
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Owner approval in the canonical decision log — explicit APPROVED for this ADR ID
+ * and matching approval_evidence; PROPOSED-only / REJECTED-only / NOT APPROVED do not qualify.
+ */
+export function adrHasApprovedCitationInDecisionLog(decisions, adrId, approvalEvidence) {
+  if (!decisions || !adrId) return false;
+  const lines = decisions.split(/\r?\n/);
+  const idApproved = lines.some((line) => lineExplicitApprovedForAdr(line, adrId));
+  if (!idApproved) return false;
+  if (!approvalEvidence || approvalEvidence === 'NONE') return false;
+  return lines.some((line) => lineExplicitApprovedForEvidence(line, adrId, approvalEvidence));
 }
 
 export function validateAdrs(root) {

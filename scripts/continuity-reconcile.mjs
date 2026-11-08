@@ -105,7 +105,7 @@ export function mergedPrCheck(prNumber) {
 /**
  * @returns {'post_merge_sync' | 'contradiction'}
  */
-export function classifyStaleOpenMergedPr(root, documentedMain, referenceMain, mergeSha, isMainPush) {
+export function classifyStaleOpenMergedPr(root, documentedMain, referenceMain, mergeSha, postMergeSyncEligible) {
   if (!documentedMain || !referenceMain || !mergeSha) return 'contradiction';
   if (shasPrefixMatch(documentedMain, referenceMain)) return 'contradiction';
   if (gitIsAncestor(root, mergeSha, documentedMain)) return 'contradiction';
@@ -113,8 +113,13 @@ export function classifyStaleOpenMergedPr(root, documentedMain, referenceMain, m
   const mergeOnRef =
     shasPrefixMatch(mergeSha, referenceMain) ||
     (gitIsAncestor(root, mergeSha, referenceMain) && gitIsAncestor(root, documentedMain, mergeSha));
-  if (isMainPush === true && lags && mergeOnRef) return 'post_merge_sync';
+  if (postMergeSyncEligible && lags && mergeOnRef) return 'post_merge_sync';
   return 'contradiction';
+}
+
+export function postMergeSyncEligible(options = {}) {
+  if (options.isMainPush === true) return true;
+  return ['start', 'checkpoint', 'close', 'ci'].includes(options.lifecyclePhase ?? '');
 }
 
 function checkpointFieldsMatch(memoryFields, handoffFields) {
@@ -216,7 +221,7 @@ export function reconcileContinuity(root, options = {}) {
         documentedMain,
         referenceMain,
         check.mergeSha,
-        options.isMainPush === true,
+        postMergeSyncEligible(options),
       );
       if (kind === 'post_merge_sync') {
         pending.push(

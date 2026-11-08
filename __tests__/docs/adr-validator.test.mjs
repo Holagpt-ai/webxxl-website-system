@@ -4,7 +4,12 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync, rmSync } f
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { adrHasApprovedCitationInDecisionLog, validateAdrs } from '../../scripts/validate-adr.mjs';
+import {
+  adrHasApprovedCitationInDecisionLog,
+  lineExplicitApprovedForAdr,
+  lineExplicitApprovedForEvidence,
+  validateAdrs,
+} from '../../scripts/validate-adr.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -42,11 +47,52 @@ test('approved ADR without canonical decision log citation fails', () => {
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('PROPOSED-only mention in decision log is not approval evidence', () => {
-  const log = '# decisions\n\nADR-018 selective integration — status PROPOSED pending owner review.\n';
-  assert.equal(adrHasApprovedCitationInDecisionLog(log, 'ADR-018', 'owner-note-1'), false);
-  const approved = '# decisions\n\nADR-018 — APPROVED by owner on 2026-10-25.\n';
-  assert.equal(adrHasApprovedCitationInDecisionLog(approved, 'ADR-018', 'NONE'), true);
+test('ADR approval citation rejects PROPOSED, NOT APPROVED, REJECTED-only, and cross-ADR evidence', () => {
+  assert.equal(
+    adrHasApprovedCitationInDecisionLog(
+      'ADR-018 selective integration — status PROPOSED pending owner review.',
+      'ADR-018',
+      'owner-note-1',
+    ),
+    false,
+  );
+  assert.equal(
+    adrHasApprovedCitationInDecisionLog('ADR-018 remains NOT APPROVED pending review.', 'ADR-018', 'owner-note-1'),
+    false,
+  );
+  assert.equal(
+    adrHasApprovedCitationInDecisionLog('ADR-018 — REJECTED by owner 2026-10-25.', 'ADR-018', 'owner-note-1'),
+    false,
+  );
+  assert.equal(
+    adrHasApprovedCitationInDecisionLog(
+      'ADR-019 — APPROVED (owner-decision-2026-10-99).',
+      'ADR-018',
+      'owner-decision-2026-10-99',
+    ),
+    false,
+  );
+  assert.equal(
+    lineExplicitApprovedForAdr('ADR-018 status PROPOSED; APPROVED later on ADR-019 only.', 'ADR-018'),
+    false,
+  );
+});
+
+test('ADR approval citation accepts exact ID and matching evidence APPROVED lines', () => {
+  const log = [
+    'ADR-018 — APPROVED by owner 2026-10-25.',
+    'Owner record owner-decision-2026-10-25: ADR-018 APPROVED.',
+  ].join('\n');
+  assert.equal(lineExplicitApprovedForAdr('ADR-018 — APPROVED by owner 2026-10-25.', 'ADR-018'), true);
+  assert.equal(
+    lineExplicitApprovedForEvidence(
+      'Owner record owner-decision-2026-10-25: ADR-018 APPROVED.',
+      'ADR-018',
+      'owner-decision-2026-10-25',
+    ),
+    true,
+  );
+  assert.equal(adrHasApprovedCitationInDecisionLog(log, 'ADR-018', 'owner-decision-2026-10-25'), true);
 });
 
 test('superseded_by without reciprocal supersedes fails', () => {

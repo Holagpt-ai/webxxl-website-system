@@ -437,16 +437,26 @@ test('just-merged PR open wording on push:main is post-merge sync not stale cont
       classifyStaleOpenMergedPr(root, baseSha, referenceMain, mergeSha, true),
       'post_merge_sync',
     );
-    const result = reconcileContinuity(root, {
-      isMainPush: true,
-      ciGitHubSha: referenceMain,
+    const reconcileOpts = {
       referenceMain,
       skipGitFetch: true,
       mergedPrCheckFn: () => ({ available: true, merged: true, mergeSha }),
+    };
+    for (const lifecyclePhase of ['start', 'checkpoint', 'close']) {
+      const result = reconcileContinuity(root, { ...reconcileOpts, lifecyclePhase });
+      assert.equal(result.conflicts.length, 0, `${lifecyclePhase}: ${result.conflicts.join('\n')}`);
+      assert.ok(result.pending.some((p) => /POST-MERGE-PR-#118/.test(p)), lifecyclePhase);
+      assert.ok(result.pending.some((p) => /POST-MERGE-CHECKPOINT/i.test(p)), lifecyclePhase);
+      assert.equal(result.status, 'PENDING_REPOSITORY_SYNC', lifecyclePhase);
+    }
+    const pushResult = reconcileContinuity(root, {
+      ...reconcileOpts,
+      isMainPush: true,
+      ciGitHubSha: referenceMain,
+      lifecyclePhase: 'ci',
     });
-    assert.equal(result.conflicts.length, 0, result.conflicts.join('\n'));
-    assert.ok(result.pending.some((p) => /POST-MERGE-PR-#118/.test(p)));
-    assert.equal(result.status, 'PENDING_REPOSITORY_SYNC');
+    assert.equal(pushResult.status, 'PENDING_REPOSITORY_SYNC');
+    assert.ok(pushResult.pending.some((p) => /POST-MERGE-PR-#118/.test(p)));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
