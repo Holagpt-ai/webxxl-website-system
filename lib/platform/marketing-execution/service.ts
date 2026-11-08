@@ -184,20 +184,16 @@ export async function getMarketingExecutionSummary(input: {
       socialBlocked.message,
     )
   } else {
-    const readiness = await buildPostizProviderReadiness(customerAccountId)
-    if (!readiness.ok) {
-      socialProviderReadiness = unavailable(
-        'marketing.social_provider_readiness',
-        readiness.code,
-        readiness.message,
-      )
-    } else {
-      const { assessedAt, moduleEnabled, livePublishingEnabled, credentialsConfigured, workspaceConnected, dispatchBlockedCode, dispatchBlockedMessage, channels } =
-        readiness.value
-      socialProviderReadiness = {
-        status: 'AVAILABLE',
-        sourceModule: 'marketing.social_provider_readiness',
-        data: {
+    try {
+      const readiness = await buildPostizProviderReadiness(customerAccountId)
+      if (!readiness.ok) {
+        socialProviderReadiness = unavailable(
+          'marketing.social_provider_readiness',
+          readiness.code,
+          readiness.message,
+        )
+      } else {
+        const {
           assessedAt,
           moduleEnabled,
           livePublishingEnabled,
@@ -205,15 +201,43 @@ export async function getMarketingExecutionSummary(input: {
           workspaceConnected,
           dispatchBlockedCode,
           dispatchBlockedMessage,
-          channels: channels.map((row) => ({
-            connectionId: row.connectionId,
-            platform: row.platform,
-            displayName: row.displayName,
-            connectionState: row.connectionState,
-            dispatchAllowed: row.dispatchAllowed,
-            blockReason: row.blockReason,
-          })),
-        },
+          channels,
+        } = readiness.value
+        socialProviderReadiness = {
+          status: 'AVAILABLE',
+          sourceModule: 'marketing.social_provider_readiness',
+          data: {
+            assessedAt,
+            moduleEnabled,
+            livePublishingEnabled,
+            credentialsConfigured,
+            workspaceConnected,
+            dispatchBlockedCode,
+            dispatchBlockedMessage,
+            channels: channels.map((row) => ({
+              connectionId: row.connectionId,
+              platform: row.platform,
+              displayName: row.displayName,
+              connectionState: row.connectionState,
+              dispatchAllowed: false,
+              blockReason: row.blockReason ?? 'PREPARATION_ONLY_DISPATCH_BLOCKED',
+            })),
+          },
+        }
+      }
+    } catch (error) {
+      if (isPrismaMissingTableError(error)) {
+        socialProviderReadiness = unavailable(
+          'marketing.social_provider_readiness',
+          'DATA_UNAVAILABLE',
+          'Social provider readiness data unavailable',
+        )
+      } else {
+        socialProviderReadiness = unavailable(
+          'marketing.social_provider_readiness',
+          'SOURCE_UNAVAILABLE',
+          'Social provider readiness could not be assessed',
+        )
       }
     }
   }
@@ -224,7 +248,7 @@ export async function getMarketingExecutionSummary(input: {
     status: 'AVAILABLE',
     sourceModule: 'marketing.social_handoff_policy',
     data: {
-      dispatchBlocked: !livePublishing || !postizApi,
+      dispatchBlocked: true,
       handoffMode: 'PREPARATION_ONLY',
       livePublishingEnabled: livePublishing,
       postizApiEnabled: postizApi,

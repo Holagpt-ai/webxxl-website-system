@@ -8,7 +8,7 @@ const buildPostizMock = vi.hoisted(() => vi.fn())
 const prismaMock = vi.hoisted(() => ({
   managedSite: { findFirst: vi.fn() },
   marketingRequest: { groupBy: vi.fn() },
-  marketingArtifactReview: { findMany: vi.fn(), findFirst: vi.fn() },
+  marketingArtifactReview: { findMany: vi.fn(), findFirst: vi.fn(), count: vi.fn() },
   socialPublication: { groupBy: vi.fn(), count: vi.fn() },
   marketingArtifact: { findFirst: vi.fn() },
   crmSegment: { findMany: vi.fn() },
@@ -98,6 +98,15 @@ describe('Batch 3 marketing execution integration', () => {
     }
     prismaMock.managedSite.findFirst.mockResolvedValue({ id: 'site_a' })
     prismaMock.marketingRequest.groupBy.mockResolvedValue([{ status: 'APPROVED', _count: { _all: 2 } }])
+    prismaMock.marketingArtifactReview.count
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(1)
+      .mockResolvedValueOnce(2)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValue(0)
     prismaMock.marketingArtifactReview.findMany.mockResolvedValue([
       {
         id: 'rev_1',
@@ -112,7 +121,10 @@ describe('Batch 3 marketing execution integration', () => {
         allowedChannel: 'linkedin',
       },
     ])
-    prismaMock.socialPublication.groupBy.mockResolvedValue([{ status: 'PENDING', _count: { _all: 1 } }])
+    prismaMock.socialPublication.groupBy.mockResolvedValue([
+      { status: 'PENDING', _count: { _all: 3 } },
+      { status: 'SCHEDULED', _count: { _all: 2 } },
+    ])
     prismaMock.socialPublication.count.mockResolvedValue(0)
     prismaMock.marketingArtifactReview.findFirst.mockResolvedValue({
       status: 'APPROVED',
@@ -216,6 +228,93 @@ describe('Batch 3 marketing execution integration', () => {
     expect(handoff.ok).toBe(true)
     if (handoff.ok) {
       expect(handoff.value.schedulingAllowed).toBe(false)
+    }
+  })
+
+  it('scopes social publication aggregates to managed site via campaign relation', async () => {
+    const { getMarketingExecutionSummary } = await import('@/lib/platform/marketing-execution/service')
+    await getMarketingExecutionSummary({ portal: portalStub('acct_a'), managedSiteId: 'site_a' })
+    expect(prismaMock.socialPublication.groupBy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          customerAccountId: 'acct_a',
+          campaign: { managedSiteId: 'site_a' },
+        }),
+      }),
+    )
+    expect(prismaMock.socialPublication.count).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          campaign: { managedSiteId: 'site_a' },
+          publishedUrl: { not: null },
+        }),
+      }),
+    )
+  })
+
+  it('keeps PENDING out of execution ladder SCHEDULED total', async () => {
+    const { getMarketingExecutionSummary } = await import('@/lib/platform/marketing-execution/service')
+    const result = await getMarketingExecutionSummary({ portal: portalStub('acct_a'), managedSiteId: 'site_a' })
+    expect(result.ok).toBe(true)
+    if (!result.ok || result.value.workflowCounts.status !== 'AVAILABLE') return
+    expect(result.value.workflowCounts.data.publicationStatus.PENDING).toBe(3)
+    expect(result.value.workflowCounts.data.executionLadder.SCHEDULED).toBe(2)
+  })
+
+  it('uses count queries for review effective status aggregates', async () => {
+    const { getMarketingExecutionSummary } = await import('@/lib/platform/marketing-execution/service')
+    await getMarketingExecutionSummary({ portal: portalStub('acct_a') })
+    expect(prismaMock.marketingArtifactReview.count.mock.calls.length).toBeGreaterThanOrEqual(7)
+  })
+
+  it('returns UNAVAILABLE social readiness slice when Postiz assess throws', async () => {
+    process.env.SOCIAL_EXECUTION_GATES_ENABLED = 'true'
+    buildPostizMock.mockRejectedValue({ code: 'P2021', meta: { modelName: 'BusinessSocialConnection' } })
+    const { getMarketingExecutionSummary } = await import('@/lib/platform/marketing-execution/service')
+    const result = await getMarketingExecutionSummary({ portal: portalStub('acct_a') })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value.socialProviderReadiness.status).toBe('UNAVAILABLE')
+  })
+
+  it('never implies dispatch authorization when live flags are on', async () => {
+    process.env.SOCIAL_EXECUTION_GATES_ENABLED = 'true'
+    process.env.POSTIZ_API_ENABLED = 'true'
+    process.env.POSTIZ_LIVE_PUBLISHING_ENABLED = 'true'
+    buildPostizMock.mockResolvedValue({
+      ok: true,
+      value: {
+        customerAccountId: 'acct_a',
+        assessedAt: '2026-11-08T00:00:00.000Z',
+        moduleEnabled: true,
+        postizApiEnabled: true,
+        livePublishingEnabled: true,
+        credentialsConfigured: true,
+        workspaceConnected: true,
+        channels: [
+          {
+            connectionId: 'ch_1',
+            platform: 'linkedin',
+            displayName: 'Co',
+            connectionState: 'CONNECTED',
+            externalChannelRef: 'secret-ref',
+            dispatchAllowed: true,
+          },
+        ],
+        dispatchBlockedCode: 'LIVE_DISPATCH_AUTHORIZED_AT_FLAG',
+        dispatchBlockedMessage: 'flag on',
+      },
+    })
+    const { getMarketingExecutionSummary } = await import('@/lib/platform/marketing-execution/service')
+    const result = await getMarketingExecutionSummary({ portal: portalStub('acct_a') })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value.socialHandoffPolicy.status).toBe('AVAILABLE')
+    if (result.value.socialHandoffPolicy.status === 'AVAILABLE') {
+      expect(result.value.socialHandoffPolicy.data.dispatchBlocked).toBe(true)
+    }
+    if (result.value.socialProviderReadiness.status === 'AVAILABLE') {
+      expect(result.value.socialProviderReadiness.data.channels[0]?.dispatchAllowed).toBe(false)
     }
   })
 

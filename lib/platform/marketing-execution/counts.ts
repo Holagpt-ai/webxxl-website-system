@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { computeReviewEffectiveStatus } from '@/lib/platform/marketing/review-presentation'
 import type { MarketingWorkflowLifecycleCounts } from '@/lib/platform/marketing-execution/types'
@@ -11,31 +12,90 @@ function scopeWhere(customerAccountId: string, managedSiteId?: string | null) {
   }
 }
 
+function publicationScopeWhere(customerAccountId: string, managedSiteId?: string | null) {
+  return {
+    customerAccountId,
+    ...(managedSiteId ? { campaign: { managedSiteId } } : {}),
+  }
+}
+
+async function countReviewEffectiveStatuses(
+  baseWhere: Prisma.MarketingArtifactReviewWhereInput,
+  now: Date,
+): Promise<Record<string, number>> {
+  const [
+    draft,
+    submitted,
+    approved,
+    rejected,
+    revoked,
+    expiredStored,
+    submittedPastExpiry,
+  ] = await Promise.all([
+    prisma.marketingArtifactReview.count({ where: { AND: [baseWhere, { status: 'DRAFT' }] } }),
+    prisma.marketingArtifactReview.count({
+      where: {
+        AND: [
+          baseWhere,
+          { status: 'SUBMITTED', revokedAt: null },
+          { OR: [{ expiresAt: null }, { expiresAt: { gte: now } }] },
+        ],
+      },
+    }),
+    prisma.marketingArtifactReview.count({
+      where: { AND: [baseWhere, { status: 'APPROVED', revokedAt: null }] },
+    }),
+    prisma.marketingArtifactReview.count({ where: { AND: [baseWhere, { status: 'REJECTED' }] } }),
+    prisma.marketingArtifactReview.count({
+      where: { AND: [baseWhere, { OR: [{ status: 'REVOKED' }, { revokedAt: { not: null } }] }] },
+    }),
+    prisma.marketingArtifactReview.count({ where: { AND: [baseWhere, { status: 'EXPIRED' }] } }),
+    prisma.marketingArtifactReview.count({
+      where: {
+        AND: [
+          baseWhere,
+          { status: 'SUBMITTED', revokedAt: null, expiresAt: { lt: now } },
+        ],
+      },
+    }),
+  ])
+
+  return {
+    DRAFT: draft,
+    SUBMITTED: submitted,
+    APPROVED: approved,
+    REJECTED: rejected,
+    REVOKED: revoked,
+    EXPIRED: expiredStored + submittedPastExpiry,
+  }
+}
+
 export async function loadMarketingWorkflowLifecycleCounts(input: {
   customerAccountId: string
   managedSiteId?: string | null
   now: Date
 }): Promise<MarketingWorkflowLifecycleCounts> {
   const where = scopeWhere(input.customerAccountId, input.managedSiteId)
+  const publicationWhere = publicationScopeWhere(input.customerAccountId, input.managedSiteId)
 
-  const [requestGroups, reviewRows, publicationGroups] = await Promise.all([
+  const [requestGroups, reviewEffectiveStatus, publicationGroups, publishedWithProof] = await Promise.all([
     prisma.marketingRequest.groupBy({
       by: ['status'],
       where,
       _count: { _all: true },
     }),
-    prisma.marketingArtifactReview.findMany({
-      where,
-      select: {
-        status: true,
-        expiresAt: true,
-        revokedAt: true,
-      },
-    }),
+    countReviewEffectiveStatuses(where, input.now),
     prisma.socialPublication.groupBy({
       by: ['status'],
-      where: { customerAccountId: input.customerAccountId },
+      where: publicationWhere,
       _count: { _all: true },
+    }),
+    prisma.socialPublication.count({
+      where: {
+        ...publicationWhere,
+        status: 'PUBLISHED',
+        publishedUrl: { not: null },
+      },
     }),
   ])
 
@@ -44,33 +104,16 @@ export async function loadMarketingWorkflowLifecycleCounts(input: {
     requestStatus[row.status] = row._count._all
   }
 
-  const reviewEffectiveStatus: Record<string, number> = {}
-  for (const row of reviewRows) {
-    const effective = computeReviewEffectiveStatus(row, input.now)
-    reviewEffectiveStatus[effective] = (reviewEffectiveStatus[effective] ?? 0) + 1
-  }
-
   const publicationStatus: Record<string, number> = {}
   for (const row of publicationGroups) {
     publicationStatus[row.status] = row._count._all
   }
 
-  const draft =
-    (requestStatus.DRAFT ?? 0) +
-    (reviewEffectiveStatus.DRAFT ?? 0)
+  const draft = (requestStatus.DRAFT ?? 0) + (reviewEffectiveStatus.DRAFT ?? 0)
   const submitted = reviewEffectiveStatus.SUBMITTED ?? 0
   const approved = reviewEffectiveStatus.APPROVED ?? 0
   const prepared = requestStatus.HANDED_OFF ?? 0
-  const scheduled =
-    (publicationStatus.SCHEDULED ?? 0) +
-    (publicationStatus.PENDING ?? 0)
-  const publishedWithProof = await prisma.socialPublication.count({
-    where: {
-      customerAccountId: input.customerAccountId,
-      status: 'PUBLISHED',
-      publishedUrl: { not: null },
-    },
-  })
+  const scheduled = publicationStatus.SCHEDULED ?? 0
   const reconciliationRequired = publicationStatus.RECONCILIATION_REQUIRED ?? 0
 
   return {
