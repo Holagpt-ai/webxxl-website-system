@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import type { PortalUser } from '@/lib/portal/authz'
 import { SITE_INTELLIGENCE_PROVENANCE_NOTICE } from '@/lib/platform/site-intelligence/constants'
+import { loadSeoSiteOverview } from '@/lib/platform/seo/seo-overview-service'
 
 vi.mock('@/config/features', () => ({
   features: { analyticsBackend: true },
@@ -125,6 +126,7 @@ describe('Batch 2 site intelligence integration', () => {
   beforeEach(() => {
     vi.resetModules()
     googleReadinessMock.mockClear()
+    vi.mocked(loadSeoSiteOverview).mockClear()
     process.env = {
       ...env,
       SEO_BACKEND_ENABLED: 'true',
@@ -239,5 +241,33 @@ describe('Batch 2 site intelligence integration', () => {
     if (result.ok && result.value.googleReadiness.status === 'UNAVAILABLE') {
       expect(result.value.googleReadiness.reasonCode).toMatch(/NOT_ELIGIBLE|FREE_SOFTWARE_NOT_ELIGIBLE/)
     }
+  })
+
+  it('skips SEO overview and Google readiness when seo.read permission is denied', async () => {
+    process.env.GOOGLE_PROVIDER_READINESS_ENABLED = 'true'
+    const permissions = await import('@/lib/platform/seo/permissions')
+    const assertSpy = vi.spyOn(permissions, 'assertSeoPermission').mockImplementation(() => {
+      throw new Error('Missing SEO permission: seo.read')
+    })
+    const { getSiteIntelligenceSummary } = await import('@/lib/platform/site-intelligence/service')
+    const result = await getSiteIntelligenceSummary({
+      portal: portalStub('acct_a'),
+      managedSiteId: 'site_a',
+      range: range(),
+    })
+    assertSpy.mockRestore()
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(vi.mocked(loadSeoSiteOverview)).not.toHaveBeenCalled()
+    expect(googleReadinessMock).not.toHaveBeenCalled()
+    expect(result.value.seo.status).toBe('UNAVAILABLE')
+    if (result.value.seo.status === 'UNAVAILABLE') {
+      expect(result.value.seo.reasonCode).toBe('FORBIDDEN')
+    }
+    expect(result.value.googleReadiness.status).toBe('UNAVAILABLE')
+    if (result.value.googleReadiness.status === 'UNAVAILABLE') {
+      expect(result.value.googleReadiness.reasonCode).toBe('FORBIDDEN')
+    }
+    expect(result.value.analytics.status).toBe('AVAILABLE')
   })
 })

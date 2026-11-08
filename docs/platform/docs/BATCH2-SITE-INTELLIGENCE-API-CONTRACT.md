@@ -19,6 +19,7 @@
 - Session `requireCustomerMembership`
 - Managed site must belong to session `CustomerAccount` (`404` if not)
 - OPEN-001: SEO slice requires `core.local-seo`; Analytics slice requires `core.analytics` (each may be `UNAVAILABLE` without failing the whole response when the site exists)
+- `seo` and `googleReadiness` slices require membership `seo.read` (`UNAVAILABLE` / `FORBIDDEN` when denied); `analytics` is gated independently
 
 ### Response
 

@@ -2,7 +2,9 @@ import { isEnabled } from '@/config/features'
 import { isAnalyticsBackendEnabled, ANALYTICS_DEFAULT_TIMEZONE } from '@/config/analytics-backend'
 import { isSeoBackendEnabled } from '@/config/seo-backend'
 import { isGoogleProviderReadinessEnabled } from '@/config/google-integration'
+import { isStaffRole } from '@/lib/admin/roles'
 import type { PortalUser } from '@/lib/portal/authz'
+import { assertSeoPermission } from '@/lib/platform/seo/permissions'
 import type { AnalyticsDateRange } from '@/lib/platform/analytics/date-range'
 import { buildAnalyticsOverview } from '@/lib/platform/analytics/bi/summary-service'
 import { prismaAnalyticsStore } from '@/lib/platform/analytics/prisma-store'
@@ -28,6 +30,20 @@ function unavailable<T>(
   message: string,
 ): SiteIntelligenceSlice<T> {
   return { status: 'UNAVAILABLE', sourceModule, reasonCode, message }
+}
+
+const SEO_READ_FORBIDDEN_MESSAGE = 'Missing SEO permission: seo.read'
+
+function seoReadDenied(portal: PortalUser): boolean {
+  try {
+    assertSeoPermission(
+      { membershipRole: portal.membership.role, isStaff: isStaffRole(portal.role) },
+      'seo.read',
+    )
+    return false
+  } catch {
+    return true
+  }
 }
 
 export async function getSiteIntelligenceSummary(input: {
@@ -63,6 +79,8 @@ export async function getSiteIntelligenceSummary(input: {
     seo = unavailable('seo.overview', 'SEO_DISABLED', 'Local SEO backend is disabled')
   } else if (!seoEntitlement.allowed) {
     seo = unavailable('seo.overview', seoEntitlement.code, seoEntitlement.message)
+  } else if (seoReadDenied(input.portal)) {
+    seo = unavailable('seo.overview', 'FORBIDDEN', SEO_READ_FORBIDDEN_MESSAGE)
   } else {
     const overview = await loadSeoSiteOverview({
       customerAccountId,
@@ -111,6 +129,8 @@ export async function getSiteIntelligenceSummary(input: {
     googleReadiness = unavailable('google.readiness', 'SEO_DISABLED', 'Local SEO backend is disabled')
   } else if (!seoEntitlement.allowed) {
     googleReadiness = unavailable('google.readiness', seoEntitlement.code, seoEntitlement.message)
+  } else if (seoReadDenied(input.portal)) {
+    googleReadiness = unavailable('google.readiness', 'FORBIDDEN', SEO_READ_FORBIDDEN_MESSAGE)
   } else {
     const readiness = await buildGoogleAccountReadiness({
       customerAccountId,
