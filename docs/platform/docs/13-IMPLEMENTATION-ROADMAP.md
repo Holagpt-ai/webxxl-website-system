@@ -30,7 +30,7 @@ GitHub `main` at `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` (PR #52) has moved p
 
 **Batch 2 (Issue #114):** MERGED — `GET /api/v1/site-intelligence/sites/{siteId}/summary` per [`BATCH2-SITE-INTELLIGENCE-API-CONTRACT.md`](BATCH2-SITE-INTELLIGENCE-API-CONTRACT.md). v0 optional on `dashboard/seo/**` and `dashboard/analytics/**`.
 
-**Batch 3 (Issue #117):** Marketing & Social Execution — IN PR adds `GET /api/v1/marketing/execution/summary` per [`BATCH3-MARKETING-EXECUTION-API-CONTRACT.md`](BATCH3-MARKETING-EXECUTION-API-CONTRACT.md). v0 Stage B on `dashboard/marketing/**`.
+**Batch 3 (Issue #117):** Marketing & Social Execution — **MERGED** ([PR #118](https://github.com/Holagpt-ai/webxxl-website-system/pull/118) backend, [PR #120](https://github.com/Holagpt-ai/webxxl-website-system/pull/120) UI). `GET /api/v1/marketing/execution/summary` per [`BATCH3-MARKETING-EXECUTION-API-CONTRACT.md`](BATCH3-MARKETING-EXECUTION-API-CONTRACT.md).
 
 ---
 

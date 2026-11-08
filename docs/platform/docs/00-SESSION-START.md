@@ -4,7 +4,7 @@
 
 ## Mandatory reading sequence for every fresh work session
 
-1. Read the root `README.md`, `AGENTS.md`, `docs/PROJECT_MEMORY.md`, and `docs/SESSION_HANDOFF.md`. Read **`01-MASTER-TAD.md`** when the batch changes architecture, policy, tenancy, or commercial scope. Do not re-read the entire TAD on an ordinary implementation batch.
+1. Run **`pnpm continuity:start`** (or verify GitHub `main` and read the six-field checkpoint). Read the root `README.md`, `AGENTS.md`, `docs/PROJECT_MEMORY.md`, and `docs/SESSION_HANDOFF.md`. Read **`01-MASTER-TAD.md`** when the batch changes architecture, policy, tenancy, or commercial scope. Do not re-read the entire TAD on an ordinary implementation batch.
 2. Read **`02-CURRENT-STATE.md`**, then **`15-DECISIONS-CHANGELOG.md`**. Follow the domain specification sections that the batch actually changes.
 3. Identify the actual repository, branch, code revision, relevant schema, applicable feature flags and last merged batch. The TAD is architecture; source and deployed evidence determine actual status.
 4. Confirm the chosen implementation batch, exact modules and file ownership; show affected contracts, migration impact, external providers and acceptance cases.

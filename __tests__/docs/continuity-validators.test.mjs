@@ -19,13 +19,20 @@ import {
   firstSha,
   looksLikeOpenPrClaim,
   parseSixFieldCheckpoint,
+  prNumbers,
   shasPrefixMatch,
 } from '../../scripts/continuity-parse.mjs';
 import {
+  classifyStaleOpenMergedPr,
   evaluateCheckpointMainLineage,
   gitIsAncestor,
   reconcileContinuity,
 } from '../../scripts/continuity-reconcile.mjs';
+import { parseContinuityCliArgs } from '../../scripts/continuity-cli-args.mjs';
+import { applySnapshotFromFile, proposeCheckpointSnapshot } from '../../scripts/continuity-docs-snapshot.mjs';
+import { deriveReasonCode, runContinuityLifecycle } from '../../scripts/continuity-lifecycle.mjs';
+import { validateOperationalAnchors } from '../../scripts/validate-operational-anchors.mjs';
+import { buildContinuityLiveStatus } from '../../scripts/continuity-live.mjs';
 import {
   buildPostMergePendingSyncArtifact,
   dedupePendingItems,
@@ -228,6 +235,12 @@ test('six-field checkpoint parsing reads table cells', () => {
 test('open PR claim heuristics detect owner-review wording', () => {
   assert.equal(looksLikeOpenPrClaim('Owner review of PR #50'), true);
   assert.equal(looksLikeOpenPrClaim('PR #106 MERGED on main'), false);
+  assert.equal(looksLikeOpenPrClaim('[PR **#122**] on `feature/x` (open, owner review)'), true);
+});
+
+test('prNumbers parses Markdown PR references', () => {
+  const text = 'Issue **#121** [PR **#122**](https://github.com/example/pull/122) (open)';
+  assert.deepEqual(prNumbers(text), ['122']);
 });
 
 test('sha prefix match tolerates short and full hashes', () => {
@@ -363,6 +376,173 @@ test('missing evidence stays unverified', () => {
   try {
     mkdirSync(join(root, 'unused'));
     writeFileSync(join(root, 'unused', 'note.txt'), 'unused');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('c merged PR still open in checkpoint is CONFLICT with MERGED_PR_STILL_OPEN reason', () => {
+  const root = mkdtempSync(join(tmpdir(), 'webxxl-open-pr-'));
+  const documented = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  try {
+    writeCheckpointDocs(root, documented);
+    const memory = readFileSync(join(root, 'docs', 'PROJECT_MEMORY.md'), 'utf8');
+    writeFileSync(
+      join(root, 'docs', 'PROJECT_MEMORY.md'),
+      memory.replace(
+        '| 2 | GitHub SHA, branch, active PR |',
+        `| 2 | GitHub SHA, branch, active PR | **\`${documented}\`** on main. [PR **#118**](https://example/pull/118) open, not merged |`,
+      ),
+    );
+    const field2 = `| 2 | GitHub SHA, branch, active PR | **\`${documented}\`** on main. [PR **#118**](https://example/pull/118) open, not merged |`;
+    const handoff = readFileSync(join(root, 'docs', 'SESSION_HANDOFF.md'), 'utf8');
+    writeFileSync(join(root, 'docs', 'PROJECT_MEMORY.md'), readFileSync(join(root, 'docs', 'PROJECT_MEMORY.md'), 'utf8').replace(/\| 2 \| GitHub SHA, branch, active PR \|[^\n]+\|/, field2));
+    writeFileSync(join(root, 'docs', 'SESSION_HANDOFF.md'), handoff.replace(/\| 2 \| GitHub SHA, branch, active PR \|[^\n]+\|/, field2));
+    const mergedAt = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
+    const result = reconcileContinuity(root, {
+      lifecyclePhase: 'close',
+      skipGitFetch: true,
+      referenceMain: documented,
+      mergedPrCheckFn: (pr) =>
+        pr === '118'
+          ? { available: true, merged: true, mergeSha: mergedAt }
+          : { available: true, merged: false, mergeSha: null },
+    });
+    assert.equal(classifyStaleOpenMergedPr(root, documented, documented, mergedAt, false), 'contradiction');
+    assert.equal(result.status, 'CONFLICT');
+    assert.ok(result.conflicts.some((c) => /still describes PR #118 as open/.test(c)));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('just-merged PR open wording on push:main is post-merge sync not stale contradiction', () => {
+  const root = mkdtempSync(join(tmpdir(), 'webxxl-post-merge-pr-'));
+  try {
+    const baseSha = initFixtureRepo(root);
+    writeFileSync(join(root, 'README.md'), 'application v2 after merge\n');
+    gitCmd(root, 'add', 'README.md');
+    gitCmd(root, 'commit', '-m', 'simulate squash merge on main');
+    const referenceMain = gitCmd(root, 'rev-parse', 'HEAD');
+    const mergeSha = referenceMain;
+    writeCheckpointDocs(root, baseSha);
+    const field2 = `| 2 | GitHub SHA, branch, active PR | **\`${baseSha}\`** on main. [PR **#118**](https://example/pull/118) open until docs catch up |`;
+    for (const rel of ['docs/PROJECT_MEMORY.md', 'docs/SESSION_HANDOFF.md']) {
+      writeFileSync(
+        join(root, rel),
+        readFileSync(join(root, rel), 'utf8').replace(/\| 2 \| GitHub SHA, branch, active PR \|[^\n]+\|/, field2),
+      );
+    }
+    assert.equal(
+      classifyStaleOpenMergedPr(root, baseSha, referenceMain, mergeSha, true),
+      'post_merge_sync',
+    );
+    const reconcileOpts = {
+      referenceMain,
+      skipGitFetch: true,
+      mergedPrCheckFn: () => ({ available: true, merged: true, mergeSha }),
+    };
+    for (const lifecyclePhase of ['start', 'checkpoint', 'close']) {
+      const result = reconcileContinuity(root, { ...reconcileOpts, lifecyclePhase });
+      assert.equal(result.conflicts.length, 0, `${lifecyclePhase}: ${result.conflicts.join('\n')}`);
+      assert.ok(result.pending.some((p) => /POST-MERGE-PR-#118/.test(p)), lifecyclePhase);
+      assert.ok(result.pending.some((p) => /POST-MERGE-CHECKPOINT/i.test(p)), lifecyclePhase);
+      assert.equal(result.status, 'PENDING_REPOSITORY_SYNC', lifecyclePhase);
+    }
+    const pushResult = reconcileContinuity(root, {
+      ...reconcileOpts,
+      isMainPush: true,
+      ciGitHubSha: referenceMain,
+      lifecyclePhase: 'ci',
+    });
+    assert.equal(pushResult.status, 'PENDING_REPOSITORY_SYNC');
+    assert.ok(pushResult.pending.some((p) => /POST-MERGE-PR-#118/.test(p)));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('continuity CLI treats --json as a flag not repository root', () => {
+  const parsed = parseContinuityCliArgs(['node', 'continuity-start.mjs', '--json']);
+  assert.equal(parsed.json, true);
+  assert.match(parsed.root, /webxxl-website-system|Projects/i);
+  const withRoot = parseContinuityCliArgs(['node', 'continuity-start.mjs', '/tmp/repo', '--json']);
+  assert.equal(withRoot.json, true);
+  assert.equal(withRoot.root, resolve('/tmp/repo'));
+});
+
+test('a current repo lifecycle close has no deterministic conflicts after CONTINUITY-04 reconcile', () => {
+  const { payload } = runContinuityLifecycle(ROOT, { phase: 'close', skipGitFetch: true, referenceMain: firstSha(parseSixFieldCheckpoint(readFileSync(join(ROOT, 'docs', 'PROJECT_MEMORY.md'), 'utf8'))['2']) });
+  assert.equal(payload.conflicts.length, 0, payload.conflicts.join('\n'));
+  assert.notEqual(payload.status, 'CONFLICT');
+});
+
+test('continuity live status marks bot writer disabled', () => {
+  const live = buildContinuityLiveStatus({ status: 'PENDING_REPOSITORY_SYNC', reasonCode: 'CHECKPOINT_LAGS_LIVE_MAIN', conflicts: [], pending: ['x'], facts: {} }, 'aaaa', { available: true, prs: [] });
+  assert.equal(live.bot_docs_sync_pr.enabled, false);
+  assert.match(live.note, /Green CI does not imply/);
+});
+
+test('operational anchors reject stale CHATGPT verified main claim', () => {
+  const root = mkdtempSync(join(tmpdir(), 'webxxl-anchor-'));
+  try {
+  const main = 'cccccccccccccccccccccccccccccccccccccccc';
+  writeCheckpointDocs(root, main);
+    writeFileSync(
+      join(root, 'docs', 'CHATGPT_PROJECT_INSTRUCTIONS.md'),
+      `Checkpoint written 2026-01-01: verified \`main\` is \`deadbeefdeadbeefdeadbeefdeadbeefdeadbeef\``,
+    );
+    const { errors } = validateOperationalAnchors(root);
+    assert.ok(errors.length >= 1);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('docs snapshot write is idempotent when snapshot unchanged', () => {
+  const root = mkdtempSync(join(tmpdir(), 'webxxl-snapshot-'));
+  const snapPath = join(root, 'snap.json');
+  try {
+    const main = 'dddddddddddddddddddddddddddddddddddddddd';
+    writeCheckpointDocs(root, main);
+    const snapshot = proposeCheckpointSnapshot({
+      reconciledMainSha: main,
+      field1Summary: 'test field 1',
+      field2Summary: `**\`${main}\`** on main`,
+      field3Deployment: 'UNVERIFIED',
+      field4Date: '2026-11-08',
+      field5Next: 'wait',
+      field6Blockers: 'none',
+    });
+    writeFileSync(snapPath, JSON.stringify(snapshot));
+    const first = applySnapshotFromFile(root, snapPath);
+    const second = applySnapshotFromFile(root, snapPath);
+    assert.equal(first.changed, true);
+    assert.equal(second.idempotent, true);
+    assert.equal(second.changed, false);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('g duplicate ADR index status mismatch is reported', () => {
+  const root = mkdtempSync(join(tmpdir(), 'webxxl-adr-'));
+  try {
+    cpSync(join(ROOT, 'docs', 'adr'), join(root, 'docs', 'adr'), { recursive: true });
+    mkdirSync(join(root, 'docs', 'platform', 'docs'), { recursive: true });
+    writeFileSync(
+      join(root, 'docs', 'platform', 'docs', '15-DECISIONS-CHANGELOG.md'),
+      readFileSync(join(ROOT, 'docs', 'platform', 'docs', '15-DECISIONS-CHANGELOG.md')),
+    );
+    let index = readFileSync(join(root, 'docs', 'adr', 'INDEX.md'), 'utf8');
+    index = index.replace('| ADR-018 |', '| ADR-018 |').replace('| PROPOSED |', '| APPROVED |');
+    index = index.replace(
+      '| ADR-018 | Component adoption vs whole-platform replacement | PROPOSED |',
+      '| ADR-018 | Component adoption vs whole-platform replacement | APPROVED |',
+    );
+    writeFileSync(join(root, 'docs', 'adr', 'INDEX.md'), index);
+    const { errors } = validateAdrs(root);
+    assert.ok(errors.some((e) => /INDEX\.md/.test(e) && /ADR-018/.test(e)));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

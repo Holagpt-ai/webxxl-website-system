@@ -1,5 +1,6 @@
 # CONTINUITY-03 — Session closeout protocol
 
+**Superseded for lifecycle commands by:** [`CONTINUITY-04-SESSION-LIFECYCLE.md`](CONTINUITY-04-SESSION-LIFECYCLE.md) (Issue [#121](https://github.com/Holagpt-ai/webxxl-website-system/issues/121))  
 **Issues:** [#107](https://github.com/Holagpt-ai/webxxl-website-system/issues/107) (closed in PR #108); post-merge tracking [#109](https://github.com/Holagpt-ai/webxxl-website-system/issues/109)  
 **ADR:** not required (operational continuity tooling; Master TAD unchanged)
 

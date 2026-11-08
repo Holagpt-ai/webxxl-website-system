@@ -5,9 +5,25 @@
  * documentation commit can change the current SHA without a warning.
  * Prints GitHub warnings and exits 0.
  */
+import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+const REPO = 'Holagpt-ai/webxxl-website-system';
+
+function liveMergedPullRequestNumbers(limit = 30) {
+  try {
+    const out = execFileSync(
+      'gh',
+      ['pr', 'list', '--repo', REPO, '--state', 'merged', '--limit', String(limit), '--json', 'number'],
+      { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] },
+    );
+    return new Set(JSON.parse(out).map((row) => String(row.number)));
+  } catch {
+    return null;
+  }
+}
 
 export const OPERATIONAL_DOCS = [
   'docs/SESSION_HANDOFF.md',
@@ -70,10 +86,11 @@ function mergedHits(text, batch, prs) {
   return [...new Set(hits)];
 }
 
-export function collectStaleStatusWarnings({ projectMemory, documents, handoff }) {
+export function collectStaleStatusWarnings({ projectMemory, documents, handoff, liveMergedPrs = null }) {
   const rows = parseMergedCheckpoint(projectMemory || '');
   const batch = latestCompletedBatch(rows);
   const prs = new Set(rows.flatMap((row) => prNumbers(`${row.item} ${row.evidence}`)));
+  if (liveMergedPrs) for (const number of liveMergedPrs) prs.add(number);
   const warnings = [];
   for (const doc of documents || []) {
     const lines = (doc.text || '').replace(/\r\n/g, '\n').split('\n');
@@ -102,6 +119,7 @@ export function loadOperationalStatus(root) {
   return {
     projectMemory: existsSync(memoryPath) ? readFileSync(memoryPath, 'utf8') : '',
     handoff: existsSync(handoffPath) ? readFileSync(handoffPath, 'utf8') : '',
+    liveMergedPrs: liveMergedPullRequestNumbers(),
     documents: OPERATIONAL_DOCS.filter((rel) => existsSync(join(root, rel))).map((rel) => ({
       name: rel,
       text: readFileSync(join(root, rel), 'utf8'),
@@ -114,7 +132,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   if (!existsSync(join(root, 'docs', 'PROJECT_MEMORY.md'))) {
     process.stdout.write('::warning::Stale-status advisory skipped because docs/PROJECT_MEMORY.md is missing.\n');
   } else {
-    const warnings = collectStaleStatusWarnings(loadOperationalStatus(root));
+    const loaded = loadOperationalStatus(root);
+    const warnings = collectStaleStatusWarnings(loaded);
     if (!warnings.length) process.stdout.write('Stale operational status: none\n');
     for (const warning of warnings) process.stdout.write(`::warning::${warning}\n`);
   }

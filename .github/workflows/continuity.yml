@@ -37,6 +37,13 @@ jobs:
           name: post-merge-pending-sync
           path: post-merge-pending-sync.json
           if-no-files-found: ignore
+      - name: Upload live continuity status (detection only)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: continuity-live-status
+          path: continuity-live-status.json
+          if-no-files-found: ignore
       - name: Continuity documents
         run: node scripts/validate-continuity.mjs
       - name: Routes and navigation
