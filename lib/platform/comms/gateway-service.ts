@@ -1,9 +1,10 @@
-import { isCommunicationsOutboundEnabled, isSmsSendEnabled } from '@/config/comms-backend'
+import { isCommunicationsOutboundEnabled, isCommsIntegrationGatesEnabled, isSmsSendEnabled } from '@/config/comms-backend'
 import { commsProviderDispatchBlocked } from '@/lib/platform/comms/execution-gates'
 import { prisma } from '@/lib/db'
 import { evaluateChatwootDirectSendBypass, evaluateCommunicationPolicy } from '@/lib/platform/comms/policy-engine'
 import { buildCommunicationContentHash } from '@/lib/platform/comms/intent-hash'
 import { resolveEffectiveAiActor, resolveServerDataClassification } from '@/lib/platform/comms/intent-auth'
+import { prepareGuardedCommunication } from '@/lib/platform/comms-execution/guarded-prepare-service'
 import type { CommsResult } from '@/lib/platform/comms/types'
 import type { CrmConsentChannel, CrmConsentPurpose, CommsDataClassification } from '@prisma/client'
 
@@ -20,7 +21,45 @@ export async function prepareCommunicationIntent(input: {
   idempotencyKey: string
   dataClassification?: CommsDataClassification
   aiActor?: boolean
-}): Promise<CommsResult<{ intentId: string; status: string; policyDecision: string }>> {
+  quoteId?: string
+  billingGroupId?: string
+  managedSiteId?: string
+  humanApprovalGranted?: boolean
+  reserveWallet?: boolean
+}): Promise<CommsResult<{ intentId: string; status: string; policyDecision: string; reservationId?: string | null }>> {
+  // Batch 4: when integration gates are on, use the DB-backed guarded prepare path.
+  if (isCommsIntegrationGatesEnabled()) {
+    const guarded = await prepareGuardedCommunication({
+      customerAccountId: input.customerAccountId,
+      actorUserId: input.actorUserId,
+      channel: input.channel,
+      purpose: input.purpose,
+      recipientAddress: input.recipientAddress,
+      crmContactId: input.crmContactId,
+      senderIdentityId: input.senderIdentityId,
+      managedSiteId: input.managedSiteId,
+      contentVersion: input.contentVersion,
+      policyVersion: input.policyVersion,
+      idempotencyKey: input.idempotencyKey,
+      dataClassification: input.dataClassification,
+      aiActor: input.aiActor,
+      humanApprovalGranted: input.humanApprovalGranted,
+      quoteId: input.quoteId,
+      billingGroupId: input.billingGroupId,
+      reserveWallet: input.reserveWallet === true,
+    })
+    if (!guarded.ok) return guarded
+    return {
+      ok: true,
+      value: {
+        intentId: guarded.value.intentId,
+        status: guarded.value.status,
+        policyDecision: String(guarded.value.policyDecision),
+        reservationId: guarded.value.reservationId,
+      },
+    }
+  }
+
   const contentHash = buildCommunicationContentHash({
     customerAccountId: input.customerAccountId,
     senderIdentityId: input.senderIdentityId ?? null,

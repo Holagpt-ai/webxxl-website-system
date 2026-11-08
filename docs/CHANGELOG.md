@@ -110,6 +110,7 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-11-08 | Issue #117 Batch 3 marketing & social execution | [PR **#118**](https://github.com/Holagpt-ai/webxxl-website-system/pull/118) merged @ `c9a67b065a0d665f0f66bddcfae932eb85cb489d`; [PR **#120**](https://github.com/Holagpt-ai/webxxl-website-system/pull/120) UI @ `6015d907262fd655919b8419369716a8f40d41dd` | MERGED. Not publish/send activation |
 | 2026-11-08 | Issue #121 CONTINUITY-04 lifecycle | [PR **#122**](https://github.com/Holagpt-ai/webxxl-website-system/pull/122) merged @ `c488b10a6143a7b358e0f88158ac09ea91289815` | Session start/checkpoint/close; live status artifact; ADR anchor checks |
 | 2026-11-08 | Issue #121 post-merge CI stale-template fix | [PR **#123**](https://github.com/Holagpt-ai/webxxl-website-system/pull/123) merged @ `259f6be2be0774e90f1f77bfce1911be462420da` | Handoff template excluded from stale-status scan |
-| 2026-11-08 | Issue #121 ISSUE_REGISTER post-merge classifier | Corrective PR (owner review) | Unified `resolveMergedOpenPrDrift`; register lag → PENDING_REPOSITORY_SYNC |
+| 2026-11-08 | Issue #121 ISSUE_REGISTER post-merge classifier | [PR **#124**](https://github.com/Holagpt-ai/webxxl-website-system/pull/124) merged @ `5cc8d416ef4059ba507c231afb34e95b6a587c7c` | Unified `resolveMergedOpenPrDrift`; register lag → PENDING_REPOSITORY_SYNC |
+| 2026-11-08 | Issue #109 Batch 4 communications & messaging wallet | Owner-review PR on `feat/batch4-comms-messaging-wallet` | Execution summary API + guarded prepare + wallet bridge; no live send/activation |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

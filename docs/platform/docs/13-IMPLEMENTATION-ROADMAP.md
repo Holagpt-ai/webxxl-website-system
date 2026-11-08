@@ -32,6 +32,8 @@ GitHub `main` at `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` (PR #52) has moved p
 
 **Batch 3 (Issue #117):** Marketing & Social Execution — **MERGED** ([PR #118](https://github.com/Holagpt-ai/webxxl-website-system/pull/118) backend, [PR #120](https://github.com/Holagpt-ai/webxxl-website-system/pull/120) UI). `GET /api/v1/marketing/execution/summary` per [`BATCH3-MARKETING-EXECUTION-API-CONTRACT.md`](BATCH3-MARKETING-EXECUTION-API-CONTRACT.md).
 
+**Batch 4 (Issue #109):** Communications & Messaging Wallet — **IN PR** (`feat/batch4-comms-messaging-wallet`). `GET /api/v1/communications/execution/summary` + guarded prepare + shared wallet bridge per [`BATCH4-COMMS-MESSAGING-WALLET-API-CONTRACT.md`](BATCH4-COMMS-MESSAGING-WALLET-API-CONTRACT.md). No live send/activation. Optional v0 on `dashboard/communications/**`.
+
 ---
 
 **Historical note (2026-11-07 morning):** Issue #105 CRM page entitlement is **MERGED** on `main` @ `e37f0a0` ([PR #106](https://github.com/Holagpt-ai/webxxl-website-system/pull/106)). Batch 43 safeguards remain on `main`.
