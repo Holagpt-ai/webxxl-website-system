@@ -471,11 +471,19 @@ test('mixed-status issue register row resolves only the active open PR citation'
   assert.deepEqual(openPrNumbersInText(row), ['124']);
 });
 
-test('live CONT-121 issue register row exposes PR #124 as the active open citation', () => {
+test('live CONT-121 issue register row is RESOLVED with no open PR citation', () => {
   const register = readFileSync(join(ROOT, 'docs', 'ISSUE_REGISTER.md'), 'utf8');
-  const row = register.split('\n').find((line) => line.includes('CONT-121'));
+  const row = register.split('\n').find((line) => line.includes('| CONT-121 |'));
   assert.ok(row);
-  assert.deepEqual(openPrNumbersInText(row), ['124']);
+  assert.match(row, /\|\s*CONT-121\s*\|\s*RESOLVED\s*\|/);
+  assert.deepEqual(openPrNumbersInText(row), []);
+});
+
+test('live BATCH4-109 issue register row exposes PR #125 as the active open citation', () => {
+  const register = readFileSync(join(ROOT, 'docs', 'ISSUE_REGISTER.md'), 'utf8');
+  const row = register.split('\n').find((line) => line.includes('| BATCH4-109 |'));
+  assert.ok(row);
+  assert.deepEqual(openPrNumbersInText(row), ['125']);
 });
 
 test('push:main mixed-status CONT-121 row yields POST-MERGE-ISSUE-PR for active PR only', () => {
