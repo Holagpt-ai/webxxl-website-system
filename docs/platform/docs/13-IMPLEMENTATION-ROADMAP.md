@@ -26,9 +26,11 @@ GitHub `main` at `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` (PR #52) has moved p
 | 8 | Release & Activation | 22–26 | Owner decisions, authorized migrations, gated activation, full cross-module QA, launch |
 | DEFERRED | Optional expansion | 27 | Voice/WhatsApp advanced, paid AI catalog, white-label, CMS builder — **no implied approval** |
 
-**Batch 1 (Issue #111):** Customer Operations Engine — owner-review PR adds `GET /api/v1/customer-operations/summary` per [`BATCH1-CUSTOMER-OPERATIONS-API-CONTRACT.md`](BATCH1-CUSTOMER-OPERATIONS-API-CONTRACT.md). v0.app owns optional Business Command Center UI wiring.
+**Batch 1 (Issue #111):** **MERGED** [PR #112](https://github.com/Holagpt-ai/webxxl-website-system/pull/112) @ `52e6bb6` — `GET /api/v1/customer-operations/summary`. v0.app: Issue **#113** Business Command Center UI (`dashboard/business/**`).
 
-**Next after Batch 1 merge:** Batch **2** — SEO & Analytics Intelligence (execution table above).
+**Batch 2 (Issue #114):** SEO & Analytics Intelligence — owner-review PR adds `GET /api/v1/site-intelligence/sites/{siteId}/summary` per [`BATCH2-SITE-INTELLIGENCE-API-CONTRACT.md`](BATCH2-SITE-INTELLIGENCE-API-CONTRACT.md). v0 optional on `dashboard/seo/**` and `dashboard/analytics/**`.
+
+**Next after Batch 2 merge:** Batch **3** — Marketing & Social Execution.
 
 ---
 
