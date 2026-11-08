@@ -7,7 +7,7 @@
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | GitHub `main` `52e6bb631d5b8621f737d1fe7f3a8050a0d82a08` ([PR **#112**](https://github.com/Holagpt-ai/webxxl-website-system/pull/112) Batch 1, MERGED 2026-11-07). [PR **#110**](https://github.com/Holagpt-ai/webxxl-website-system/pull/110) Issue **#109** roadmap on `main`. Issue **#114** Batch 2 site intelligence in owner-review PR. v0 Issue **#113** owns `dashboard/business/**`. Build-first active; Issue #105 QA **deferred** to Batch 8. |
-| 2 | GitHub SHA, branch, active PR | **`52e6bb631d5b8621f737d1fe7f3a8050a0d82a08`** on `main`. Issue **#114** Batch 2 on `feature/issue-114-batch2-site-intelligence` (open owner-review PR) — **Cursor** |
+| 2 | GitHub SHA, branch, active PR | **`52e6bb631d5b8621f737d1fe7f3a8050a0d82a08`** on `main`. Issue **#114** Batch 2 [PR **#115**](https://github.com/Holagpt-ai/webxxl-website-system/pull/115) head `c4f56d5` on `feature/issue-114-batch2-site-intelligence` (open, **not merged**) — **Cursor** |
 | 3 | Production deployment | Vercel **`dpl_Dp46wnsQStm3ZacNS6BRKMChvoxH`** (owner-reported READY @ `52e6bb6`, 2026-11-07). Prior Vercel `dpl_4mt42VeQg7aMDHhv7Pb8x5w5xg93` @ `fcceade` is a historical row. SHA deploy only. Not migration, activation, or provider live state. |
 | 4 | Last updated | 2026-11-07 |
 | 5 | Next task / responsible platform | Owner review Issue **#114** Batch 2 PR. Optional v0 SEO/analytics UI for `/api/v1/site-intelligence/sites/{siteId}/summary` — **v0.app** (not `dashboard/business/**`, Issue #113) |
@@ -30,7 +30,7 @@ Owner reviews Batch 2 PR. v0 may consume the new API on SEO/analytics dashboard 
 ```
 Date / scope / owner: 2026-11-07 / Issue #114 Batch 2 / Cursor
 Repo / main SHA: Holagpt-ai/webxxl-website-system / 52e6bb631d5b8621f737d1fe7f3a8050a0d82a08
-Branch / PR: feature/issue-114-batch2-site-intelligence / open owner-review PR
+Branch / PR: feature/issue-114-batch2-site-intelligence / PR #115 (owner review)
 Merged / deployed: PR #112 on main; Vercel dpl_Dp46wnsQStm3ZacNS6BRKMChvoxH @ 52e6bb6 (SHA only)
 Migration / flags / activation: UNVERIFIED / not activated / UNVERIFIED
 Tests: batch2-site-intelligence.test.ts (6); typecheck pass
