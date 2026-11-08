@@ -48,12 +48,15 @@ describe('Batch 27C Business Command Center UI integration', () => {
     expect(layout.length).toBeGreaterThan(0)
   })
 
-  it('uses GET /api/v1/business/overview with session account query', () => {
-    expect(BUSINESS_API.overview).toBe('/api/v1/business/overview')
+  it('uses GET /api/v1/customer-operations/summary with session account scope checks', () => {
+    expect(BUSINESS_API.customerOperations).toBe('/api/v1/customer-operations/summary')
     const center = read('components/business/command-center.tsx')
-    expect(center).toContain('BUSINESS_API.overview')
+    expect(center).toContain('BUSINESS_API.customerOperations')
     expect(center).toContain('customerAccountId: accountId')
-    const route = read('app/api/v1/business/overview/route.ts')
+    expect(center).toContain('data.summary.customerAccountId === accountId')
+    expect(center).toContain('summary.businessOverview.customerAccountId === accountId')
+    expect(center).toContain('CustomerOperationsSection')
+    const route = read('app/api/v1/customer-operations/summary/route.ts')
     expect(route).toContain('requireCustomerMembership')
     expect(route).toContain('requestedAccountId !== portal.customerAccount.id')
   })
@@ -120,7 +123,7 @@ describe('Batch 27C Business Command Center UI integration', () => {
   it('remounts the command center when CustomerAccount changes', () => {
     const center = read('components/business/command-center.tsx')
     expect(center).toContain('key={props.accountId}')
-    expect(center).toContain('data.overview.customerAccountId === accountId')
+    expect(center).toContain('data.summary.customerAccountId === accountId')
     expect(center).toContain('staleAccount')
   })
 
