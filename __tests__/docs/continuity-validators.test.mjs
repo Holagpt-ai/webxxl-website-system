@@ -26,6 +26,9 @@ import {
   gitIsAncestor,
   reconcileContinuity,
 } from '../../scripts/continuity-reconcile.mjs';
+import { deriveReasonCode, runContinuityLifecycle } from '../../scripts/continuity-lifecycle.mjs';
+import { validateOperationalAnchors } from '../../scripts/validate-operational-anchors.mjs';
+import { buildContinuityLiveStatus } from '../../scripts/continuity-live.mjs';
 import {
   buildPostMergePendingSyncArtifact,
   dedupePendingItems,
@@ -363,6 +366,81 @@ test('missing evidence stays unverified', () => {
   try {
     mkdirSync(join(root, 'unused'));
     writeFileSync(join(root, 'unused', 'note.txt'), 'unused');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('c merged PR still open in checkpoint is CONFLICT with MERGED_PR_STILL_OPEN reason', () => {
+  const root = mkdtempSync(join(tmpdir(), 'webxxl-open-pr-'));
+  try {
+    writeCheckpointDocs(root, 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
+    const memory = readFileSync(join(root, 'docs', 'PROJECT_MEMORY.md'), 'utf8');
+    writeFileSync(
+      join(root, 'docs', 'PROJECT_MEMORY.md'),
+      memory.replace(
+        '| 2 | GitHub SHA, branch, active PR |',
+        '| 2 | GitHub SHA, branch, active PR | PR #118 open, not merged on `feature/issue-117` |',
+      ),
+    );
+    const handoff = readFileSync(join(root, 'docs', 'SESSION_HANDOFF.md'), 'utf8');
+    writeFileSync(join(root, 'docs', 'SESSION_HANDOFF.md'), handoff.replace('| 2 | GitHub SHA, branch, active PR |', '| 2 | GitHub SHA, branch, active PR | PR #118 open, not merged |'));
+    const result = reconcileContinuity(root, { lifecyclePhase: 'close', skipGitFetch: true, referenceMain: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' });
+    if (result.conflicts.some((c) => /PR #118/.test(c))) {
+      assert.equal(result.status, 'CONFLICT');
+      assert.equal(deriveReasonCode(result), 'MERGED_PR_STILL_OPEN');
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('a current repo lifecycle close has no deterministic conflicts after CONTINUITY-04 reconcile', () => {
+  const { payload } = runContinuityLifecycle(ROOT, { phase: 'close', skipGitFetch: true, referenceMain: firstSha(parseSixFieldCheckpoint(readFileSync(join(ROOT, 'docs', 'PROJECT_MEMORY.md'), 'utf8'))['2']) });
+  assert.equal(payload.conflicts.length, 0, payload.conflicts.join('\n'));
+  assert.notEqual(payload.status, 'CONFLICT');
+});
+
+test('continuity live status marks bot writer disabled', () => {
+  const live = buildContinuityLiveStatus({ status: 'PENDING_REPOSITORY_SYNC', reasonCode: 'CHECKPOINT_LAGS_LIVE_MAIN', conflicts: [], pending: ['x'], facts: {} }, 'aaaa', { available: true, prs: [] });
+  assert.equal(live.bot_docs_sync_pr.enabled, false);
+  assert.match(live.note, /Green CI does not imply/);
+});
+
+test('operational anchors reject stale CHATGPT verified main claim', () => {
+  const root = mkdtempSync(join(tmpdir(), 'webxxl-anchor-'));
+  try {
+  const main = 'cccccccccccccccccccccccccccccccccccccccc';
+  writeCheckpointDocs(root, main);
+    writeFileSync(
+      join(root, 'docs', 'CHATGPT_PROJECT_INSTRUCTIONS.md'),
+      `Checkpoint written 2026-01-01: verified \`main\` is \`deadbeefdeadbeefdeadbeefdeadbeefdeadbeef\``,
+    );
+    const { errors } = validateOperationalAnchors(root);
+    assert.ok(errors.length >= 1);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('g duplicate ADR index status mismatch is reported', () => {
+  const root = mkdtempSync(join(tmpdir(), 'webxxl-adr-'));
+  try {
+    cpSync(join(ROOT, 'docs', 'adr'), join(root, 'docs', 'adr'), { recursive: true });
+    mkdirSync(join(root, 'docs', 'platform', 'docs'), { recursive: true });
+    writeFileSync(
+      join(root, 'docs', 'platform', 'docs', '15-DECISIONS-CHANGELOG.md'),
+      readFileSync(join(ROOT, 'docs', 'platform', 'docs', '15-DECISIONS-CHANGELOG.md')),
+    );
+    let index = readFileSync(join(root, 'docs', 'adr', 'INDEX.md'), 'utf8');
+    index = index.replace('| ADR-018 |', '| ADR-018 |').replace('| PROPOSED |', '| APPROVED |');
+    index = index.replace(
+      '| ADR-018 | Component adoption vs whole-platform replacement | PROPOSED |',
+      '| ADR-018 | Component adoption vs whole-platform replacement | APPROVED |',
+    );
+    writeFileSync(join(root, 'docs', 'adr', 'INDEX.md'), index);
+    const { errors } = validateAdrs(root);
+    assert.ok(errors.some((e) => /INDEX\.md/.test(e) && /ADR-018/.test(e)));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

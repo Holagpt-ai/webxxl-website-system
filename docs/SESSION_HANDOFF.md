@@ -1,25 +1,25 @@
 # WebXXL — Session Handoff
 
-**Compiled:** 2026-11-08 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `7f947574dd9eedb05648a0d7c73b68c515f10c44` (PR #116)
+**Compiled:** 2026-11-08 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `6015d907262fd655919b8419369716a8f40d41dd` (PR **#120**)
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | GitHub `main` `7f947574dd9eedb05648a0d7c73b68c515f10c44` ([PR **#116**](https://github.com/Holagpt-ai/webxxl-website-system/pull/116) Batch 1 UI + [PR **#115**](https://github.com/Holagpt-ai/webxxl-website-system/pull/115) Batch 2 @ `9f3fc66`, MERGED 2026-11-08). Issue **#117** Batch 3 marketing execution IN PR. Build-first active; Issue #105 QA **deferred** to Batch 8. |
-| 2 | GitHub SHA, branch, active PR | **`7f947574dd9eedb05648a0d7c73b68c515f10c44`** on `main`. Issue **#117** Batch 3 [PR **#118**](https://github.com/Holagpt-ai/webxxl-website-system/pull/118) head `ea5e101` on `feature/issue-117-batch3-marketing-execution` (open, **not merged**) — **Cursor** |
-| 3 | Production deployment | Vercel **`dpl_5EfjweLaVKHWQ5naopk381yuAAv3`** (owner-reported READY @ `7f94757`, 2026-11-08). Prior Vercel `dpl_Dp46wnsQStm3ZacNS6BRKMChvoxH` @ `52e6bb6` is a historical row. SHA deploy only. Not migration, activation, or provider live state. |
+| 1 | Last verified checkpoint | GitHub `main` `6015d907262fd655919b8419369716a8f40d41dd` ([PR **#118**](https://github.com/Holagpt-ai/webxxl-website-system/pull/118) Batch 3 backend @ `c9a67b0` + [PR **#120**](https://github.com/Holagpt-ai/webxxl-website-system/pull/120) Batch 3 UI, MERGED 2026-11-08). Prior Batch 1–2 @ `7f94757` / `9f3fc66`. Issue **#121** CONTINUITY-04 lifecycle IN PR. Build-first active; Issue #105 QA **deferred** to Batch 8. |
+| 2 | GitHub SHA, branch, active PR | **`6015d907262fd655919b8419369716a8f40d41dd`** on `main`. Issue **#121** CONTINUITY-04 on `feature/issue-121-continuity-04` (open implementation PR, owner review) — **Cursor** |
+| 3 | Production deployment | Vercel **`dpl_HaRLJcFCRwZCLNZz8FLPYLQDoEST`** (owner-reported READY @ `6015d90`, 2026-11-08). Prior Vercel `dpl_5EfjweLaVKHWQ5naopk381yuAAv3` @ `7f94757` is a historical row. SHA deploy only. Not migration, activation, or provider live state. |
 | 4 | Last updated | 2026-11-08 |
-| 5 | Next task / responsible platform | Owner review Issue **#117** Batch 3 PR. Optional v0 Marketing execution panel per contract — **v0.app** (`dashboard/marketing/**` only) |
+| 5 | Next task / responsible platform | Owner review Issue **#121** CONTINUITY-04 PR; then **Batch 4** per Issue **#109** roadmap — **Cursor** |
 | 6 | Open blocker / gate IDs | **Build-first policy:** broad browser QA, CRM E2E, cross-module acceptance deferred to **Batch 8 — Release & Activation** (Issue #109). Issue **#105** QA items **deferred**, not cancelled. CRM-SUBNAV-105 **REPORTED**, not resolved. Staging migrations last **39/39** (2026-11-03); not re-counted 2026-11-08. Production migrate **UNVERIFIED**. Flags **not activated**. Provider activation **UNVERIFIED**. |
 
 ## This session
 
-Issue **#117** Batch 3: `GET /api/v1/marketing/execution/summary` composes workflow counts, bounded review evidence, CRM audience planning preview, Postiz readiness slice, and social handoff policy (`lib/platform/marketing-execution/`). `prepareApprovedCreativeSocialHandoff` binds approved revisions without scheduling Postiz. Focused Vitest coverage. **Not merged.**
+Issue **#121** CONTINUITY-04: shared `continuity-lifecycle` engine; `pnpm continuity:start`, `continuity:checkpoint`, extended `continuity:close` (JSON + reason codes); `continuity-live-status.json` on CI `push:main`; stronger ADR index/status/supersession checks; operational anchor validation; live GitHub merged-PR hints for stale-status advisory; reconciled checkpoint for PR **#118** / **#120** on `main`. Bot docs-sync PR writer remains **disabled** (detection only).
 
 ## Next assignment
 
-Owner reviews Batch 3 PR. v0 may wire execution summary on `dashboard/marketing/**` per contract. **Batch 4** queued after merge.
+Owner reviews CONTINUITY-04 PR. Resume **Batch 4** after merge per roadmap.
 
 ## PENDING REPOSITORY SYNC
 
@@ -28,12 +28,12 @@ Owner reviews Batch 3 PR. v0 may wire execution summary on `dashboard/marketing/
 ## Handoff template
 
 ```
-Date / scope / owner: 2026-11-08 / Issue #117 Batch 3 / Cursor
-Repo / main SHA: Holagpt-ai/webxxl-website-system / 7f947574dd9eedb05648a0d7c73b68c515f10c44
-Branch / PR: feature/issue-117-batch3-marketing-execution / PR #118 (owner review, not merged)
-Merged / deployed: PR #115 #116 on main; Vercel dpl_5EfjweLaVKHWQ5naopk381yuAAv3 @ 7f94757 (SHA only)
+Date / scope / owner: 2026-11-08 / Issue #121 CONTINUITY-04 / Cursor
+Repo / main SHA: Holagpt-ai/webxxl-website-system / 6015d907262fd655919b8419369716a8f40d41dd
+Branch / PR: feature/issue-121-continuity-04 / open (owner review)
+Merged / deployed: PR #118 #120 on main; Vercel dpl_HaRLJcFCRwZCLNZz8FLPYLQDoEST @ 6015d90 (SHA only)
 Migration / flags / activation: UNVERIFIED / not activated / UNVERIFIED
-Tests: batch3-marketing-execution.test.ts; typecheck pass
-Next exact assignment / owning tool: Owner review Batch 3 — Cursor; v0 marketing UI — v0.app
-Do NOT touch: production DB, flags, providers, live publish, auto-merge
+Tests: continuity-validators.test.mjs; adr-validator.test.mjs
+Next exact assignment / owning tool: Owner review CONTINUITY-04 — Cursor; Batch 4 — Cursor
+Do NOT touch: production DB, flags, providers, live publish, auto-merge, bot docs writer without owner approval
 ```

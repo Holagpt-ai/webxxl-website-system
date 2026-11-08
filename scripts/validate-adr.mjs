@@ -32,10 +32,14 @@ export function validateAdrs(root) {
   const decisions = existsSync(decisionsPath) ? readFileSync(decisionsPath, 'utf8') : '';
   const ids = new Set();
   const indexRecords = new Map();
+  const indexStatus = new Map();
   for (const line of index.split(/\r?\n/)) {
     const match = line.match(/^\|\s*(ADR-\d{3})\s*\|/);
     if (match) indexRecords.set(match[1], (indexRecords.get(match[1]) || 0) + 1);
+    const row = line.match(/^\|\s*(ADR-\d{3})\s*\|[^|]*\|\s*([^|]+?)\s*\|/);
+    if (row) indexStatus.set(row[1], row[2].trim().toUpperCase());
   }
+  const frontmatterById = new Map();
 
   for (const name of files) {
     const m = name.match(FILE_PATTERN);
@@ -80,10 +84,33 @@ export function validateAdrs(root) {
     }
     if ((indexRecords.get(id) || 0) !== 1) errors.push(`${name}: ${id} must appear exactly once as an INDEX.md table row`);
     if (!index.includes(`(${name})`)) errors.push(`${name}: INDEX.md lacks link to exact file`);
+    const indexState = indexStatus.get(id);
+    if (indexState && fields.status && indexState !== fields.status.toUpperCase()) {
+      errors.push(`${name}: frontmatter status ${fields.status} disagrees with INDEX.md (${indexState})`);
+    }
+    frontmatterById.set(id, { name, fields });
   }
   for (const [id, count] of indexRecords) {
     if (!ids.has(id)) errors.push(`INDEX.md: ${id} has row but no matching file`);
     if (count !== 1) errors.push(`INDEX.md: duplicate index rows for ${id}`);
+  }
+  for (const [id, { fields }] of frontmatterById) {
+    const supersedes = fields.supersedes;
+    if (!supersedes || supersedes === 'NONE') continue;
+    for (const target of supersedes.split(/[;,]/).map((s) => s.trim()).filter(Boolean)) {
+      const targetRecord = frontmatterById.get(target);
+      if (!targetRecord) {
+        errors.push(`${id}: supersedes ${target} but no matching ADR file`);
+        continue;
+      }
+      const by = targetRecord.fields.superseded_by;
+      if (!by || by === 'NONE' || !by.split(/[;,]/).map((s) => s.trim()).includes(id)) {
+        errors.push(`${id}: supersedes ${target} but ${target} superseded_by does not reciprocate ${id}`);
+      }
+      if (targetRecord.fields.status !== 'SUPERSEDED' && fields.status === 'APPROVED') {
+        errors.push(`${id}: APPROVED supersedes ${target} but ${target} is not SUPERSEDED`);
+      }
+    }
   }
   return { errors, checked: files.length };
 }

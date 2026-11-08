@@ -69,4 +69,4 @@ For a foundational decision already present in the legacy log (e.g., ADR-004 ten
 - [ADR-019](ADR-019-cms-adapter-decision-gate.md): CMS/content editor selection gate — **PROPOSED**, no CMS selected.
 - [ADR-020](ADR-020-optional-automation-builder-gate.md): optional automation builder vs current execution engine — **PROPOSED**, no new engine deployed.
 
-**Immediate priority remains BATCH-15 analytics ingestion and conversion.** These proposals do not authorize integrating new providers or delaying that batch.
+**Current implementation queue** follows the six-field checkpoint in `docs/PROJECT_MEMORY.md` (build-first batches per Issue #109). Batch 15 ingestion source is **MERGED** with flags default off; it is not confused with the active batch queue. These ADR proposals do not authorize integrating new providers or skipping owner review.

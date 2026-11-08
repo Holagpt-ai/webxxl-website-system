@@ -19,6 +19,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "prisma db seed",
+    "continuity:start": "node scripts/continuity-start.mjs",
+    "continuity:checkpoint": "node scripts/continuity-checkpoint.mjs",
     "continuity:close": "node scripts/continuity-close.mjs",
     "continuity:reconcile": "node scripts/check-continuity-reconcile.mjs"
   },

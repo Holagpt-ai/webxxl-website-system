@@ -1,7 +1,8 @@
 /**
- * Evidence-aware continuity reconciliation (CONTINUITY-03).
+ * Evidence-aware continuity reconciliation (CONTINUITY-04).
  * Read-only. Does not mutate git, production, or remote services except optional GitHub API reads.
  */
+import { validateOperationalAnchors } from './validate-operational-anchors.mjs';
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -129,6 +130,8 @@ function resolveReferenceMain(root, options, originMain, headSha) {
  *   ciGitHubSha?: string | null,
  *   referenceMain?: string | null,
  *   strictExternal?: boolean,
+ *   lifecyclePhase?: 'start' | 'checkpoint' | 'close' | 'ci',
+ *   skipGitFetch?: boolean,
  * }} options
  */
 export function reconcileContinuity(root, options = {}) {
@@ -181,13 +184,18 @@ export function reconcileContinuity(root, options = {}) {
     }
   }
 
-  const checkpointBlob = Object.values(memoryFields).join('\n');
-  for (const pr of prNumbers(checkpointBlob)) {
-    if (!looksLikeOpenPrClaim(memoryFields['2'] ?? '') && !looksLikeOpenPrClaim(memoryFields['5'] ?? '')) continue;
+  const verifyOpenPrs =
+    options.strictExternal || options.lifecyclePhase === 'close' || options.lifecyclePhase === 'start';
+  const openPrs = new Set();
+  for (const value of Object.values(memoryFields)) {
+    if (!looksLikeOpenPrClaim(value ?? '')) continue;
+    for (const pr of prNumbers(value ?? '')) openPrs.add(pr);
+  }
+  for (const pr of openPrs) {
     const check = mergedPrCheck(pr);
     if (check.available && check.merged) {
       conflicts.push(`checkpoint still describes PR #${pr} as open but GitHub reports MERGED`);
-    } else if (!check.available && options.strictExternal) {
+    } else if (!check.available && verifyOpenPrs) {
       pending.push(`Could not verify PR #${pr} merge state (GitHub API unavailable)`);
     }
   }
@@ -195,6 +203,16 @@ export function reconcileContinuity(root, options = {}) {
   const issueRegister = existsSync(join(root, 'docs', 'ISSUE_REGISTER.md'))
     ? readFileSync(join(root, 'docs', 'ISSUE_REGISTER.md'), 'utf8')
     : '';
+  for (const line of issueRegister.split('\n')) {
+    if (!line.trim().startsWith('|')) continue;
+    if (!/\|\s*IN PR\s*\|/i.test(line)) continue;
+    const prMatch = line.match(/PR\s*#(\d+)/i);
+    if (!prMatch) continue;
+    const check = mergedPrCheck(prMatch[1]);
+    if (check.available && check.merged) {
+      conflicts.push(`ISSUE_REGISTER row still IN PR but PR #${prMatch[1]} is MERGED on GitHub`);
+    }
+  }
   if (/\|\s*CRM-PAGE-105\s*\|\s*IN PR\s*\|/i.test(issueRegister)) {
     const pr106 = mergedPrCheck('106');
     if (pr106.available && pr106.merged) {
@@ -202,7 +220,17 @@ export function reconcileContinuity(root, options = {}) {
     }
   }
 
-  const staleWarnings = collectStaleStatusWarnings(loadOperationalStatus(root));
+  const anchorPhase = options.strictExternal || options.lifecyclePhase === 'close';
+  if (anchorPhase) {
+    const anchors = validateOperationalAnchors(root);
+    conflicts.push(...anchors.errors);
+    for (const warning of anchors.warnings) {
+      if (options.strictExternal) conflicts.push(`operational anchor: ${warning}`);
+    }
+  }
+
+  const operational = loadOperationalStatus(root);
+  const staleWarnings = collectStaleStatusWarnings(operational);
   for (const warning of staleWarnings) {
     conflicts.push(`stale operational status: ${warning}`);
   }
@@ -228,6 +256,8 @@ export function reconcileContinuity(root, options = {}) {
   let status = 'SYNCHRONIZED';
   if (conflicts.length) status = 'CONFLICT';
   else if (dedupedPending.length) status = 'PENDING_REPOSITORY_SYNC';
+  const materialStaleOpen = conflicts.some((c) => /still describes PR #\d+ as open/i.test(c));
+  if (materialStaleOpen && status === 'SYNCHRONIZED') status = 'CONFLICT';
 
   return {
     status,
@@ -251,7 +281,7 @@ export function reconcileContinuity(root, options = {}) {
 export function formatCloseoutReport(result) {
   const { status, conflicts, pending, facts } = result;
   const lines = [
-    'WEBXXL CONTINUITY CLOSEOUT (CONTINUITY-03)',
+    'WEBXXL CONTINUITY CLOSEOUT (CONTINUITY-04)',
     `Status: ${status}`,
     '',
     '1. GitHub',
