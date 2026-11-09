@@ -4,6 +4,7 @@ import type { CommsResult } from '@/lib/platform/comms/types'
 import type { PrismaClient } from '@prisma/client'
 import { reserveCredits } from '@/lib/platform/wallet/durable-service'
 import { resolveVerifiedCommunicationQuoteCost } from '@/lib/platform/comms/quote-cost-snapshot'
+import { isProhibitedIntentStatusForWalletHold } from '@/lib/platform/comms-execution/wallet-hold-eligibility'
 
 export type CommsWalletPrepareInput = {
   billingGroupId: string
@@ -41,6 +42,13 @@ export async function prepareCommsWalletReservation(
     },
   })
   if (!intent) return { ok: false, code: 'NOT_FOUND', message: 'Communication intent not found' }
+  if (isProhibitedIntentStatusForWalletHold(intent.status, intent.policyDecision)) {
+    return {
+      ok: false,
+      code: 'FORBIDDEN',
+      message: 'Prohibited or blocked communication intent cannot reserve wallet credits',
+    }
+  }
   if (!intent.quoteId) return { ok: false, code: 'FORBIDDEN', message: 'Intent missing bound communication quote' }
 
   const quote = await prisma.communicationQuote.findFirst({

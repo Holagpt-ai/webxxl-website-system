@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-08 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `259f6be2be0774e90f1f77bfce1911be462420da` (PR **#123** Issue **#121** fix; prior PR **#122** CONTINUITY-04)
+**Evidence review:** 2026-11-08 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `5cc8d416ef4059ba507c231afb34e95b6a587c7c` (PR **#124** Issue **#121** register classifier; prior PR **#123** / **#122**)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,11 +35,11 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | GitHub `main` `259f6be2be0774e90f1f77bfce1911be462420da` ([PR **#123**](https://github.com/Holagpt-ai/webxxl-website-system/pull/123) Issue **#121** post-merge stale-template fix @ `259f6be`, MERGED 2026-11-08). Prior [PR **#122**](https://github.com/Holagpt-ai/webxxl-website-system/pull/122) CONTINUITY-04 @ `c488b10`, MERGED 2026-11-08. Build-first active; Issue #105 QA **deferred** to Batch 8. |
-| 2 | GitHub SHA, branch, active PR | **`259f6be2be0774e90f1f77bfce1911be462420da`** on `main`. Issue **#121** [PR **#124**](https://github.com/Holagpt-ai/webxxl-website-system/pull/124) on `fix/issue-121-issue-register-post-merge` (open, owner review) — **Cursor** |
-| 3 | Production deployment | Vercel **`dpl_E8aaezK3z3G5HQNH11RDBRbRNiXr`** (owner-reported **READY** @ `259f6be2be0774e90f1f77bfce1911be462420da`, 2026-11-08). Prior Vercel **`dpl_GywPHGTHr3jDH1U9gQmsAL1dNDv1`** @ `c488b10` is a historical row. SHA deploy only. Not migration, activation, or provider live state. |
+| 1 | Last verified checkpoint | GitHub `main` `5cc8d416ef4059ba507c231afb34e95b6a587c7c` ([PR **#124**](https://github.com/Holagpt-ai/webxxl-website-system/pull/124) Issue **#121** register classifier @ `5cc8d41`, MERGED 2026-11-08). Prior [PR **#123**](https://github.com/Holagpt-ai/webxxl-website-system/pull/123) @ `259f6be`; [PR **#122**](https://github.com/Holagpt-ai/webxxl-website-system/pull/122) CONTINUITY-04 @ `c488b10`. Build-first active; Issue #105 QA **deferred** to Batch 8. |
+| 2 | GitHub SHA, branch, active PR | **`5cc8d416ef4059ba507c231afb34e95b6a587c7c`** on `main`. **Batch 4** [PR **#125**](https://github.com/Holagpt-ai/webxxl-website-system/pull/125) on `feat/batch4-comms-messaging-wallet` (open, owner review) — **Cursor** |
+| 3 | Production deployment | Last owner-reported Vercel **`dpl_E8aaezK3z3G5HQNH11RDBRbRNiXr`** **READY** @ `259f6be2be0774e90f1f77bfce1911be462420da` (2026-11-08). Deploy of `5cc8d41` **UNVERIFIED**. SHA deploy only. Not migration, activation, or provider live state. |
 | 4 | Last updated | 2026-11-08 |
-| 5 | Next task / responsible platform | Issue **#121** push:main continuity acceptance gate; then **Batch 4 — Communications & Messaging Wallet** per Issue **#109** — **Cursor** |
+| 5 | Next task / responsible platform | Owner review **Batch 4 — Communications & Messaging Wallet** (Issue **#109**); then **Batch 5 — Commerce & Managed Services** — **Cursor** |
 | 6 | Open blocker / gate IDs | **Build-first policy:** broad browser QA, CRM E2E, cross-module acceptance deferred to **Batch 8 — Release & Activation** (Issue #109). Issue **#105** QA items **deferred**, not cancelled. CRM-SUBNAV-105 **REPORTED**, not resolved. Staging migrations last **39/39** (2026-11-03); not re-counted 2026-11-08. Production migrate **UNVERIFIED**. Flags **not activated**. Provider activation **UNVERIFIED**. |
 
 ### Evidence table
@@ -139,6 +139,8 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Issue #121 post-merge stale-template fix | MERGED | [PR **#123**](https://github.com/Holagpt-ai/webxxl-website-system/pull/123) @ `259f6be2be0774e90f1f77bfce1911be462420da`, merge 2026-11-08 | Handoff template stale-scan exclusion |
 | Vercel production SHA (2026-11-08, PR #123) | DEPLOYED | Vercel `dpl_E8aaezK3z3G5HQNH11RDBRbRNiXr` **READY** @ `259f6be2be0774e90f1f77bfce1911be462420da`. SHA only. Not migration or activation |
 | CONTINUITY-04 session lifecycle | MERGED | [PR **#122**](https://github.com/Holagpt-ai/webxxl-website-system/pull/122) Issue **#121** @ `c488b10a6143a7b358e0f88158ac09ea91289815`, merge 2026-11-08 — `pnpm continuity:start` / `checkpoint` / `close`, live status artifact, ADR anchor checks | [`CONTINUITY-04-SESSION-LIFECYCLE.md`](CONTINUITY-04-SESSION-LIFECYCLE.md) |
+| Issue #121 ISSUE_REGISTER post-merge classifier | MERGED | [PR **#124**](https://github.com/Holagpt-ai/webxxl-website-system/pull/124) @ `5cc8d416ef4059ba507c231afb34e95b6a587c7c`, merge 2026-11-08 | Register lag → PENDING_REPOSITORY_SYNC |
+| Batch 4 communications & messaging wallet | IN PR | [PR **#125**](https://github.com/Holagpt-ai/webxxl-website-system/pull/125) on `feat/batch4-comms-messaging-wallet` — `GET /api/v1/communications/execution/summary` + guarded prepare + wallet bridge | [`BATCH4-COMMS-MESSAGING-WALLET-API-CONTRACT.md`](platform/docs/BATCH4-COMMS-MESSAGING-WALLET-API-CONTRACT.md) |
 | CONTINUITY-03 session closeout | MERGED | [PR #108](https://github.com/Holagpt-ai/webxxl-website-system/pull/108), `5d90c124b1c7a884f7a61f16e5b9d263f0c08081`, merge 2026-11-07. Issue **#107** **CLOSED**. `pnpm continuity:close` + CI reconcile |
 | Vercel production SHA (2026-11-07, PR #106) | DEPLOYED | Vercel `dpl_AzZVHN5Si3jShjcJf5Gtq1dCxdAb` **success** @ `e37f0a023dd289dc3a9b4e7484f6a1dd34b24276`. GitHub commit status via `vercel[bot]`, 2026-11-07T18:01:23Z. SHA only. Superseded for current production by PR #108 row |
 | Vercel production SHA (2026-11-07, PR #108) | DEPLOYED | Vercel `dpl_HR1qq83Cz2ARKUvaRf8URt2Piwpo` **success** @ `5d90c124b1c7a884f7a61f16e5b9d263f0c08081`. GitHub commit status via `vercel[bot]`, 2026-11-07T19:07:53Z. SHA only. Not migration or activation |

@@ -18,6 +18,13 @@ export async function POST(request: Request) {
       idempotencyKey?: string
       dataClassification?: CommsDataClassification
       aiActor?: boolean
+      quoteId?: string
+      billingGroupId?: string
+      managedSiteId?: string
+      /** Server may honor only when wallet/comms integration + reservation flags allow; never live send. */
+      reserveWallet?: boolean
+      // Intentionally ignored if present — approval evidence is DB-only.
+      humanApprovalGranted?: unknown
     }
     if (!body.channel || !body.purpose || !body.recipientAddress || !body.idempotencyKey) {
       return NextResponse.json({ code: 'VALIDATION', message: 'Missing required intent fields' }, { status: 400 })
@@ -35,6 +42,10 @@ export async function POST(request: Request) {
       idempotencyKey: body.idempotencyKey,
       dataClassification: body.dataClassification,
       aiActor: body.aiActor,
+      quoteId: body.quoteId,
+      billingGroupId: body.billingGroupId,
+      managedSiteId: body.managedSiteId,
+      reserveWallet: body.reserveWallet === true,
     })
     if (!result.ok) {
       return NextResponse.json({ code: result.code, message: result.message }, { status: commsResultHttpStatus(result.code) })
