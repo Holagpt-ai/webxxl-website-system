@@ -7,7 +7,7 @@
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | GitHub `main` `c27c6810e61825fd5a99a9a0d994c1bda704c871` ([PR **#125**](https://github.com/Holagpt-ai/webxxl-website-system/pull/125) Batch 4 Communications & Messaging Wallet, MERGED 2026-11-09). Prior [PR **#124**](https://github.com/Holagpt-ai/webxxl-website-system/pull/124) @ `5cc8d41`; [PR **#123**](https://github.com/Holagpt-ai/webxxl-website-system/pull/123) @ `259f6be`; [PR **#122**](https://github.com/Holagpt-ai/webxxl-website-system/pull/122) CONTINUITY-04 @ `c488b10`. Build-first active; Issue #105 QA **deferred** to Batch 8. |
-| 2 | GitHub SHA, branch, active PR | **`c27c6810e61825fd5a99a9a0d994c1bda704c871`** on `main`. **Batch 5** Commerce & Managed Services on `feat/batch5-commerce-managed-services` (open, owner review) — **Cursor** |
+| 2 | GitHub SHA, branch, active PR | **`c27c6810e61825fd5a99a9a0d994c1bda704c871`** on `main`. **Batch 5** [PR **#126**](https://github.com/Holagpt-ai/webxxl-website-system/pull/126) on `feat/batch5-commerce-managed-services` (open, owner review) — **Cursor** |
 | 3 | Production deployment | Owner-reported Vercel **`dpl_Agrh29ThShz8cmB5kHtkjHhpi64n`** **READY** @ `c27c6810e61825fd5a99a9a0d994c1bda704c871` (Batch 4 SHA only). Not migration, activation, or provider live state. |
 | 4 | Last updated | 2026-11-08 |
 | 5 | Next task / responsible platform | Owner review **Batch 5 — Commerce & Managed Services** (Issue **#109**); then **Batch 6 — AI Workforce & Automation** — **Cursor** |
@@ -30,7 +30,7 @@ Owner review Batch 5 PR. After merge: **Batch 6 — AI Workforce & Automation** 
 ```
 Date / scope / owner: 2026-11-08 / Batch 5 Commerce & Managed Services / Cursor
 Repo / main SHA: Holagpt-ai/webxxl-website-system / c27c6810e61825fd5a99a9a0d994c1bda704c871
-Branch / PR: feat/batch5-commerce-managed-services / (owner review; not merged)
+Branch / PR: feat/batch5-commerce-managed-services / PR #126 (owner review; not merged)
 Merged / deployed: PR #125 on main @ c27c6810; Vercel READY dpl_Agrh29ThShz8cmB5kHtkjHhpi64n @ c27c6810 (SHA only)
 Migration / flags / activation: UNVERIFIED / not activated / UNVERIFIED
 Tests: batch5-commerce-managed-services.test.ts; continuity post-merge doc classifier
