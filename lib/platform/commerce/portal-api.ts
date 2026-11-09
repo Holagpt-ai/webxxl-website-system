@@ -68,7 +68,8 @@ async function assertAccountAccess(
   return { ok: false, error: 'FORBIDDEN' }
 }
 
-async function assertBillingGroupReader(
+/** Shared billing-group read gate for portal and commerce-execution summaries. */
+export async function assertBillingGroupReader(
   store: CommerceStore,
   actor: CommerceActor,
   billingGroupId: string,

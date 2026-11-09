@@ -479,11 +479,12 @@ test('live CONT-121 issue register row is RESOLVED with no open PR citation', ()
   assert.deepEqual(openPrNumbersInText(row), []);
 });
 
-test('live BATCH4-109 issue register row exposes PR #125 as the active open citation', () => {
+test('live BATCH4-109 issue register row is RESOLVED after PR #125 merge', () => {
   const register = readFileSync(join(ROOT, 'docs', 'ISSUE_REGISTER.md'), 'utf8');
   const row = register.split('\n').find((line) => line.includes('| BATCH4-109 |'));
   assert.ok(row);
-  assert.deepEqual(openPrNumbersInText(row), ['125']);
+  assert.match(row, /\|\s*BATCH4-109\s*\|\s*RESOLVED\s*\|/);
+  assert.deepEqual(openPrNumbersInText(row), []);
 });
 
 test('push:main mixed-status CONT-121 row yields POST-MERGE-ISSUE-PR for active PR only', () => {
@@ -666,6 +667,118 @@ test('two consecutive squash merges stay PENDING without ISSUE_REGISTER conflict
     assert.equal(result.conflicts.length, 0);
     assert.ok(result.pending.some((p) => /POST-MERGE-ISSUE-PR-#124/.test(p)));
     assert.ok(result.pending.some((p) => /POST-MERGE-PR-#124/.test(p)));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('push:main DATA_AND_SERVICES and roadmap IN PR lag is PENDING with checkpoint and register', () => {
+  const root = mkdtempSync(join(tmpdir(), 'webxxl-post-merge-docs-'));
+  try {
+    const baseSha = initFixtureRepo(root);
+    writeCheckpointDocs(root, baseSha);
+    writeFileSync(
+      join(root, 'docs', 'ISSUE_REGISTER.md'),
+      `| id | status | item | evidence | action |\n| BATCH4-109 | IN PR | Communications wallet | [PR **#125**](https://example/pull/125) on feature branch | notes |\n`,
+    );
+    writeFileSync(
+      join(root, 'docs', 'DATA_AND_SERVICES.md'),
+      `| Communications & messaging wallet (Batch 4) | lib/platform/comms-execution | Chatwoot | IN PR #125 (Issue #109) | Preparation-only |\n`,
+    );
+    writeFileSync(
+      join(root, 'docs', 'platform', 'docs', '13-IMPLEMENTATION-ROADMAP.md'),
+      `**Batch 4 (Issue #109):** Communications & Messaging Wallet — **IN PR** ([PR #125](https://example/pull/125)).\n`,
+    );
+    const field2 = `| 2 | GitHub SHA, branch, active PR | **\`${baseSha}\`** on main. **Batch 4** [PR **#125**](https://example/pull/125) (open, owner review) |`;
+    for (const rel of ['docs/PROJECT_MEMORY.md', 'docs/SESSION_HANDOFF.md']) {
+      let text = readFileSync(join(root, rel), 'utf8').replace(/\| 2 \| GitHub SHA, branch, active PR \|[^\n]+\|/, field2);
+      // MERGED evidence row so stale-doc detection does not depend on live GitHub API.
+      if (rel === 'docs/PROJECT_MEMORY.md') {
+        text += `\n| Batch 4 communications | MERGED | PR #125 |\n`;
+      }
+      writeFileSync(join(root, rel), text);
+    }
+    writeFileSync(join(root, 'README.md'), 'application after batch4 squash\n');
+    gitCmd(root, 'add', '.');
+    gitCmd(root, 'commit', '-m', 'squash merge PR 125 without docs refresh');
+    const referenceMain = gitCmd(root, 'rev-parse', 'HEAD');
+    const mergedPrCheckFn = (pr) =>
+      pr === '125'
+        ? { available: true, merged: true, mergeSha: referenceMain }
+        : { available: true, merged: false, mergeSha: null };
+
+    for (const lifecyclePhase of ['start', 'checkpoint', 'close', 'ci']) {
+      const result = reconcileContinuity(root, {
+        lifecyclePhase,
+        referenceMain,
+        skipGitFetch: true,
+        mergedPrCheckFn,
+      });
+      assert.equal(result.conflicts.length, 0, `${lifecyclePhase}: ${result.conflicts.join('\n')}`);
+      assert.equal(result.status, 'PENDING_REPOSITORY_SYNC', lifecyclePhase);
+      assert.ok(result.pending.some((p) => /POST-MERGE-DOC-PR-#125/.test(p)), lifecyclePhase);
+      assert.ok(result.pending.some((p) => /POST-MERGE-ISSUE-PR-#125/.test(p)), lifecyclePhase);
+      assert.ok(result.pending.some((p) => /POST-MERGE-PR-#125/.test(p)), lifecyclePhase);
+    }
+
+    const firstPush = reconcileContinuity(root, {
+      isMainPush: true,
+      ciGitHubSha: referenceMain,
+      lifecyclePhase: 'ci',
+      referenceMain,
+      skipGitFetch: true,
+      mergedPrCheckFn,
+    });
+    assert.equal(firstPush.status, 'PENDING_REPOSITORY_SYNC');
+    assert.equal(firstPush.conflicts.length, 0);
+
+    // Consecutive squash merge stays PENDING (docs still lag), not CONFLICT.
+    writeFileSync(join(root, 'README.md'), 'application after consecutive squash\n');
+    gitCmd(root, 'add', 'README.md');
+    gitCmd(root, 'commit', '-m', 'second squash merge');
+    const secondMain = gitCmd(root, 'rev-parse', 'HEAD');
+    const secondPush = reconcileContinuity(root, {
+      isMainPush: true,
+      ciGitHubSha: secondMain,
+      lifecyclePhase: 'ci',
+      referenceMain: secondMain,
+      skipGitFetch: true,
+      mergedPrCheckFn: (pr) =>
+        pr === '125'
+          ? { available: true, merged: true, mergeSha: referenceMain }
+          : { available: true, merged: false, mergeSha: null },
+    });
+    assert.equal(secondPush.status, 'PENDING_REPOSITORY_SYNC');
+    assert.equal(secondPush.conflicts.length, 0);
+    assert.ok(secondPush.pending.some((p) => /POST-MERGE-DOC-PR-#125/.test(p)));
+    assert.ok(secondPush.pending.some((p) => /POST-MERGE-CHECKPOINT/i.test(p)));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('reconciled DATA_AND_SERVICES IN PR for merged PR without lag is CONFLICT', () => {
+  const root = mkdtempSync(join(tmpdir(), 'webxxl-data-services-contradiction-'));
+  const documented = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  try {
+    writeCheckpointDocs(root, documented);
+    // Record #125 as MERGED in memory so stale detection does not depend on live GitHub API.
+    writeFileSync(
+      join(root, 'docs', 'PROJECT_MEMORY.md'),
+      `${readFileSync(join(root, 'docs', 'PROJECT_MEMORY.md'), 'utf8')}\n| Batch 4 communications | MERGED | PR #125 \`${documented}\` |\n`,
+    );
+    writeFileSync(
+      join(root, 'docs', 'DATA_AND_SERVICES.md'),
+      `| Communications wallet (Batch 4) | paths | Chatwoot | IN PR #125 | off |\n`,
+    );
+    const result = reconcileContinuity(root, {
+      referenceMain: documented,
+      lifecyclePhase: 'close',
+      skipGitFetch: true,
+      mergedPrCheckFn: () => ({ available: true, merged: true, mergeSha: documented }),
+    });
+    assert.equal(result.status, 'CONFLICT');
+    assert.ok(result.conflicts.some((c) => /DATA_AND_SERVICES|stale operational status/i.test(c)));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
