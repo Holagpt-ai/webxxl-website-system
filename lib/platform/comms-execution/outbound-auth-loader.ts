@@ -5,6 +5,10 @@ import type { CommsResult } from '@/lib/platform/comms/types'
 import { resolveEffectiveAiActor, resolveServerDataClassification } from '@/lib/platform/comms/intent-auth'
 import { buildCommunicationContentHash } from '@/lib/platform/comms/intent-hash'
 import { prisma as defaultPrisma } from '@/lib/db'
+import {
+  assertRecipientMatchesCrmContact,
+  normalizeRecipientAddressForChannel,
+} from '@/lib/platform/comms-execution/recipient-address-binding'
 
 export type LoadOutboundAuthorizationInput = {
   customerAccountId: string
@@ -20,25 +24,45 @@ export type LoadOutboundAuthorizationInput = {
   idempotencyKey: string
   dataClassification?: CommsDataClassification
   aiActor?: boolean
-  humanApprovalGranted?: boolean
   quoteId?: string
   approvedRegulatedWorkflow?: boolean
   /** When true, marks cross-account conversation attempt for fail-closed denial. */
   attemptedCrossAccountConversation?: boolean
 }
 
+export type LoadedOutboundAuthorization = OutboundAuthorizationInput & {
+  contentFingerprint: string
+  normalizedRecipientAddress: string
+}
+
 /**
  * Trusted server-side loader for Batch 35 outbound authorization inputs.
- * Never trusts client-supplied consent, suppression, sender, membership, or wallet facts.
+ * Never trusts client-supplied consent, suppression, sender, membership, approval, or wallet facts.
  */
 export async function loadOutboundAuthorizationInput(
   input: LoadOutboundAuthorizationInput,
   db: PrismaClient = defaultPrisma,
-): Promise<CommsResult<OutboundAuthorizationInput & { contentFingerprint: string }>> {
+): Promise<CommsResult<LoadedOutboundAuthorization>> {
+  let normalizedRecipientAddress: string
+  if (input.crmContactId) {
+    const bound = await assertRecipientMatchesCrmContact(db, {
+      customerAccountId: input.customerAccountId,
+      crmContactId: input.crmContactId,
+      channel: input.channel,
+      recipientAddress: input.recipientAddress,
+    })
+    if (!bound.ok) return bound
+    normalizedRecipientAddress = bound.value.normalizedAddress
+  } else {
+    const normalized = normalizeRecipientAddressForChannel(input.channel, input.recipientAddress)
+    if (!normalized.ok) return normalized
+    normalizedRecipientAddress = normalized.value
+  }
+
   const contentFingerprint = buildCommunicationContentHash({
     customerAccountId: input.customerAccountId,
     senderIdentityId: input.senderIdentityId ?? null,
-    recipient: input.recipientAddress,
+    recipient: normalizedRecipientAddress,
     channel: input.channel,
     purpose: input.purpose,
     contentVersion: input.contentVersion,
@@ -47,11 +71,28 @@ export async function loadOutboundAuthorizationInput(
 
   const existing = await db.communicationIntent.findUnique({
     where: { idempotencyKey: input.idempotencyKey },
-    select: { customerAccountId: true, contentHash: true },
+    select: {
+      id: true,
+      customerAccountId: true,
+      contentHash: true,
+      approvals: {
+        where: { decision: 'APPROVED' },
+        orderBy: { decidedAt: 'desc' },
+        take: 1,
+        select: { id: true, decision: true, customerAccountId: true },
+      },
+    },
   })
   if (existing && existing.customerAccountId !== input.customerAccountId) {
     return { ok: false, code: 'CONFLICT', message: 'Intent idempotency key bound to another account' }
   }
+
+  // Immutable approval evidence is DB-only — never request-body booleans.
+  const humanApprovalGranted = Boolean(
+    existing?.approvals.some(
+      (row) => row.decision === 'APPROVED' && row.customerAccountId === input.customerAccountId,
+    ),
+  )
 
   const memberships = await db.customerMembership.findMany({
     where: { userId: input.actorUserId },
@@ -109,12 +150,6 @@ export async function loadOutboundAuthorizationInput(
   let suppressed = false
   let consentStatus: 'GRANTED' | 'REVOKED' | 'UNKNOWN' | 'NONE' = 'UNKNOWN'
   if (input.crmContactId) {
-    const contact = await db.crmContact.findFirst({
-      where: { id: input.crmContactId, customerAccountId: input.customerAccountId },
-      select: { id: true },
-    })
-    if (!contact) return { ok: false, code: 'NOT_FOUND', message: 'CRM contact not found for account' }
-
     const suppression = await db.contactSuppression.findFirst({
       where: {
         customerAccountId: input.customerAccountId,
@@ -193,7 +228,7 @@ export async function loadOutboundAuthorizationInput(
       dataClassification,
       approvedRegulatedWorkflow: input.approvedRegulatedWorkflow === true,
       aiActor,
-      humanApprovalGranted: input.humanApprovalGranted,
+      humanApprovalGranted,
       providerConnected,
       walletQuoteAvailable,
       idempotencyKey: input.idempotencyKey,
@@ -202,6 +237,7 @@ export async function loadOutboundAuthorizationInput(
       operatingMemberships,
       billingGroupSiblingAccounts,
       attemptedCrossAccountConversation: input.attemptedCrossAccountConversation === true,
+      normalizedRecipientAddress,
     },
   }
 }

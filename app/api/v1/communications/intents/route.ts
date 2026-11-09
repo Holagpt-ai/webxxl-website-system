@@ -21,9 +21,10 @@ export async function POST(request: Request) {
       quoteId?: string
       billingGroupId?: string
       managedSiteId?: string
-      humanApprovalGranted?: boolean
       /** Server may honor only when wallet/comms integration + reservation flags allow; never live send. */
       reserveWallet?: boolean
+      // Intentionally ignored if present — approval evidence is DB-only.
+      humanApprovalGranted?: unknown
     }
     if (!body.channel || !body.purpose || !body.recipientAddress || !body.idempotencyKey) {
       return NextResponse.json({ code: 'VALIDATION', message: 'Missing required intent fields' }, { status: 400 })
@@ -44,7 +45,6 @@ export async function POST(request: Request) {
       quoteId: body.quoteId,
       billingGroupId: body.billingGroupId,
       managedSiteId: body.managedSiteId,
-      humanApprovalGranted: body.humanApprovalGranted,
       reserveWallet: body.reserveWallet === true,
     })
     if (!result.ok) {

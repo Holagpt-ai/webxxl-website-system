@@ -7,6 +7,9 @@ import { prepareCommsWalletReservation } from '@/lib/platform/comms/wallet-bound
 import { evaluateChatwootDirectSendBypass } from '@/lib/platform/comms/policy-engine'
 import type { CommsResult } from '@/lib/platform/comms/types'
 import { loadOutboundAuthorizationInput } from '@/lib/platform/comms-execution/outbound-auth-loader'
+import {
+  evaluateWalletHoldEligibility,
+} from '@/lib/platform/comms-execution/wallet-hold-eligibility'
 import type { GuardedCommsPrepareResult } from '@/lib/platform/comms-execution/types'
 import {
   PREPARATION_ONLY_DISPATCH_BLOCKED_CODE,
@@ -26,7 +29,6 @@ export type GuardedCommsPrepareInput = {
   idempotencyKey: string
   dataClassification?: CommsDataClassification
   aiActor?: boolean
-  humanApprovalGranted?: boolean
   quoteId?: string
   billingGroupId?: string
   /** When set with quoteId + billingGroupId, attempts wallet hold while outbound remains OFF. */
@@ -37,10 +39,96 @@ export type GuardedCommsPrepareInput = {
   attemptedCrossAccountConversation?: boolean
 }
 
+function resolveIntentStatus(input: {
+  policyDecision: string
+  approvalRequired: boolean
+  hasImmutableDbApproval: boolean
+  walletHoldEligible: boolean
+}): 'DRAFT' | 'BLOCKED' | 'PENDING_APPROVAL' {
+  if (
+    input.policyDecision === 'DENIED' ||
+    input.policyDecision === 'COMPLIANCE_REVIEW_REQUIRED' ||
+    input.policyDecision === 'INSUFFICIENT_CREDITS' ||
+    input.policyDecision === 'COST_UNAVAILABLE'
+  ) {
+    return 'BLOCKED'
+  }
+  // Dispatch/provider NOT_CONFIGURED is preparation-ok when wallet-hold eligibility passes.
+  if (input.policyDecision === 'NOT_CONFIGURED' && !input.walletHoldEligible) {
+    return 'BLOCKED'
+  }
+  if (input.approvalRequired && !input.hasImmutableDbApproval) {
+    return 'PENDING_APPROVAL'
+  }
+  if (input.policyDecision === 'REQUIRES_APPROVAL' && !input.hasImmutableDbApproval) {
+    return 'PENDING_APPROVAL'
+  }
+  return 'DRAFT'
+}
+
+async function loadImmutableApprovalEvidence(
+  db: PrismaClient,
+  input: { intentId: string; customerAccountId: string },
+): Promise<boolean> {
+  const approval = await db.communicationApproval.findFirst({
+    where: {
+      intentId: input.intentId,
+      customerAccountId: input.customerAccountId,
+      decision: 'APPROVED',
+    },
+    select: { id: true },
+  })
+  return Boolean(approval)
+}
+
+async function attemptEligibleWalletReservation(
+  db: PrismaClient,
+  input: {
+    reserveWallet: boolean
+    quoteId: string | null
+    billingGroupId?: string
+    customerAccountId: string
+    managedSiteId?: string
+    intentId: string
+    actorUserId: string
+    correlationId?: string
+    reservationIdempotencyKey: string
+    idempotencyKey: string
+    eligibility: ReturnType<typeof evaluateWalletHoldEligibility>
+  },
+): Promise<CommsResult<{ reservationId: string | null; walletReservationAttempted: boolean }>> {
+  if (!input.reserveWallet || !input.quoteId || !input.billingGroupId) {
+    return { ok: true, value: { reservationId: null, walletReservationAttempted: false } }
+  }
+  // Preparation may succeed while a hold is refused. Never invent approval to unlock a hold.
+  if (!input.eligibility.eligible) {
+    return { ok: true, value: { reservationId: null, walletReservationAttempted: false } }
+  }
+
+  const reserved = await prepareCommsWalletReservation(db, {
+    billingGroupId: input.billingGroupId,
+    customerAccountId: input.customerAccountId,
+    managedSiteId: input.managedSiteId,
+    intentId: input.intentId,
+    actorUserId: input.actorUserId,
+    correlationId: input.correlationId ?? `comms-prep:${input.intentId}`,
+    idempotencyKey: input.reservationIdempotencyKey,
+    reservationExpiresAt: new Date(Date.now() + 15 * 60_000),
+  })
+  if (!reserved.ok) {
+    return { ok: false, code: reserved.code, message: reserved.message }
+  }
+  return {
+    ok: true,
+    value: { reservationId: reserved.value.reservationId, walletReservationAttempted: true },
+  }
+}
+
 /**
  * End-to-end guarded preparation: CRM/consent/sender/wallet facts → outbound auth →
  * durable intent → optional quote bind → optional wallet reservation.
  * Never calls Twilio/Resend/Chatwoot transport. Dispatch remains blocked.
+ * Never invents approval evidence from request-body booleans.
  */
 export async function prepareGuardedCommunication(
   input: GuardedCommsPrepareInput,
@@ -68,7 +156,6 @@ export async function prepareGuardedCommunication(
       idempotencyKey: input.idempotencyKey,
       dataClassification: input.dataClassification,
       aiActor: input.aiActor,
-      humanApprovalGranted: input.humanApprovalGranted,
       quoteId: input.quoteId,
       approvedRegulatedWorkflow: input.approvedRegulatedWorkflow,
       attemptedCrossAccountConversation: input.attemptedCrossAccountConversation,
@@ -89,6 +176,14 @@ export async function prepareGuardedCommunication(
     }
   }
 
+  const policyDecision = auth.value.policyDecision
+  const approvalRequired =
+    policyDecision === 'REQUIRES_APPROVAL' ||
+    input.purpose === 'MARKETING' ||
+    loaded.value.aiActor === true
+
+  const reservationIdempotencyKey = input.reservationIdempotencyKey ?? `reserve:${input.idempotencyKey}`
+
   const existing = await db.communicationIntent.findUnique({
     where: { idempotencyKey: input.idempotencyKey },
   })
@@ -99,6 +194,46 @@ export async function prepareGuardedCommunication(
     if (existing.contentHash !== loaded.value.contentFingerprint) {
       return { ok: false, code: 'CONFLICT', message: 'Intent idempotency key reused with different fingerprint' }
     }
+
+    const hasImmutableDbApproval = await loadImmutableApprovalEvidence(db, {
+      intentId: existing.id,
+      customerAccountId: input.customerAccountId,
+    })
+    const eligibility = evaluateWalletHoldEligibility({
+      suppressed: loaded.value.suppressed,
+      consentStatus: loaded.value.consentStatus,
+      purpose: input.purpose,
+      channel: input.channel,
+      dataClassification: loaded.value.dataClassification,
+      approvedRegulatedWorkflow: loaded.value.approvedRegulatedWorkflow,
+      senderVerified: loaded.value.senderVerified,
+      senderUseCaseRegistered: loaded.value.senderUseCaseRegistered,
+      senderIdentityId: loaded.value.senderIdentityId,
+      emailDomainVerified: loaded.value.emailDomainVerified,
+      walletQuoteAvailable: loaded.value.walletQuoteAvailable,
+      approvalRequired: existing.approvalRequired || approvalRequired,
+      hasImmutableDbApproval,
+      outboundPolicyDecision: existing.policyDecision || policyDecision,
+    })
+
+    const reserved = await attemptEligibleWalletReservation(db, {
+      reserveWallet: input.reserveWallet === true,
+      quoteId: existing.quoteId,
+      billingGroupId: input.billingGroupId,
+      customerAccountId: input.customerAccountId,
+      managedSiteId: input.managedSiteId,
+      intentId: existing.id,
+      actorUserId: input.actorUserId,
+      correlationId: input.correlationId,
+      reservationIdempotencyKey,
+      idempotencyKey: input.idempotencyKey,
+      eligibility,
+    })
+    if (!reserved.ok) {
+      // Failed reservation must not invent APPROVED evidence or mutate intent into approved state.
+      return reserved
+    }
+
     return {
       ok: true,
       value: {
@@ -109,8 +244,8 @@ export async function prepareGuardedCommunication(
         dispatchBlockedCode: auth.value.dispatchBlockedCode || PREPARATION_ONLY_DISPATCH_BLOCKED_CODE,
         chatwootNativeSendBlocked: true,
         quoteId: existing.quoteId,
-        reservationId: null,
-        walletReservationAttempted: false,
+        reservationId: reserved.value.reservationId,
+        walletReservationAttempted: reserved.value.walletReservationAttempted,
       },
     }
   }
@@ -145,18 +280,31 @@ export async function prepareGuardedCommunication(
     }
   }
 
-  const policyDecision = auth.value.policyDecision
-  let status: 'DRAFT' | 'BLOCKED' | 'PENDING_APPROVAL' = 'DRAFT'
-  if (
-    policyDecision === 'DENIED' ||
-    policyDecision === 'NOT_CONFIGURED' ||
-    policyDecision === 'COMPLIANCE_REVIEW_REQUIRED' ||
-    policyDecision === 'INSUFFICIENT_CREDITS'
-  ) {
-    status = 'BLOCKED'
-  } else if (policyDecision === 'REQUIRES_APPROVAL') {
-    status = 'PENDING_APPROVAL'
-  }
+  // New intents never have DB approval yet — do not invent one from request input.
+  const hasImmutableDbApproval = false
+  const eligibility = evaluateWalletHoldEligibility({
+    suppressed: loaded.value.suppressed,
+    consentStatus: loaded.value.consentStatus,
+    purpose: input.purpose,
+    channel: input.channel,
+    dataClassification: loaded.value.dataClassification,
+    approvedRegulatedWorkflow: loaded.value.approvedRegulatedWorkflow,
+    senderVerified: loaded.value.senderVerified,
+    senderUseCaseRegistered: loaded.value.senderUseCaseRegistered,
+    senderIdentityId: loaded.value.senderIdentityId,
+    emailDomainVerified: loaded.value.emailDomainVerified,
+    walletQuoteAvailable: loaded.value.walletQuoteAvailable && Boolean(quoteId),
+    approvalRequired,
+    hasImmutableDbApproval,
+    outboundPolicyDecision: policyDecision,
+  })
+
+  const status = resolveIntentStatus({
+    policyDecision,
+    approvalRequired,
+    hasImmutableDbApproval,
+    walletHoldEligible: eligibility.eligible,
+  })
 
   const intent = await db.communicationIntent.create({
     data: {
@@ -170,13 +318,13 @@ export async function prepareGuardedCommunication(
       contentHash: loaded.value.contentFingerprint,
       policyDecision,
       dataClassification: loaded.value.dataClassification,
-      approvalRequired: policyDecision === 'REQUIRES_APPROVAL' || input.purpose === 'MARKETING',
+      approvalRequired,
       idempotencyKey: input.idempotencyKey,
       recipients: {
         create: {
           customerAccountId: input.customerAccountId,
           crmContactId: input.crmContactId,
-          normalizedAddress: input.recipientAddress,
+          normalizedAddress: loaded.value.normalizedRecipientAddress,
           eligibility: policyDecision,
         },
       },
@@ -195,43 +343,27 @@ export async function prepareGuardedCommunication(
         dispatchBlocked: true,
         chatwootNativeSendBlocked: true,
         quoteId,
+        walletHoldEligible: eligibility.eligible,
+        walletHoldReason: eligibility.reasonCode,
       },
     },
   })
 
-  let reservationId: string | null = null
-  let walletReservationAttempted = false
-  if (input.reserveWallet && quoteId && input.billingGroupId) {
-    walletReservationAttempted = true
-    if (intent.approvalRequired && input.humanApprovalGranted === true) {
-      await db.communicationApproval.create({
-        data: {
-          intentId: intent.id,
-          customerAccountId: input.customerAccountId,
-          approverUserId: input.actorUserId,
-          decision: 'APPROVED',
-          reason: 'immutable-server-approval-evidence',
-        },
-      })
-    }
-    const reserved = await prepareCommsWalletReservation(db, {
-      billingGroupId: input.billingGroupId,
-      customerAccountId: input.customerAccountId,
-      managedSiteId: input.managedSiteId,
-      intentId: intent.id,
-      actorUserId: input.actorUserId,
-      correlationId: input.correlationId ?? `comms-prep:${intent.id}`,
-      idempotencyKey: input.reservationIdempotencyKey ?? `reserve:${input.idempotencyKey}`,
-      reservationExpiresAt: new Date(Date.now() + 15 * 60_000),
-    })
-    if (!reserved.ok) {
-      return {
-        ok: false,
-        code: reserved.code,
-        message: reserved.message,
-      }
-    }
-    reservationId = reserved.value.reservationId
+  const reserved = await attemptEligibleWalletReservation(db, {
+    reserveWallet: input.reserveWallet === true,
+    quoteId,
+    billingGroupId: input.billingGroupId,
+    customerAccountId: input.customerAccountId,
+    managedSiteId: input.managedSiteId,
+    intentId: intent.id,
+    actorUserId: input.actorUserId,
+    correlationId: input.correlationId,
+    reservationIdempotencyKey,
+    idempotencyKey: input.idempotencyKey,
+    eligibility,
+  })
+  if (!reserved.ok) {
+    return reserved
   }
 
   return {
@@ -244,8 +376,8 @@ export async function prepareGuardedCommunication(
       dispatchBlockedCode: auth.value.dispatchBlockedCode || PREPARATION_ONLY_DISPATCH_BLOCKED_CODE,
       chatwootNativeSendBlocked: true,
       quoteId,
-      reservationId,
-      walletReservationAttempted,
+      reservationId: reserved.value.reservationId,
+      walletReservationAttempted: reserved.value.walletReservationAttempted,
     },
   }
 }

@@ -39,15 +39,16 @@ Denied gates return per-slice `UNAVAILABLE` with `reasonCode` — the route does
 `prepareGuardedCommunication` in `lib/platform/comms-execution/guarded-prepare-service.ts` (also used by `prepareCommunicationIntent` when `COMMS_INTEGRATION_GATES_ENABLED`):
 
 1. Loads CRM consent, suppression, sender eligibility, membership, billing-group siblings, Chatwoot mapping, and quote facts server-side (`outbound-auth-loader.ts`).
-2. Calls `authorizeOutboundCommunication` (Batch 35).
-3. Persists intent with policy decision; Chatwoot native billable send remains blocked.
-4. Optionally binds quote + `prepareCommsWalletReservation` (existing durable wallet) while outbound stays OFF.
+2. When `crmContactId` is present, binds `recipientAddress` to that contact’s channel identity (normalized); mismatch fails closed before intent/quote/reservation.
+3. Calls `authorizeOutboundCommunication` (Batch 35). Approval evidence is **DB-only** (`CommunicationApproval`); request-body booleans are ignored.
+4. Persists intent with policy decision; Chatwoot native billable send remains blocked.
+5. Wallet holds use `evaluateWalletHoldEligibility` (preparation eligibility distinct from dispatch-disabled). Prohibited/suppressed/unapproved intents never reserve. Optional `prepareCommsWalletReservation` while outbound stays OFF.
 
 `reconcileCommsWalletAgainstDispatchOutcome` bridges provider lifecycle evidence to durable settle/release. Unknown outcomes stay `RECONCILIATION_REQUIRED`.
 
 ### Extended intent route
 
-`POST /api/v1/communications/intents` accepts optional `quoteId`, `billingGroupId`, `managedSiteId`, `humanApprovalGranted`, `reserveWallet`. Live SMS/email/Chatwoot dispatch remains blocked by execution gates.
+`POST /api/v1/communications/intents` accepts optional `quoteId`, `billingGroupId`, `managedSiteId`, `reserveWallet`. `humanApprovalGranted` in the body is ignored. Live SMS/email/Chatwoot dispatch remains blocked by execution gates.
 
 ### v0 Stage B handoff (Cursor does not edit these paths)
 

@@ -24,7 +24,6 @@ export async function prepareCommunicationIntent(input: {
   quoteId?: string
   billingGroupId?: string
   managedSiteId?: string
-  humanApprovalGranted?: boolean
   reserveWallet?: boolean
 }): Promise<CommsResult<{ intentId: string; status: string; policyDecision: string; reservationId?: string | null }>> {
   // Batch 4: when integration gates are on, use the DB-backed guarded prepare path.
@@ -43,7 +42,6 @@ export async function prepareCommunicationIntent(input: {
       idempotencyKey: input.idempotencyKey,
       dataClassification: input.dataClassification,
       aiActor: input.aiActor,
-      humanApprovalGranted: input.humanApprovalGranted,
       quoteId: input.quoteId,
       billingGroupId: input.billingGroupId,
       reserveWallet: input.reserveWallet === true,
