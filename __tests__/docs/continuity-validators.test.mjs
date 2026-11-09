@@ -691,10 +691,12 @@ test('push:main DATA_AND_SERVICES and roadmap IN PR lag is PENDING with checkpoi
     );
     const field2 = `| 2 | GitHub SHA, branch, active PR | **\`${baseSha}\`** on main. **Batch 4** [PR **#125**](https://example/pull/125) (open, owner review) |`;
     for (const rel of ['docs/PROJECT_MEMORY.md', 'docs/SESSION_HANDOFF.md']) {
-      writeFileSync(
-        join(root, rel),
-        readFileSync(join(root, rel), 'utf8').replace(/\| 2 \| GitHub SHA, branch, active PR \|[^\n]+\|/, field2),
-      );
+      let text = readFileSync(join(root, rel), 'utf8').replace(/\| 2 \| GitHub SHA, branch, active PR \|[^\n]+\|/, field2);
+      // MERGED evidence row so stale-doc detection does not depend on live GitHub API.
+      if (rel === 'docs/PROJECT_MEMORY.md') {
+        text += `\n| Batch 4 communications | MERGED | PR #125 |\n`;
+      }
+      writeFileSync(join(root, rel), text);
     }
     writeFileSync(join(root, 'README.md'), 'application after batch4 squash\n');
     gitCmd(root, 'add', '.');
@@ -760,6 +762,11 @@ test('reconciled DATA_AND_SERVICES IN PR for merged PR without lag is CONFLICT',
   const documented = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
   try {
     writeCheckpointDocs(root, documented);
+    // Record #125 as MERGED in memory so stale detection does not depend on live GitHub API.
+    writeFileSync(
+      join(root, 'docs', 'PROJECT_MEMORY.md'),
+      `${readFileSync(join(root, 'docs', 'PROJECT_MEMORY.md'), 'utf8')}\n| Batch 4 communications | MERGED | PR #125 \`${documented}\` |\n`,
+    );
     writeFileSync(
       join(root, 'docs', 'DATA_AND_SERVICES.md'),
       `| Communications wallet (Batch 4) | paths | Chatwoot | IN PR #125 | off |\n`,
