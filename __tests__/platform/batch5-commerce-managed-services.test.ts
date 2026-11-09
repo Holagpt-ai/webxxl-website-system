@@ -61,13 +61,20 @@ const ENV_KEYS = [
   'COMMERCE_PROVIDER_MODE',
   'COMMERCE_MOCK_WEBHOOK_SECRET',
   'WALLET_BACKEND_ENABLED',
+  'WALLET_GROUP_READ_ENABLED',
 ]
+
+const AESTHETICS_OPERATOR_USER_ID = 'user_abmed_aesthetics_operator'
+const REVOKED_BILLING_USER_ID = 'user_abmed_revoked_billing'
 
 const payer = { userId: BILLING_OWNER_USER_ID, platformRole: 'CUSTOMER' as const }
 const admin = { userId: 'user_staff_admin', platformRole: 'ADMIN' as const }
 const from = new Date('2020-01-01T00:00:00.000Z')
 
-function commerceStore() {
+function commerceStore(options?: {
+  memberships?: FundingMembership[]
+  roles?: Array<{ billingGroupId: string; userId: string; role: 'GROUP_OWNER' | 'BILLING_ADMIN' | 'BILLING_VIEWER' }>
+}) {
   return createMemoryCommerceStore({
     billingGroups: [{ id: ABMED_GROUP_ID, name: 'ABMED Group', slug: 'abmed', status: 'ACTIVE', defaultCurrency: 'USD' }],
     accounts: [
@@ -75,22 +82,26 @@ function commerceStore() {
       { id: ABMED_PHYSICIANS_ACCOUNT_ID, businessName: 'ABMED Physicians Group', slug: 'abmed-physicians' },
       { id: ABMED_CLINICAL_ACCOUNT_ID, businessName: 'ABMED Clinical Research', slug: 'abmed-clinical' },
     ],
-    roles: [{ billingGroupId: ABMED_GROUP_ID, userId: BILLING_OWNER_USER_ID, role: 'GROUP_OWNER' }],
-    memberships: [ABMED_AESTHETICS_ACCOUNT_ID, ABMED_PHYSICIANS_ACCOUNT_ID, ABMED_CLINICAL_ACCOUNT_ID].map(
-      (customerAccountId): FundingMembership => ({
-        billingGroupId: ABMED_GROUP_ID,
-        customerAccountId,
-        status: 'ACTIVE',
-        validFrom: from,
-        validTo: null,
-        walletUseAllowed: true,
-      }),
-    ),
+    roles: options?.roles ?? [{ billingGroupId: ABMED_GROUP_ID, userId: BILLING_OWNER_USER_ID, role: 'GROUP_OWNER' }],
+    memberships:
+      options?.memberships ??
+      [ABMED_AESTHETICS_ACCOUNT_ID, ABMED_PHYSICIANS_ACCOUNT_ID, ABMED_CLINICAL_ACCOUNT_ID].map(
+        (customerAccountId): FundingMembership => ({
+          billingGroupId: ABMED_GROUP_ID,
+          customerAccountId,
+          status: 'ACTIVE',
+          validFrom: from,
+          validTo: null,
+          walletUseAllowed: true,
+        }),
+      ),
     operating: [
       { userId: BILLING_OWNER_USER_ID, customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID },
       { userId: BILLING_OWNER_USER_ID, customerAccountId: ABMED_PHYSICIANS_ACCOUNT_ID },
       { userId: BILLING_OWNER_USER_ID, customerAccountId: ABMED_CLINICAL_ACCOUNT_ID },
+      { userId: AESTHETICS_OPERATOR_USER_ID, customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID },
       { userId: CLINICAL_ONLY_USER_ID, customerAccountId: ABMED_CLINICAL_ACCOUNT_ID },
+      { userId: REVOKED_BILLING_USER_ID, customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID },
     ],
     policies: [],
     projects: [
@@ -113,6 +124,7 @@ function enableMockCommerce() {
   process.env.COMMERCE_LIVE_PROVIDER_ENABLED = 'false'
   process.env.COMMERCE_WALLET_MINT_ENABLED = 'false'
   process.env.WALLET_BACKEND_ENABLED = 'true'
+  process.env.WALLET_GROUP_READ_ENABLED = 'true'
 }
 
 function portalFor(accountId: string, userId = BILLING_OWNER_USER_ID): PortalUser {
@@ -274,6 +286,133 @@ describe('Batch 5 commerce & managed services', () => {
       expect(physiciansSummary.value.purchaseHistory.data.orders).toHaveLength(1)
       expect(physiciansSummary.value.purchaseHistory.data.orders[0]?.productKeys).toContain('domain.registration')
     }
+  })
+
+  it('restricts sibling member lists and wallet balances to billing readers', async () => {
+    enableMockCommerce()
+    const db = commerceStore()
+    const emptyInfra = { hosting: [], domains: [], email: [] }
+    const walletDeps = {
+      store: db,
+      infrastructureOverview: async () => emptyInfra,
+      walletBalance: async () => ({ walletId: ABMED_WALLET_ID, availableBalance: 42 }),
+    }
+
+    const ownerSummary = await getCommerceExecutionSummary({
+      portal: portalFor(ABMED_AESTHETICS_ACCOUNT_ID, BILLING_OWNER_USER_ID),
+      billingGroupId: ABMED_GROUP_ID,
+      deps: walletDeps,
+    })
+    expect(ownerSummary.ok).toBe(true)
+    if (!ownerSummary.ok) return
+    expect(ownerSummary.value.billingGroupPayer.status).toBe('AVAILABLE')
+    if (ownerSummary.value.billingGroupPayer.status === 'AVAILABLE') {
+      expect(ownerSummary.value.billingGroupPayer.data.payerAuthorized).toBe(true)
+      expect(ownerSummary.value.billingGroupPayer.data.callerRole).toBe('GROUP_OWNER')
+      expect(ownerSummary.value.billingGroupPayer.data.memberAccountIds).toEqual(
+        expect.arrayContaining([
+          ABMED_AESTHETICS_ACCOUNT_ID,
+          ABMED_PHYSICIANS_ACCOUNT_ID,
+          ABMED_CLINICAL_ACCOUNT_ID,
+        ]),
+      )
+      expect(ownerSummary.value.billingGroupPayer.data.memberAccountIds).toHaveLength(3)
+    }
+    expect(ownerSummary.value.walletInstrumentBoundary.status).toBe('AVAILABLE')
+    if (ownerSummary.value.walletInstrumentBoundary.status === 'AVAILABLE') {
+      expect(ownerSummary.value.walletInstrumentBoundary.data.walletId).toBe(ABMED_WALLET_ID)
+      expect(ownerSummary.value.walletInstrumentBoundary.data.availableCredits).toBe(42)
+    }
+
+    const operatorSummary = await getCommerceExecutionSummary({
+      portal: portalFor(ABMED_AESTHETICS_ACCOUNT_ID, AESTHETICS_OPERATOR_USER_ID),
+      billingGroupId: ABMED_GROUP_ID,
+      deps: walletDeps,
+    })
+    expect(operatorSummary.ok).toBe(true)
+    if (!operatorSummary.ok) return
+    expect(operatorSummary.value.billingGroupPayer.status).toBe('AVAILABLE')
+    if (operatorSummary.value.billingGroupPayer.status === 'AVAILABLE') {
+      expect(operatorSummary.value.billingGroupPayer.data.payerAuthorized).toBe(false)
+      expect(operatorSummary.value.billingGroupPayer.data.callerRole).toBeNull()
+      expect(operatorSummary.value.billingGroupPayer.data.memberAccountIds).toEqual([ABMED_AESTHETICS_ACCOUNT_ID])
+      expect(operatorSummary.value.billingGroupPayer.data.memberAccountIds).not.toContain(ABMED_PHYSICIANS_ACCOUNT_ID)
+      expect(operatorSummary.value.billingGroupPayer.data.memberAccountIds).not.toContain(ABMED_CLINICAL_ACCOUNT_ID)
+    }
+    expect(operatorSummary.value.walletInstrumentBoundary.status).toBe('AVAILABLE')
+    if (operatorSummary.value.walletInstrumentBoundary.status === 'AVAILABLE') {
+      expect(operatorSummary.value.walletInstrumentBoundary.data.walletId).toBeNull()
+      expect(operatorSummary.value.walletInstrumentBoundary.data.availableCredits).toBeNull()
+    }
+  })
+
+  it('conceals wallet balances when WALLET_GROUP_READ_ENABLED is off for nonstaff readers', async () => {
+    enableMockCommerce()
+    process.env.WALLET_GROUP_READ_ENABLED = 'false'
+    const db = commerceStore()
+    const summary = await getCommerceExecutionSummary({
+      portal: portalFor(ABMED_AESTHETICS_ACCOUNT_ID, BILLING_OWNER_USER_ID),
+      billingGroupId: ABMED_GROUP_ID,
+      deps: {
+        store: db,
+        infrastructureOverview: async () => ({ hosting: [], domains: [], email: [] }),
+        walletBalance: async () => ({ walletId: ABMED_WALLET_ID, availableBalance: 99 }),
+      },
+    })
+    expect(summary.ok).toBe(true)
+    if (!summary.ok) return
+    expect(summary.value.billingGroupPayer.status).toBe('AVAILABLE')
+    if (summary.value.billingGroupPayer.status === 'AVAILABLE') {
+      expect(summary.value.billingGroupPayer.data.payerAuthorized).toBe(true)
+    }
+    expect(summary.value.walletInstrumentBoundary.status).toBe('AVAILABLE')
+    if (summary.value.walletInstrumentBoundary.status === 'AVAILABLE') {
+      expect(summary.value.walletInstrumentBoundary.data.walletId).toBeNull()
+      expect(summary.value.walletInstrumentBoundary.data.availableCredits).toBeNull()
+      expect(summary.value.walletInstrumentBoundary.data.note).toMatch(/WALLET_GROUP_READ_ENABLED/i)
+    }
+  })
+
+  it('denies payer authority for inactive funding membership without a billing role', async () => {
+    enableMockCommerce()
+    const db = commerceStore({
+      roles: [],
+      memberships: [
+        {
+          billingGroupId: ABMED_GROUP_ID,
+          customerAccountId: ABMED_AESTHETICS_ACCOUNT_ID,
+          status: 'SUSPENDED',
+          validFrom: from,
+          validTo: null,
+          walletUseAllowed: false,
+        },
+        {
+          billingGroupId: ABMED_GROUP_ID,
+          customerAccountId: ABMED_PHYSICIANS_ACCOUNT_ID,
+          status: 'ACTIVE',
+          validFrom: from,
+          validTo: null,
+          walletUseAllowed: true,
+        },
+      ],
+    })
+    const summary = await getCommerceExecutionSummary({
+      portal: portalFor(ABMED_AESTHETICS_ACCOUNT_ID, REVOKED_BILLING_USER_ID),
+      billingGroupId: ABMED_GROUP_ID,
+      deps: {
+        store: db,
+        infrastructureOverview: async () => ({ hosting: [], domains: [], email: [] }),
+        walletBalance: async () => ({ walletId: ABMED_WALLET_ID, availableBalance: 42 }),
+      },
+    })
+    expect(summary.ok).toBe(true)
+    if (!summary.ok) return
+    // Preferred group fails closed: inactive funding membership is not authorized.
+    expect(summary.value.billingGroupPayer.status).toBe('UNAVAILABLE')
+    if (summary.value.billingGroupPayer.status === 'UNAVAILABLE') {
+      expect(summary.value.billingGroupPayer.reasonCode).toBe('FORBIDDEN')
+    }
+    expect(summary.value.walletInstrumentBoundary.status).toBe('UNAVAILABLE')
   })
 
   it('keeps quote/price-version immutable and rejects duplicate checkout/webhook idempotently', async () => {

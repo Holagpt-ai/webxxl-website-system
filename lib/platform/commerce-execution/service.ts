@@ -3,7 +3,7 @@ import {
   isCommerceProvisioningEnabled,
   isCommerceSubscriptionProviderEnabled,
 } from '@/config/commerce-backend'
-import { isWalletBackendEnabled } from '@/config/wallet-backend'
+import { isWalletBackendEnabled, isWalletGroupReadEnabled } from '@/config/wallet-backend'
 import type { PortalUser } from '@/lib/portal/authz'
 import { isPrismaMissingTableError } from '@/lib/platform/business-overview/access'
 import { COMMERCE_CATALOG_SKELETON } from '@/lib/platform/commerce/catalog'
@@ -12,9 +12,10 @@ import {
   classifyFinancialInstrument,
   type FinancialInstrument,
 } from '@/lib/platform/commerce/financial-boundaries'
+import { assertBillingGroupReader } from '@/lib/platform/commerce/portal-api'
 import { prismaCommerceStore } from '@/lib/platform/commerce/prisma-store'
 import type { CommerceStore } from '@/lib/platform/commerce/store'
-import type { ProductRecord } from '@/lib/platform/commerce/types'
+import type { CommerceActor, ProductRecord } from '@/lib/platform/commerce/types'
 import {
   COMMERCE_EXECUTION_BATCH_VERSION,
   COMMERCE_EXECUTION_PLANNING_DISCLOSURE,
@@ -92,10 +93,14 @@ async function resolveBillingGroupId(
   store: CommerceStore,
   customerAccountId: string,
   preferred?: string | null,
-): Promise<string | null> {
+): Promise<{ billingGroupId: string | null; preferredRejected: boolean }> {
   if (preferred) {
     const memberships = await store.listFundingMemberships(preferred, customerAccountId)
-    if (memberships.some((m) => m.status === 'ACTIVE')) return preferred
+    if (memberships.some((m) => m.status === 'ACTIVE')) {
+      return { billingGroupId: preferred, preferredRejected: false }
+    }
+    // Fail closed: do not silently substitute another group for an unauthorized preferred id.
+    return { billingGroupId: null, preferredRejected: true }
   }
   try {
     const row = await prisma.billingGroupMembership.findFirst({
@@ -103,11 +108,21 @@ async function resolveBillingGroupId(
       select: { billingGroupId: true },
       orderBy: { validFrom: 'desc' },
     })
-    return row?.billingGroupId ?? null
+    return { billingGroupId: row?.billingGroupId ?? null, preferredRejected: false }
   } catch (error) {
     if (!isPrismaMissingTableError(error)) throw error
-    return null
+    return { billingGroupId: null, preferredRejected: false }
   }
+}
+
+function toCommerceActor(portal: PortalUser): CommerceActor {
+  const platformRole =
+    portal.role === 'ADMIN' || portal.role === 'STAFF' ? portal.role : 'CUSTOMER'
+  return { userId: portal.id, platformRole }
+}
+
+function isStaffActor(actor: CommerceActor): boolean {
+  return actor.platformRole === 'ADMIN' || actor.platformRole === 'STAFF'
 }
 
 export type CommerceExecutionDeps = {
@@ -242,7 +257,9 @@ export async function getCommerceExecutionSummary(input: {
     invoiceReferences = unavailable('commerce.invoice_references', coreBlocked.reasonCode, coreBlocked.message)
   } else {
     try {
-      const billingGroupId = await resolveBillingGroupId(store, customerAccountId, input.billingGroupId)
+      const actor = toCommerceActor(input.portal)
+      const resolvedGroup = await resolveBillingGroupId(store, customerAccountId, input.billingGroupId)
+      const billingGroupId = resolvedGroup.billingGroupId
       const orders = await store.listOrdersByAccount(customerAccountId)
       const purchaseRows = []
       for (const order of orders.slice(0, 50)) {
@@ -275,53 +292,106 @@ export async function getCommerceExecutionSummary(input: {
         billingGroupDoesNotGrantSiblingPurchaseVisibility: true,
       })
 
-      if (billingGroupId) {
-        const role = await store.findBillingRole(billingGroupId, input.portal.id)
-        const members = await store.listBillingGroupMembers(billingGroupId)
-        const memberships = await store.listFundingMemberships(billingGroupId, customerAccountId)
-        const payerAuthorized =
-          Boolean(role && (role.role === 'GROUP_OWNER' || role.role === 'BILLING_ADMIN')) ||
-          memberships.some((m) => m.status === 'ACTIVE')
-        billingGroupPayer = available('commerce.billing_group_payer', {
-          billingGroupId,
-          payerAuthorized,
-          callerRole: role?.role ?? null,
-          memberAccountIds: members.map((m) => m.customerAccountId),
-          operationalIsolation: BILLING_PAYER_OPERATIONAL_ISOLATION,
-          abmedPatternSupported: true,
-        })
-
-        let walletId: string | null = null
-        let availableCredits: number | null = null
-        if (isWalletBackendEnabled()) {
-          const injected = input.deps?.walletBalance
-            ? await input.deps.walletBalance(billingGroupId)
-            : null
-          if (injected) {
-            walletId = injected.walletId
-            availableCredits = injected.availableBalance
-          } else {
-            try {
-              const wallet = await store.findWallet(billingGroupId)
-              if (wallet) {
-                walletId = wallet.id
-                const balance = await getWalletBalance(prisma, wallet.id)
-                availableCredits = balance?.availableBalance ?? null
+      if (resolvedGroup.preferredRejected) {
+        billingGroupPayer = unavailable(
+          'commerce.billing_group_payer',
+          'FORBIDDEN',
+          'Billing group is not authorized for this customer account',
+        )
+        walletInstrumentBoundary = unavailable(
+          'commerce.wallet_instrument_boundary',
+          'FORBIDDEN',
+          'Billing group is not authorized for this customer account',
+        )
+      } else if (billingGroupId) {
+        const reader = await assertBillingGroupReader(store, actor, billingGroupId)
+        if (!reader.ok) {
+          billingGroupPayer = unavailable(
+            'commerce.billing_group_payer',
+            reader.error,
+            'Billing group financial read is not authorized',
+          )
+          walletInstrumentBoundary = unavailable(
+            'commerce.wallet_instrument_boundary',
+            reader.error,
+            'Billing group wallet read is not authorized',
+          )
+        } else {
+          const allMembers = await store.listBillingGroupMembers(billingGroupId)
+          let memberAccountIds = allMembers.map((m) => m.customerAccountId)
+          if (!isStaffActor(actor) && !reader.value.role) {
+            const operatingIds = new Set<string>()
+            for (const member of allMembers) {
+              if (await store.hasOperatingMembership(actor.userId, member.customerAccountId)) {
+                operatingIds.add(member.customerAccountId)
               }
-            } catch (error) {
-              if (!isPrismaMissingTableError(error)) throw error
+            }
+            memberAccountIds = allMembers
+              .filter((m) => operatingIds.has(m.customerAccountId))
+              .map((m) => m.customerAccountId)
+          }
+          const payerAuthorized = Boolean(
+            isStaffActor(actor) ||
+              reader.value.role === 'GROUP_OWNER' ||
+              reader.value.role === 'BILLING_ADMIN',
+          )
+          billingGroupPayer = available('commerce.billing_group_payer', {
+            billingGroupId,
+            payerAuthorized,
+            callerRole: reader.value.role,
+            memberAccountIds,
+            operationalIsolation: BILLING_PAYER_OPERATIONAL_ISOLATION,
+            abmedPatternSupported: true,
+          })
+
+          // Mirror getBillingGroupWalletSummary: operating members without a billing role
+          // never receive group wallet id/balance; WALLET_GROUP_READ_ENABLED gates nonstaff.
+          const canReadGroupWallet =
+            isStaffActor(actor) ||
+            reader.value.role === 'GROUP_OWNER' ||
+            reader.value.role === 'BILLING_ADMIN' ||
+            reader.value.role === 'BILLING_VIEWER'
+          let walletId: string | null = null
+          let availableCredits: number | null = null
+          let walletNote =
+            'Shared messaging credit wallet must not be debited for hosting, domain, subscription, or business-email money purchases.'
+          if (!canReadGroupWallet) {
+            walletNote =
+              'Operating membership alone does not disclose shared BillingGroup wallet balances; billing-reader role required.'
+          } else if (!isWalletBackendEnabled()) {
+            walletNote = 'Wallet backend disabled; money purchases remain distinct from messaging credits.'
+          } else if (!isWalletGroupReadEnabled() && !isStaffActor(actor)) {
+            walletNote = 'WALLET_GROUP_READ_ENABLED is off; group wallet balances are concealed for nonstaff readers.'
+          } else {
+            const injected = input.deps?.walletBalance
+              ? await input.deps.walletBalance(billingGroupId)
+              : null
+            if (injected) {
+              walletId = injected.walletId
+              availableCredits = injected.availableBalance
+            } else {
+              try {
+                const wallet = await store.findWallet(billingGroupId)
+                if (wallet) {
+                  walletId = wallet.id
+                  const balance = await getWalletBalance(prisma, wallet.id)
+                  availableCredits = balance?.availableBalance ?? null
+                }
+              } catch (error) {
+                if (!isPrismaMissingTableError(error)) throw error
+              }
             }
           }
+          walletInstrumentBoundary = available('commerce.wallet_instrument_boundary', {
+            messagingCreditType: 'MESSAGING',
+            moneyPurchasesDebitWallet: false,
+            hostingDomainSubscriptionUseWallet: false,
+            billingGroupId,
+            walletId,
+            availableCredits,
+            note: walletNote,
+          })
         }
-        walletInstrumentBoundary = available('commerce.wallet_instrument_boundary', {
-          messagingCreditType: 'MESSAGING',
-          moneyPurchasesDebitWallet: false,
-          hostingDomainSubscriptionUseWallet: false,
-          billingGroupId,
-          walletId,
-          availableCredits,
-          note: 'Shared messaging credit wallet must not be debited for hosting, domain, subscription, or business-email money purchases.',
-        })
       } else {
         billingGroupPayer = available('commerce.billing_group_payer', {
           billingGroupId: null,

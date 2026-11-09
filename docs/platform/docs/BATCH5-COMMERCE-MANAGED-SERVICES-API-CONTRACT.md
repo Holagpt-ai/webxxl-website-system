@@ -40,8 +40,8 @@ Runtime gates remain OFF. Live checkout, provisioning, DNS, mailbox creation, an
 |---|---|---|
 | `catalogEntitlements` | `COMMERCE_CATALOG_SKELETON` + `classifyFinancialInstrument` | OPEN-001 `SUBSCRIBER_ONLY`; included FREE not payable |
 | `purchaseHistory` | `listOrdersByAccount` + order items | Tenant = `CustomerAccount`; BillingGroup does **not** share sibling purchase visibility |
-| `billingGroupPayer` | Billing roles + funding memberships | Authorized shared payer (ABMED pattern); operational isolation constant |
-| `walletInstrumentBoundary` | Wallet balance (optional) | Messaging credits never debit for money hosting/domain/subscription/email |
+| `billingGroupPayer` | `assertBillingGroupReader` + summary member filtering | Payer authority is role-based (`GROUP_OWNER` / `BILLING_ADMIN`); ordinary operators see only their own operating accounts |
+| `walletInstrumentBoundary` | Same reader gate as `getBillingGroupWalletSummary` | Wallet id/balance only for billing readers; `WALLET_GROUP_READ_ENABLED` required for nonstaff; messaging credits never debit money purchases |
 | `paymentProviderReadiness` | `config/commerce-backend` + `resolveCommerceProviderKey` | `liveChargeBlocked: true`; provider-neutral |
 | `managedServicesLifecycle` | Project services + infra overview + lifecycle mapper | ACTIVE only with `PROVIDER_VERIFIED` + external ref |
 | `subscriptionState` | Subscriptions by order | Provider subscription calls reported blocked when flag off |
