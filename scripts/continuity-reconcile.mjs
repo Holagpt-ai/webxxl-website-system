@@ -149,15 +149,27 @@ export function resolveMergedOpenPrDrift(root, documentedMain, referenceMain, pr
         ? [
             `POST-MERGE-ISSUE-PR-#${pr} | ISSUE_REGISTER row still IN PR for merged PR #${pr}; refresh register status (not a stale contradiction)`,
           ]
-        : [
-            `POST-MERGE-PR-#${pr} | PR #${pr} merged on current main; refresh checkpoint open wording (not a stale contradiction)`,
-          ];
+        : context === 'data_and_services'
+          ? [
+              `POST-MERGE-DOC-PR-#${pr} | DATA_AND_SERVICES still IN PR for merged PR #${pr}; refresh capability row (not a stale contradiction)`,
+            ]
+          : context === 'implementation_roadmap'
+            ? [
+                `POST-MERGE-DOC-PR-#${pr} | IMPLEMENTATION-ROADMAP still IN PR for merged PR #${pr}; refresh batch status (not a stale contradiction)`,
+              ]
+            : [
+                `POST-MERGE-PR-#${pr} | PR #${pr} merged on current main; refresh checkpoint open wording (not a stale contradiction)`,
+              ];
     return { outcome: 'pending', messages };
   }
   const messages =
     context === 'issue_register'
       ? [`ISSUE_REGISTER row still IN PR but PR #${pr} is MERGED on GitHub`]
-      : [`checkpoint still describes PR #${pr} as open but GitHub reports MERGED`];
+      : context === 'data_and_services'
+        ? [`DATA_AND_SERVICES still IN PR but PR #${pr} is MERGED on GitHub`]
+        : context === 'implementation_roadmap'
+          ? [`IMPLEMENTATION-ROADMAP still IN PR but PR #${pr} is MERGED on GitHub`]
+          : [`checkpoint still describes PR #${pr} as open but GitHub reports MERGED`];
   return { outcome: 'conflict', messages };
 }
 
@@ -167,10 +179,20 @@ function prNumbersFromStaleHits(hitsText) {
   return [...found];
 }
 
+const POST_MERGE_STALE_DOC_CONTEXTS = [
+  { pattern: /^docs\/ISSUE_REGISTER\.md:\d+ stale open status for merged work \((.+)\)$/, context: 'issue_register' },
+  { pattern: /^docs\/DATA_AND_SERVICES\.md:\d+ stale open status for merged work \((.+)\)$/, context: 'data_and_services' },
+  {
+    pattern: /^docs\/platform\/docs\/13-IMPLEMENTATION-ROADMAP\.md:\d+ stale open status for merged work \((.+)\)$/,
+    context: 'implementation_roadmap',
+  },
+];
+
 function classifyStaleWarning(root, warning, options, documentedMain, referenceMain, checkMergedPr) {
-  const registerMatch = warning.match(/^docs\/ISSUE_REGISTER\.md:\d+ stale open status for merged work \((.+)\)$/);
-  if (!registerMatch) return { outcome: 'conflict', messages: [`stale operational status: ${warning}`] };
-  const prs = prNumbersFromStaleHits(registerMatch[1]);
+  const matched = POST_MERGE_STALE_DOC_CONTEXTS.find((entry) => entry.pattern.test(warning));
+  if (!matched) return { outcome: 'conflict', messages: [`stale operational status: ${warning}`] };
+  const hits = warning.match(matched.pattern)?.[1];
+  const prs = prNumbersFromStaleHits(hits);
   if (!prs.length) return { outcome: 'conflict', messages: [`stale operational status: ${warning}`] };
   const pending = [];
   const conflicts = [];
@@ -182,7 +204,7 @@ function classifyStaleWarning(root, warning, options, documentedMain, referenceM
       pr,
       checkMergedPr(pr),
       options,
-      'issue_register',
+      matched.context,
     );
     if (resolved.outcome === 'pending') pending.push(...(resolved.messages ?? []));
     else if (resolved.outcome === 'conflict') conflicts.push(`stale operational status: ${warning}`);
@@ -339,13 +361,9 @@ export function reconcileContinuity(root, options = {}) {
   const operational = loadOperationalStatus(root);
   const staleWarnings = collectStaleStatusWarnings(operational);
   for (const warning of staleWarnings) {
-    if (warning.startsWith('docs/ISSUE_REGISTER.md:')) {
-      const classified = classifyStaleWarning(root, warning, options, documentedMain, referenceMain, checkMergedPr);
-      if (classified.outcome === 'pending') pending.push(...(classified.messages ?? []));
-      else conflicts.push(...(classified.messages ?? [`stale operational status: ${warning}`]));
-    } else {
-      conflicts.push(`stale operational status: ${warning}`);
-    }
+    const classified = classifyStaleWarning(root, warning, options, documentedMain, referenceMain, checkMergedPr);
+    if (classified.outcome === 'pending') pending.push(...(classified.messages ?? []));
+    else conflicts.push(...(classified.messages ?? [`stale operational status: ${warning}`]));
   }
 
   const adr = validateAdrs(root);

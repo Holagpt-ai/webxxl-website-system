@@ -138,4 +138,16 @@ export const COMMERCE_CATALOG_SKELETON: CatalogSkeleton[] = [
     providerPassThrough: false,
     featureFlag: null,
   },
+  {
+    productKey: 'email.business',
+    kind: 'ADDON',
+    name: 'Business email service',
+    pricingMode: 'RECURRING',
+    purchasable: true,
+    creditEligible: false,
+    eligibilityCohort: 'SUBSCRIBER_ONLY',
+    entitlementKey: 'paid.business-email',
+    providerPassThrough: true,
+    featureFlag: null,
+  },
 ]
