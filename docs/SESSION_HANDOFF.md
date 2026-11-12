@@ -23,7 +23,7 @@ Owner review of the Batch 6 branch. After merge: **Batch 7 — Platform Admin & 
 
 ## PENDING REPOSITORY SYNC
 
-- Fact: Batch 6 is not on `main` yet, so checkpoint field 2 stays at verified `dd109204c3089ddef6ba03770c70d33b0d8455d3`. Target files: `docs/PROJECT_MEMORY.md` and `docs/SESSION_HANDOFF.md`. Responsible platform: Cursor, after owner merge. Next action: record the squash SHA only when GitHub `main` advances.
+(none)
 
 ## Handoff template
 
