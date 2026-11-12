@@ -85,6 +85,7 @@ Batch 17A CRM extensions (backend merged; UI wired in Batch 17B/17C integration 
 Batch 23 CRM data operations (backend; open PR): enriched `POST /api/v1/crm/imports/preview` and `POST /api/v1/crm/imports/commit` outcomes; stable `POST /api/v1/crm/exports` cursor pages; `GET|PATCH|DELETE /api/v1/crm/segments/[id]`; `GET|POST /api/v1/crm/merge-proposals` and `POST /api/v1/crm/merge-proposals/[id]` (`approve`/`reject`).
 | Communications and workflows | `/api/v1/communications/*` (incl. Batch 4 `GET /api/v1/communications/execution/summary`), `/api/v1/workflows/*` |
 | Customer AI | `/api/v1/customer-ai/accounts/[accountId]/*` |
+| AI workforce execution (Batch 6) | `GET /api/v1/ai-workforce/execution/summary`, `POST /api/v1/ai-workforce/execution/preparations`, `POST /api/v1/ai-workforce/execution/preparations/[preparationId]/approval`, `POST /api/v1/ai-workforce/execution/pause` — [`BATCH6-AI-WORKFORCE-AUTOMATION-API-CONTRACT.md`](platform/docs/BATCH6-AI-WORKFORCE-AUTOMATION-API-CONTRACT.md) |
 | Files | `/api/files/[fileId]` |
 
 Planned screens in [`docs/platform/docs/05-SITEMAP-WIREFRAMES.md`](platform/docs/05-SITEMAP-WIREFRAMES.md) are targets until a `page.tsx` exists. The checker does not invent those paths.

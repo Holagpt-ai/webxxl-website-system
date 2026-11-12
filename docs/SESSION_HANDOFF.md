@@ -1,39 +1,39 @@
 # WebXXL — Session Handoff
 
-**Compiled:** 2026-11-08 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `c27c6810e61825fd5a99a9a0d994c1bda704c871` (PR **#125**)
+**Compiled:** 2026-11-12 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `dd109204c3089ddef6ba03770c70d33b0d8455d3` (PR **#126** Batch 5 MERGED)
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | GitHub `main` `c27c6810e61825fd5a99a9a0d994c1bda704c871` ([PR **#125**](https://github.com/Holagpt-ai/webxxl-website-system/pull/125) Batch 4 Communications & Messaging Wallet, MERGED 2026-11-09). Prior [PR **#124**](https://github.com/Holagpt-ai/webxxl-website-system/pull/124) @ `5cc8d41`; [PR **#123**](https://github.com/Holagpt-ai/webxxl-website-system/pull/123) @ `259f6be`; [PR **#122**](https://github.com/Holagpt-ai/webxxl-website-system/pull/122) CONTINUITY-04 @ `c488b10`. Build-first active; Issue #105 QA **deferred** to Batch 8. |
-| 2 | GitHub SHA, branch, active PR | **`c27c6810e61825fd5a99a9a0d994c1bda704c871`** on `main`. **Batch 5** [PR **#126**](https://github.com/Holagpt-ai/webxxl-website-system/pull/126) on `feat/batch5-commerce-managed-services` (open, owner review) — **Cursor** |
-| 3 | Production deployment | Owner-reported Vercel **`dpl_Agrh29ThShz8cmB5kHtkjHhpi64n`** **READY** @ `c27c6810e61825fd5a99a9a0d994c1bda704c871` (Batch 4 SHA only). Not migration, activation, or provider live state. |
-| 4 | Last updated | 2026-11-08 |
-| 5 | Next task / responsible platform | Owner review **Batch 5 — Commerce & Managed Services** (Issue **#109**); then **Batch 6 — AI Workforce & Automation** — **Cursor** |
-| 6 | Open blocker / gate IDs | **Build-first policy:** broad browser QA, CRM E2E, cross-module acceptance deferred to **Batch 8 — Release & Activation** (Issue #109). Issue **#105** QA items **deferred**, not cancelled. CRM-SUBNAV-105 **REPORTED**, not resolved. Staging migrations last **39/39** (2026-11-03); not re-counted 2026-11-08. Production migrate **UNVERIFIED**. Flags **not activated**. Provider activation **UNVERIFIED**. |
+| 1 | Last verified checkpoint | GitHub `main` `dd109204c3089ddef6ba03770c70d33b0d8455d3` ([PR **#126**](https://github.com/Holagpt-ai/webxxl-website-system/pull/126) Batch 5 Commerce & Managed Services, MERGED 2026-11-09). Prior [PR **#125**](https://github.com/Holagpt-ai/webxxl-website-system/pull/125) @ `c27c6810`. Build-first policy active; Issue #105 QA **deferred** to Batch 8. |
+| 2 | GitHub SHA, branch, active PR | **`dd109204c3089ddef6ba03770c70d33b0d8455d3`** on `main`. [PR **#126**](https://github.com/Holagpt-ai/webxxl-website-system/pull/126) Batch 5 MERGED. |
+| 3 | Production deployment | GitHub deployment **`7656576538`** Production **success** 2026-11-09T13:58:17Z @ `dd109204c3089ddef6ba03770c70d33b0d8455d3`. Continuity deployment lookup **success** for Vercel **`dpl_DdxJbNwAzaWp9u7wKN8m3SQgoUxH`**. SHA only. Not migration, activation, or provider live state. |
+| 4 | Last updated | 2026-11-12 |
+| 5 | Next task / responsible platform | **Batch 6 — AI Workforce & Automation** — **Cursor**. After that merge, **Batch 7 — Platform Admin & Unified Experience** (Cursor + v0.app). |
+| 6 | Open blocker / gate IDs | Issue **#105** QA **deferred**. CRM-SUBNAV-105 **REPORTED**. POLICY-SUB-001 **REPORTED**. RELEASE-001 gated. Issue **#109** remains the execution roadmap. Staging migrations last **39/39** (2026-11-03); not re-counted 2026-11-12. Production migrate **UNVERIFIED**. Flags **not activated**. Provider activation **UNVERIFIED**. AI execution, outbound, workflow cron, and external effects remain disabled. |
 
 ## This session
 
-**Batch 5 — Commerce & Managed Services:** composed catalog/entitlements, purchase history, BillingGroup payer isolation, money-vs-messaging-wallet boundary, payment-provider readiness, managed hosting/domain/email lifecycle honesty, subscription/invoice references, and fulfillment policy. Continuity CI post-merge classifier extended for `DATA_AND_SERVICES` and implementation roadmap. No live checkout, provisioning, DNS, mailbox creation, or wallet mint.
+**Batch 6 — AI Workforce & Automation:** account-scoped orchestration over the existing internal workforce, customer AI catalog, central tool registry, and AUTO-10 `WORKFORCE_TASK_PREPARE` handler. Deterministic CRM, project, marketing, SEO, communications, and knowledge drafts; human approval binding; pause and cost ceilings; sibling billing-group denial. No live inference, send, charge, enqueue, or provider activation. Checkpoint reconciled to PR #126 MERGED @ `dd109204c3089ddef6ba03770c70d33b0d8455d3`.
 
 ## Next assignment
 
-Owner review Batch 5 PR. After merge: **Batch 6 — AI Workforce & Automation** (Issue #109) — **Cursor**.
+Owner review of the Batch 6 branch. After merge: **Batch 7 — Platform Admin & Unified Experience** (Cursor backend, v0.app UI).
 
 ## PENDING REPOSITORY SYNC
 
-(none)
+- Fact: Batch 6 is not on `main` yet, so checkpoint field 2 stays at verified `dd109204c3089ddef6ba03770c70d33b0d8455d3`. Target files: `docs/PROJECT_MEMORY.md` and `docs/SESSION_HANDOFF.md`. Responsible platform: Cursor, after owner merge. Next action: record the squash SHA only when GitHub `main` advances.
 
 ## Handoff template
 
 ```
-Date / scope / owner: 2026-11-08 / Batch 5 Commerce & Managed Services / Cursor
-Repo / main SHA: Holagpt-ai/webxxl-website-system / c27c6810e61825fd5a99a9a0d994c1bda704c871
-Branch / PR: feat/batch5-commerce-managed-services / PR #126 (owner review; not merged)
-Merged / deployed: PR #125 on main @ c27c6810; Vercel READY dpl_Agrh29ThShz8cmB5kHtkjHhpi64n @ c27c6810 (SHA only)
+Date / scope / owner: 2026-11-12 / Batch 6 AI Workforce & Automation / Cursor
+Repo / main SHA: Holagpt-ai/webxxl-website-system / dd109204c3089ddef6ba03770c70d33b0d8455d3
+Branch / PR: feat/batch6-ai-workforce-automation / owner review
+Merged / deployed: PR #126 on main @ dd109204; GitHub deployment 7656576538 Production success; coordinator-reported Vercel dpl_DdxJbNwAzaWp9u7wKN8m3SQgoUxH READY (SHA only)
 Migration / flags / activation: UNVERIFIED / not activated / UNVERIFIED
-Tests: batch5-commerce-managed-services.test.ts; continuity post-merge doc classifier
-Next exact assignment / owning tool: Batch 6 — AI Workforce & Automation — Cursor after Batch 5 merge
-Do NOT touch: production DB, flags, providers, live checkout/provisioning/DNS/email, auto-merge, v0 UI paths
+Tests: __tests__/platform/batch6-ai-workforce-automation.test.ts; tsc --noEmit
+Next exact assignment / owning tool: Batch 7 — Platform Admin & Unified Experience — Cursor + v0.app after Batch 6 merge
+Do NOT touch: production DB, AI provider activation, workflow cron, live send/charge, auto-merge, v0 UI paths
 ```
