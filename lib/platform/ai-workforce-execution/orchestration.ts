@@ -15,6 +15,11 @@ import {
   idempotencyScope,
   type AiWorkforceOrchestrationStore,
 } from '@/lib/platform/ai-workforce-execution/store'
+import {
+  issueAccountWorkforcePreparationApproval,
+  verifyAccountWorkforcePreparationApproval,
+} from '@/lib/platform/ai-workforce-execution/approval-records'
+import { resolveServerChannelCoverageState } from '@/lib/platform/ai-workforce-execution/coverage-resolver'
 import { composeToolDraft, resolveComposedTool } from '@/lib/platform/ai-workforce-execution/tool-bindings'
 import type {
   AiWorkforceLocale,
@@ -49,7 +54,6 @@ function requestFingerprint(input: PrepareAccountWorkforceActionInput, locale: A
         managedSiteId: input.managedSiteId ?? null,
         sourceRecordIds: [...(input.sourceRecordIds ?? [])].sort(),
         serverClassification: input.serverClassification ?? 'GENERAL_BUSINESS',
-        channelConnected: input.channelConnected ?? null,
       }),
     )
     .digest('hex')
@@ -83,10 +87,13 @@ function resolveLocale(locale: string | undefined): AiWorkforceResult<AiWorkforc
 
 export function pauseAccountWorkforce(
   store: AiWorkforceOrchestrationStore,
-  input: { customerAccountId: string; operatorUserId: string; reason?: string },
+  input: { customerAccountId: string; operatorUserId: string; operatorIsStaff: boolean; reason?: string },
 ): AiWorkforceResult<{ paused: true }> {
   if (isInternalAgentIdentity(input.operatorUserId)) {
     return fail('AGENT_IMPERSONATION_DENIED', 'Agents cannot pause account workforce execution')
+  }
+  if (!input.operatorIsStaff) {
+    return fail('FORBIDDEN', 'Staff operator role required to pause account workforce preparation')
   }
   store.pauses.set(input.customerAccountId, {
     customerAccountId: input.customerAccountId,
@@ -100,10 +107,13 @@ export function pauseAccountWorkforce(
 
 export function resumeAccountWorkforce(
   store: AiWorkforceOrchestrationStore,
-  input: { customerAccountId: string; operatorUserId: string },
+  input: { customerAccountId: string; operatorUserId: string; operatorIsStaff: boolean },
 ): AiWorkforceResult<{ paused: false }> {
   if (isInternalAgentIdentity(input.operatorUserId)) {
     return fail('AGENT_IMPERSONATION_DENIED', 'Agents cannot resume account workforce execution')
+  }
+  if (!input.operatorIsStaff) {
+    return fail('FORBIDDEN', 'Staff operator role required to resume account workforce preparation')
   }
   const existing = store.pauses.get(input.customerAccountId)
   if (!existing?.active) return fail('NOT_FOUND', 'Active account pause not found')
@@ -199,7 +209,15 @@ export function prepareAccountWorkforceAction(
     return fail('BUDGET_EXCEEDED', 'Account AI preparation ceiling exceeded. Customer charge remains 0.')
   }
 
-  const composed = composeToolDraft(input.toolKey, { ...input, locale: locale.value })
+  const serverChannelCoverage = resolveServerChannelCoverageState({
+    customerAccountId: input.customerAccountId,
+    toolKey: input.toolKey,
+  })
+  const composed = composeToolDraft(input.toolKey, {
+    ...input,
+    locale: locale.value,
+    serverChannelCoverage,
+  })
   if (!composed) return fail('FAILED', 'Tool composer missing')
 
   let coverageState = composed.coverageState
@@ -252,12 +270,17 @@ export function prepareAccountWorkforceAction(
   return { ok: true, value: preparation }
 }
 
+export { issueAccountWorkforcePreparationApproval, verifyAccountWorkforcePreparationApproval }
+
 export function bindHumanApprovedAction(
   store: AiWorkforceOrchestrationStore,
   input: BindHumanApprovedActionInput,
 ): AiWorkforceResult<AiWorkforcePreparation> {
   if (isInternalAgentIdentity(input.approverUserId)) {
     return fail('AGENT_IMPERSONATION_DENIED', 'Agents cannot approve workforce actions')
+  }
+  if (!input.approverIsStaff) {
+    return fail('FORBIDDEN', 'Staff operator role required to bind workforce approvals')
   }
   if (!input.approvalId || !input.actionHash) {
     return fail('APPROVAL_REQUIRED', 'Server approval id and action hash are required')
@@ -284,6 +307,16 @@ export function bindHumanApprovedAction(
   if (isAccountWorkforcePaused(store, input.customerAccountId)) {
     return fail('PAUSED', 'Paused accounts cannot bind new workforce actions')
   }
+
+  const verified = verifyAccountWorkforcePreparationApproval(store, {
+    approvalId: input.approvalId,
+    customerAccountId: input.customerAccountId,
+    preparationId: input.preparationId,
+    actionHash: input.actionHash,
+    decision: input.decision,
+    consume: true,
+  })
+  if (!verified.ok) return verified
 
   const updated: AiWorkforcePreparation = {
     ...current,

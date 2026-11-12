@@ -1,3 +1,4 @@
+import type { AiWorkforcePreparationApprovalRecord } from '@/lib/platform/ai-workforce-execution/approval-records'
 import type { AiWorkforcePreparation } from '@/lib/platform/ai-workforce-execution/types'
 
 export type AccountPauseRecord = {
@@ -17,6 +18,7 @@ export type AccountBudgetReservation = {
 
 export type AiWorkforceOrchestrationStore = {
   preparations: Map<string, AiWorkforcePreparation>
+  approvals: Map<string, AiWorkforcePreparationApprovalRecord>
   byIdempotency: Map<string, string>
   pauses: Map<string, AccountPauseRecord>
   budget: Map<string, AccountBudgetReservation>
@@ -27,6 +29,7 @@ export function createAiWorkforceOrchestrationStore(): AiWorkforceOrchestrationS
   let sequence = 0
   return {
     preparations: new Map(),
+    approvals: new Map(),
     byIdempotency: new Map(),
     pauses: new Map(),
     budget: new Map(),

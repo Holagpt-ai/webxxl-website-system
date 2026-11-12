@@ -36,7 +36,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | GitHub `main` `dd109204c3089ddef6ba03770c70d33b0d8455d3` ([PR **#126**](https://github.com/Holagpt-ai/webxxl-website-system/pull/126) Batch 5 Commerce & Managed Services, MERGED 2026-11-09). Prior [PR **#125**](https://github.com/Holagpt-ai/webxxl-website-system/pull/125) @ `c27c6810`. Build-first policy active; Issue #105 QA **deferred** to Batch 8. |
-| 2 | GitHub SHA, branch, active PR | **`dd109204c3089ddef6ba03770c70d33b0d8455d3`** on `main`. [PR **#126**](https://github.com/Holagpt-ai/webxxl-website-system/pull/126) Batch 5 MERGED. |
+| 2 | GitHub SHA, branch, active PR | **`dd109204c3089ddef6ba03770c70d33b0d8455d3`** on `main`. Active [PR **#127**](https://github.com/Holagpt-ai/webxxl-website-system/pull/127) on `feat/batch6-ai-workforce-automation` (owner review). [PR **#126**](https://github.com/Holagpt-ai/webxxl-website-system/pull/126) Batch 5 MERGED. |
 | 3 | Production deployment | GitHub deployment **`7656576538`** Production **success** 2026-11-09T13:58:17Z @ `dd109204c3089ddef6ba03770c70d33b0d8455d3`. Continuity deployment lookup **success** for Vercel **`dpl_DdxJbNwAzaWp9u7wKN8m3SQgoUxH`**. SHA only. Not migration, activation, or provider live state. |
 | 4 | Last updated | 2026-11-12 |
 | 5 | Next task / responsible platform | **Batch 6 — AI Workforce & Automation** — **Cursor**. After that merge, **Batch 7 — Platform Admin & Unified Experience** (Cursor + v0.app). |

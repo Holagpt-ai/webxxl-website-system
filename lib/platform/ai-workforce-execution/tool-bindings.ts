@@ -20,7 +20,10 @@ export type ComposedToolBinding = {
   denialReason?: string
 }
 
-type DraftContext = PrepareAccountWorkforceActionInput & { locale: AiWorkforceLocale }
+type DraftContext = PrepareAccountWorkforceActionInput & {
+  locale: AiWorkforceLocale
+  serverChannelCoverage: AiWorkforceCoverageState
+}
 
 const COMPOSED: Record<
   string,
@@ -116,12 +119,7 @@ function sourceIds(input: DraftContext): string[] {
 }
 
 function crmDraft(input: DraftContext): { coverageState: AiWorkforceCoverageState; draft: Record<string, unknown> } {
-  const coverageState: AiWorkforceCoverageState =
-    input.channelConnected === false
-      ? 'CHANNEL_DISCONNECTED'
-      : input.channelConnected === true
-        ? 'CHANNEL_CONNECTED_PREPARATION_ONLY'
-        : 'COVERAGE_UNVERIFIED'
+  const coverageState = input.serverChannelCoverage
   return {
     coverageState,
     draft: {
@@ -130,10 +128,12 @@ function crmDraft(input: DraftContext): { coverageState: AiWorkforceCoverageStat
       sourceRecordIds: sourceIds(input),
       outboundSend: false,
       coverageState,
+      synthesis: 'DETERMINISTIC_TEMPLATE',
+      verifiedSourceRecords: sourceIds(input).length > 0,
       coverageNote:
         coverageState === 'CHANNEL_DISCONNECTED'
           ? 'Channel disconnected. This is a coverage limitation, not proof the lead was never contacted.'
-          : 'Deterministic CRM preparation. Authoritative contact reads stay on existing CRM APIs.',
+          : 'Deterministic CRM preparation. Authoritative contact reads stay on existing CRM APIs. Connectivity is server-resolved or COVERAGE_UNVERIFIED.',
       suggestedAction: input.toolKey === 'crm.tasks.create' ? 'crm_task_draft' : 'crm_contact_summary',
       locale: input.locale,
     },

@@ -25,6 +25,7 @@ import { isAccountWorkforcePaused } from '@/lib/platform/ai-workforce-execution/
 import type { AiWorkforceOrchestrationStore } from '@/lib/platform/ai-workforce-execution/store'
 import { listToolCoverage } from '@/lib/platform/ai-workforce-execution/tool-bindings'
 import type { AiWorkforceExecutionSlice } from '@/lib/platform/ai-workforce-execution/types'
+import { describeAiWorkforceOrchestrationPersistence } from '@/lib/platform/ai-workforce-execution/runtime-gates'
 import { describeWorkflowHandoff } from '@/lib/platform/ai-workforce-execution/workflow-visibility'
 
 export type AiWorkforceExecutionSummary = {
@@ -76,6 +77,7 @@ export type AiWorkforceExecutionSummary = {
     billingGroupGrantsSiblingAiAccess: false
   }>
   customerEmployeePersistence: AiWorkforceExecutionSlice<{ persistence: 'NOT_READ' }>
+  orchestrationPersistence: AiWorkforceExecutionSlice<ReturnType<typeof describeAiWorkforceOrchestrationPersistence>>
 }
 
 function available<T>(sourceModule: string, data: T): AiWorkforceExecutionSlice<T> {
@@ -164,5 +166,8 @@ export function getAiWorkforceExecutionSummary(input: {
           reasonCode: 'CUSTOMER_AI_WORKFORCE_DISABLED',
           message: 'Customer AI workforce persistence is disabled.',
         },
+    orchestrationPersistence: available('lib/platform/ai-workforce-execution/runtime-gates.ts', {
+      ...describeAiWorkforceOrchestrationPersistence(),
+    }),
   }
 }

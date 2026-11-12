@@ -25,6 +25,7 @@ export const CLIENT_AUTHORITY_FIELDS = [
   'granted',
   'executionEnabled',
   'approved',
+  'channelConnected',
 ] as const
 
 export function rejectClientAuthority(body: Record<string, unknown>): string | null {

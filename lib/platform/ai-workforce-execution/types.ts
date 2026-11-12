@@ -112,6 +112,8 @@ export type BindHumanApprovedActionInput = {
   customerAccountId: string
   preparationId: string
   approverUserId: string
+  /** Operating membership alone does not grant approval authority. */
+  approverIsStaff: boolean
   approvalId: string
   actionHash: string
   decision: 'APPROVED' | 'REJECTED'

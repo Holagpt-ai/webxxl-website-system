@@ -1,15 +1,20 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   ABMED_AESTHETICS_ACCOUNT_ID,
   ABMED_PHYSICIANS_ACCOUNT_ID,
 } from '@/lib/platform/fixtures/abmed'
 import { rejectClientAuthority } from '@/lib/platform/ai-workforce-execution/constants'
+import { issueAccountWorkforcePreparationApproval } from '@/lib/platform/ai-workforce-execution/approval-records'
+import {
+  aiWorkforceHttpMutationDisabledResponse,
+} from '@/lib/platform/ai-workforce-execution/http-guards'
 import {
   bindHumanApprovedAction,
   pauseAccountWorkforce,
   prepareAccountWorkforceAction,
   resumeAccountWorkforce,
 } from '@/lib/platform/ai-workforce-execution/orchestration'
+import { isAiWorkforceExecutionHttpMutationEnabled } from '@/lib/platform/ai-workforce-execution/runtime-gates'
 import { createAiWorkforceOrchestrationStore } from '@/lib/platform/ai-workforce-execution/store'
 import { getAiWorkforceExecutionSummary } from '@/lib/platform/ai-workforce-execution/summary'
 import { INTERNAL_AGENT_KEYS } from '@/lib/platform/workforce/internal-agents'
@@ -17,6 +22,22 @@ import { INTERNAL_AGENT_KEYS } from '@/lib/platform/workforce/internal-agents'
 const AESTHETICS = ABMED_AESTHETICS_ACCOUNT_ID
 const PHYSICIANS = ABMED_PHYSICIANS_ACCOUNT_ID
 const OPERATOR = 'user_abmed_aesthetics_operator'
+const STAFF_OPERATOR = 'user_abmed_staff_operator'
+
+function issueApproval(
+  store: ReturnType<typeof createAiWorkforceOrchestrationStore>,
+  preparationId: string,
+  customerAccountId: string,
+  allowedDecision: 'APPROVED' | 'REJECTED' = 'APPROVED',
+) {
+  return issueAccountWorkforcePreparationApproval(store, {
+    customerAccountId,
+    preparationId,
+    issuerUserId: STAFF_OPERATOR,
+    issuerIsStaff: true,
+    allowedDecision,
+  })
+}
 
 function siblings() {
   return new Map<string, string[]>([['group_abmed', [AESTHETICS, PHYSICIANS]]])
@@ -44,6 +65,7 @@ describe('Batch 6 AI workforce orchestration', () => {
     expect(summary.workflowHandoff.data?.retryableErrorClasses).toContain('TRANSIENT')
     expect(summary.workflowHandoff.data?.nonRetryableErrorClasses).toContain('PERMANENT')
     expect(summary.customerEmployeePersistence.status).toBe('UNAVAILABLE')
+    expect(summary.orchestrationPersistence.data?.persistence).toBe('IN_MEMORY_PROCESS_LOCAL')
     const composed = summary.toolCoverage.data?.rows.filter((row) => row.batch6Composed) ?? []
     expect(composed.map((row) => row.domain)).toEqual(
       expect.arrayContaining(['crm', 'projects', 'marketing', 'seo', 'communications', 'billing']),
@@ -144,8 +166,8 @@ describe('Batch 6 AI workforce orchestration', () => {
     })
     expect(disconnected.ok).toBe(true)
     if (!disconnected.ok) return
-    expect(disconnected.value.coverageState).toBe('CHANNEL_DISCONNECTED')
-    expect(String(disconnected.value.draft.coverageNote)).toContain('not proof')
+    expect(disconnected.value.coverageState).toBe('COVERAGE_UNVERIFIED')
+    expect(disconnected.value.draft.synthesis).toBe('DETERMINISTIC_TEMPLATE')
 
     const injection = prepareAccountWorkforceAction(store, {
       customerAccountId: AESTHETICS,
@@ -199,11 +221,26 @@ describe('Batch 6 AI workforce orchestration', () => {
     const agentPause = pauseAccountWorkforce(store, {
       customerAccountId: AESTHETICS,
       operatorUserId: INTERNAL_AGENT_KEYS.engineer,
+      operatorIsStaff: true,
     })
     expect(agentPause.ok).toBe(false)
     if (!agentPause.ok) expect(agentPause.code).toBe('AGENT_IMPERSONATION_DENIED')
 
-    expect(pauseAccountWorkforce(store, { customerAccountId: AESTHETICS, operatorUserId: OPERATOR }).ok).toBe(true)
+    const memberPause = pauseAccountWorkforce(store, {
+      customerAccountId: AESTHETICS,
+      operatorUserId: OPERATOR,
+      operatorIsStaff: false,
+    })
+    expect(memberPause.ok).toBe(false)
+    if (!memberPause.ok) expect(memberPause.code).toBe('FORBIDDEN')
+
+    expect(
+      pauseAccountWorkforce(store, {
+        customerAccountId: AESTHETICS,
+        operatorUserId: STAFF_OPERATOR,
+        operatorIsStaff: true,
+      }).ok,
+    ).toBe(true)
     const paused = prepareAccountWorkforceAction(store, {
       customerAccountId: AESTHETICS,
       actorUserId: OPERATOR,
@@ -212,7 +249,13 @@ describe('Batch 6 AI workforce orchestration', () => {
     })
     expect(paused.ok).toBe(false)
     if (!paused.ok) expect(paused.code).toBe('PAUSED')
-    expect(resumeAccountWorkforce(store, { customerAccountId: AESTHETICS, operatorUserId: OPERATOR }).ok).toBe(true)
+    expect(
+      resumeAccountWorkforce(store, {
+        customerAccountId: AESTHETICS,
+        operatorUserId: STAFF_OPERATOR,
+        operatorIsStaff: true,
+      }).ok,
+    ).toBe(true)
 
     const over = prepareAccountWorkforceAction(store, {
       customerAccountId: AESTHETICS,
@@ -271,6 +314,7 @@ describe('Batch 6 AI workforce orchestration', () => {
       customerAccountId: AESTHETICS,
       preparationId: prepared.value.id,
       approverUserId: INTERNAL_AGENT_KEYS.projectManager,
+      approverIsStaff: true,
       approvalId: 'apr_1',
       actionHash: prepared.value.actionHash,
       decision: 'APPROVED',
@@ -278,11 +322,40 @@ describe('Batch 6 AI workforce orchestration', () => {
     expect(forged.ok).toBe(false)
     if (!forged.ok) expect(forged.code).toBe('AGENT_IMPERSONATION_DENIED')
 
-    const mismatch = bindHumanApprovedAction(store, {
+    const unauthorized = bindHumanApprovedAction(store, {
       customerAccountId: AESTHETICS,
       preparationId: prepared.value.id,
       approverUserId: OPERATOR,
+      approverIsStaff: false,
       approvalId: 'apr_1',
+      actionHash: prepared.value.actionHash,
+      decision: 'APPROVED',
+    })
+    expect(unauthorized.ok).toBe(false)
+    if (!unauthorized.ok) expect(unauthorized.code).toBe('FORBIDDEN')
+
+    const clientForged = bindHumanApprovedAction(store, {
+      customerAccountId: AESTHETICS,
+      preparationId: prepared.value.id,
+      approverUserId: STAFF_OPERATOR,
+      approverIsStaff: true,
+      approvalId: 'client_forged',
+      actionHash: prepared.value.actionHash,
+      decision: 'APPROVED',
+    })
+    expect(clientForged.ok).toBe(false)
+    if (!clientForged.ok) expect(clientForged.code).toBe('FORGED_APPROVAL')
+
+    const issued = issueApproval(store, prepared.value.id, AESTHETICS)
+    expect(issued.ok).toBe(true)
+    if (!issued.ok) return
+
+    const mismatch = bindHumanApprovedAction(store, {
+      customerAccountId: AESTHETICS,
+      preparationId: prepared.value.id,
+      approverUserId: STAFF_OPERATOR,
+      approverIsStaff: true,
+      approvalId: issued.value.approvalId,
       actionHash: 'not-the-hash',
       decision: 'APPROVED',
     })
@@ -292,8 +365,9 @@ describe('Batch 6 AI workforce orchestration', () => {
     const bound = bindHumanApprovedAction(store, {
       customerAccountId: AESTHETICS,
       preparationId: prepared.value.id,
-      approverUserId: OPERATOR,
-      approvalId: 'apr_1',
+      approverUserId: STAFF_OPERATOR,
+      approverIsStaff: true,
+      approvalId: issued.value.approvalId,
       actionHash: prepared.value.actionHash,
       decision: 'APPROVED',
     })
@@ -308,8 +382,9 @@ describe('Batch 6 AI workforce orchestration', () => {
     const replay = bindHumanApprovedAction(store, {
       customerAccountId: AESTHETICS,
       preparationId: prepared.value.id,
-      approverUserId: OPERATOR,
-      approvalId: 'apr_1',
+      approverUserId: STAFF_OPERATOR,
+      approverIsStaff: true,
+      approvalId: issued.value.approvalId,
       actionHash: prepared.value.actionHash,
       decision: 'APPROVED',
     })
@@ -322,8 +397,9 @@ describe('Batch 6 AI workforce orchestration', () => {
     const otherAccount = bindHumanApprovedAction(store, {
       customerAccountId: PHYSICIANS,
       preparationId: prepared.value.id,
-      approverUserId: OPERATOR,
-      approvalId: 'apr_1',
+      approverUserId: STAFF_OPERATOR,
+      approverIsStaff: true,
+      approvalId: issued.value.approvalId,
       actionHash: prepared.value.actionHash,
       decision: 'APPROVED',
     })
@@ -333,7 +409,49 @@ describe('Batch 6 AI workforce orchestration', () => {
 
   it('rejects client-supplied authority fields', () => {
     expect(rejectClientAuthority({ toolKey: 'crm.contacts.search', approvalId: 'forged' })).toBe('approvalId')
+    expect(rejectClientAuthority({ channelConnected: true })).toBe('channelConnected')
     expect(rejectClientAuthority({ dataClassification: 'PHI' })).toBe('dataClassification')
     expect(rejectClientAuthority({ toolKey: 'seo.readSnapshot' })).toBeNull()
+  })
+
+  it('blocks HTTP mutations in production when durable persistence is off', () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    vi.stubEnv('CUSTOMER_AI_WORKFORCE_ENABLED', 'true')
+    vi.stubEnv('AI_WORKFORCE_EXECUTION_HTTP_ENABLED', 'true')
+    vi.stubEnv('CUSTOMER_AI_PILOT_DURABLE_ENABLED', 'false')
+    expect(isAiWorkforceExecutionHttpMutationEnabled()).toBe(false)
+    const response = aiWorkforceHttpMutationDisabledResponse()
+    expect(response?.status).toBe(503)
+    vi.unstubAllEnvs()
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('consumes server-issued approvals on bind', () => {
+    const store = createAiWorkforceOrchestrationStore()
+    const prepared = prepareAccountWorkforceAction(store, {
+      customerAccountId: AESTHETICS,
+      actorUserId: OPERATOR,
+      toolKey: 'communications.requestApproval',
+      idempotencyKey: 'approve-replay',
+    })
+    expect(prepared.ok).toBe(true)
+    if (!prepared.ok) return
+    const issued = issueApproval(store, prepared.value.id, AESTHETICS)
+    expect(issued.ok).toBe(true)
+    if (!issued.ok) return
+    const first = bindHumanApprovedAction(store, {
+      customerAccountId: AESTHETICS,
+      preparationId: prepared.value.id,
+      approverUserId: STAFF_OPERATOR,
+      approverIsStaff: true,
+      approvalId: issued.value.approvalId,
+      actionHash: prepared.value.actionHash,
+      decision: 'APPROVED',
+    })
+    expect(first.ok).toBe(true)
+    expect(store.approvals.get(issued.value.approvalId)?.status).toBe('CONSUMED')
   })
 })
