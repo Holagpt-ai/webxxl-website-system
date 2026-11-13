@@ -1,0 +1,10 @@
+export class AiWorkforceApiError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+    public code: string,
+  ) {
+    super(message)
+    this.name = 'AiWorkforceApiError'
+  }
+}

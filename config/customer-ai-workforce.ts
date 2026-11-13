@@ -54,6 +54,15 @@ export function isCustomerAiPilotHttpEnabled(): boolean {
   return envFlag('CUSTOMER_AI_PILOT_HTTP_ENABLED', false)
 }
 
+/**
+ * Batch 6 HTTP mutations (preparations, approvals, pause).
+ * Requires CUSTOMER_AI_WORKFORCE_ENABLED. Production stays off until AI_WORKFORCE_EXECUTION_DURABLE_ENABLED
+ * with a connected Batch 6 store (not CUSTOMER_AI_PILOT_DURABLE_ENABLED).
+ */
+export function isAiWorkforceExecutionHttpEnabledFlag(): boolean {
+  return envFlag('AI_WORKFORCE_EXECUTION_HTTP_ENABLED', false)
+}
+
 /** Allows TEST_SYNTHETIC snapshots in library prep (Vitest only). Never enable in production. */
 export function isCustomerAiPilotTestSyntheticEnabled(): boolean {
   return envFlag('CUSTOMER_AI_PILOT_TEST_SYNTHETIC', false)
