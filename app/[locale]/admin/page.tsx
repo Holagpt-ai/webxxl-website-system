@@ -1,21 +1,15 @@
 import Link from 'next/link'
 import { getAdminDashboardStats } from '@/lib/admin/queries'
-import { PageTitle, SectionCard, EmptyState } from '@/components/dashboard/primitives'
+import { PageTitle, SectionCard } from '@/components/dashboard/primitives'
+import { AdminOperationsSummary } from '@/components/admin/operations-summary'
 import { requireStaff } from '@/lib/portal/authz'
 import { getDictionary } from '@/lib/i18n/dictionaries'
+import { adminOperationsEn } from '@/lib/i18n/dictionaries/admin-operations-en'
+import { adminOperationsEs } from '@/lib/i18n/dictionaries/admin-operations-es'
 import { localizeStoredActivity } from '@/lib/i18n/labels'
 import { resolveLocale } from '@/lib/i18n/server'
 
 export const dynamic = 'force-dynamic'
-
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-lg border bg-background p-4">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-bold tabular-nums">{value}</p>
-    </div>
-  )
-}
 
 export default async function AdminOverviewPage({ params }: { params: Promise<{ locale: string }> }) {
   await requireStaff()
@@ -24,32 +18,21 @@ export default async function AdminOverviewPage({ params }: { params: Promise<{ 
   const a = dict.admin
   const stats = await getAdminDashboardStats()
   const prefix = locale === 'es' ? '/es' : ''
-
-  const hasWork =
-    stats.activeCustomers +
-      stats.activeProjects +
-      stats.pendingApprovals +
-      stats.openChangeRequests +
-      stats.openSupportRequests >
-    0
+  const opsCopy = locale === 'es' ? adminOperationsEs : adminOperationsEn
 
   return (
     <>
       <PageTitle title={a.overview.title} description={a.overview.description} />
-      {!hasWork ? (
-        <EmptyState title={a.overview.emptyTitle} body={a.overview.emptyBody} />
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label={a.overview.activeCustomers} value={stats.activeCustomers} />
-          <Stat label={a.overview.activeProjects} value={stats.activeProjects} />
-          <Stat label={a.overview.customerActions} value={stats.projectsNeedingCustomerAction} />
-          <Stat label={a.overview.pendingApprovals} value={stats.pendingApprovals} />
-          <Stat label={a.overview.openRequests} value={stats.openChangeRequests} />
-          <Stat label={a.overview.openSupport} value={stats.openSupportRequests} />
-          <Stat label={a.overview.blockedTasks} value={stats.blockedTasks} />
-          <Stat label={a.overview.overdueTasks} value={stats.overdueTasks} />
-        </div>
-      )}
+      <div className="mb-6">
+        <AdminOperationsSummary
+          locale={locale}
+          prefix={prefix}
+          copy={opsCopy}
+          extraMetrics={[
+            { label: opsCopy.queues.customerActions, value: stats.projectsNeedingCustomerAction, href: `${prefix}/admin/projects` },
+          ]}
+        />
+      </div>
 
       <SectionCard title={a.overview.recentActivity}>
         {stats.recentActivity.length === 0 ? (

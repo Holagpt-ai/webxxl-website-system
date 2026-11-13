@@ -10,6 +10,10 @@ import { getDictionary } from '@/lib/i18n/dictionaries'
 import { format } from '@/lib/i18n/localize'
 import { enumLabel, localizeStoredActivity } from '@/lib/i18n/labels'
 import { getPortalModuleRegistry } from '@/lib/portal/modules'
+import { prisma } from '@/lib/db'
+import { adminOperationsEn } from '@/lib/i18n/dictionaries/admin-operations-en'
+import { adminOperationsEs } from '@/lib/i18n/dictionaries/admin-operations-es'
+import { AdminOperationsSummary } from '@/components/admin/operations-summary'
 import {
   InviteCustomerForm,
   CreateProjectForm,
@@ -29,7 +33,14 @@ export default async function AdminCustomerDetailPage({ params }: Props) {
   const { customerId } = await params
   const customer = await getCustomerDetail(customerId)
   if (!customer) notFound()
-  const activity = await getCustomerRecentActivity(customerId)
+  const [activity, sites] = await Promise.all([
+    getCustomerRecentActivity(customerId),
+    prisma.managedSite.findMany({
+      where: { customerAccountId: customerId },
+      select: { id: true, name: true, domain: true },
+      orderBy: { name: 'asc' },
+    }),
+  ])
   const prefix = locale === 'es' ? '/es' : ''
   const dict = getDictionary(locale)
   const copy = dict.admin.customers
@@ -48,6 +59,17 @@ export default async function AdminCustomerDetailPage({ params }: Props) {
       <PageTitle title={customer.businessName} description={`/${customer.slug} · ${enumLabel(dict.dashboard.accountStatuses, customer.status)}`} />
       <div className="mb-6">
         <CustomerStatusForm customerId={customer.id} current={customer.status} />
+      </div>
+
+      <div className="mb-6">
+        <AdminOperationsSummary
+          key={customer.id}
+          locale={locale}
+          prefix={prefix}
+          copy={locale === 'es' ? adminOperationsEs : adminOperationsEn}
+          customerAccountId={customer.id}
+          sites={sites}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
