@@ -7,7 +7,7 @@
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | GitHub `main` `c7bec5e7def89d60f89cdaa0d339decfb6f0ab6b` ([PR **#127**](https://github.com/Holagpt-ai/webxxl-website-system/pull/127) Batch 6 AI Workforce & Automation, MERGED 2026-11-13). Prior [PR **#126**](https://github.com/Holagpt-ai/webxxl-website-system/pull/126) @ `dd109204`. Build-first policy active; Issue #105 QA **deferred** to Batch 8. |
-| 2 | GitHub SHA, branch, active PR | **`c7bec5e7def89d60f89cdaa0d339decfb6f0ab6b`** on `main`. Open Batch 7 PR on `feat/batch7-platform-admin-unified-experience` (owner review). [PR **#127**](https://github.com/Holagpt-ai/webxxl-website-system/pull/127) **MERGED**. |
+| 2 | GitHub SHA, branch, active PR | **`c7bec5e7def89d60f89cdaa0d339decfb6f0ab6b`** on `main`. Active [PR **#128**](https://github.com/Holagpt-ai/webxxl-website-system/pull/128) on `feat/batch7-platform-admin-unified-experience` (owner review). [PR **#127**](https://github.com/Holagpt-ai/webxxl-website-system/pull/127) Batch 6 **MERGED**. |
 | 3 | Production deployment | GitHub deployment **`7753430399`** Production **success** 2026-11-13T00:22:07Z @ `c7bec5e7def89d60f89cdaa0d339decfb6f0ab6b`. SHA only. Not migration, activation, or provider live state. |
 | 4 | Last updated | 2026-11-13 |
 | 5 | Next task / responsible platform | **Batch 7 — Platform Admin & Unified Experience** — **Cursor** (backend) + **v0.app** (admin/public UI). After merge: **Batch 8 — Release & Activation**. |
@@ -30,7 +30,7 @@ Owner review of Batch 7 PR. v0.app: admin unified operations panels, EN/ES polis
 ```
 Date / scope / owner: 2026-11-13 / Batch 7 Platform Admin backend / Cursor
 Repo / main SHA: Holagpt-ai/webxxl-website-system / c7bec5e7def89d60f89cdaa0d339decfb6f0ab6b
-Branch / PR: feat/batch7-platform-admin-unified-experience / (open on push)
+Branch / PR: feat/batch7-platform-admin-unified-experience / PR #128 (owner review)
 Merged / deployed: PR #127 @ c7bec5e; GitHub deployment 7753430399 Production success (SHA only)
 Migration / flags / activation: UNVERIFIED / not activated / UNVERIFIED
 Tests: __tests__/platform/batch7-platform-admin-operations.test.ts; tsc --noEmit
