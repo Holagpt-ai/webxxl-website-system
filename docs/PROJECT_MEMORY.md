@@ -36,7 +36,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | GitHub `main` `8058565e11fed8927147c54e2b4ee0a58cc184bf` ([PR **#130**](https://github.com/Holagpt-ai/webxxl-website-system/pull/130) Batch 7C public conversion UI, MERGED 2026-11-13). Issue **#109** Batches 0–7 **complete at source**. Issue #105 QA **deferred** to Batch 8B. |
-| 2 | GitHub SHA, branch, active PR | **`8058565e11fed8927147c54e2b4ee0a58cc184bf`** on `main`. Active **Batch 8A** release readiness PR on `feat/batch8a-release-readiness` (owner review). [PR **#130**](https://github.com/Holagpt-ai/webxxl-website-system/pull/130) **MERGED**. |
+| 2 | GitHub SHA, branch, active PR | **`8058565e11fed8927147c54e2b4ee0a58cc184bf`** on `main`. Open [PR **#131**](https://github.com/Holagpt-ai/webxxl-website-system/pull/131) Batch 8A @ `bee07d6` on `feat/batch8a-release-readiness`. [PR **#130**](https://github.com/Holagpt-ai/webxxl-website-system/pull/130) **MERGED**. |
 | 3 | Production deployment | GitHub deployment **`7772915207`** Production **success** 2026-11-13T18:14:48Z @ `8058565e11fed8927147c54e2b4ee0a58cc184bf`. SHA only. Not migration, activation, or provider live state. |
 | 4 | Last updated | 2026-11-13 |
 | 5 | Next task / responsible platform | **Batch 8A** baseline recovery — **Cursor** (owner review). **Batch 8B** staging acceptance matrix execution — **owner-authorized staging** after 8A merge. |

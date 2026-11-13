@@ -1,6 +1,6 @@
 # Batch 8A — Release readiness & baseline recovery
 
-**Status:** IN PR (owner review) · **Base `main`:** `8058565e11fed8927147c54e2b4ee0a58cc184bf` (PR **#130** Batch 7C MERGED)
+**Status:** IN PR (owner review) · **PR [#131](https://github.com/Holagpt-ai/webxxl-website-system/pull/131)** @ `bee07d6` · **Base `main`:** `8058565e11fed8927147c54e2b4ee0a58cc184bf` (PR **#130** Batch 7C MERGED)
 
 ## Release gate outcomes (`pnpm release:readiness` @ `8058565`)
 
