@@ -11,10 +11,15 @@ export const aiWorkforceExecutionEn = {
   serverDisclosure: 'Server disclosure',
   stages: {
     title: 'How work moves',
-    prepare: { label: 'Preparation', body: 'Deterministic drafts and reads from your records. Not model output, and nothing leaves WebXXL.' },
+    prepare: {
+      label: 'Preparation',
+      body: 'Deterministic template drafts. Record IDs referenced in a request are not verified as source records. Not model output, and nothing leaves WebXXL.',
+    },
     approve: { label: 'Human approval', body: 'WebXXL staff issue and bind each approval. Prompts and agents cannot approve.' },
     execute: { label: 'Execution', body: 'Approved work stays blocked from sending, charging, or changing anything outside WebXXL.' },
     available: 'Available',
+    notEnabled: 'Not enabled',
+    notReported: 'Not reported',
     staffOnly: 'Staff only',
     disabled: 'Disabled',
   },

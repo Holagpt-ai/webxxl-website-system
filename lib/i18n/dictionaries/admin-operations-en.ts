@@ -55,6 +55,8 @@ export const adminOperationsEn = {
       aiWorkforce: 'AI workforce',
     },
     sectionsAvailable: '{available} of {total} sections available',
+    notReported: 'Not reported',
+    notReportedBody: 'This module returned no readiness sections, so its readiness is unknown.',
     available: 'Available',
     unavailable: 'Unavailable',
     notComposed: 'Not composed',

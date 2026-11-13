@@ -67,7 +67,7 @@ export function ExecutionReadiness({ accountId, locale, copy, aiCopy, loginHref 
             </div>
           </div>
 
-          <Stages copy={copy} />
+          <Stages persistence={summary.orchestrationPersistence} copy={copy} />
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <SlicePanel title={copy.approvals.title} slice={summary.approvalBoundary} copy={copy}>
@@ -171,10 +171,22 @@ export function ExecutionReadiness({ accountId, locale, copy, aiCopy, loginHref 
   )
 }
 
-function Stages({ copy }: { copy: AiWorkforceExecutionCopy }) {
+function Stages({
+  persistence,
+  copy,
+}: {
+  persistence: AiWorkforceExecutionSlice<{ httpMutationsEnabled: boolean }>
+  copy: AiWorkforceExecutionCopy
+}) {
   const s = copy.stages
+  const preparation: { status: string; tone: PillTone } =
+    persistence.status !== 'AVAILABLE' || persistence.data === undefined
+      ? { status: s.notReported, tone: 'muted' }
+      : persistence.data.httpMutationsEnabled
+        ? { status: s.available, tone: 'success' }
+        : { status: s.notEnabled, tone: 'muted' }
   const stages = [
-    { ...s.prepare, status: s.available, tone: 'success' as PillTone },
+    { ...s.prepare, ...preparation },
     { ...s.approve, status: s.staffOnly, tone: 'info' as PillTone },
     { ...s.execute, status: s.disabled, tone: 'muted' as PillTone },
   ]

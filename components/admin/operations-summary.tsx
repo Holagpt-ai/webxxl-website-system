@@ -237,17 +237,21 @@ function ExecutionPanel({
             <div key={key} className="flex flex-col gap-3 rounded-lg border p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h4 className="text-sm font-semibold text-foreground">{e.modules[key]}</h4>
-                {moduleSummary ? (
+                {!moduleSummary ? (
+                  <StatusPill label={e.notComposed} tone="muted" />
+                ) : slices.length === 0 ? (
+                  <StatusPill label={e.notReported} tone="muted" />
+                ) : (
                   <StatusPill
                     label={fill(e.sectionsAvailable, { available: String(availableCount), total: String(slices.length) })}
                     tone={availableCount === slices.length ? 'success' : 'info'}
                   />
-                ) : (
-                  <StatusPill label={e.notComposed} tone="muted" />
                 )}
               </div>
               {!moduleSummary ? (
                 <p className="text-sm leading-relaxed text-muted-foreground">{e.notComposedBody}</p>
+              ) : slices.length === 0 ? (
+                <p className="text-sm leading-relaxed text-muted-foreground">{e.notReportedBody}</p>
               ) : (
                 <>
                   <ul className="flex flex-col text-sm">

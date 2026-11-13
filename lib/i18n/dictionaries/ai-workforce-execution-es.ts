@@ -13,10 +13,15 @@ export const aiWorkforceExecutionEs: AiWorkforceExecutionCopy = {
   serverDisclosure: 'Aviso del servidor',
   stages: {
     title: 'Cómo avanza el trabajo',
-    prepare: { label: 'Preparación', body: 'Borradores y lecturas deterministas de tus registros. No es resultado de un modelo y nada sale de WebXXL.' },
+    prepare: {
+      label: 'Preparación',
+      body: 'Borradores deterministas a partir de plantillas. Los ID de registros indicados en una solicitud no se verifican como registros de origen. No es resultado de un modelo y nada sale de WebXXL.',
+    },
     approve: { label: 'Aprobación humana', body: 'El personal de WebXXL emite y vincula cada aprobación. Las instrucciones y los agentes no pueden aprobar.' },
     execute: { label: 'Ejecución', body: 'El trabajo aprobado sigue bloqueado para enviar, cobrar o cambiar algo fuera de WebXXL.' },
     available: 'Disponible',
+    notEnabled: 'No activada',
+    notReported: 'Sin datos',
     staffOnly: 'Solo personal',
     disabled: 'Desactivada',
   },

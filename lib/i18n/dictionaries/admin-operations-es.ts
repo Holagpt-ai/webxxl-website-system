@@ -57,6 +57,8 @@ export const adminOperationsEs: AdminOperationsCopy = {
       aiWorkforce: 'Equipo de IA',
     },
     sectionsAvailable: '{available} de {total} secciones disponibles',
+    notReported: 'Sin datos',
+    notReportedBody: 'Este módulo no devolvió secciones de preparación, así que su estado es desconocido.',
     available: 'Disponible',
     unavailable: 'No disponible',
     notComposed: 'No compuesto',
