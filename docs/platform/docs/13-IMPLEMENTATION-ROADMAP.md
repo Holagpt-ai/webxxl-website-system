@@ -38,7 +38,11 @@ GitHub `main` at `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` (PR #52) has moved p
 
 **Batch 6 (Issue #109):** AI Workforce & Automation — **MERGED** ([PR #127](https://github.com/Holagpt-ai/webxxl-website-system/pull/127) @ `c7bec5e7def89d60f89cdaa0d339decfb6f0ab6b`). Account orchestration, verified approval binding, and AUTO-10 handoff visibility per [`BATCH6-AI-WORKFORCE-AUTOMATION-API-CONTRACT.md`](BATCH6-AI-WORKFORCE-AUTOMATION-API-CONTRACT.md). No live inference, send, charge, or worker cron. Optional v0 on `dashboard/ai-employees/**`.
 
-**Batch 7 (Issue #109):** Platform Admin & Unified Experience — **in progress** on `feat/batch7-platform-admin-unified-experience`. Staff `GET /api/v1/admin/operations/summary` per [`BATCH7-PLATFORM-ADMIN-OPERATIONS-API-CONTRACT.md`](BATCH7-PLATFORM-ADMIN-OPERATIONS-API-CONTRACT.md). v0 admin/public UI per [`BATCH7B-ADMIN-UI-INTEGRATION-CONTRACT.md`](BATCH7B-ADMIN-UI-INTEGRATION-CONTRACT.md). No provider activation or public conversion implementation in Cursor.
+**Batch 7 (Issue #109):** Platform Admin backend — **merged** @ `8585d93` ([PR #128](https://github.com/Holagpt-ai/webxxl-website-system/pull/128)). Staff `GET /api/v1/admin/operations/summary` per [`BATCH7-PLATFORM-ADMIN-OPERATIONS-API-CONTRACT.md`](BATCH7-PLATFORM-ADMIN-OPERATIONS-API-CONTRACT.md).
+
+**Batch 7B:** Admin operations + AI employees readiness UI — **in PR** (v0 `v0/admin-ai-employees-ui-7b` @ `3479070`, Cursor integration). [`BATCH7B-ADMIN-UI-INTEGRATION-CONTRACT.md`](BATCH7B-ADMIN-UI-INTEGRATION-CONTRACT.md).
+
+**Batch 7C (deferred):** Public conversion + mobile presentation — **v0.app**. No provider activation in Cursor.
 
 ---
 
