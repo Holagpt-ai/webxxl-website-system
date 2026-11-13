@@ -24,13 +24,13 @@
 | Business Command Center | `GET /api/v1/customer-operations/summary` | Batch 1 — unchanged |
 | Communications / Commerce / Marketing execution | Respective `GET .../execution/summary` | Batches 3–5 |
 
-## Public conversion (deferred)
+## Public conversion (Batch 7C — v0)
 
-Pricing, lead capture, and marketing conversion surfaces on public/managed sites remain **deferred** to v0 in Batch 7. Do not fabricate connected analytics or CRM states on marketing pages.
+Delivered on `v0/public-conversion-7c` @ `5b3ff52` (11 files): pricing transparency/setup fees, quote CTA, plan continuity on Get Started, project shortcuts preserving query params, contact/wizard error recovery with `keptValues`, EN/ES in root dictionaries. Online checkout remains unimplemented (`checkoutNote`). Cursor integration: `__tests__/portal/batch7c-public-conversion-integration.test.ts`.
 
-## Mobile presentation (deferred)
+## Responsive presentation (Batch 7C — v0)
 
-Responsive layout pass for admin and customer dashboards is **deferred** (`unifiedExperience.mobilePresentation: DEFERRED_V0`). No Cursor changes to global layout components owned by v0.
+Layout wrapping pass on readiness kit, admin operations summary, AI readiness, marketplace panels, and business module cards. No backend or flag changes.
 
 ## Verification evidence (v0 handoff)
 

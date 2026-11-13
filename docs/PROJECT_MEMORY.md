@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-13 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `8585d93df7c407b84942f2e7eb82fd38beea9d6f` (PR **#128** Batch 7 backend MERGED)
+**Evidence review:** 2026-11-13 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `627f9d6cc52755730ec7de773d98307200dd7469` (PR **#129** Batch 7B MERGED)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,11 +35,11 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | GitHub `main` `8585d93df7c407b84942f2e7eb82fd38beea9d6f` ([PR **#128**](https://github.com/Holagpt-ai/webxxl-website-system/pull/128) Batch 7 Platform Admin backend, MERGED 2026-11-13). Prior [PR **#127**](https://github.com/Holagpt-ai/webxxl-website-system/pull/127) @ `c7bec5e7`. Build-first policy active; Issue #105 QA **deferred** to Batch 8. |
-| 2 | GitHub SHA, branch, active PR | **`8585d93df7c407b84942f2e7eb82fd38beea9d6f`** on `main`. Active Batch 7B UI integration PR on `feat/batch7b-admin-ui-integration` (owner review). v0 source `v0/admin-ai-employees-ui-7b` @ `3479070`. [PR **#128**](https://github.com/Holagpt-ai/webxxl-website-system/pull/128) **MERGED**. |
-| 3 | Production deployment | GitHub deployment **`7766776686`** Production **success** 2026-11-13T13:45:49Z @ `8585d93df7c407b84942f2e7eb82fd38beea9d6f`. SHA only. Not migration, activation, or provider live state. Batch 7B UI not yet merged. |
+| 1 | Last verified checkpoint | GitHub `main` `627f9d6cc52755730ec7de773d98307200dd7469` ([PR **#129**](https://github.com/Holagpt-ai/webxxl-website-system/pull/129) Batch 7B admin/AI UI, MERGED 2026-11-13). Prior [PR **#128**](https://github.com/Holagpt-ai/webxxl-website-system/pull/128) @ `8585d93`. Issue #105 QA **deferred** to Batch 8. |
+| 2 | GitHub SHA, branch, active PR | **`627f9d6cc52755730ec7de773d98307200dd7469`** on `main`. Active Batch **7C** integration PR on `feat/batch7c-public-conversion-integration` (owner review). v0 source `v0/public-conversion-7c` @ `5b3ff52`. [PR **#129**](https://github.com/Holagpt-ai/webxxl-website-system/pull/129) **MERGED**. |
+| 3 | Production deployment | GitHub deployment **`7768203600`** Production **success** 2026-11-13T14:50:01Z @ `627f9d6cc52755730ec7de773d98307200dd7469`. SHA only. Not migration, activation, or provider live state. Batch 7C UI not yet merged. |
 | 4 | Last updated | 2026-11-13 |
-| 5 | Next task / responsible platform | **Batch 7B** admin/AI employees UI integration — **Cursor** (reconcile + tests + docs). **Batch 7C** public conversion + remaining unified UI — **v0.app**. Then **Batch 8 — Release & Activation**. |
+| 5 | Next task / responsible platform | **Batch 7C** public conversion UI integration — **Cursor** (owner review PR). Then **Batch 8 — Release & Activation** (no broad acceptance in 7C). Mailbox verify `hello@webbxxl.com` deferred to Batch 8. |
 | 6 | Open blocker / gate IDs | Issue **#105** QA **deferred**. CRM-SUBNAV-105 **REPORTED**. POLICY-SUB-001 **REPORTED**. RELEASE-001 gated. Issue **#109** remains the execution roadmap. Staging migrations last **39/39** (2026-11-03); not re-counted 2026-11-13. Production migrate **UNVERIFIED**. Flags **not activated**. Provider activation **UNVERIFIED**. AI execution, outbound, workflow cron, and external effects remain disabled. |
 
 ### Evidence table
@@ -146,9 +146,10 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Vercel production SHA (2026-11-09, PR #126) | DEPLOYED | GitHub deployment `7656576538` Production **success** 2026-11-09T13:58:17Z @ `dd109204c3089ddef6ba03770c70d33b0d8455d3`. Coordinator-reported Vercel `dpl_DdxJbNwAzaWp9u7wKN8m3SQgoUxH` **READY** (id not in the GitHub payload). SHA only. Not migration or activation |
 | Batch 6 AI workforce & automation | MERGED | [PR **#127**](https://github.com/Holagpt-ai/webxxl-website-system/pull/127) squash `c7bec5e7def89d60f89cdaa0d339decfb6f0ab6b` on 2026-11-13 — verified approvals, staff gates, execution summaries | [`BATCH6-AI-WORKFORCE-AUTOMATION-API-CONTRACT.md`](platform/docs/BATCH6-AI-WORKFORCE-AUTOMATION-API-CONTRACT.md) |
 | Vercel production SHA (2026-11-13, PR #127) | DEPLOYED | GitHub deployment `7753430399` Production **success** @ `c7bec5e7def89d60f89cdaa0d339decfb6f0ab6b`. SHA only. Not migration or activation |
-| Batch 7 platform admin backend | MERGED | [PR **#128**](https://github.com/Holagpt-ai/webxxl-website-system/pull/128) @ `8585d93df7c407b84942f2e7eb82fd38beea9d6f` — `GET /api/v1/admin/operations/summary` + staff composition + managed-site verify | [`BATCH7-PLATFORM-ADMIN-OPERATIONS-API-CONTRACT.md`](platform/docs/BATCH7-PLATFORM-ADMIN-OPERATIONS-API-CONTRACT.md) |
-| Vercel production SHA (2026-11-13, PR #128) | DEPLOYED | GitHub deployment `7766776686` Production **success** @ `8585d93df7c407b84942f2e7eb82fd38beea9d6f`. SHA only. Not migration or activation |
-| Batch 7B admin + AI employees UI | IN PR | v0 `v0/admin-ai-employees-ui-7b` @ `3479070` → Cursor integration branch; 12-file frontend scope | [`BATCH7B-ADMIN-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH7B-ADMIN-UI-INTEGRATION-CONTRACT.md) |
+| Batch 7 platform admin backend | MERGED | [PR **#128**](https://github.com/Holagpt-ai/webxxl-website-system/pull/128) @ `8585d93df7c407b84942f2e7eb82fd38beea9d6f` | [`BATCH7-PLATFORM-ADMIN-OPERATIONS-API-CONTRACT.md`](platform/docs/BATCH7-PLATFORM-ADMIN-OPERATIONS-API-CONTRACT.md) |
+| Batch 7B admin + AI employees UI | MERGED | [PR **#129**](https://github.com/Holagpt-ai/webxxl-website-system/pull/129) @ `627f9d6cc52755730ec7de773d98307200dd7469` | [`BATCH7B-ADMIN-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH7B-ADMIN-UI-INTEGRATION-CONTRACT.md) |
+| Vercel production SHA (2026-11-13, PR #129) | DEPLOYED | GitHub deployment `7768203600` Production **success** @ `627f9d6cc52755730ec7de773d98307200dd7469`. SHA only. Not migration or activation |
+| Batch 7C public conversion + responsive UI | IN PR | v0 `v0/public-conversion-7c` @ `5b3ff52` → Cursor integration branch; 11-file frontend scope | [`BATCH7B-ADMIN-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH7B-ADMIN-UI-INTEGRATION-CONTRACT.md) (§ Batch 7C) |
 | CONTINUITY-03 session closeout | MERGED | [PR #108](https://github.com/Holagpt-ai/webxxl-website-system/pull/108), `5d90c124b1c7a884f7a61f16e5b9d263f0c08081`, merge 2026-11-07. Issue **#107** **CLOSED**. `pnpm continuity:close` + CI reconcile |
 | Vercel production SHA (2026-11-07, PR #106) | DEPLOYED | Vercel `dpl_AzZVHN5Si3jShjcJf5Gtq1dCxdAb` **success** @ `e37f0a023dd289dc3a9b4e7484f6a1dd34b24276`. GitHub commit status via `vercel[bot]`, 2026-11-07T18:01:23Z. SHA only. Superseded for current production by PR #108 row |
 | Vercel production SHA (2026-11-07, PR #108) | DEPLOYED | Vercel `dpl_HR1qq83Cz2ARKUvaRf8URt2Piwpo` **success** @ `5d90c124b1c7a884f7a61f16e5b9d263f0c08081`. GitHub commit status via `vercel[bot]`, 2026-11-07T19:07:53Z. SHA only. Not migration or activation |
