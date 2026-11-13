@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from 'react'
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react'
+import { siteConfig } from '@/config/site'
 import type { Dictionary } from '@/lib/i18n/dictionaries/en'
 import { format } from '@/lib/i18n/localize'
 import { submitProjectIntake } from '@/lib/integrations/forms'
@@ -99,7 +100,9 @@ export function ProjectWizard({
       if (!EMAIL.test(s.email)) next.email = f.emailError
     }
     setErrors(next)
-    return Object.keys(next).length === 0
+    const firstInvalid = Object.keys(next)[0]
+    if (firstInvalid) requestAnimationFrame(() => document.getElementById(firstInvalid)?.focus())
+    return !firstInvalid
   }
 
   function goTo(index: number) {
@@ -245,9 +248,18 @@ export function ProjectWizard({
 
         <Honeypot value={honeypot} onChange={setHoneypot} />
         {failed && (
-          <p role="alert" className="text-sm text-destructive">
-            {f.errorBody}
-          </p>
+          <div role="alert" className="flex flex-col gap-3 rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm">
+            <p className="font-semibold text-destructive">{f.errorBody}</p>
+            <p className="text-muted-foreground">{f.keptValues}</p>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button type="button" variant="outline" onClick={submit} disabled={pending} className="h-11">
+                {f.retry}
+              </Button>
+              <a href={`mailto:${siteConfig.email}`} className="inline-flex min-h-11 items-center font-semibold text-primary hover:underline">
+                {f.emailInstead}
+              </a>
+            </div>
+          </div>
         )}
 
         <div className="flex items-center justify-between gap-3 border-t pt-6">

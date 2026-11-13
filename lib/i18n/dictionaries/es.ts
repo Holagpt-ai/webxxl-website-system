@@ -145,6 +145,13 @@ export const es: Dictionary = {
     notice: 'Los precios mostrados son preliminares y pueden cambiar antes del lanzamiento. El precio final se confirma en tu llamada estratégica.',
     mostPopular: 'Más popular',
     includedTitle: 'Incluido en todos los planes',
+    setupFeeLabel: 'Configuración única',
+    noContract: 'Sin contrato a largo plazo',
+    checkoutNote: 'Elegir un plan inicia el registro de tu proyecto. El pago en línea aún no está disponible: confirmamos contigo el plan, la configuración y los complementos antes de cualquier cobro.',
+    quoteTitle: '¿No sabes qué plan te conviene?',
+    quoteBody: 'Cuéntanos sobre tu negocio y te recomendaremos un plan y los complementos que realmente necesitas.',
+    selectedPlan: 'Plan seleccionado',
+    changePlan: 'Cambiar plan',
   },
   forms: {
     name: 'Nombre completo',
@@ -169,6 +176,10 @@ export const es: Dictionary = {
     newsletterSuccess: '¡Te suscribiste. Gracias!',
     password: 'Contraseña',
     reasons: ['Sitio web nuevo', 'Rediseño de sitio web', 'CRM', 'Hosting o dominios', 'Soporte para un proyecto existente', 'Alianzas', 'Otro'],
+    fixErrors: 'Revisa los campos marcados.',
+    keptValues: 'Tus respuestas siguen aquí; no se perdió nada.',
+    retry: 'Intentar de nuevo',
+    emailInstead: 'Escríbenos por correo',
   },
   wizard: {
     title: 'Comienza tu proyecto',
@@ -210,6 +221,8 @@ export const es: Dictionary = {
     confirmationBody: 'Gracias. El equipo WebXXL revisará tus datos y te contactará en un día hábil para agendar tu llamada estratégica.',
     confirmationRef: 'Referencia',
     nothingSelected: 'Nada seleccionado',
+    quoteRequest: 'Solicitud de cotización gratis',
+    quoteRequestBody: 'Sin compromiso. Revisamos tus respuestas y te enviamos una recomendación y cotización.',
   },
   login: {
     title: 'Acceso de clientes',

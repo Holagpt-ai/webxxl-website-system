@@ -1,4 +1,5 @@
 import { Info } from 'lucide-react'
+import { ctas } from '@/config/ctas'
 import { pricingSettings, featureTooltips, type PricingPlan } from '@/config/pricing'
 import type { Locale } from '@/lib/i18n/config'
 import { getDictionary } from '@/lib/i18n/dictionaries'
@@ -19,11 +20,24 @@ function PlanPrice({ plan, locale }: { plan: PricingPlan; locale: Locale }) {
   return (
     <div className="flex flex-col gap-1">
       {plan.priceModel === 'startingAt' && <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{dict.pricing.startingAt}</span>}
-      <p className="flex items-baseline gap-1">
+      <p className="flex flex-wrap items-baseline gap-1">
         <span className="text-4xl font-extrabold tracking-tight md:text-5xl">{money(plan.priceMonthly, plan.currency, locale)}</span>
         <span className="text-muted-foreground">{dict.pricing.perMonth}</span>
       </p>
-      {plan.setupFee ? <span className="text-sm text-muted-foreground">{format(dict.pricing.setupFee, { amount: money(plan.setupFee, plan.currency, locale) })}</span> : null}
+      <dl className="mt-1 flex flex-col gap-1 text-sm">
+        {plan.setupFee ? (
+          <div className="flex items-center justify-between gap-3 border-t pt-2">
+            <dt className="text-muted-foreground">{dict.pricing.setupFeeLabel}</dt>
+            <dd className="font-semibold">{money(plan.setupFee, plan.currency, locale)}</dd>
+          </div>
+        ) : null}
+        <div className="flex items-center justify-between gap-3">
+          <dt className="sr-only">{dict.pricing.billingPeriod}</dt>
+          <dd className="text-muted-foreground">
+            {dict.pricing.monthly} · {dict.pricing.noContract}
+          </dd>
+        </div>
+      </dl>
     </div>
   )
 }
@@ -37,7 +51,7 @@ export function PricingCards({ plans, locale }: { plans: PricingPlan[]; locale: 
           <li
             key={plan.id}
             className={cn(
-              'relative flex flex-col gap-6 rounded-2xl border bg-card p-7',
+              'relative flex min-w-0 flex-col gap-6 rounded-2xl border bg-card p-6 sm:p-7',
               plan.highlighted ? 'border-2 border-primary shadow-elevated md:-my-3 md:py-10' : 'shadow-card',
             )}
           >
@@ -64,12 +78,19 @@ export function PricingCards({ plans, locale }: { plans: PricingPlan[]; locale: 
           </li>
         ))}
       </ul>
-      {pricingSettings.showPreliminaryNotice && (
-        <p className="flex items-start gap-2 text-sm text-muted-foreground">
-          <Info className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
-          {dict.pricing.notice}
-        </p>
-      )}
+      <p className="flex items-start gap-2 text-pretty text-sm leading-relaxed text-muted-foreground">
+        <Info className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+        {pricingSettings.showPreliminaryNotice ? `${dict.pricing.notice} ${dict.pricing.checkoutNote}` : dict.pricing.checkoutNote}
+      </p>
+      <div className="flex flex-col gap-4 rounded-2xl border bg-muted p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <p className="text-lg font-bold">{dict.pricing.quoteTitle}</p>
+          <p className="text-pretty text-sm leading-relaxed text-muted-foreground">{dict.pricing.quoteBody}</p>
+        </div>
+        <ButtonLink locale={locale} href={ctas.bookCall.href} variant="outline" className="w-full shrink-0 sm:w-auto">
+          {t(ctas.bookCall.label, locale)}
+        </ButtonLink>
+      </div>
     </div>
   )
 }
