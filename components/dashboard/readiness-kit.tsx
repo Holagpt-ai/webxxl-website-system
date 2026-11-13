@@ -33,11 +33,11 @@ export function Panel({
 export function Metric({ label, value, href }: { label: string; value: number | string; href?: string }) {
   const body = (
     <>
-      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className="break-words text-xs font-medium uppercase tracking-wide text-muted-foreground hyphens-auto">{label}</span>
       <span className="text-2xl font-semibold tabular-nums text-foreground">{value}</span>
     </>
   )
-  const base = 'flex flex-col gap-1 rounded-lg border bg-background p-4'
+  const base = 'flex min-w-0 flex-col gap-1 rounded-lg border bg-background p-4'
   return href ? (
     <Link href={href} className={cn(base, 'transition-colors hover:border-primary/50 focus-visible:outline-2 focus-visible:outline-ring')}>
       {body}
@@ -62,9 +62,9 @@ export function MetricSkeleton({ count, label }: { count: number; label: string 
 
 export function FactRow({ label, value, tone }: { label: string; value: string; tone?: PillTone }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b py-2 text-sm last:border-0">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd>{tone ? <StatusPill label={value} tone={tone} /> : <span className="font-medium tabular-nums text-foreground">{value}</span>}</dd>
+    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b py-2 text-sm last:border-0">
+      <dt className="min-w-0 break-words text-muted-foreground">{label}</dt>
+      <dd className="ml-auto text-right">{tone ? <StatusPill label={value} tone={tone} /> : <span className="font-medium tabular-nums text-foreground">{value}</span>}</dd>
     </div>
   )
 }

@@ -257,9 +257,9 @@ function ExecutionPanel({
                   <ul className="flex flex-col text-sm">
                     {slices.map((s) => (
                       <li key={s.key} className="flex flex-wrap items-center justify-between gap-2 border-b py-1.5 last:border-0">
-                        <code className="font-mono text-xs text-foreground">{s.key}</code>
-                        <span className="flex items-center gap-2">
-                          {s.reasonCode && <code className="font-mono text-xs text-muted-foreground">{s.reasonCode}</code>}
+                        <code className="min-w-0 break-all font-mono text-xs text-foreground">{s.key}</code>
+                        <span className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
+                          {s.reasonCode && <code className="min-w-0 break-all font-mono text-xs text-muted-foreground">{s.reasonCode}</code>}
                           <StatusPill label={s.status === 'AVAILABLE' ? e.available : e.unavailable} tone={s.status === 'AVAILABLE' ? 'success' : 'muted'} />
                         </span>
                       </li>

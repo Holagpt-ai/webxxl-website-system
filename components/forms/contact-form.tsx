@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { CheckCircle2, Loader2 } from 'lucide-react'
+import { siteConfig } from '@/config/site'
 import type { Dictionary } from '@/lib/i18n/dictionaries/en'
 import { submitContact } from '@/lib/integrations/forms'
 import { Button } from '@/components/ui/button'
@@ -47,7 +48,9 @@ export function ContactForm({
     if (!EMAIL.test(values.email)) next.email = labels.emailError
     if (!values.message.trim()) next.message = labels.requiredError
     setErrors(next)
-    return Object.keys(next).length === 0
+    const firstInvalid = Object.keys(next)[0]
+    if (firstInvalid) requestAnimationFrame(() => document.getElementById(firstInvalid)?.focus())
+    return !firstInvalid
   }
 
   return (
@@ -74,9 +77,13 @@ export function ContactForm({
       <TextAreaField id="message" label={labels.message} value={values.message} onChange={set('message')} required error={errors.message} />
       <Honeypot value={honeypot} onChange={setHoneypot} />
       {status === 'error' && (
-        <p role="alert" className="text-sm text-destructive">
-          {labels.errorBody}
-        </p>
+        <div role="alert" className="flex flex-col gap-2 rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm">
+          <p className="font-semibold text-destructive">{labels.errorBody}</p>
+          <p className="text-muted-foreground">{labels.keptValues}</p>
+          <a href={`mailto:${siteConfig.email}`} className="inline-flex min-h-11 items-center self-start font-semibold text-primary hover:underline">
+            {labels.emailInstead}
+          </a>
+        </div>
       )}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">{labels.privacyNote}</p>

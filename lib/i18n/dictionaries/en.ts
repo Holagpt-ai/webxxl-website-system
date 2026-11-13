@@ -145,6 +145,13 @@ export const en = {
     notice: 'Pricing shown is preliminary and may change before launch. Final pricing is confirmed on your strategy call.',
     mostPopular: 'Most popular',
     includedTitle: 'Included in every plan',
+    setupFeeLabel: 'One-time setup',
+    noContract: 'No long-term contract',
+    checkoutNote: 'Choosing a plan starts your project intake. Online checkout is not available yet — we confirm your plan, setup fee and any add-ons with you before anything is billed.',
+    quoteTitle: 'Not sure which plan fits?',
+    quoteBody: 'Tell us about your business and we will recommend a plan and the add-ons you actually need.',
+    selectedPlan: 'Selected plan',
+    changePlan: 'Change plan',
   },
   forms: {
     name: 'Full name',
@@ -169,6 +176,10 @@ export const en = {
     newsletterSuccess: 'You are subscribed. Thank you!',
     password: 'Password',
     reasons: ['New website', 'Website redesign', 'CRM', 'Hosting or domains', 'Support for an existing project', 'Partnership', 'Other'],
+    fixErrors: 'Please check the highlighted fields.',
+    keptValues: 'Your answers are still here — nothing was lost.',
+    retry: 'Try again',
+    emailInstead: 'Email us instead',
   },
   wizard: {
     title: 'Start your project',
@@ -210,6 +221,8 @@ export const en = {
     confirmationBody: 'Thank you. The WebXXL team will review your details and reach out within one business day to schedule your strategy call.',
     confirmationRef: 'Reference',
     nothingSelected: 'Nothing selected',
+    quoteRequest: 'Free quote request',
+    quoteRequestBody: 'No commitment. We review your answers and reply with a recommendation and quote.',
   },
   login: {
     title: 'Client Login',

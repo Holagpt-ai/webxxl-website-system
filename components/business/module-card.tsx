@@ -89,12 +89,12 @@ export function ModuleCard({
       aria-labelledby={headingId}
       className="flex flex-col gap-4 rounded-xl border bg-card p-5 text-card-foreground"
     >
-      <header className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
             <Icon className="size-4" aria-hidden="true" />
           </span>
-          <h3 id={headingId} className="font-semibold leading-tight text-foreground">
+          <h3 id={headingId} className="min-w-0 break-words font-semibold leading-tight text-foreground">
             {name}
           </h3>
         </div>
