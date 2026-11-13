@@ -86,8 +86,8 @@ export function MarketplacePanel({
               const isSelected = modalOpen && selectedKey === service.serviceKey
               return (
                 <article key={service.serviceKey} className="rounded-xl border bg-card p-4 text-sm">
-                  <div className="flex items-start justify-between gap-2">
-                    <h4 className="font-semibold">{localizedMarketplaceText(service.name, locale)}</h4>
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <h4 className="min-w-0 break-words font-semibold">{localizedMarketplaceText(service.name, locale)}</h4>
                     {active && <StatusBadge label={dict.marketplaceActiveOnAccount} />}
                     {comingSoon && !active && <StatusBadge label={dict.marketplaceComingSoon} />}
                     {unavailable && <StatusBadge label={dict.marketplaceUnavailable} />}

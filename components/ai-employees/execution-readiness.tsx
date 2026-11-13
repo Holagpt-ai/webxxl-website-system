@@ -195,8 +195,8 @@ function Stages({
       <ol className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {stages.map((stage, i) => (
           <li key={stage.label} className="flex flex-col gap-2 rounded-lg border p-3">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-medium text-foreground">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <p className="min-w-0 break-words text-sm font-medium text-foreground">
                 <span className="sr-only">{i + 1}. </span>
                 {stage.label}
               </p>
