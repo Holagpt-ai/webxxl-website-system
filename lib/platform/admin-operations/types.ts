@@ -38,6 +38,7 @@ export type AdminAccountExecutionAttachment = {
   customerAccountId: string
   businessName: string
   accountStatus: string
+  staffCompositionKind: 'staff_readonly_composition'
   communications: CommsExecutionSummaryResponse | null
   commerce: CommerceExecutionSummaryResponse | null
   marketing: MarketingExecutionSummaryResponse | null
@@ -49,6 +50,7 @@ export type AdminOperationsSummaryResponse = {
   generatedAt: string
   scope: 'platform' | 'customer_account'
   customerAccountId: string | null
+  managedSiteId: string | null
   disclosure: typeof ADMIN_OPERATIONS_DISCLOSURE
   platformQueues: AdminOperationsSlice<AdminPlatformQueueCounts>
   runtimeGates: AdminOperationsSlice<AdminRuntimeGateSnapshot>

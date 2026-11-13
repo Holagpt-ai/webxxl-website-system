@@ -17,7 +17,7 @@ Unified **staff-only**, **read-only** operations composition across platform que
 | Param | Required | Behavior |
 |---|---|---|
 | `customerAccountId` | No | When set, scopes platform queue counts to that account and attaches execution summaries for communications, commerce, marketing, and AI workforce. Account must exist or `accountExecution` is `UNAVAILABLE` / `NOT_FOUND`. |
-| `managedSiteId` | No | Forwarded to account execution summaries when `customerAccountId` is set. Must belong to that account in downstream services. |
+| `managedSiteId` | No | Requires `customerAccountId`. Verified server-side against `ManagedSite.customerAccountId` before any execution attachment is composed. Mismatch returns **404** `NOT_FOUND`. |
 
 ### Success body
 
@@ -49,7 +49,7 @@ When `customerAccountId` is provided, `accountExecution.data` may include full r
 - `GET /api/v1/marketing/execution/summary` composition
 - AI workforce execution summary composition
 
-OPEN-001 and module permission gates inside those composers still apply. Staff composition uses a read-only portal context; **billing groups do not grant sibling CRM or messaging access.**
+OPEN-001 and module permission gates inside those composers still apply. Staff composition uses a **synthetic read-only context** (`staff_readonly_composition`): the staff user's identity is preserved and **no unrelated `CustomerMembership` row is reused**. `accountExecution.data.staffCompositionKind` is always `staff_readonly_composition`. **Billing groups do not grant sibling CRM or messaging access.**
 
 ### Runtime gates
 
@@ -64,6 +64,8 @@ Reports source configuration only (`WORKFLOW_*`, `CUSTOMER_AI_*`, `COMMERCE_CHEC
 | Code | HTTP | Meaning |
 |---|---|---|
 | `UNAUTHORIZED` | 401 | Not staff |
+| `VALIDATION` | 400 | `managedSiteId` without `customerAccountId` |
+| `NOT_FOUND` | 404 | Unknown account site binding for `managedSiteId` |
 | `ERROR` | 500 | Unexpected failure |
 
 ## v0 Stage B handoff

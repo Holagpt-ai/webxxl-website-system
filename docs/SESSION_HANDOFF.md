@@ -33,7 +33,7 @@ Repo / main SHA: Holagpt-ai/webxxl-website-system / c7bec5e7def89d60f89cdaa0d339
 Branch / PR: feat/batch7-platform-admin-unified-experience / PR #128 (owner review)
 Merged / deployed: PR #127 @ c7bec5e; GitHub deployment 7753430399 Production success (SHA only)
 Migration / flags / activation: UNVERIFIED / not activated / UNVERIFIED
-Tests: __tests__/platform/batch7-platform-admin-operations.test.ts; tsc --noEmit
+Tests: batch7 platform admin + staff-portal-context + route-auth Vitest; tsc --noEmit
 Next exact assignment / owning tool: v0.app admin UI + Batch 8 planning after Batch 7 merge
 Do NOT touch: production DB, provider activation, workflow cron, live send/charge, auto-merge, v0 UI paths (Cursor)
 ```

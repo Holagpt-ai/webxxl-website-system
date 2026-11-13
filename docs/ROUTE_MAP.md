@@ -86,7 +86,7 @@ Batch 23 CRM data operations (backend; open PR): enriched `POST /api/v1/crm/impo
 | Communications and workflows | `/api/v1/communications/*` (incl. Batch 4 `GET /api/v1/communications/execution/summary`), `/api/v1/workflows/*` |
 | Customer AI | `/api/v1/customer-ai/accounts/[accountId]/*` |
 | AI workforce execution (Batch 6) | `GET /api/v1/ai-workforce/execution/summary`, `POST /api/v1/ai-workforce/execution/preparations`, `POST .../preparations/[preparationId]/approval-issue`, `POST .../preparations/[preparationId]/approval`, `POST /api/v1/ai-workforce/execution/pause` — OPEN-001 `core.crm` + `core.marketing-studio`; staff for issue/bind/pause; [`BATCH6-AI-WORKFORCE-AUTOMATION-API-CONTRACT.md`](platform/docs/BATCH6-AI-WORKFORCE-AUTOMATION-API-CONTRACT.md) |
-| Platform admin operations (Batch 7) | `GET /api/v1/admin/operations/summary` — staff-only; optional `customerAccountId` attaches Batches 4–6 execution summaries; [`BATCH7-PLATFORM-ADMIN-OPERATIONS-API-CONTRACT.md`](platform/docs/BATCH7-PLATFORM-ADMIN-OPERATIONS-API-CONTRACT.md) |
+| Platform admin operations (Batch 7) | `GET /api/v1/admin/operations/summary` — staff-only; optional `customerAccountId` + `managedSiteId` (site must belong to account; mismatch **404**); staff read-only composition context (no borrowed membership); attaches Batches 4–6 execution summaries; [`BATCH7-PLATFORM-ADMIN-OPERATIONS-API-CONTRACT.md`](platform/docs/BATCH7-PLATFORM-ADMIN-OPERATIONS-API-CONTRACT.md) |
 | Files | `/api/files/[fileId]` |
 
 Planned screens in [`docs/platform/docs/05-SITEMAP-WIREFRAMES.md`](platform/docs/05-SITEMAP-WIREFRAMES.md) are targets until a `page.tsx` exists. The checker does not invent those paths.

@@ -6,11 +6,12 @@ import {
   ADMIN_OPERATIONS_BATCH_VERSION,
   ADMIN_OPERATIONS_DISCLOSURE,
 } from '@/lib/platform/admin-operations/constants'
+import { STAFF_COMPOSITION_CONTEXT_KIND } from '@/lib/platform/admin-operations/staff-portal-context'
 
 vi.mock('@/lib/db', () => ({
   prisma: {
     customerAccount: { count: vi.fn(), findUnique: vi.fn() },
-    customerMembership: { findFirst: vi.fn() },
+    managedSite: { findFirst: vi.fn() },
     project: { count: vi.fn() },
     projectApproval: { count: vi.fn() },
     changeRequest: { count: vi.fn() },
@@ -33,17 +34,17 @@ vi.mock('@/lib/platform/marketing-execution/service', () => ({
 vi.mock('@/lib/platform/ai-workforce-execution/summary', () => ({
   getAiWorkforceExecutionSummary: vi.fn(() => ({ version: 'batch6' })),
 }))
-vi.mock('@/lib/platform/admin-operations/staff-portal-context', () => ({
-  buildStaffCompositionPortal: vi.fn(async () => ({
-    id: 'staff-1',
-    role: 'STAFF',
-    membership: { role: 'MEMBER', customerAccountId: 'acct_a' },
-    customerAccount: { id: 'acct_a', businessName: 'A Co', status: 'ACTIVE', createdAt: new Date(), updatedAt: new Date() },
-  })),
-}))
 
 describe('Batch 7 platform admin operations', () => {
   const env = process.env
+  const staffUser = {
+    id: 'staff-1',
+    role: 'STAFF',
+    email: 'staff@example.com',
+    name: 'Staff',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  } as never
 
   beforeEach(() => {
     vi.resetModules()
@@ -56,6 +57,14 @@ describe('Batch 7 platform admin operations', () => {
     vi.mocked(prisma.serviceOrder.count).mockResolvedValue(1)
     vi.mocked(prisma.managedSiteLead.count).mockResolvedValue(6)
     vi.mocked(prisma.projectTask.count).mockResolvedValue(2)
+    vi.mocked(prisma.customerAccount.findUnique).mockResolvedValue({
+      id: 'acct_a',
+      businessName: 'A Co',
+      status: 'ACTIVE',
+      createdAt: new Date('2020-01-01'),
+      updatedAt: new Date('2020-01-01'),
+    } as never)
+    vi.mocked(prisma.managedSite.findFirst).mockResolvedValue({ id: 'site_a' } as never)
   })
 
   afterEach(() => {
@@ -68,6 +77,7 @@ describe('Batch 7 platform admin operations', () => {
     expect(route).toContain('requireStaff')
     expect(route).toContain('getAdminOperationsSummary')
     expect(route).toContain('customerAccountId')
+    expect(route).toContain('404')
   })
 
   it('documents the API and v0 integration contracts', () => {
@@ -84,9 +94,10 @@ describe('Batch 7 platform admin operations', () => {
 
   it('composes platform scope without account execution attachment', async () => {
     const { getAdminOperationsSummary } = await import('@/lib/platform/admin-operations/service')
-    const summary = await getAdminOperationsSummary({
-      staffUser: { id: 'staff-1', role: 'STAFF' } as never,
-    })
+    const result = await getAdminOperationsSummary({ staffUser })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    const summary = result.value
     expect(summary.version).toBe(ADMIN_OPERATIONS_BATCH_VERSION)
     expect(summary.disclosure).toBe(ADMIN_OPERATIONS_DISCLOSURE)
     expect(summary.scope).toBe('platform')
@@ -97,15 +108,36 @@ describe('Batch 7 platform admin operations', () => {
     expect(summary.publicConversion.data?.state).toBe('DEFERRED_V0')
   })
 
-  it('attaches execution summaries when customerAccountId is set', async () => {
+  it('attaches execution summaries with verified staff composition context', async () => {
     const { getAdminOperationsSummary } = await import('@/lib/platform/admin-operations/service')
-    const summary = await getAdminOperationsSummary({
-      staffUser: { id: 'staff-1', role: 'STAFF' } as never,
+    const result = await getAdminOperationsSummary({
+      staffUser,
       customerAccountId: 'acct_a',
+      managedSiteId: 'site_a',
     })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    const summary = result.value
     expect(summary.scope).toBe('customer_account')
+    expect(summary.managedSiteId).toBe('site_a')
     expect(summary.accountExecution.status).toBe('AVAILABLE')
+    expect(summary.accountExecution.data?.staffCompositionKind).toBe(STAFF_COMPOSITION_CONTEXT_KIND)
     expect(summary.accountExecution.data?.communications).toEqual({ batchVersion: 'batch4' })
     expect(summary.accountExecution.data?.aiWorkforce).toEqual({ version: 'batch6' })
+  })
+
+  it('fails closed on mismatched managed site before attachments', async () => {
+    vi.mocked(prisma.managedSite.findFirst).mockResolvedValue(null)
+    const { getAdminOperationsSummary } = await import('@/lib/platform/admin-operations/service')
+    const { getCommunicationsExecutionSummary } = await import('@/lib/platform/comms-execution/service')
+    const result = await getAdminOperationsSummary({
+      staffUser,
+      customerAccountId: 'acct_a',
+      managedSiteId: 'site_wrong',
+    })
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.code).toBe('NOT_FOUND')
+    expect(getCommunicationsExecutionSummary).not.toHaveBeenCalled()
   })
 })

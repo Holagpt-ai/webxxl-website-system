@@ -10,12 +10,16 @@ export async function GET(request: Request) {
     const url = new URL(request.url)
     const customerAccountId = url.searchParams.get('customerAccountId')
     const managedSiteId = url.searchParams.get('managedSiteId')
-    const summary = await getAdminOperationsSummary({
+    const result = await getAdminOperationsSummary({
       staffUser: staff,
       customerAccountId,
       managedSiteId,
     })
-    return NextResponse.json({ summary })
+    if (!result.ok) {
+      const status = result.code === 'NOT_FOUND' ? 404 : result.code === 'VALIDATION' ? 400 : 403
+      return NextResponse.json({ code: result.code, message: result.message }, { status })
+    }
+    return NextResponse.json({ summary: result.value })
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json({ code: 'UNAUTHORIZED', message: 'Staff access required' }, { status: 401 })
