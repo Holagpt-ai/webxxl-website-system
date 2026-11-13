@@ -1,14 +1,16 @@
 {
-  "recordedAt": "2026-11-13T18:39:00.000Z",
-  "batch": "8B",
-  "repositorySha": "30746e513a990b37a63ced4973e80f704a92308c",
-  "stagingIdentity": "supabase:vcgibefnhneaqhcguhnt/postgres",
-  "productionExcluded": "supabase:txfxeehglqfszletuumn/postgres",
-  "operation": "read_only_prisma_migrations_query",
-  "migrateDeployExecuted": false,
-  "preflightCli": "migration-rehearsal.ts --verify-db",
-  "readinessCli": "release-readiness.ts with PILOT_READINESS_DB_PROBE=1",
-  "fullSchemaChain": "PASS — 39/39 expected migrations finished (not rolled back)",
-  "pilotModuleSlice": "PASS",
-  "disclaimer": "Migration history match does not prove schema integrity, data correctness, or authenticated functionality."
+  "environment": "Staging",
+  "service": "webxxl-website-system",
+  "released_at_utc": "2026-11-13T18:39:00.000Z",
+  "git_sha": "30746e513a990b37a63ced4973e80f704a92308c",
+  "deployment_id": "staging-read-only-migration-probe",
+  "creator": "cursor-batch-8b",
+  "state": "SUCCESS",
+  "staging_database_identity": "supabase:vcgibefnhneaqhcguhnt/postgres",
+  "migration_ids_applied": "39/39 finished (read-only _prisma_migrations query; not migrate deploy)",
+  "flags": "UNVERIFIED",
+  "provider_scope": "UNVERIFIED",
+  "result": "STAGING_MIGRATION_PROBE_ONLY",
+  "evidence_url": "https://github.com/Holagpt-ai/webxxl-website-system/blob/main/docs/BATCH8B-STAGING-ACCEPTANCE-REPORT.md",
+  "notes": "Batch 8B read-only probe. Production txfxeehglqfszletuumn not accessed."
 }
