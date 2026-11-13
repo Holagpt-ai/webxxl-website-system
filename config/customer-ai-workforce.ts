@@ -56,7 +56,8 @@ export function isCustomerAiPilotHttpEnabled(): boolean {
 
 /**
  * Batch 6 HTTP mutations (preparations, approvals, pause).
- * Requires CUSTOMER_AI_WORKFORCE_ENABLED; disabled in production unless CUSTOMER_AI_PILOT_DURABLE_ENABLED.
+ * Requires CUSTOMER_AI_WORKFORCE_ENABLED. Production stays off until AI_WORKFORCE_EXECUTION_DURABLE_ENABLED
+ * with a connected Batch 6 store (not CUSTOMER_AI_PILOT_DURABLE_ENABLED).
  */
 export function isAiWorkforceExecutionHttpEnabledFlag(): boolean {
   return envFlag('AI_WORKFORCE_EXECUTION_HTTP_ENABLED', false)

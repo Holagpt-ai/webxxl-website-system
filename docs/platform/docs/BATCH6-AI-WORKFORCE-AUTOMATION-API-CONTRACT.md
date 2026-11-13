@@ -28,7 +28,7 @@ OPEN-001 subscriber gate: `core.crm` and `core.marketing-studio` (`requireInclud
 
 ### HTTP mutation gates
 
-`POST` mutations return `503 EXECUTION_DISABLED` unless `CUSTOMER_AI_WORKFORCE_ENABLED` and `AI_WORKFORCE_EXECUTION_HTTP_ENABLED` are on **and** either the runtime is non-production or `CUSTOMER_AI_PILOT_DURABLE_ENABLED` is on. Orchestration state is **process-local** (`orchestrationPersistence` summary slice); it is not globally enforced on Vercel.
+`POST` mutations return `503 EXECUTION_DISABLED` in **production** until Batch 6 orchestration is connected to approved persistent storage (`orchestrationPersistence.durablePersistenceConnected`). `CUSTOMER_AI_PILOT_DURABLE_ENABLED` does **not** satisfy this gate. Non-production runtimes may enable gated preparation when `CUSTOMER_AI_WORKFORCE_ENABLED` and `AI_WORKFORCE_EXECUTION_HTTP_ENABLED` are on. The summary reports `productionSafe: false` and `persistence: IN_MEMORY_PROCESS_LOCAL` while maps remain process-local.
 
 ### Client authority
 
@@ -42,7 +42,7 @@ The preparation body must not include `approvalId`, `actionHash`, `channelConnec
 
 ### Preparation result
 
-Draft tools return `PENDING_APPROVAL`. Read tools return `PREPARED`. Consequential approval returns `APPROVED_EFFECT_BLOCKED` or `REJECTED`. Every success sets `executionState: DISABLED`, `outbound: BLOCKED`, `moneyEffect: NONE`, `customerChargeUsd: 0`, and `externalEffectCount: 0`. CRM drafts expose `synthesis: DETERMINISTIC_TEMPLATE`; they are not verified AI output.
+Draft tools return `PENDING_APPROVAL`. Read tools return `PREPARED`. Consequential approval returns `APPROVED_EFFECT_BLOCKED` or `REJECTED`. Every success sets `executionState: DISABLED`, `outbound: BLOCKED`, `moneyEffect: NONE`, `customerChargeUsd: 0`, and `externalEffectCount: 0`. CRM drafts expose `synthesis: DETERMINISTIC_TEMPLATE`; they are not verified AI output. Client `sourceRecordIds` appear as `referencedRecordIds` only; `verifiedSourceRecords` stays false until the server authorizes records.
 
 `workflow.state` is `NOT_QUEUED` unless enqueue flags are already on, in which case it is `ENQUEUE_WITHHELD` (`BATCH6_DOES_NOT_DISPATCH`). Retry classes are reported from the existing AUTO-10 policy. Attempts executed stay `0`.
 

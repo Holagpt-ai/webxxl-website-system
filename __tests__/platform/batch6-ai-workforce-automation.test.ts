@@ -66,6 +66,8 @@ describe('Batch 6 AI workforce orchestration', () => {
     expect(summary.workflowHandoff.data?.nonRetryableErrorClasses).toContain('PERMANENT')
     expect(summary.customerEmployeePersistence.status).toBe('UNAVAILABLE')
     expect(summary.orchestrationPersistence.data?.persistence).toBe('IN_MEMORY_PROCESS_LOCAL')
+    expect(summary.orchestrationPersistence.data?.productionSafe).toBe(false)
+    expect(summary.orchestrationPersistence.data?.durablePersistenceConnected).toBe(false)
     const composed = summary.toolCoverage.data?.rows.filter((row) => row.batch6Composed) ?? []
     expect(composed.map((row) => row.domain)).toEqual(
       expect.arrayContaining(['crm', 'projects', 'marketing', 'seo', 'communications', 'billing']),
@@ -204,6 +206,8 @@ describe('Batch 6 AI workforce orchestration', () => {
     expect(replay.value.replayed).toBe(true)
     expect(replay.value.externalEffectCount).toBe(0)
     expect(store.budget.size).toBe(1)
+    expect(replay.value.draft.verifiedSourceRecords).toBe(false)
+    expect(replay.value.draft.referencedRecordIds).toEqual(['proj_a'])
 
     const conflict = prepareAccountWorkforceAction(store, {
       customerAccountId: AESTHETICS,
@@ -414,11 +418,12 @@ describe('Batch 6 AI workforce orchestration', () => {
     expect(rejectClientAuthority({ toolKey: 'seo.readSnapshot' })).toBeNull()
   })
 
-  it('blocks HTTP mutations in production when durable persistence is off', () => {
+  it('blocks HTTP mutations in production even when pilot and HTTP flags are on', () => {
     vi.stubEnv('NODE_ENV', 'production')
     vi.stubEnv('CUSTOMER_AI_WORKFORCE_ENABLED', 'true')
     vi.stubEnv('AI_WORKFORCE_EXECUTION_HTTP_ENABLED', 'true')
-    vi.stubEnv('CUSTOMER_AI_PILOT_DURABLE_ENABLED', 'false')
+    vi.stubEnv('CUSTOMER_AI_PILOT_DURABLE_ENABLED', 'true')
+    vi.stubEnv('AI_WORKFORCE_EXECUTION_DURABLE_ENABLED', 'true')
     expect(isAiWorkforceExecutionHttpMutationEnabled()).toBe(false)
     const response = aiWorkforceHttpMutationDisabledResponse()
     expect(response?.status).toBe(503)

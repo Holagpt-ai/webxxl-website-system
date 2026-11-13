@@ -23,6 +23,7 @@ export type ComposedToolBinding = {
 type DraftContext = PrepareAccountWorkforceActionInput & {
   locale: AiWorkforceLocale
   serverChannelCoverage: AiWorkforceCoverageState
+  serverVerifiedSourceRecordIds: string[]
 }
 
 const COMPOSED: Record<
@@ -118,18 +119,38 @@ function sourceIds(input: DraftContext): string[] {
   return [...(input.sourceRecordIds ?? [])].sort()
 }
 
+function verifiedSourceIds(input: DraftContext): string[] {
+  return [...input.serverVerifiedSourceRecordIds].sort()
+}
+
+function sourceRecordFields(input: DraftContext): {
+  referencedRecordIds: string[]
+  serverVerifiedSourceRecordIds: string[]
+  verifiedSourceRecords: boolean
+} {
+  const referencedRecordIds = sourceIds(input)
+  const serverVerifiedSourceRecordIds = verifiedSourceIds(input)
+  return {
+    referencedRecordIds,
+    serverVerifiedSourceRecordIds,
+    verifiedSourceRecords: serverVerifiedSourceRecordIds.length > 0,
+  }
+}
+
 function crmDraft(input: DraftContext): { coverageState: AiWorkforceCoverageState; draft: Record<string, unknown> } {
   const coverageState = input.serverChannelCoverage
+  const sources = sourceRecordFields(input)
   return {
     coverageState,
     draft: {
       sourceModule: 'lib/platform/customer-ai-workforce/pilot-workflows.ts',
       toolKey: input.toolKey,
-      sourceRecordIds: sourceIds(input),
+      referencedRecordIds: sources.referencedRecordIds,
+      serverVerifiedSourceRecordIds: sources.serverVerifiedSourceRecordIds,
       outboundSend: false,
       coverageState,
       synthesis: 'DETERMINISTIC_TEMPLATE',
-      verifiedSourceRecords: sourceIds(input).length > 0,
+      verifiedSourceRecords: sources.verifiedSourceRecords,
       coverageNote:
         coverageState === 'CHANNEL_DISCONNECTED'
           ? 'Channel disconnected. This is a coverage limitation, not proof the lead was never contacted.'
@@ -141,12 +162,15 @@ function crmDraft(input: DraftContext): { coverageState: AiWorkforceCoverageStat
 }
 
 function projectDraft(input: DraftContext): { coverageState: AiWorkforceCoverageState; draft: Record<string, unknown> } {
+  const sources = sourceRecordFields(input)
   return {
     coverageState: 'PROPOSAL_ONLY',
     draft: {
       sourceModule: 'lib/platform/workforce/internal-agents.ts',
       toolKey: input.toolKey,
-      sourceRecordIds: sourceIds(input),
+      referencedRecordIds: sources.referencedRecordIds,
+      serverVerifiedSourceRecordIds: sources.serverVerifiedSourceRecordIds,
+      verifiedSourceRecords: sources.verifiedSourceRecords,
       managedSiteId: input.managedSiteId ?? null,
       deploy: false,
       dnsCutover: false,

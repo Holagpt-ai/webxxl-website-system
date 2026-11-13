@@ -20,6 +20,7 @@ import {
   verifyAccountWorkforcePreparationApproval,
 } from '@/lib/platform/ai-workforce-execution/approval-records'
 import { resolveServerChannelCoverageState } from '@/lib/platform/ai-workforce-execution/coverage-resolver'
+import { resolveServerAuthorizedSourceRecordIds } from '@/lib/platform/ai-workforce-execution/source-records-resolver'
 import { composeToolDraft, resolveComposedTool } from '@/lib/platform/ai-workforce-execution/tool-bindings'
 import type {
   AiWorkforceLocale,
@@ -213,10 +214,16 @@ export function prepareAccountWorkforceAction(
     customerAccountId: input.customerAccountId,
     toolKey: input.toolKey,
   })
+  const serverVerifiedSourceRecordIds = resolveServerAuthorizedSourceRecordIds({
+    customerAccountId: input.customerAccountId,
+    toolKey: input.toolKey,
+    candidateRecordIds: input.sourceRecordIds ?? [],
+  })
   const composed = composeToolDraft(input.toolKey, {
     ...input,
     locale: locale.value,
     serverChannelCoverage,
+    serverVerifiedSourceRecordIds,
   })
   if (!composed) return fail('FAILED', 'Tool composer missing')
 

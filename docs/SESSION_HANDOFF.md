@@ -15,7 +15,7 @@
 
 ## This session
 
-**Batch 6 — AI Workforce & Automation:** account-scoped orchestration over the existing internal workforce, customer AI catalog, central tool registry, and AUTO-10 `WORKFORCE_TASK_PREPARE` handler. Security review corrections: server-issued approval records with verify/consume, staff-only issue/bind/pause, OPEN-001 subscriber gate, process-local HTTP mutation gates, and server-resolved channel coverage (`COVERAGE_UNVERIFIED`). No live inference, send, charge, enqueue, or provider activation. Checkpoint reconciled to PR #126 MERGED @ `dd109204c3089ddef6ba03770c70d33b0d8455d3`. Pull request #127 is in owner review.
+**Batch 6 — AI Workforce & Automation:** account-scoped orchestration over the existing internal workforce, customer AI catalog, central tool registry, and AUTO-10 `WORKFORCE_TASK_PREPARE` handler. Security + final review corrections: verified approvals, staff gates, OPEN-001, production HTTP mutations off while Batch 6 maps remain process-local (pilot durable does not apply), server-resolved coverage and source records. No live inference, send, charge, enqueue, or provider activation. Checkpoint reconciled to PR #126 MERGED @ `dd109204c3089ddef6ba03770c70d33b0d8455d3`. Pull request #127 is in owner review.
 
 ## Next assignment
 

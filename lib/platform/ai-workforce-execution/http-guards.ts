@@ -18,7 +18,7 @@ export function aiWorkforceHttpMutationDisabledResponse() {
     {
       code: 'EXECUTION_DISABLED',
       message:
-        'AI workforce HTTP mutations are disabled. Process-local orchestration is not globally enforced until owner gates and durable persistence are satisfied.',
+        'AI workforce HTTP mutations are disabled. Batch 6 orchestration is process-local; production mutations require connected Batch 6 durable persistence (CUSTOMER_AI_PILOT_DURABLE_ENABLED does not apply).',
     },
     { status: 503 },
   )
