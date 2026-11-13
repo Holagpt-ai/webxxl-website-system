@@ -89,7 +89,7 @@ describe('Batch 7 platform admin operations', () => {
     expect(api).toContain('/api/v1/admin/operations/summary')
     expect(api).toContain('requireStaff')
     expect(ui).toContain('ai-workforce/execution/summary')
-    expect(ui).toContain('DEFERRED_V0')
+    expect(ui).toContain('Batch 7C')
   })
 
   it('composes platform scope without account execution attachment', async () => {
