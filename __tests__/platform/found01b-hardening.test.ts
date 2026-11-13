@@ -164,6 +164,7 @@ describe('FOUND-01B reservation expiration safety', () => {
       reservationId: reserved.value.id,
       amount: 100,
       idempotencyKey: 'settle-partial-before-expire',
+      at: new Date('2026-10-20T00:00:00.000Z'),
     })
     expect(partial.ok).toBe(true)
     expect(reserved.value.settledAmount).toBe(100)

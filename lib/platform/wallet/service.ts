@@ -208,7 +208,7 @@ export function createWalletContractService(store: InMemoryPlatformStore): Walle
     },
 
     settle(input) {
-      const at = new Date()
+      const at = input.at ?? new Date()
       const amountCheck = validateCreditAmount(input.amount)
       if (!amountCheck.ok) return { ok: false, error: 'INVALID_AMOUNT' }
       const resolved = resolveWalletActor(store, input.actorUserId, input.actorType)
