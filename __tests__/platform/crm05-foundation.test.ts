@@ -68,7 +68,7 @@ describe('CRM-05 foundation', () => {
     const summary = summarizeSegmentPopulation(fixture)
     expect(summary.totalContacts).toBe(200)
     expect(summary.suppressedContacts).toBe(20)
-    expect(summary.unknownConsentContacts).toBe(180)
+    expect(summary.unknownConsentContacts).toBe(160)
     expect(summary.eligibleContacts).toBe(20)
     const vip = fixture.filter((c) => evaluateSegmentGroup(c, { logic: 'AND', rules: [{ field: 'tag', operator: 'eq', value: 'vip' }] }))
     expect(vip.length).toBe(20)

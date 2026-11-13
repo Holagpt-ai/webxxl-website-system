@@ -42,7 +42,11 @@ GitHub `main` at `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` (PR #52) has moved p
 
 **Batch 7B:** Admin operations + AI employees readiness UI — **merged** @ `627f9d6` ([PR #129](https://github.com/Holagpt-ai/webxxl-website-system/pull/129)). [`BATCH7B-ADMIN-UI-INTEGRATION-CONTRACT.md`](BATCH7B-ADMIN-UI-INTEGRATION-CONTRACT.md).
 
-**Batch 7C:** Public conversion + responsive UI — **in PR** (v0 `v0/public-conversion-7c` @ `5b3ff52`, Cursor integration). Completes Issue #109 frontend scope for Batch 7. **Batch 8** follows owner merge.
+**Batch 7C:** Public conversion + responsive UI — **merged** @ `8058565` ([PR #130](https://github.com/Holagpt-ai/webxxl-website-system/pull/130)). Issue **#109** Batches 0–7 **complete at source**.
+
+**Batch 8A:** Release readiness & baseline recovery — **in PR** ([`BATCH8A-RELEASE-READINESS.md`](../../BATCH8A-RELEASE-READINESS.md)).
+
+**Batch 8B:** Staging acceptance matrix — **planned** ([`BATCH8B-STAGING-ACCEPTANCE-MATRIX.md`](../../BATCH8B-STAGING-ACCEPTANCE-MATRIX.md)); owner staging authorization required.
 
 ---
 

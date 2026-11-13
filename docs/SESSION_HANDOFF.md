@@ -1,25 +1,25 @@
 # WebXXL — Session Handoff
 
-**Compiled:** 2026-11-13 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `627f9d6cc52755730ec7de773d98307200dd7469` (PR **#129** Batch 7B MERGED)
+**Compiled:** 2026-11-13 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `8058565e11fed8927147c54e2b4ee0a58cc184bf` (PR **#130** Batch 7C MERGED)
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | GitHub `main` `627f9d6cc52755730ec7de773d98307200dd7469` ([PR **#129**](https://github.com/Holagpt-ai/webxxl-website-system/pull/129) Batch 7B admin/AI UI, MERGED 2026-11-13). Prior [PR **#128**](https://github.com/Holagpt-ai/webxxl-website-system/pull/128) @ `8585d93`. Issue #105 QA **deferred** to Batch 8. |
-| 2 | GitHub SHA, branch, active PR | **`627f9d6cc52755730ec7de773d98307200dd7469`** on `main`. Active Batch **7C** integration PR on `feat/batch7c-public-conversion-integration` (owner review). v0 source `v0/public-conversion-7c` @ `5b3ff52`. [PR **#129**](https://github.com/Holagpt-ai/webxxl-website-system/pull/129) **MERGED**. |
-| 3 | Production deployment | GitHub deployment **`7768203600`** Production **success** 2026-11-13T14:50:01Z @ `627f9d6cc52755730ec7de773d98307200dd7469`. SHA only. Not migration, activation, or provider live state. Batch 7C UI not yet merged. |
+| 1 | Last verified checkpoint | GitHub `main` `8058565e11fed8927147c54e2b4ee0a58cc184bf` ([PR **#130**](https://github.com/Holagpt-ai/webxxl-website-system/pull/130) Batch 7C public conversion UI, MERGED 2026-11-13). Issue **#109** Batches 0–7 **complete at source**. Issue #105 QA **deferred** to Batch 8B. |
+| 2 | GitHub SHA, branch, active PR | **`8058565e11fed8927147c54e2b4ee0a58cc184bf`** on `main`. Open [PR **#131**](https://github.com/Holagpt-ai/webxxl-website-system/pull/131) Batch 8A @ `bee07d6` on `feat/batch8a-release-readiness`. [PR **#130**](https://github.com/Holagpt-ai/webxxl-website-system/pull/130) **MERGED**. |
+| 3 | Production deployment | GitHub deployment **`7772915207`** Production **success** 2026-11-13T18:14:48Z @ `8058565e11fed8927147c54e2b4ee0a58cc184bf`. SHA only. Not migration, activation, or provider live state. |
 | 4 | Last updated | 2026-11-13 |
-| 5 | Next task / responsible platform | **Batch 7C** public conversion UI integration — **Cursor** (owner review PR). Then **Batch 8 — Release & Activation** (no broad acceptance in 7C). Mailbox verify `hello@webbxxl.com` deferred to Batch 8. |
+| 5 | Next task / responsible platform | **Batch 8A** baseline recovery — **Cursor** (owner review). **Batch 8B** staging acceptance matrix execution — **owner-authorized staging** after 8A merge. |
 | 6 | Open blocker / gate IDs | Issue **#105** QA **deferred**. CRM-SUBNAV-105 **REPORTED**. POLICY-SUB-001 **REPORTED**. RELEASE-001 gated. Issue **#109** remains the execution roadmap. Staging migrations last **39/39** (2026-11-03); not re-counted 2026-11-13. Production migrate **UNVERIFIED**. Flags **not activated**. Provider activation **UNVERIFIED**. AI execution, outbound, workflow cron, and external effects remain disabled. |
 
 ## This session
 
-**Batch 7C — Public conversion & responsive UI:** Fast-forward merged approved v0 commits (`8562468`, `5b3ff52`) onto `main` @ `627f9d6`. Eleven v0-owned files: pricing/`getPlanActionHref` continuity, Get Started plan/intent/industry params, form error recovery, responsive readiness/dashboard cards. Cursor-added `__tests__/portal/batch7c-public-conversion-integration.test.ts` and continuity docs. No Prisma/auth/flag/provider changes.
+**Batch 8A — Release readiness & baseline recovery:** `pnpm release:readiness` PASS for source gates; BLOCKED on DB probe and authenticated smoke. Recovered four Vitest baselines (INFRA-02 example env, CRM-05 counts, FOUND-01B settle clock, SOCIAL-04A next-auth resolver). Added [`BATCH8A-RELEASE-READINESS.md`](BATCH8A-RELEASE-READINESS.md) and [`BATCH8B-STAGING-ACCEPTANCE-MATRIX.md`](BATCH8B-STAGING-ACCEPTANCE-MATRIX.md).
 
 ## Next assignment
 
-Owner review of Batch 7C integration PR. **Batch 8:** release stabilization, `hello@webbxxl.com` mailbox verification, RELEASE-001 gates, Issue #105 deferred QA — after 7C merge only.
+Owner review Batch 8A PR. **Batch 8B:** execute staging acceptance matrix with owner staging credentials — no production migrate, activation, or live sends.
 
 ## PENDING REPOSITORY SYNC
 
@@ -28,12 +28,12 @@ Owner review of Batch 7C integration PR. **Batch 8:** release stabilization, `he
 ## Handoff template
 
 ```
-Date / scope / owner: 2026-11-13 / Batch 7C public conversion integration / Cursor
-Repo / main SHA: Holagpt-ai/webxxl-website-system / 627f9d6cc52755730ec7de773d98307200dd7469
-Branch / PR: feat/batch7c-public-conversion-integration / (open after push, owner review)
-Merged / deployed: PR #129 MERGED @ 627f9d6; GitHub deployment 7768203600 Production success (SHA only)
+Date / scope / owner: 2026-11-13 / Batch 8A release baseline / Cursor
+Repo / main SHA: Holagpt-ai/webxxl-website-system / 8058565e11fed8927147c54e2b4ee0a58cc184bf
+Branch / PR: feat/batch8a-release-readiness / (open after push, owner review)
+Merged / deployed: PR #130 MERGED @ 8058565; GitHub deployment 7772915207 Production success (SHA only)
 Migration / flags / activation: UNVERIFIED / not activated / UNVERIFIED
-Tests: batch7c-public-conversion-integration + batch7b Vitest; pnpm typecheck
-Next exact assignment / owning tool: Owner merge 7C PR → Batch 8 release & activation inventory
-Do NOT touch: production DB, provider activation, workflow cron, live send/charge, auto-merge
+Tests: infra02 + CRM-05 + FOUND-01B + SOCIAL-04A + batch8a-release-baseline; tsc
+Next exact assignment / owning tool: Batch 8B staging acceptance (owner staging env)
+Do NOT touch: production DB, credentials, provider activation, live sends/charges
 ```

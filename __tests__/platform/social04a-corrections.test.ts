@@ -297,6 +297,14 @@ describe('SOCIAL-04A Prisma campaign quota (mocked persistence)', () => {
         },
       },
     }
+    vi.doMock('@/lib/platform/open001/load-subscriber-evidence', () => ({
+      loadSubscriberEvidenceForAccount: async (customerAccountId: string) => ({
+        customerAccountId,
+        subscriptions: [{ customerAccountId, productKey: 'website.subscription', status: 'ACTIVE' }],
+        legacyWebsiteServices: [],
+        loadOutcome: 'synthetic' as const,
+      }),
+    }))
     vi.doMock('@/lib/db', () => ({
       prisma: {
         marketingStudioUsage: {
