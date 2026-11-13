@@ -18,7 +18,7 @@
 |---|---|---|---|
 | INFRA-02 example env | Staging URL used `YOUR_STAGING_DB_PASSWORD` (failed secret-pattern scan) | **Test harness / example doc** | `PLACEHOLDER_STAGING_DB_PASSWORD` in `webxxl-staging-database.env.example` |
 | CRM-05 segment summary | `summarizeSegmentPopulation` excludes suppressed contacts from unknown-consent count (160 not 180) | **Test expectation drift** | Align fixture assertion to 160 |
-| FOUND-01B partial settle | `settle()` used wall-clock `Date` after reservation `expiresAt` passed in 2026 | **Engineering defect** | Optional `at` on `SettleCreditsInput`; test passes explicit timeline |
+| FOUND-01B partial settle | Vitest ran against real wall clock past fixture `expiresAt` | **Test harness** | `settle()` keeps trusted wall clock only; FOUND-01B uses `vi.useFakeTimers` for timeline |
 | SOCIAL-04A campaign quota | Vitest node resolver could not resolve `next/server` from nested `next-auth` | **Test harness** | `server.deps.inline: ['next-auth']` in `vitest.config.ts`; mock subscriber evidence in test |
 
 ## Release blocker inventory

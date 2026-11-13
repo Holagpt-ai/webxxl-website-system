@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { activateFundingMembership } from '@/lib/platform/billing-membership'
 import {
   ABMED_AESTHETICS_ACCOUNT_ID,
@@ -120,6 +120,10 @@ describe('FOUND-01B membership activation atomicity', () => {
 })
 
 describe('FOUND-01B reservation expiration safety', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('rejects already-expired reservations at creation', () => {
     const store = createSyntheticAbmedFoundation()
     const wallet = createWalletContractService(store)
@@ -141,6 +145,9 @@ describe('FOUND-01B reservation expiration safety', () => {
   })
 
   it('blocks settlement after expiry while preserving prior partial ledger debits', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-10-18T00:00:00.000Z'))
+
     const store = createSyntheticAbmedFoundation()
     const wallet = createWalletContractService(store)
     store.trustedWalletServiceActors.add(TRUSTED_SETTLEMENT_SERVICE)
@@ -154,23 +161,23 @@ describe('FOUND-01B reservation expiration safety', () => {
       correlationId: 'partial-then-expire',
       idempotencyKey: 'hold-partial-expire',
       expiresAt: new Date('2026-11-01T00:00:00.000Z'),
-      at: new Date('2026-10-18T00:00:00.000Z'),
     })
     expect(reserved.ok).toBe(true)
     if (!reserved.ok) return
 
+    vi.setSystemTime(new Date('2026-10-20T00:00:00.000Z'))
     const partial = wallet.settle({
       actorUserId: BILLING_OWNER_USER_ID,
       reservationId: reserved.value.id,
       amount: 100,
       idempotencyKey: 'settle-partial-before-expire',
-      at: new Date('2026-10-20T00:00:00.000Z'),
     })
     expect(partial.ok).toBe(true)
     expect(reserved.value.settledAmount).toBe(100)
     expect(reserved.value.status).toBe('PARTIALLY_SETTLED')
 
-    const afterExpiry = new Date('2026-12-01T00:00:00.000Z')
+    vi.setSystemTime(new Date('2026-12-01T00:00:00.000Z'))
+    const afterExpiry = new Date()
     expireHeldReservations(store, afterExpiry)
     expect(reserved.value.status).toBe('EXPIRED')
     expect(reservationAcceptsNewSettlement(reserved.value, afterExpiry)).toBe(false)
@@ -190,6 +197,9 @@ describe('FOUND-01B reservation expiration safety', () => {
   })
 
   it('rejects late settlement when hold expired but status was not yet marked EXPIRED', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-10-17T12:00:00.000Z'))
+
     const store = createSyntheticAbmedFoundation()
     const wallet = createWalletContractService(store)
     seedWalletTopUp(store, ABMED_GROUP_ID, 300, 'topup-late', BILLING_OWNER_USER_ID)
@@ -201,10 +211,11 @@ describe('FOUND-01B reservation expiration safety', () => {
       correlationId: 'late-settle',
       idempotencyKey: 'hold-late',
       expiresAt: new Date('2026-10-17T23:00:00.000Z'),
-      at: new Date('2026-10-17T12:00:00.000Z'),
     })
     expect(reserved.ok).toBe(true)
     if (!reserved.ok) return
+
+    vi.setSystemTime(new Date('2026-10-18T00:00:00.000Z'))
     expect(
       wallet.settle({
         actorUserId: BILLING_OWNER_USER_ID,

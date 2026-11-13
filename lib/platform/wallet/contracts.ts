@@ -39,8 +39,6 @@ export type SettleCreditsInput = {
   idempotencyKey: string
   managedSiteId?: string
   campaignId?: string
-  /** Defaults to wall-clock now; pass explicitly in tests and orchestration replay. */
-  at?: Date
 }
 
 export type ReleaseCreditsInput = {
