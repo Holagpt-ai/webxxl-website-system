@@ -36,7 +36,9 @@ GitHub `main` at `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` (PR #52) has moved p
 
 **Batch 5 (Issue #109):** Commerce & Managed Services — **MERGED** ([PR #126](https://github.com/Holagpt-ai/webxxl-website-system/pull/126) @ `dd109204c3089ddef6ba03770c70d33b0d8455d3`). `GET /api/v1/commerce/execution/summary` + managed-service lifecycle honesty + payment readiness per [`BATCH5-COMMERCE-MANAGED-SERVICES-API-CONTRACT.md`](BATCH5-COMMERCE-MANAGED-SERVICES-API-CONTRACT.md). No live checkout/provisioning. Optional v0 on `dashboard/commerce/**` / infrastructure.
 
-**Batch 6 (Issue #109):** AI Workforce & Automation — **owner review** ([PR #127](https://github.com/Holagpt-ai/webxxl-website-system/pull/127) on `feat/batch6-ai-workforce-automation`). Account orchestration, deterministic preparation, human approval binding, and AUTO-10 handoff visibility per [`BATCH6-AI-WORKFORCE-AUTOMATION-API-CONTRACT.md`](BATCH6-AI-WORKFORCE-AUTOMATION-API-CONTRACT.md). No live inference, send, charge, or worker cron. Optional v0 on `dashboard/ai-employees/**`.
+**Batch 6 (Issue #109):** AI Workforce & Automation — **MERGED** ([PR #127](https://github.com/Holagpt-ai/webxxl-website-system/pull/127) @ `c7bec5e7def89d60f89cdaa0d339decfb6f0ab6b`). Account orchestration, verified approval binding, and AUTO-10 handoff visibility per [`BATCH6-AI-WORKFORCE-AUTOMATION-API-CONTRACT.md`](BATCH6-AI-WORKFORCE-AUTOMATION-API-CONTRACT.md). No live inference, send, charge, or worker cron. Optional v0 on `dashboard/ai-employees/**`.
+
+**Batch 7 (Issue #109):** Platform Admin & Unified Experience — **in progress** on `feat/batch7-platform-admin-unified-experience`. Staff `GET /api/v1/admin/operations/summary` per [`BATCH7-PLATFORM-ADMIN-OPERATIONS-API-CONTRACT.md`](BATCH7-PLATFORM-ADMIN-OPERATIONS-API-CONTRACT.md). v0 admin/public UI per [`BATCH7B-ADMIN-UI-INTEGRATION-CONTRACT.md`](BATCH7B-ADMIN-UI-INTEGRATION-CONTRACT.md). No provider activation or public conversion implementation in Cursor.
 
 ---
 
