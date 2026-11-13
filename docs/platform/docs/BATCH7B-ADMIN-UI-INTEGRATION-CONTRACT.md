@@ -34,4 +34,12 @@ Responsive layout pass for admin and customer dashboards is **deferred** (`unifi
 
 ## Verification evidence (v0 handoff)
 
-List edited component paths, locale coverage (`en`/`es`), and screenshots or preview URLs. Cursor reconciles into `ROUTE_MAP` and `DATA_AND_SERVICES` on integration PR only.
+**v0 branch:** `v0/admin-ai-employees-ui-7b` @ `347907079f77167be0dcd29088a1009674ad3057` (2 commits ahead of `main` @ `8585d93`).
+
+**Edited paths (12):** `app/[locale]/admin/page.tsx`, `app/[locale]/admin/customers/[customerId]/page.tsx`, `app/[locale]/dashboard/ai-employees/page.tsx`, `components/admin/operations-summary.tsx`, `components/ai-employees/execution-readiness.tsx`, `components/dashboard/readiness-kit.tsx`, `lib/admin-ui/operations.ts`, `lib/ai-employees-ui/execution.ts`, `lib/i18n/dictionaries/admin-operations-{en,es}.ts`, `lib/i18n/dictionaries/ai-workforce-execution-{en,es}.ts`.
+
+**Locale:** dedicated EN/ES dictionary modules; pages select copy by `resolveLocale` / `getPageContext`.
+
+**Cursor integration tests:** `__tests__/portal/batch7b-admin-ui-integration.test.ts` (API wiring, tenant site filter, slice gating, no false live-execution copy).
+
+Reconciled in `ROUTE_MAP` and `DATA_AND_SERVICES` on Batch 7B integration PR.
