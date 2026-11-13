@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-13 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `8058565e11fed8927147c54e2b4ee0a58cc184bf` (PR **#130** Batch 7C MERGED)
+**Evidence review:** 2026-11-13 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `30746e513a990b37a63ced4973e80f704a92308c` (PR **#131** Batch 8A MERGED)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,12 +35,12 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | GitHub `main` `8058565e11fed8927147c54e2b4ee0a58cc184bf` ([PR **#130**](https://github.com/Holagpt-ai/webxxl-website-system/pull/130) Batch 7C public conversion UI, MERGED 2026-11-13). Issue **#109** Batches 0–7 **complete at source**. Issue #105 QA **deferred** to Batch 8B. |
-| 2 | GitHub SHA, branch, active PR | **`8058565e11fed8927147c54e2b4ee0a58cc184bf`** on `main`. Open [PR **#131**](https://github.com/Holagpt-ai/webxxl-website-system/pull/131) Batch 8A @ `bee07d6` on `feat/batch8a-release-readiness`. [PR **#130**](https://github.com/Holagpt-ai/webxxl-website-system/pull/130) **MERGED**. |
-| 3 | Production deployment | GitHub deployment **`7772915207`** Production **success** 2026-11-13T18:14:48Z @ `8058565e11fed8927147c54e2b4ee0a58cc184bf`. SHA only. Not migration, activation, or provider live state. |
+| 1 | Last verified checkpoint | GitHub `main` `30746e513a990b37a63ced4973e80f704a92308c` ([PR **#131**](https://github.com/Holagpt-ai/webxxl-website-system/pull/131) Batch 8A, MERGED 2026-11-13). **Batch 8B** staging acceptance: migration probe **39/39** re-counted 2026-11-13; authenticated matrix **BLOCKED** (no Auth/staging session). |
+| 2 | GitHub SHA, branch, active PR | **`30746e513a990b37a63ced4973e80f704a92308c`** on `main`. Batch 8B evidence PR pending owner review. [PR **#131**](https://github.com/Holagpt-ai/webxxl-website-system/pull/131) **MERGED**. |
+| 3 | Production deployment | GitHub deployment **`7773401135`** Production **success** 2026-11-13T18:37:06Z @ `30746e513a990b37a63ced4973e80f704a92308c`. SHA only. Not migration, activation, or provider live state. |
 | 4 | Last updated | 2026-11-13 |
-| 5 | Next task / responsible platform | **Batch 8A** baseline recovery — **Cursor** (owner review). **Batch 8B** staging acceptance matrix execution — **owner-authorized staging** after 8A merge. |
-| 6 | Open blocker / gate IDs | Issue **#105** QA **deferred**. CRM-SUBNAV-105 **REPORTED**. POLICY-SUB-001 **REPORTED**. RELEASE-001 gated. Issue **#109** remains the execution roadmap. Staging migrations last **39/39** (2026-11-03); not re-counted 2026-11-13. Production migrate **UNVERIFIED**. Flags **not activated**. Provider activation **UNVERIFIED**. AI execution, outbound, workflow cron, and external effects remain disabled. |
+| 5 | Next task / responsible platform | **Batch 8C** — owner-authorized authenticated staging completion + RELEASE-001 inputs — **owner staging/Auth** then Cursor/v0 as scoped. |
+| 6 | Open blocker / gate IDs | **AUTH-STAGING-8B** (no Auth env / pilot sessions). Issue **#105** remainder **BLOCKED**. CRM-SUBNAV-105 **unreproduced**. POLICY-SUB-001 **REPORTED**. RELEASE-001 **gated**. Staging migrations **39/39 VERIFIED read-only 2026-11-13** on `vcgibefnhneaqhcguhnt`. Production migrate **UNVERIFIED**. Flags **not activated**. |
 
 ### Evidence table
 
