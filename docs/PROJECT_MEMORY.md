@@ -39,7 +39,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | 2 | GitHub SHA, branch, active PR | **`c7bec5e7def89d60f89cdaa0d339decfb6f0ab6b`** on `main`. Active [PR **#128**](https://github.com/Holagpt-ai/webxxl-website-system/pull/128) on `feat/batch7-platform-admin-unified-experience` (owner review). [PR **#127**](https://github.com/Holagpt-ai/webxxl-website-system/pull/127) Batch 6 **MERGED**. |
 | 3 | Production deployment | GitHub deployment **`7753430399`** Production **success** 2026-11-13T00:22:07Z @ `c7bec5e7def89d60f89cdaa0d339decfb6f0ab6b`. SHA only. Not migration, activation, or provider live state. |
 | 4 | Last updated | 2026-11-13 |
-| 5 | Next task / responsible platform | **Batch 7 — Platform Admin & Unified Experience** — **Cursor** (backend) + **v0.app** (UI). After merge: **Batch 8 — Release & Activation**. |
+| 5 | Next task / responsible platform | **Batch 7 — Platform Admin & Unified Experience** — **Cursor** (backend) + **v0.app** (admin/public UI). After merge: **Batch 8 — Release & Activation**. |
 | 6 | Open blocker / gate IDs | Issue **#105** QA **deferred**. CRM-SUBNAV-105 **REPORTED**. POLICY-SUB-001 **REPORTED**. RELEASE-001 gated. Issue **#109** remains the execution roadmap. Staging migrations last **39/39** (2026-11-03); not re-counted 2026-11-13. Production migrate **UNVERIFIED**. Flags **not activated**. Provider activation **UNVERIFIED**. AI execution, outbound, workflow cron, and external effects remain disabled. |
 
 ### Evidence table
