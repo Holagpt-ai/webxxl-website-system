@@ -1,6 +1,6 @@
-# Batch 8B — Staging acceptance matrix (planned)
+# Batch 8B — Staging acceptance matrix
 
-**Prerequisite:** Batch 8A merged; owner designates isolated staging `DATABASE_URL` / `DIRECT_URL` (`WEBXXL_STAGING_BOUNDARIES_CONFIRMED`).
+**Status:** Partial execution 2026-11-13 — see [`BATCH8B-STAGING-ACCEPTANCE-REPORT.md`](BATCH8B-STAGING-ACCEPTANCE-REPORT.md). **Prerequisite:** Batch 8A merged @ `30746e5`.
 
 **Prohibited without owner authorization:** production migrate, live cross-tenant DB reads, outbound sends, payments, provider activation, AI execution, workflow cron.
 
