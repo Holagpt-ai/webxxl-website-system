@@ -4,6 +4,20 @@ import {
   throwIncludedFreeAccessDecision,
 } from '@/lib/platform/open001/included-free-access'
 import { loadSubscriberEvidenceForAccount } from '@/lib/platform/open001/load-subscriber-evidence'
+import type { SubscriberEvidenceSnapshot } from '@/lib/platform/open001/subscriber-evidence'
+
+const EVIDENCE_UNVERIFIABLE_MESSAGE =
+  'Website subscription eligibility cannot be verified for this account.'
+
+function assertVerifiedSubscriberEvidence(
+  customerAccountId: string,
+  evidence: SubscriberEvidenceSnapshot,
+  ApiError: new (status: number, message: string, code: string) => Error,
+): void {
+  if (evidence.loadOutcome !== 'ok' || evidence.customerAccountId !== customerAccountId) {
+    throw new ApiError(503, EVIDENCE_UNVERIFIABLE_MESSAGE, 'SUBSCRIPTION_EVIDENCE_UNAVAILABLE')
+  }
+}
 
 type PortalMembership = Awaited<ReturnType<typeof requireCustomerMembership>>
 
@@ -22,6 +36,7 @@ export async function requireIncludedFreeSoftwareMembershipKeys(
 ): Promise<PortalMembership> {
   const portal = await requireCustomerMembership()
   const evidence = await loadSubscriberEvidenceForAccount(portal.customerAccount.id)
+  assertVerifiedSubscriberEvidence(portal.customerAccount.id, evidence, ApiError)
   for (const entitlementKey of entitlementKeys) {
     const decision = evaluateIncludedFreeAccessForAccount({
       entitlementKey,
