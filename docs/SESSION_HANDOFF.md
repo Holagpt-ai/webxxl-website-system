@@ -1,25 +1,25 @@
 # WebXXL — Session Handoff
 
-**Compiled:** 2026-11-13 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `30746e513a990b37a63ced4973e80f704a92308c` (PR **#131** Batch 8A MERGED)
+**Compiled:** 2026-11-14 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `d82d32382d2eee10473cf5f9c5281a92799046ad` (PR **#133** Batch 8D MERGED)
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | GitHub `main` `30746e513a990b37a63ced4973e80f704a92308c` ([PR **#131**](https://github.com/Holagpt-ai/webxxl-website-system/pull/131) Batch 8A, MERGED 2026-11-13). **Batch 8B** staging acceptance: migration probe **39/39** re-counted 2026-11-13; authenticated matrix **BLOCKED** (no Auth/staging session). |
-| 2 | GitHub SHA, branch, active PR | **`30746e513a990b37a63ced4973e80f704a92308c`** on `main`. Batch 8B evidence PR pending owner review. [PR **#131**](https://github.com/Holagpt-ai/webxxl-website-system/pull/131) **MERGED**. |
-| 3 | Production deployment | GitHub deployment **`7773401135`** Production **success** 2026-11-13T18:37:06Z @ `30746e513a990b37a63ced4973e80f704a92308c`. SHA only. Not migration, activation, or provider live state. |
-| 4 | Last updated | 2026-11-13 |
-| 5 | Next task / responsible platform | **Batch 8C** — owner-authorized authenticated staging completion + RELEASE-001 inputs — **owner staging/Auth** then Cursor/v0 as scoped. |
-| 6 | Open blocker / gate IDs | **AUTH-STAGING-8B** (no Auth env / pilot sessions). Issue **#105** remainder **BLOCKED**. CRM-SUBNAV-105 **unreproduced**. POLICY-SUB-001 **REPORTED**. RELEASE-001 **gated**. Staging migrations **39/39 VERIFIED read-only 2026-11-13** on `vcgibefnhneaqhcguhnt`. Production migrate **UNVERIFIED**. Flags **not activated**. |
+| 1 | Last verified checkpoint | GitHub `main` `d82d323` (PR **#133** MERGED). **SEC-STAGING-CRED** **VERIFIED** 2026-11-14. Preview **`dpl_CUpAftyiuiPUVGarnDT9YaxGF6BL`**. Staging **39/39**. Authenticated Batch 8B items **BLOCKED** (**AUTH-STAGING-8C**). |
+| 2 | GitHub SHA, branch, active PR | **`d82d323`** on `main`. Batch 8C release-evidence PR open. `staging/acceptance` @ `94235dd`. |
+| 3 | Production deployment | **`7779811057`** @ `d82d323` (SHA only). |
+| 4 | Last updated | 2026-11-14 |
+| 5 | Next task / responsible platform | Owner: authorize Pilot A/B magic links + tester access → [`BATCH8C-AUTHENTICATED-ACCEPTANCE-QUEUE.md`](BATCH8C-AUTHENTICATED-ACCEPTANCE-QUEUE.md). |
+| 6 | Open blocker / gate IDs | **AUTH-STAGING-8C**. **ISSUE-105-QA** **BLOCKED**. **RELEASE-001** **gated**. Production migrate **UNVERIFIED**. |
 
 ## This session
 
-**Batch 8B — Controlled staging acceptance:** Staging DB identity preflight **PASS** (`vcgibefnhneaqhcguhnt`; production excluded). Read-only migration history **39/39 PASS**. Public read-only acceptance on Production Vercel: pricing, get-started plan continuity, contact form presentation, ES `/es/pricing`. Authenticated pilot, CRM, admin, AI, approvals, responsiveness — **BLOCKED** (no `AUTH_*` / magic-link sessions). Report: [`BATCH8B-STAGING-ACCEPTANCE-REPORT.md`](BATCH8B-STAGING-ACCEPTANCE-REPORT.md).
+**Batch 8C release — staging credential rotation VERIFIED** (Management API + Preview DB sync + redeploy). Evidence: [`BATCH8C-STAGING-ROTATION-RESULT.md`](BATCH8C-STAGING-ROTATION-RESULT.md). Authenticated matrix queued: [`BATCH8C-AUTHENTICATED-ACCEPTANCE-QUEUE.md`](BATCH8C-AUTHENTICATED-ACCEPTANCE-QUEUE.md). No magic links sent this session.
 
 ## Next assignment
 
-Owner supplies staging-bound Preview Auth env + Pilot A/B mailbox access. Execute remaining matrix → Batch **8C**. No production migrate, activation, or live sends without separate authorization.
+Owner authorizes Deployment Protection tester access + Pilot A/B magic-link sends on acceptance Preview only. Cursor completes matrix items 1–8, 10–11 and updates Batch 8B report with **VERIFIED** rows.
 
 ## PENDING REPOSITORY SYNC
 
