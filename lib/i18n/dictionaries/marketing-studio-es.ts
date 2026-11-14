@@ -359,6 +359,9 @@ export const marketingStudioEs: MarketingStudioCopy = {
     saved: 'Revisión {number} guardada.',
     approve: 'Aprobar campaña',
     schedule: 'Programar campaña',
+    schedulePrepTitle: 'Preparación de programación',
+    schedulePrepBody:
+      'Prepara los pies de foto y las revisiones abajo. La publicación y la programación externa siguen desactivadas hasta que WebXXL las active.',
     activeRevision: 'Revisión activa',
     approvedRevision: 'Revisión aprobada',
   },

@@ -6,9 +6,38 @@
 export const COMMS_API = {
   conversations: '/api/v1/communications/conversations',
   conversation: (id: string) => `/api/v1/communications/conversations/${encodeURIComponent(id)}`,
+  replyPreparation: (id: string) => `/api/v1/communications/conversations/${encodeURIComponent(id)}/reply-preparation`,
+  intent: (id: string) => `/api/v1/communications/intents/${encodeURIComponent(id)}`,
   inboxes: '/api/v1/communications/inboxes',
   connections: '/api/v1/communications/connections',
 } as const
+
+export type ConversationReplyContext = {
+  conversationId: string
+  deliveryBlocked: true
+  channel: string
+  consentChannel: string | null
+  purpose: string
+  crmContactId: string | null
+  recipientAddress: string | null
+  recipientResolution: string
+  quote: {
+    quoteId: string
+    eligibleCount: number
+    suppressedCount: number
+    unknownConsentCount: number
+    invalidContactCount: number
+    policyDecision: string
+  } | null
+  recentIntents: Array<{
+    id: string
+    status: string
+    channel: string
+    purpose: string
+    policyDecision: string
+    createdAt: string
+  }>
+}
 
 export const COMMS_PAGE_SIZE = 50
 

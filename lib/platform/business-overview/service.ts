@@ -245,7 +245,12 @@ async function collectMarketing(
         recordRef: { kind: 'social_campaign', id: campaign.id },
         priority: campaign.status === 'AWAITING_APPROVAL' ? 'medium' : 'normal',
         title: campaign.goal.trim() || 'Social campaign',
-        destination: { path: BUSINESS_DESTINATIONS.marketingCampaign(campaign.id) },
+        destination: {
+          path:
+            campaign.status === 'AWAITING_APPROVAL'
+              ? BUSINESS_DESTINATIONS.marketingCampaignSchedulePrep(campaign.id)
+              : BUSINESS_DESTINATIONS.marketingCampaign(campaign.id),
+        },
         timestamp: campaign.updatedAt.toISOString(),
         dueAt: null,
         customerAccountId: accountId,
@@ -301,7 +306,7 @@ async function collectSeo(
       recordRef: { kind: 'seo_opportunity', id: op.id },
       priority: priorityFromSeoScore(op.priorityScore),
       title: op.recommendation.slice(0, 120),
-      destination: { path: BUSINESS_DESTINATIONS.seoOpportunitySite(op.managedSiteId) },
+      destination: { path: BUSINESS_DESTINATIONS.seoOpportunity(op.managedSiteId, op.id) },
       timestamp: op.updatedAt.toISOString(),
       dueAt: null,
       customerAccountId: accountId,
@@ -364,7 +369,7 @@ async function collectComms(
         recordRef: { kind: 'comms_inbox', id: inbox.id },
         priority: 'medium',
         title: `Inbox setup (${inbox.channelType ?? 'channel'})`,
-        destination: { path: BUSINESS_DESTINATIONS.commsInbox },
+        destination: { path: BUSINESS_DESTINATIONS.commsInboxForInbox(inbox.id) },
         timestamp: inbox.lastSyncAt ?? checkedAt,
         dueAt: null,
         customerAccountId: accountId,

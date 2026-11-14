@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ShieldOff } from 'lucide-react'
 import { aiBase, useAi, type AiUsagePolicy } from '@/lib/ai-employees-ui/client'
 import type { AiEmployeesCopy } from '@/lib/i18n/dictionaries/ai-employees-en'
@@ -36,7 +37,15 @@ export function WorkforceView({
   copy: AiEmployeesCopy
   loginHref: string
 }) {
-  const [tab, setTab] = useState<Tab>('employees')
+  const search = useSearchParams()
+  const tabParam = search.get('tab')
+  const initialTab = TABS.includes(tabParam as Tab) ? (tabParam as Tab) : 'employees'
+  const [tab, setTab] = useState<Tab>(initialTab)
+
+  useEffect(() => {
+    const next = search.get('tab')
+    if (next && TABS.includes(next as Tab)) setTab(next as Tab)
+  }, [search])
   const { data: policy, error, isLoading, mutate } = useAi<AiUsagePolicy>(`${aiBase(accountId)}/usage-policy`)
 
   if (error && !policy) return <AiState error={error} copy={copy} onRetry={() => mutate()} loginHref={loginHref} />

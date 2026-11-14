@@ -9,6 +9,7 @@ import { fill, formatDate, formatNumber } from '@/lib/commerce-ui/format'
 import { AiState, Field, LoadingRows, StatusPill, lifecycleTone } from './ui'
 import { LocalePicker } from './locale-picker'
 import { ToolPermissions } from './tool-permissions'
+import { PilotTasksPanel } from './pilot-tasks-panel'
 import type { WorkforceContext } from './workforce-view'
 
 type Status = AiEmployee['status']
@@ -41,6 +42,7 @@ export function EmployeeDetail({ employeeId, ctx, onChanged }: { employeeId: str
       <ConfigForm key={employee.updatedAt} employee={employee} url={url} ctx={ctx} onSaved={update} />
       <Lifecycle employee={employee} url={url} ctx={ctx} onSaved={update} />
       <ToolPermissions employee={employee} ctx={ctx} />
+      <PilotTasksPanel employee={employee} ctx={ctx} />
       <EmployeeUsage employee={employee} ctx={ctx} />
     </div>
   )

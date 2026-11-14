@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { RecordQueryFocus } from '@/components/dashboard/record-query-focus'
 import { Button, buttonVariants } from '@/components/ui/button'
 import {
   EmptyNote,
@@ -56,6 +57,7 @@ export function SeoOpportunitiesView({ accountId, locale, copy, sites, marketing
 
   return (
     <SiteBar sites={sites} siteId={siteId} kit={kit}>
+      <RecordQueryFocus param="opportunityId" domIdPrefix="seo-opportunity-" ready={!res.isLoading && Boolean(items.length)} />
       <Section title={o.title} description={o.body}>
         <div className="flex flex-col gap-5">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -91,7 +93,7 @@ export function SeoOpportunitiesView({ accountId, locale, copy, sites, marketing
               {items.map((op) => {
                 const observedOnly = op.state === 'OBSERVED_FINDING'
                 return (
-                  <li key={op.id} className="flex flex-col gap-3 py-4">
+                  <li key={op.id} id={`seo-opportunity-${op.id}`} className="flex flex-col gap-3 py-4 scroll-mt-24">
                     <div className="flex flex-wrap items-center gap-2">
                       <StatusPill label={enumLabel(copy.opportunityState, op.state)} tone={observedOnly ? 'muted' : 'info'} />
                       <StatusPill label={`${o.severity}: ${enumLabel(copy.level, op.severity)}`} tone={LEVEL_TONE[op.severity] ?? 'muted'} />

@@ -4,7 +4,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 
 | Date (UTC) | Event | Evidence | Release claim |
 |---|---|---|---|
-| 2026-11-14 | Batch 9B Portal + Business + CRM + Marketing (complete) | [PR #136](https://github.com/Holagpt-ai/webxxl-website-system/pull/136) | IN PR. Portal collaboration, marketing review GET, campaign/CR/support actions, mutation feedback. Stacks on #135. Not activation |
+| 2026-11-14 | Batch 9C Comms, SEO, Analytics, AI Workforce, Marketing prep | (open PR) | Comms reply preparation API/UI, SEO opportunity deep links, analytics query drilldowns, customer AI pilot prepare/approval, social schedule-prep handoffs. Not activation |
+| 2026-11-14 | Batch 9B Portal + Business + CRM + Marketing (complete) | [PR #136](https://github.com/Holagpt-ai/webxxl-website-system/pull/136) | MERGED. Portal collaboration, marketing review GET, campaign/CR/support actions. Not activation |
 | 2026-11-14 | Batch 9A Business Center → CRM record deep links | [PR #135](https://github.com/Holagpt-ai/webxxl-website-system/pull/135), `f1562415a371f45b439f0c73def37ee05c2dc4ab` | IN PR. Record-scoped action destinations + CRM query focus. Not activation |
 | 2026-10-18 | Platform blueprint and FOUND-01 through AUTO-10 | PRs #32–#42 on `main` | Merge only. See the decision log for the original batch notes |
 | 2026-10-21 | COMMERCE-11 and COMMERCE-12 | [PR #43](https://github.com/Holagpt-ai/webxxl-website-system/pull/43), [PR #44](https://github.com/Holagpt-ai/webxxl-website-system/pull/44), [PR #45](https://github.com/Holagpt-ai/webxxl-website-system/pull/45) | Merge only |

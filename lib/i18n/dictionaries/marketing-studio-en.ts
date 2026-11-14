@@ -347,6 +347,9 @@ export const marketingStudioEn = {
     saved: 'Revision {number} saved.',
     approve: 'Approve campaign',
     schedule: 'Schedule campaign',
+    schedulePrepTitle: 'Scheduling preparation',
+    schedulePrepBody:
+      'Prepare captions and revisions below. Publishing and external scheduling stay disabled until WebXXL activates them.',
     activeRevision: 'Active revision',
     approvedRevision: 'Approved revision',
   },

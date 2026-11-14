@@ -1,8 +1,11 @@
 'use client'
 
-import { useRef, useState } from 'react'
-import { useAnalyticsProperties, type AnalyticsFilters } from '@/lib/analytics-ui/client'
-import { presetRange } from '@/lib/analytics-ui/range'
+import { useEffect, useRef, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useAnalyticsProperties, useAnalyticsSyncStatus, type AnalyticsFilters } from '@/lib/analytics-ui/client'
+import { analyticsFiltersFromSearchParams, analyticsSearchParamsFromState, type AnalyticsTabKey } from '@/lib/analytics-ui/deep-link'
+import { fill } from '@/lib/commerce-ui/format'
+import { spanDays } from '@/lib/analytics-ui/range'
 import type { AnalyticsCopy } from '@/lib/i18n/dictionaries/analytics-en'
 import { cn } from '@/lib/utils'
 import { AnalyticsFiltersBar, type RangeChoice, type SiteOption } from '@/components/analytics/filters'
@@ -14,7 +17,7 @@ import { LocalTab } from '@/components/analytics/local-tab'
 import { ConversionsTab } from '@/components/analytics/conversions-tab'
 import { ConnectionsTab } from '@/components/analytics/connections-tab'
 
-const TABS = ['overview', 'traffic', 'search', 'local', 'conversions', 'connections'] as const
+const TABS = ['overview', 'traffic', 'search', 'local', 'conversions', 'connections'] as const satisfies readonly AnalyticsTabKey[]
 type TabKey = (typeof TABS)[number]
 
 const PANELS: Record<TabKey, (props: TabProps & { sites: SiteOption[] }) => React.ReactNode> = {
@@ -39,13 +42,32 @@ export function AnalyticsView({
   copy: AnalyticsCopy
   loginHref: string
 }) {
-  const [tab, setTab] = useState<TabKey>('overview')
-  const [choice, setChoice] = useState<RangeChoice>(28)
-  const [filters, setFilters] = useState<AnalyticsFilters>(() => ({ ...presetRange(28), siteId: sites[0]?.id ?? '' }))
+  const router = useRouter()
+  const pathname = usePathname()
+  const search = useSearchParams()
+  const defaultSite = sites[0]?.id ?? ''
+  const initial = analyticsFiltersFromSearchParams(search, defaultSite)
+  const [tab, setTab] = useState<TabKey>(initial.tab)
+  const [choice, setChoice] = useState<RangeChoice>(initial.rangeChoice)
+  const [filters, setFilters] = useState<AnalyticsFilters>(initial.filters)
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+
+  useEffect(() => {
+    const parsed = analyticsFiltersFromSearchParams(search, defaultSite)
+    setTab(parsed.tab)
+    setChoice(parsed.rangeChoice)
+    setFilters(parsed.filters)
+  }, [search, defaultSite])
+
+  function syncUrl(nextFilters: AnalyticsFilters, nextTab: TabKey, nextChoice: RangeChoice) {
+    const rangeChoice = typeof nextChoice === 'number' ? nextChoice : 28
+    const qs = analyticsSearchParamsFromState({ filters: nextFilters, tab: nextTab, rangeChoice }).toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+  }
 
   // Properties is the lightest guarded endpoint; it surfaces account-wide gates (disabled, forbidden, entitlement) once.
   const gate = useAnalyticsProperties(accountId, filters, true)
+  const sync = useAnalyticsSyncStatus(accountId, filters)
   if (gate.error && GATE_CODES.includes(gate.error.code)) {
     return <AnalyticsState error={gate.error} copy={copy} loginHref={loginHref} />
   }
@@ -61,6 +83,7 @@ export function AnalyticsView({
     event.preventDefault()
     const key = TABS[next]!
     setTab(key)
+    syncUrl(filters, key, choice)
     tabRefs.current[key]?.focus()
   }
 
@@ -77,8 +100,24 @@ export function AnalyticsView({
         onChange={(next, nextChoice) => {
           setFilters(next)
           setChoice(nextChoice)
+          syncUrl(next, tab, nextChoice)
         }}
       />
+
+      <p className="text-xs text-muted-foreground" role="note">
+        {fill(copy.filters.period, {
+          start: filters.start,
+          end: filters.end,
+          days: String(spanDays(filters.start, filters.end) ?? '—'),
+        })}{' '}
+        · {copy.filters.utcNote}
+        {sync.data && (
+          <>
+            {' '}
+            · {copy.connections.title}: {sync.data.dataState}
+          </>
+        )}
+      </p>
 
       <div
         role="tablist"
@@ -100,7 +139,10 @@ export function AnalyticsView({
               aria-selected={selected}
               aria-controls={`analytics-panel-${key}`}
               tabIndex={selected ? 0 : -1}
-              onClick={() => setTab(key)}
+              onClick={() => {
+                setTab(key)
+                syncUrl(filters, key, choice)
+              }}
               className={cn(
                 '-mb-px whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50',
                 selected
