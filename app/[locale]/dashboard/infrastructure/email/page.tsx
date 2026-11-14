@@ -7,6 +7,7 @@ import { PageTitle, SectionCard, StatusBadge, EmptyState } from '@/components/da
 import { LocaleLink } from '@/components/site/primitives'
 import { dataSourceCustomerLabel, formatOptionalDate } from '@/lib/infrastructure/display'
 import { InfrastructureRequestForm } from '@/components/dashboard/infrastructure-request-form'
+import { RecordQueryFocus } from '@/components/dashboard/record-query-focus'
 import { enumLabel } from '@/lib/i18n/labels'
 
 export const dynamic = 'force-dynamic'
@@ -20,9 +21,11 @@ export default async function InfrastructureEmailPage({ params }: { params: Prom
   const prefix = loc === 'es' ? '/es' : ''
 
   const overview = await getCustomerInfrastructureOverview(portal.customerAccount.id)
+  const requestErrors = d.infrastructureRequestErrors as Record<string, string>
 
   return (
     <>
+      <RecordQueryFocus param="asset" domIdPrefix="infra-email-" ready />
       <PageTitle title={d.infrastructureEmailTitle} description={d.infrastructureProviderSyncUnavailable} />
       <LocaleLink locale={loc} href={`${prefix}/dashboard/infrastructure`} className="mb-4 inline-block text-sm text-primary">
         ← {d.infrastructureTitle}
@@ -32,7 +35,7 @@ export default async function InfrastructureEmailPage({ params }: { params: Prom
       ) : (
         <ul className="mb-8 flex flex-col gap-4">
           {overview.email.map((svc) => (
-            <li key={svc.id} className="rounded-xl border bg-card p-4 text-sm">
+            <li key={svc.id} id={`infra-email-${svc.publicId}`} className="rounded-xl border bg-card p-4 text-sm">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-semibold">{svc.planLabel ?? svc.publicId}</p>
                 <StatusBadge label={enumLabel(d.emailStatuses, svc.status)} />
@@ -60,6 +63,7 @@ export default async function InfrastructureEmailPage({ params }: { params: Prom
                   successMessage={d.infrastructureRequestSubmitted}
                   duplicateMessage={d.infrastructureRequestDuplicate}
                   reviewNotice={d.infrastructureRequestReview}
+                  errorMessages={requestErrors}
                 />
               </div>
             </li>
@@ -76,6 +80,7 @@ export default async function InfrastructureEmailPage({ params }: { params: Prom
           successMessage={d.infrastructureRequestSubmitted}
           duplicateMessage={d.infrastructureRequestDuplicate}
           reviewNotice={d.infrastructureRequestReview}
+          errorMessages={requestErrors}
         />
       </SectionCard>
     </>

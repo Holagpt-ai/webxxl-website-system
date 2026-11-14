@@ -7,6 +7,7 @@ import { PageTitle, SectionCard, StatusBadge, EmptyState } from '@/components/da
 import { LocaleLink } from '@/components/site/primitives'
 import { dataSourceCustomerLabel, formatOptionalDate } from '@/lib/infrastructure/display'
 import { InfrastructureRequestForm } from '@/components/dashboard/infrastructure-request-form'
+import { RecordQueryFocus } from '@/components/dashboard/record-query-focus'
 import { enumLabel } from '@/lib/i18n/labels'
 
 export const dynamic = 'force-dynamic'
@@ -23,9 +24,11 @@ export default async function InfrastructureHostingPage({ params }: { params: Pr
     getCustomerInfrastructureOverview(portal.customerAccount.id),
     listCustomerProjectsForInfrastructure(portal.customerAccount.id),
   ])
+  const requestErrors = d.infrastructureRequestErrors as Record<string, string>
 
   return (
     <>
+      <RecordQueryFocus param="asset" domIdPrefix="infra-hosting-" ready />
       <PageTitle title={d.infrastructureHostingTitle} description={d.infrastructureProviderSyncUnavailable} />
       <LocaleLink locale={loc} href={`${prefix}/dashboard/infrastructure`} className="mb-4 inline-block text-sm text-primary">
         ← {d.infrastructureTitle}
@@ -35,7 +38,7 @@ export default async function InfrastructureHostingPage({ params }: { params: Pr
       ) : (
         <ul className="mb-8 flex flex-col gap-4">
           {overview.hosting.map((h) => (
-            <li key={h.id} className="rounded-xl border bg-card p-4 text-sm">
+            <li key={h.id} id={`infra-hosting-${h.publicId}`} className="rounded-xl border bg-card p-4 text-sm">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-semibold">{h.planLabel ?? h.publicId}</p>
                 <StatusBadge label={enumLabel(d.hostingStatuses, h.status)} />
@@ -52,6 +55,19 @@ export default async function InfrastructureHostingPage({ params }: { params: Pr
               {h.sslStatus !== 'UNKNOWN' && (
                 <p className="text-xs text-muted-foreground">
                   {d.infrastructureSsl}: {enumLabel(d.sslStatuses, h.sslStatus)}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {d.infrastructureManagementMode}: {enumLabel(d.infrastructureManagementModes, h.managementMode)}
+              </p>
+              {h.notes && (
+                <p className="text-xs text-muted-foreground">
+                  {d.infrastructureCustomerNotes}: {h.notes}
+                </p>
+              )}
+              {h.managedDomain && (
+                <p className="text-xs text-muted-foreground">
+                  {d.infrastructureSectionDomains}: {h.managedDomain.domainName}
                 </p>
               )}
               {h.project && (
@@ -74,6 +90,7 @@ export default async function InfrastructureHostingPage({ params }: { params: Pr
                   successMessage={d.infrastructureRequestSubmitted}
                   duplicateMessage={d.infrastructureRequestDuplicate}
                   reviewNotice={d.infrastructureRequestReview}
+                  errorMessages={requestErrors}
                 />
               </div>
             </li>
@@ -93,6 +110,7 @@ export default async function InfrastructureHostingPage({ params }: { params: Pr
             reviewNotice={d.infrastructureRequestReview}
             projects={projects}
             selectProjectLabel={d.marketplaceSelectProject}
+            errorMessages={requestErrors}
           />
           <InfrastructureRequestForm
             locale={loc}
@@ -105,6 +123,7 @@ export default async function InfrastructureHostingPage({ params }: { params: Pr
             reviewNotice={d.infrastructureRequestReview}
             projects={projects}
             selectProjectLabel={d.marketplaceSelectProject}
+            errorMessages={requestErrors}
           />
         </div>
       </SectionCard>

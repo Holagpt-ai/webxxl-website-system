@@ -1,25 +1,25 @@
 # WebXXL — Session Handoff
 
-**Compiled:** 2026-11-14 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `d05b176a92b936e8a3d65a73e3665f8ae9867720` (PR **#134** Batch 8C MERGED)
+**Compiled:** 2026-11-14 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `f8677600dc26dd911bd4343d6c214023883e62ee` (PR **#138** Batch 9D MERGED)
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | GitHub `main` `d05b176` ([PR **#134**](https://github.com/Holagpt-ai/webxxl-website-system/pull/134) Batch 8C MERGED). **SEC-STAGING-CRED-2026-11-12** **VERIFIED** 2026-11-14 (`vcgibefnhneaqhcguhnt`; Preview DB updated). Pilot A reached dashboard on staging. Broad authenticated acceptance **deferred** by owner until functional development completes. |
-| 2 | GitHub SHA, branch, active PR | **`d05b176a92b936e8a3d65a73e3665f8ae9867720`** on `main`. [PR **#135**](https://github.com/Holagpt-ai/webxxl-website-system/pull/135) Batch **9A** open; [PR **#136**](https://github.com/Holagpt-ai/webxxl-website-system/pull/136) Batch **9B** open (stacks on #135). `staging/acceptance` @ `94235dd`. |
-| 3 | Production deployment | Production SHA evidence last recorded @ `d82d323` (SHA only). Post-`d05b176` Production deploy **UNVERIFIED** this session. |
+| 1 | Last verified checkpoint | GitHub `main` `f867760` ([PR **#138**](https://github.com/Holagpt-ai/webxxl-website-system/pull/138) Batch **9D** MERGED; **9A–9D** complete at source). **SEC-STAGING-CRED-2026-11-12** **VERIFIED** 2026-11-14 (`vcgibefnhneaqhcguhnt`; Preview DB updated). Batch **9E** [PR **#139**](https://github.com/Holagpt-ai/webxxl-website-system/pull/139) open. Broad acceptance **deferred** to launch stabilization. |
+| 2 | GitHub SHA, branch, active PR | **`f8677600dc26dd911bd4343d6c214023883e62ee`** on `main`. [PR **#139**](https://github.com/Holagpt-ai/webxxl-website-system/pull/139) Batch **9E** open @ `7df5a73`. Batches **9A** [#135], **9B** [#136], **9C** [#137], **9D** [#138] **MERGED**. |
+| 3 | Production deployment | Production SHA evidence last recorded @ `d82d323` (SHA only). Post-`f867760` Production deploy **UNVERIFIED** this session. |
 | 4 | Last updated | 2026-11-14 |
-| 5 | Next task / responsible platform | **Owner:** review/merge **#135** then **#9B PR**. **Cursor:** Batch **9C** (comms, SEO, analytics, AI workforce) after 9B merge. **v0:** optional focus-state emphasis on approvals/project/lead panels (no backend overlap). |
-| 6 | Open blocker / gate IDs | **AUTH-STAGING-8C** **DEFERRED** (owner). **RELEASE-001** **gated**. Production migrate **UNVERIFIED**. Module/provider flags **not activated**. |
+| 5 | Next task / responsible platform | **Owner:** review/merge [PR **#139**](https://github.com/Holagpt-ai/webxxl-website-system/pull/139) Batch **9E**. **Cursor / v0:** after merge — **final UI + launch stabilization** only. **v0:** optional [`BATCH9E-V0-HANDOFF.md`](BATCH9E-V0-HANDOFF.md). |
+| 6 | Open blocker / gate IDs | **AUTH-STAGING-8C** **DEFERRED** (owner). **RELEASE-001** **gated**. Production migrate + support-messages migration **UNVERIFIED**/owner-gated. Provider/DNS/live checkout **not activated**. |
 
 ## This session
 
-**Batch 9B (PR #136 complete):** CRM/Business deep links (9A); marketing review GET + off-list fetch; social campaign + change request + support Business Overview actions; portal collaboration destinations and query focus; approval/dependency/message/request/support mutations refresh with user feedback. v0: [`BATCH9B-V0-HANDOFF.md`](BATCH9B-V0-HANDOFF.md).
+**Batch 9E (in progress):** Infrastructure customer/admin lifecycle presentation, activity + infrastructure request panels, asset query focus, admin lifecycle status updates (no DNS writes), staff support replies to customer thread, continuity docs through PR #138.
 
 ## Next assignment
 
-Owner merge **#135** then review Batch **9B** PR. Cursor starts consolidated **Batch 9C** (comms, SEO, analytics, AI workforce).
+Owner review/merge [PR **#139**](https://github.com/Holagpt-ai/webxxl-website-system/pull/139) Batch **9E**. **Next exact assignment / owning tool:** v0.app optional UI polish per [`BATCH9E-V0-HANDOFF.md`](BATCH9E-V0-HANDOFF.md); then owner-led **launch stabilization** (not another development batch).
 
 ## PENDING REPOSITORY SYNC
 
@@ -28,13 +28,13 @@ Owner merge **#135** then review Batch **9B** PR. Cursor starts consolidated **B
 ## Handoff template
 
 ```
-Date / scope / owner: 2026-11-13 / Batch 8B staging acceptance / Cursor
-Repo / main SHA: Holagpt-ai/webxxl-website-system / 30746e513a990b37a63ced4973e80f704a92308c
-Branch / PR: feat/batch8b-staging-acceptance-report / (open after push)
-Merged / deployed: PR #131 MERGED; GitHub deployment 7773401135 Production success (SHA only)
-Migration: staging 39/39 read-only VERIFIED 2026-11-13; prod UNVERIFIED
-Flags / activation: not activated / UNVERIFIED
-Tests: migration preflight + public browser read-only; authenticated BLOCKED
-Next: Batch 8C owner Auth + pilot sessions
-Do NOT touch: production DB, live form submit, provider activation, migrate deploy
+Date / scope / owner: 2026-11-14 / Batch 9E / Cursor
+Repo / main SHA: Holagpt-ai/webxxl-website-system / f8677600dc26dd911bd4343d6c214023883e62ee
+Branch: feat/batch9e-infrastructure-platform-completion
+Merged: NO (9E open PR #139; main through 9D #138)
+Migration applied: NO in production (incl. batch9d_support_request_messages — owner auth only)
+Do NOT touch:
+- Production migrations, DNS/registrar writes, paid provider activation, live checkout, outbound sends without separate owner authorization
+- v0-owned public/customer/admin visual files while Cursor 9E PR is open
+Next exact assignment / owning tool: Owner merge #139 → v0 launch polish → stabilization QA
 ```

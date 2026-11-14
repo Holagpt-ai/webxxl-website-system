@@ -58,3 +58,40 @@ export async function addCustomerSupportReply(input: {
 
   return { ok: true }
 }
+
+export async function addStaffSupportReply(input: {
+  supportRequestId: string
+  authorUserId: string
+  body: string
+  markWaitingOnCustomer?: boolean
+}): Promise<{ ok: true } | { ok: false; error: 'not_found' | 'closed' | 'empty' }> {
+  const text = input.body.trim()
+  if (!text) return { ok: false, error: 'empty' }
+
+  const ticket = await prisma.supportRequest.findUnique({
+    where: { id: input.supportRequestId },
+    select: { id: true, status: true, customerAccountId: true, projectId: true },
+  })
+  if (!ticket) return { ok: false, error: 'not_found' }
+  if (ticket.status === 'CLOSED') return { ok: false, error: 'closed' }
+
+  const nextStatus =
+    input.markWaitingOnCustomer !== false && ticket.status !== 'RESOLVED' ? 'WAITING_ON_CUSTOMER' : ticket.status
+
+  await prisma.$transaction([
+    prisma.supportRequestMessage.create({
+      data: {
+        supportRequestId: ticket.id,
+        authorUserId: input.authorUserId,
+        body: text,
+        visibility: 'CUSTOMER',
+      },
+    }),
+    prisma.supportRequest.update({
+      where: { id: ticket.id },
+      data: { status: nextStatus, updatedAt: new Date() },
+    }),
+  ])
+
+  return { ok: true }
+}

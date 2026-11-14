@@ -208,3 +208,35 @@ export async function listCustomerProjectsForInfrastructure(customerAccountId: s
     orderBy: { name: 'asc' },
   })
 }
+
+export async function listCustomerInfrastructureActivity(customerAccountId: string, take = 20) {
+  return prisma.infrastructureActivity.findMany({
+    where: { customerAccountId },
+    orderBy: { createdAt: 'desc' },
+    take,
+    select: {
+      id: true,
+      assetType: true,
+      summary: true,
+      createdAt: true,
+    },
+  })
+}
+
+export async function listCustomerInfrastructureSupportRequests(customerAccountId: string, take = 15) {
+  return prisma.supportRequest.findMany({
+    where: {
+      customerAccountId,
+      subject: { contains: '[Infrastructure]', mode: 'insensitive' },
+    },
+    orderBy: { updatedAt: 'desc' },
+    take,
+    select: {
+      id: true,
+      subject: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  })
+}

@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { requireStaff } from '@/lib/portal/authz'
 import { getDictionary } from '@/lib/i18n/dictionaries'
 import { format } from '@/lib/i18n/localize'
@@ -11,6 +12,13 @@ import {
   adminRegisterHostingAction,
 } from '@/lib/infrastructure/admin-actions'
 import { probeProviderReadOnly } from '@/lib/infrastructure/registry'
+import {
+  DomainLifecycleForm,
+  EmailLifecycleForm,
+  HostingLifecycleForm,
+} from '@/components/admin/infrastructure-lifecycle-forms'
+import { RecordQueryFocus } from '@/components/dashboard/record-query-focus'
+import { enumLabel } from '@/lib/i18n/labels'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,14 +31,24 @@ export default async function AdminInfrastructurePage({
 }) {
   await requireStaff()
   const locale = await resolveLocale(params)
-  const copy = getDictionary(locale).admin
+  const dict = getDictionary(locale)
+  const copy = dict.admin
+  const dash = dict.dashboard
   const sp = await searchParams
+  const prefix = locale === 'es' ? '/es' : ''
   const data = await listAdminInfrastructure({ q: sp.q, customerAccountId: sp.customerAccountId })
   const providerProbe = await probeProviderReadOnly({ kind: 'dns', providerId: 'manual', domain: 'example.com' })
+  const lifecycleLabels = {
+    save: copy.save,
+    lifecycleSaved: copy.infrastructure.lifecycleSaved,
+    lifecycleErrors: copy.infrastructure.lifecycleErrors,
+  }
 
   return (
     <>
+      <RecordQueryFocus param="ticketId" domIdPrefix="admin-infra-ticket-" ready />
       <PageTitle title={copy.infrastructure.title} description={copy.infrastructure.description} />
+      <p className="mb-4 text-xs text-muted-foreground">{copy.infrastructure.dnsWritesDisabled}</p>
       <p className="mb-4 text-sm text-muted-foreground">
         {format(copy.infrastructure.probe, { status: providerProbe.ok ? copy.infrastructure.probeOk : providerProbe.error ?? copy.infrastructure.probeOk })}
       </p>
@@ -141,8 +159,13 @@ export default async function AdminInfrastructurePage({
                 </p>
                 <p className="text-muted-foreground">{h.planLabel ?? h.providerId}</p>
               </div>
-              <div className="flex items-center gap-2">
-                <StatusBadge label={h.status} />
+              <div className="flex flex-col items-end gap-2">
+                <StatusBadge label={enumLabel(dash.hostingStatuses, h.status)} />
+                <HostingLifecycleForm
+                  hostingId={h.id}
+                  currentStatus={h.status}
+                  labels={{ ...lifecycleLabels, hostingStatuses: dash.hostingStatuses }}
+                />
                 <form action={adminMarkSyncRequestedFormAction}>
                   <input type="hidden" name="assetType" value="HOSTING" />
                   <input type="hidden" name="assetId" value={h.id} />
@@ -166,13 +189,26 @@ export default async function AdminInfrastructurePage({
               </p>
               <p className="text-muted-foreground">{d.publicId}</p>
             </div>
-            <form action={adminMarkSyncRequestedFormAction}>
-              <input type="hidden" name="assetType" value="DOMAIN" />
-              <input type="hidden" name="assetId" value={d.id} />
-              <button type="submit" className="text-xs text-primary underline">
-                Mark sync ready
-              </button>
-            </form>
+            <div className="flex flex-col items-end gap-2">
+              <StatusBadge label={enumLabel(dash.domainVerificationStatuses, d.verificationStatus)} />
+              <DomainLifecycleForm
+                domainId={d.id}
+                verificationStatus={d.verificationStatus}
+                renewalStatus={d.renewalStatus}
+                labels={{
+                  ...lifecycleLabels,
+                  domainVerificationStatuses: dash.domainVerificationStatuses,
+                  domainRenewalStatuses: dash.domainRenewalStatuses,
+                }}
+              />
+              <form action={adminMarkSyncRequestedFormAction}>
+                <input type="hidden" name="assetType" value="DOMAIN" />
+                <input type="hidden" name="assetId" value={d.id} />
+                <button type="submit" className="text-xs text-primary underline">
+                  Mark sync ready
+                </button>
+              </form>
+            </div>
           </li>
         ))}
       </ul>
@@ -187,13 +223,21 @@ export default async function AdminInfrastructurePage({
               </p>
               <p className="text-muted-foreground">{e.planLabel ?? e.providerId}</p>
             </div>
-            <form action={adminMarkSyncRequestedFormAction}>
-              <input type="hidden" name="assetType" value="EMAIL" />
-              <input type="hidden" name="assetId" value={e.id} />
-              <button type="submit" className="text-xs text-primary underline">
-                Mark sync ready
-              </button>
-            </form>
+            <div className="flex flex-col items-end gap-2">
+              <StatusBadge label={enumLabel(dash.emailStatuses, e.status)} />
+              <EmailLifecycleForm
+                emailId={e.id}
+                currentStatus={e.status}
+                labels={{ ...lifecycleLabels, emailStatuses: dash.emailStatuses }}
+              />
+              <form action={adminMarkSyncRequestedFormAction}>
+                <input type="hidden" name="assetType" value="EMAIL" />
+                <input type="hidden" name="assetId" value={e.id} />
+                <button type="submit" className="text-xs text-primary underline">
+                  Mark sync ready
+                </button>
+              </form>
+            </div>
           </li>
         ))}
       </ul>
@@ -204,10 +248,13 @@ export default async function AdminInfrastructurePage({
       ) : (
         <ul className="flex flex-col gap-3 text-sm">
           {data.infrastructureSupport.map((t) => (
-            <li key={t.id} className="rounded-lg border p-3">
+            <li key={t.id} id={`admin-infra-ticket-${t.id}`} className="rounded-lg border p-3">
               <p className="font-medium">{t.subject}</p>
               <p className="text-muted-foreground">{t.customerAccount.businessName}</p>
-              <StatusBadge label={t.status} />
+              <StatusBadge label={enumLabel(dash.supportStatuses, t.status)} />
+              <Link href={`${prefix}/admin/support?ticketId=${encodeURIComponent(t.id)}`} className="mt-2 block text-xs text-primary">
+                {copy.infrastructure.openSupportQueue} →
+              </Link>
             </li>
           ))}
         </ul>

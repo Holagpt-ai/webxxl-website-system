@@ -18,12 +18,31 @@ import type {
   InfrastructureManagementMode,
 } from '@prisma/client'
 import { prisma } from '@/lib/db'
+import {
+  parseBusinessEmailServiceStatus,
+  parseDomainRenewalStatus,
+  parseDomainVerificationStatus,
+  parseHostingServiceStatus,
+} from '@/lib/infrastructure/lifecycle-enums'
+import {
+  applyDomainLifecycleStatus,
+  applyEmailLifecycleStatus,
+  applyHostingLifecycleStatus,
+} from '@/lib/infrastructure/lifecycle-mutations'
 
 export type InfrastructureAdminActionResult = { ok: true } | { ok: false; error: string }
 
 function revalidateAdminInfrastructure() {
   revalidatePath('/admin/infrastructure')
   revalidatePath('/es/admin/infrastructure')
+  revalidatePath('/dashboard/infrastructure')
+  revalidatePath('/es/dashboard/infrastructure')
+  revalidatePath('/dashboard/infrastructure/hosting')
+  revalidatePath('/es/dashboard/infrastructure/hosting')
+  revalidatePath('/dashboard/infrastructure/domains')
+  revalidatePath('/es/dashboard/infrastructure/domains')
+  revalidatePath('/dashboard/infrastructure/email')
+  revalidatePath('/es/dashboard/infrastructure/email')
 }
 
 function parseDate(value: string | undefined): Date | null {
@@ -148,6 +167,62 @@ export async function adminSetProviderConfigNoteAction(formData: FormData): Prom
     if (note.length > 2000) return { ok: false, error: 'note_too_long' }
     // Placeholder: future secure credential vault. No secrets persisted in v1.
     void note
+    revalidateAdminInfrastructure()
+    return { ok: true }
+  } catch {
+    return { ok: false, error: 'unauthorized' }
+  }
+}
+
+export async function adminUpdateHostingLifecycleAction(formData: FormData): Promise<InfrastructureAdminActionResult> {
+  try {
+    const staff = await requireStaff()
+    const hostingId = String(formData.get('hostingId') ?? '').trim()
+    const statusRaw = String(formData.get('status') ?? '')
+    if (!hostingId) return { ok: false, error: 'missing_id' }
+    const status = parseHostingServiceStatus(statusRaw)
+    if (!status) return { ok: false, error: 'invalid_status' }
+    const result = await applyHostingLifecycleStatus({ hostingId, status, actorUserId: staff.id })
+    if (!result.ok) return { ok: false, error: result.error }
+    revalidateAdminInfrastructure()
+    return { ok: true }
+  } catch {
+    return { ok: false, error: 'unauthorized' }
+  }
+}
+
+export async function adminUpdateDomainLifecycleAction(formData: FormData): Promise<InfrastructureAdminActionResult> {
+  try {
+    const staff = await requireStaff()
+    const domainId = String(formData.get('domainId') ?? '').trim()
+    const verificationStatus = parseDomainVerificationStatus(String(formData.get('verificationStatus') ?? ''))
+    const renewalStatus = parseDomainRenewalStatus(String(formData.get('renewalStatus') ?? ''))
+    if (!domainId) return { ok: false, error: 'missing_id' }
+    if (!verificationStatus || !renewalStatus) return { ok: false, error: 'invalid_status' }
+    const result = await applyDomainLifecycleStatus({
+      domainId,
+      verificationStatus,
+      renewalStatus,
+      actorUserId: staff.id,
+    })
+    if (!result.ok) return { ok: false, error: result.error }
+    revalidateAdminInfrastructure()
+    return { ok: true }
+  } catch {
+    return { ok: false, error: 'unauthorized' }
+  }
+}
+
+export async function adminUpdateEmailLifecycleAction(formData: FormData): Promise<InfrastructureAdminActionResult> {
+  try {
+    const staff = await requireStaff()
+    const emailId = String(formData.get('emailId') ?? '').trim()
+    const statusRaw = String(formData.get('status') ?? '')
+    if (!emailId) return { ok: false, error: 'missing_id' }
+    const status = parseBusinessEmailServiceStatus(statusRaw)
+    if (!status) return { ok: false, error: 'invalid_status' }
+    const result = await applyEmailLifecycleStatus({ emailId, status, actorUserId: staff.id })
+    if (!result.ok) return { ok: false, error: result.error }
     revalidateAdminInfrastructure()
     return { ok: true }
   } catch {
