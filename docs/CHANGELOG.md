@@ -4,7 +4,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 
 | Date (UTC) | Event | Evidence | Release claim |
 |---|---|---|---|
-| 2026-11-14 | Batch 9E Infrastructure, staff support, platform completion | (open PR) | Hosting/domain/email lifecycle UI, activity + request panels, admin lifecycle updates, staff support replies. No DNS/provider activation |
+| 2026-11-14 | Final UI/UX completion (v0 branch, in progress) | `v0/final-ui-ux-completion` @ `c88244e`, `b4f6a01` on `main` `b26dc0b` | Visual-only deltas; **UI incomplete**; no browser QA; not merged |
+| 2026-11-14 | Batch 9E Infrastructure, staff support, platform completion | [PR #139](https://github.com/Holagpt-ai/webxxl-website-system/pull/139) merged @ `b26dc0b` | Lifecycle transactions, staff support replies, infra panels. No DNS/provider activation |
 | 2026-11-14 | Batch 9D Commerce, Billing, Support, Portal completion | [PR #138](https://github.com/Holagpt-ai/webxxl-website-system/pull/138) merged @ `f867760` | Support message thread + customer replies, marketplace quote/order/detail, wallet ledger, checkout prep without charges. Migration for support messages |
 | 2026-11-14 | Batch 9A Business Center CRM deep links | [PR #135](https://github.com/Holagpt-ai/webxxl-website-system/pull/135) merged | Record-scoped destinations + CRM query focus |
 | 2026-11-14 | Batch 9C Comms, SEO, Analytics, AI Workforce, Marketing prep | [PR #137](https://github.com/Holagpt-ai/webxxl-website-system/pull/137) merged @ `964b3ab` | Comms reply prep, SEO/analytics deep links, AI pilot UI. Not activation |
