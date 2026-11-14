@@ -263,7 +263,7 @@ describe('Batch 30A lead funnel reporting', () => {
     const overview = await getBusinessOverview(portal, baseDataAccess())
     const leadActions = overview.actions.filter((a) => a.actionType.startsWith('crm.website_lead'))
     expect(leadActions.length).toBeGreaterThan(0)
-    expect(leadActions[0]?.destination.path).toBe(BUSINESS_DESTINATIONS.crmLeads)
+    expect(leadActions[0]?.destination.path).toBe(BUSINESS_DESTINATIONS.crmLead('lead_1'))
     expect(leadActions[0]?.recordRef).toEqual({ kind: 'managed_site_lead', id: 'lead_1' })
   })
 
