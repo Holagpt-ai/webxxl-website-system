@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { getPageContext } from '@/lib/i18n/server'
 import { localizePath } from '@/lib/i18n/localize'
 import type { Locale } from '@/lib/i18n/config'
@@ -24,13 +25,15 @@ export default async function AnalyticsPage({ params }: { params: Promise<{ loca
       {sites.length === 0 ? (
         <EmptyState title={copy.noSites.title} body={copy.noSites.body} />
       ) : (
-        <AnalyticsView
-          accountId={portal.customerAccount.id}
-          sites={sites}
-          locale={locale}
-          copy={copy}
-          loginHref={localizePath(locale as Locale, '/login')}
-        />
+        <Suspense fallback={null}>
+          <AnalyticsView
+            accountId={portal.customerAccount.id}
+            sites={sites}
+            locale={locale}
+            copy={copy}
+            loginHref={localizePath(locale as Locale, '/login')}
+          />
+        </Suspense>
       )}
     </>
   )

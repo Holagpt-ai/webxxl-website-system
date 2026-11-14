@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -17,8 +18,14 @@ export function EmployeesPanel({ ctx }: { ctx: WorkforceContext }) {
   const { copy, accountId, accountName, policy } = ctx
   const [skip, setSkip] = useState(0)
   const [creating, setCreating] = useState(false)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const search = useSearchParams()
+  const [selectedId, setSelectedId] = useState<string | null>(search.get('employeeId'))
   const listUrl = withPage(`${aiBase(accountId)}/employees`, PAGE, skip)
+
+  useEffect(() => {
+    const id = search.get('employeeId')
+    if (id) setSelectedId(id)
+  }, [search])
   const { data, error, isLoading, mutate } = useAi<PageResult<AiEmployee>>(listUrl)
 
   const refresh = () => {

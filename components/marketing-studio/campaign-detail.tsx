@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, CalendarClock, CheckCircle2 } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -8,6 +9,7 @@ import { EmptyNote, LoadingRows, Section, StatusPill } from '@/components/commer
 import {
   Facts,
   FormActions,
+  GapNotice,
   SuccessNote,
   TextAreaField,
   UnavailableAction,
@@ -26,6 +28,7 @@ export function MarketingCampaignDetail({ accountId, locale, copy, base, campaig
   const connections = useWorkspace<{ connections: SocialConnection[] }>(MKT_API.connections, accountId)
   const c = copy.campaign
   const kit = copy.kit
+  const schedulePrep = useSearchParams().get('prepare') === 'schedule'
 
   const back = (
     <Link className={buttonVariants({ variant: "ghost", size: "sm", className: "self-start" })} href={`${base}/campaigns`}>
@@ -65,6 +68,9 @@ export function MarketingCampaignDetail({ accountId, locale, copy, base, campaig
   return (
     <div className="flex flex-col gap-6">
       {back}
+      {schedulePrep && (
+        <GapNotice title={c.schedulePrepTitle} body={c.schedulePrepBody} />
+      )}
       <Section title={campaign.goal}>
         <Facts
           items={[

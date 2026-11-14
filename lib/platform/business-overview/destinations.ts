@@ -27,9 +27,23 @@ export const BUSINESS_DESTINATIONS = {
   marketingDeliverableReview: (artifactId: string, reviewId: string) =>
     dashboardPathWithQuery(`/dashboard/marketing/deliverables/${encodeURIComponent(artifactId)}`, { reviewId }),
   marketingCampaign: (campaignId: string) => `/dashboard/marketing/campaigns/${encodeURIComponent(campaignId)}`,
+  marketingCampaignSchedulePrep: (campaignId: string) =>
+    dashboardPathWithQuery(`/dashboard/marketing/campaigns/${encodeURIComponent(campaignId)}`, { prepare: 'schedule' }),
+  aiEmployee: (employeeId: string) => dashboardPathWithQuery('/dashboard/ai-employees', { tab: 'employees', employeeId }),
   seoOpportunities: '/dashboard/seo/opportunities',
   seoOpportunitySite: (siteId: string) => `/dashboard/seo/opportunities?site=${encodeURIComponent(siteId)}`,
+  seoOpportunity: (siteId: string, opportunityId: string) =>
+    dashboardPathWithQuery('/dashboard/seo/opportunities', { site: siteId, opportunityId }),
+  analyticsDashboard: (query?: { siteId?: string; tab?: string; rangeDays?: string }) =>
+    dashboardPathWithQuery('/dashboard/analytics', {
+      site: query?.siteId ?? '',
+      tab: query?.tab ?? '',
+      range: query?.rangeDays ?? '',
+    }),
   commsInbox: '/dashboard/communications',
+  commsInboxNeedsAttention: () => dashboardPathWithQuery('/dashboard/communications', { filter: 'needs_attention' }),
+  commsInboxForInbox: (inboxMappingId: string) =>
+    dashboardPathWithQuery('/dashboard/communications', { inbox: inboxMappingId }),
   commsConversation: (conversationId: string) =>
     `/dashboard/communications/conversations/${encodeURIComponent(conversationId)}`,
   projectApprovals: '/dashboard/approvals',

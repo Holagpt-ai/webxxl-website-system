@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { getPageContext } from '@/lib/i18n/server'
 import { localizePath } from '@/lib/i18n/localize'
 import type { Locale } from '@/lib/i18n/config'
@@ -27,13 +28,15 @@ export default async function AiEmployeesPage({ params }: { params: Promise<{ lo
           loginHref={localizePath(locale as Locale, '/login')}
         />
       </div>
-      <WorkforceView
+      <Suspense fallback={null}>
+        <WorkforceView
         accountId={portal.customerAccount.id}
         accountName={portal.customerAccount.businessName}
         locale={locale}
         copy={copy}
         loginHref={localizePath(locale as Locale, '/login')}
-      />
+        />
+      </Suspense>
     </>
   )
 }

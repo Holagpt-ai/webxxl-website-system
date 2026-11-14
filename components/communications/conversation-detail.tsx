@@ -9,6 +9,7 @@ import { useComms } from '@/lib/comms-ui/use-comms'
 import { COMMS_API, type ConversationDetail } from '@/lib/comms-ui/types'
 import type { CommsViewProps } from '@/lib/comms-ui/server'
 import { CommsGate, STATUS_TONE, SyncCell, isCommsGate } from './shared'
+import { ConversationReplyPrep } from './conversation-reply-prep'
 
 export function CommsConversationDetail({
   accountId,
@@ -179,6 +180,16 @@ export function CommsConversationDetail({
           )}
         </Section>
       </div>
+
+      <ConversationReplyPrep
+        accountId={accountId}
+        locale={locale}
+        copy={copy}
+        base={base}
+        crmContactsBase={crmContactsBase}
+        conversationId={conversationId}
+        crmContactId={conv.crmContact?.id ?? null}
+      />
     </div>
   )
 }
