@@ -288,6 +288,31 @@ export async function createSupportRequestAction(
   }
 }
 
+export async function replySupportRequestAction(
+  supportRequestId: string,
+  message: string,
+): Promise<ActionResult> {
+  try {
+    const portal = await requireCustomerMembership()
+    const { addCustomerSupportReply } = await import('@/lib/portal/support-messages')
+    const result = await addCustomerSupportReply({
+      supportRequestId,
+      customerAccountId: portal.customerAccount.id,
+      authorUserId: portal.id,
+      body: message,
+    })
+    if (!result.ok) {
+      if (result.error === 'empty') return { ok: false, error: 'empty' }
+      if (result.error === 'not_found') return { ok: false, error: 'not_found' }
+      if (result.error === 'closed') return { ok: false, error: 'closed' }
+    }
+    revalidateDashboard()
+    return { ok: true }
+  } catch {
+    return { ok: false, error: 'unauthorized' }
+  }
+}
+
 export async function uploadProjectFileAction(formData: FormData): Promise<ActionResult> {
   try {
     const parsed = await readUploadFromFormData(formData)

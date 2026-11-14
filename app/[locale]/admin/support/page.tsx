@@ -36,7 +36,19 @@ export default async function AdminSupportPage({ params }: { params: Promise<{ l
                     {sr.project ? ` · ${sr.project.name}` : ''}
                   </p>
                   <StatusBadge label={enumLabel(getDictionary(locale).dashboard.supportStatuses, sr.status)} />
-                  <p className="mt-2 line-clamp-4 text-muted-foreground">{sr.message}</p>
+                  <p className="mt-2 whitespace-pre-wrap text-muted-foreground">{sr.message}</p>
+                  {sr.messages.length > 0 && (
+                    <ul className="mt-3 flex flex-col gap-2 border-t pt-3">
+                      {sr.messages.map((msg) => (
+                        <li key={msg.id} className="rounded-md bg-muted/60 px-3 py-2 text-xs">
+                          <p>{msg.body}</p>
+                          <p className="mt-1 text-muted-foreground">
+                            {msg.author.name ?? msg.author.email} · {new Intl.DateTimeFormat(locale === 'es' ? 'es' : 'en').format(msg.createdAt)}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   <LinkedFileList
                     files={sr.fileLinks.map((link) => link.projectFile)}
                     storageReady={storageReady}

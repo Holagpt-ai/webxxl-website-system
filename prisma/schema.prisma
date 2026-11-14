@@ -424,6 +424,7 @@ model User {
   sessions           Session[]
   memberships        CustomerMembership[]
   comments           ProjectComment[]
+  supportRequestMessages SupportRequestMessage[]
   uploadedFiles      ProjectFile[]
   approvalsResponded ProjectApproval[] @relation("ApprovalResponder")
   changeRequests     ChangeRequest[]
@@ -863,11 +864,26 @@ model SupportRequest {
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
 
-  customerAccount CustomerAccount   @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
-  project         Project?          @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  customerAccount CustomerAccount          @relation(fields: [customerAccountId], references: [id], onDelete: Cascade)
+  project         Project?                 @relation(fields: [projectId], references: [id], onDelete: SetNull)
   fileLinks       ProjectFileLink[]
+  messages        SupportRequestMessage[]
 
   @@index([customerAccountId])
+}
+
+model SupportRequestMessage {
+  id               String            @id @default(cuid())
+  supportRequestId String
+  authorUserId     String
+  body             String            @db.Text
+  visibility       CommentVisibility @default(CUSTOMER)
+  createdAt        DateTime          @default(now())
+
+  supportRequest SupportRequest @relation(fields: [supportRequestId], references: [id], onDelete: Cascade)
+  author         User           @relation(fields: [authorUserId], references: [id], onDelete: Cascade)
+
+  @@index([supportRequestId, createdAt])
 }
 
 model CustomerService {

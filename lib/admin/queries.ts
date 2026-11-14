@@ -203,6 +203,11 @@ export async function listSupportQueue() {
       customerAccount: { select: { businessName: true, id: true } },
       project: { select: { id: true, name: true } },
       fileLinks: { include: { projectFile: { select: { id: true, originalName: true } } } },
+      messages: {
+        where: { visibility: 'CUSTOMER' },
+        orderBy: { createdAt: 'asc' },
+        include: { author: { select: { id: true, name: true, email: true } } },
+      },
     },
   })
 }
