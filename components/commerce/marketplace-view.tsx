@@ -14,17 +14,23 @@ import type {
 import type { CommerceCopy } from '@/lib/i18n/dictionaries/commerce-en'
 import { cn } from '@/lib/utils'
 import { OrderList } from './order-list'
+import { OrderDetailPanel } from './order-detail-panel'
+import { ProductPurchaseFlow } from './product-purchase-flow'
 import { CommerceState, EmptyNote, LoadingRows, Pagination, Section, StatusPill, TableFrame, td, th } from './ui'
+
+export type MarketplaceBillingGroup = { id: string; name: string }
 
 const PAGE = 10
 
 export function MarketplaceView({
   accountId,
+  billingGroups,
   locale,
   copy,
   loginHref,
 }: {
   accountId: string
+  billingGroups: MarketplaceBillingGroup[]
   locale: string
   copy: CommerceCopy
   loginHref: string
@@ -32,6 +38,7 @@ export function MarketplaceView({
   const m = copy.marketplace
   const base = `/api/v1/commerce/accounts/${encodeURIComponent(accountId)}`
   const catalog = useCommerce<{ catalog: CatalogRow[] }>('/api/v1/commerce/catalog')
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
 
   // Commerce being off is account-wide; show one clear state instead of four identical ones.
   if (catalog.error?.code === 'COMMERCE_DISABLED') {
@@ -44,11 +51,33 @@ export function MarketplaceView({
         <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
         {copy.common.checkoutClosed}
       </p>
-      <CatalogSection state={catalog} copy={copy} locale={locale} loginHref={loginHref} />
+      <CatalogSection
+        state={catalog}
+        copy={copy}
+        locale={locale}
+        loginHref={loginHref}
+        accountId={accountId}
+        billingGroups={billingGroups}
+        onOrdered={setSelectedOrderId}
+      />
       <ServicesSection url={`${base}/services`} copy={copy} loginHref={loginHref} />
       <RequestsSection url={`${base}/marketplace-requests`} copy={copy} locale={locale} loginHref={loginHref} />
       <Section id="orders" title={m.ordersTitle}>
-        <PagedOrders url={`${base}/orders`} copy={copy} locale={locale} empty={m.ordersEmpty} loginHref={loginHref} />
+        <PagedOrders
+          url={`${base}/orders`}
+          copy={copy}
+          locale={locale}
+          empty={m.ordersEmpty}
+          loginHref={loginHref}
+          onSelectOrder={setSelectedOrderId}
+        />
+        <OrderDetailPanel
+          orderId={selectedOrderId}
+          copy={copy}
+          locale={locale}
+          loginHref={loginHref}
+          onClose={() => setSelectedOrderId(null)}
+        />
       </Section>
     </div>
   )
@@ -59,11 +88,17 @@ function CatalogSection({
   copy,
   locale,
   loginHref,
+  accountId,
+  billingGroups,
+  onOrdered,
 }: {
   state: ReturnType<typeof useCommerce<{ catalog: CatalogRow[] }>>
   copy: CommerceCopy
   locale: string
   loginHref: string
+  accountId: string
+  billingGroups: MarketplaceBillingGroup[]
+  onOrdered: (orderId: string) => void
 }) {
   const m = copy.marketplace
   const [kind, setKind] = useState('ALL')
@@ -101,7 +136,16 @@ function CatalogSection({
           )}
           <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {visible.map((product) => (
-              <ProductCard key={product.productKey} product={product} copy={copy} locale={locale} />
+              <ProductCard
+                key={product.productKey}
+                product={product}
+                copy={copy}
+                locale={locale}
+                accountId={accountId}
+                billingGroups={billingGroups}
+                loginHref={loginHref}
+                onOrdered={onOrdered}
+              />
             ))}
           </ul>
         </>
@@ -110,7 +154,23 @@ function CatalogSection({
   )
 }
 
-function ProductCard({ product, copy, locale }: { product: CatalogRow; copy: CommerceCopy; locale: string }) {
+function ProductCard({
+  product,
+  copy,
+  locale,
+  accountId,
+  billingGroups,
+  loginHref,
+  onOrdered,
+}: {
+  product: CatalogRow
+  copy: CommerceCopy
+  locale: string
+  accountId: string
+  billingGroups: MarketplaceBillingGroup[]
+  loginHref: string
+  onOrdered: (orderId: string) => void
+}) {
   const m = copy.marketplace
   const price = product.prices.find((p) => p.status === 'ACTIVE') ?? product.prices[0]
   const included = product.pricingMode === 'INCLUDED_FREE'
@@ -138,6 +198,15 @@ function ProductCard({ product, copy, locale }: { product: CatalogRow; copy: Com
           {price?.creditAmount != null && ` · ${fill(m.creditsIncluded, { credits: formatNumber(price.creditAmount, locale) })}`}
         </p>
       </div>
+      <ProductPurchaseFlow
+        product={product}
+        accountId={accountId}
+        billingGroups={billingGroups}
+        copy={copy}
+        locale={locale}
+        loginHref={loginHref}
+        onOrdered={(id) => onOrdered(id)}
+      />
     </li>
   )
 }
@@ -237,6 +306,7 @@ export function PagedOrders({
   empty,
   loginHref,
   accountNames,
+  onSelectOrder,
 }: {
   url: string
   copy: CommerceCopy
@@ -244,6 +314,7 @@ export function PagedOrders({
   empty: string
   loginHref: string
   accountNames?: Record<string, string>
+  onSelectOrder?: (orderId: string) => void
 }) {
   const [skip, setSkip] = useState(0)
   const { data, error, mutate } = useCommerce<PageResult<PurchaseHistoryOrderDto>>(withPage(url, PAGE, skip))
@@ -252,7 +323,7 @@ export function PagedOrders({
   if (!data) return <LoadingRows label={copy.common.loading} />
   return (
     <>
-      <OrderList orders={data.items} copy={copy} locale={locale} empty={empty} accountNames={accountNames} />
+      <OrderList orders={data.items} copy={copy} locale={locale} empty={empty} accountNames={accountNames} onSelectOrder={onSelectOrder} />
       <Pagination total={data.pagination.total} take={PAGE} skip={skip} onChange={setSkip} copy={copy} />
     </>
   )

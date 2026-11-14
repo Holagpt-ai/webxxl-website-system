@@ -7,6 +7,7 @@ import { LinkedFileList } from '@/components/files/project-file-list'
 import { isStorageConfigured } from '@/lib/integrations/storage'
 import { enumLabel } from '@/lib/i18n/labels'
 import { RecordQueryFocus } from '@/components/dashboard/record-query-focus'
+import { SupportTicketThread } from '@/components/dashboard/support-ticket-thread'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,7 +21,14 @@ export default async function SupportPage({ params }: { params: Promise<{ locale
     prisma.supportRequest.findMany({
       where: { customerAccountId: portal.customerAccount.id },
       orderBy: { createdAt: 'desc' },
-      include: { fileLinks: { include: { projectFile: { select: { id: true, originalName: true } } } } },
+      include: {
+        fileLinks: { include: { projectFile: { select: { id: true, originalName: true } } } },
+        messages: {
+          where: { visibility: 'CUSTOMER' },
+          orderBy: { createdAt: 'asc' },
+          include: { author: { select: { id: true, name: true, email: true } } },
+        },
+      },
     }),
     project
       ? prisma.projectFile.findMany({
@@ -70,6 +78,13 @@ export default async function SupportPage({ params }: { params: Promise<{ locale
                 <p className="mt-2 text-xs text-muted-foreground">
                   {new Intl.DateTimeFormat(locale === 'es' ? 'es' : 'en', { dateStyle: 'medium' }).format(ticket.createdAt)}
                 </p>
+                <SupportTicketThread
+                  ticketId={ticket.id}
+                  status={ticket.status}
+                  messages={ticket.messages}
+                  locale={locale}
+                  labels={d.supportThread}
+                />
               </li>
             ))}
           </ul>

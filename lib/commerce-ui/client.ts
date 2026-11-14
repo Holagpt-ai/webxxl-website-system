@@ -91,3 +91,29 @@ export function withPage(url: string, take: number, skip: number, extra?: Record
   for (const [key, value] of Object.entries(extra ?? {})) if (value) params.set(key, value)
   return `${url}?${params.toString()}`
 }
+
+export type CommercePostResult<T> = { ok: true; data: T } | { ok: false; code: CommerceUiErrorCode }
+
+export async function commercePost<T>(url: string, body: unknown): Promise<CommercePostResult<T>> {
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'content-type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) return { ok: false, code: (await toError(res)).code }
+    return { ok: true, data: (await res.json()) as T }
+  } catch {
+    return { ok: false, code: 'UNKNOWN' }
+  }
+}
+
+export async function commerceGet<T>(url: string): Promise<CommercePostResult<T>> {
+  try {
+    return { ok: true, data: await commerceFetcher<T>(url) }
+  } catch (error) {
+    if (error instanceof CommerceApiError) return { ok: false, code: error.code }
+    return { ok: false, code: 'UNKNOWN' }
+  }
+}

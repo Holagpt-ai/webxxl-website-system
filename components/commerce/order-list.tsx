@@ -4,6 +4,7 @@ import { ChevronDown } from 'lucide-react'
 import { formatDate, formatMoney, formatNumber } from '@/lib/commerce-ui/format'
 import type { FinancialOrderDto, PurchaseHistoryOrderDto } from '@/lib/commerce-ui/types'
 import type { CommerceCopy } from '@/lib/i18n/dictionaries/commerce-en'
+import { Button } from '@/components/ui/button'
 import { EmptyNote, StatusPill, orderTone } from './ui'
 
 type OrderLike = FinancialOrderDto & Partial<Pick<PurchaseHistoryOrderDto, 'createdAt' | 'legacyMarketplace' | 'paymentConfirmed'>>
@@ -14,12 +15,14 @@ export function OrderList({
   locale,
   empty,
   accountNames,
+  onSelectOrder,
 }: {
   orders: OrderLike[]
   copy: CommerceCopy
   locale: string
   empty: string
   accountNames?: Record<string, string>
+  onSelectOrder?: (orderId: string) => void
 }) {
   if (orders.length === 0) return <EmptyNote>{empty}</EmptyNote>
 
@@ -82,6 +85,11 @@ export function OrderList({
                     <span className="font-mono text-foreground">{order.legacyMarketplace.publicId}</span> ·{' '}
                     {copy.requestStatuses[order.legacyMarketplace.status] ?? order.legacyMarketplace.status}
                   </p>
+                )}
+                {onSelectOrder && (
+                  <Button type="button" size="sm" variant="outline" className="self-start" onClick={() => onSelectOrder(order.id)}>
+                    {copy.orderDetail.viewOrder}
+                  </Button>
                 )}
               </div>
             </details>

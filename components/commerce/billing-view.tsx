@@ -4,7 +4,9 @@ import { useState } from 'react'
 import { LifeBuoy, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useCommerce } from '@/lib/commerce-ui/client'
-import { formatNumber } from '@/lib/commerce-ui/format'
+import { COMMERCE_API } from '@/lib/commerce-ui/api'
+import { formatDate, formatNumber } from '@/lib/commerce-ui/format'
+import type { WalletLedgerEntryDto } from '@/lib/platform/wallet/api-dto'
 import type { BillingGroupSummaryDto, WalletSummaryDto } from '@/lib/commerce-ui/types'
 import type { CommerceCopy } from '@/lib/i18n/dictionaries/commerce-en'
 import { PagedOrders } from './marketplace-view'
@@ -129,7 +131,10 @@ function GroupDetail({
 
       <Section id="wallet" title={b.walletTitle}>
         {canSeeWallet ? (
-          <WalletPanel url={`${base}/wallet-summary`} locale={locale} copy={copy} loginHref={loginHref} />
+          <>
+            <WalletPanel url={`${base}/wallet-summary`} locale={locale} copy={copy} loginHref={loginHref} />
+            <WalletLedgerPanel groupId={groupId} copy={copy} locale={locale} loginHref={loginHref} />
+          </>
         ) : (
           <div className="flex items-start gap-3 rounded-lg border border-dashed bg-muted p-4">
             <Lock className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
@@ -208,6 +213,41 @@ function WalletPanel({ url, locale, copy, loginHref }: { url: string; locale: st
         </div>
       ))}
     </dl>
+  )
+}
+
+function WalletLedgerPanel({
+  groupId,
+  copy,
+  locale,
+  loginHref,
+}: {
+  groupId: string
+  copy: CommerceCopy
+  locale: string
+  loginHref: string
+}) {
+  const b = copy.billing
+  const { data, error, mutate } = useCommerce<{ ledger: WalletLedgerEntryDto[] }>(COMMERCE_API.walletLedger(groupId))
+
+  if (error) return <CommerceState error={error} copy={copy} onRetry={() => mutate()} loginHref={loginHref} compact />
+  if (!data) return <LoadingRows label={copy.common.loading} rows={2} />
+  if (!data.ledger.length) return <EmptyNote>{b.ledgerEmpty}</EmptyNote>
+
+  return (
+    <div className="mt-4 flex flex-col gap-2">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{b.ledgerTitle}</p>
+      <p className="text-xs text-muted-foreground">{b.ledgerDescription}</p>
+      <ul className="flex flex-col divide-y rounded-lg border text-sm">
+        {data.ledger.map((entry) => (
+          <li key={entry.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+            <span className="font-medium">{entry.type}</span>
+            <span className="tabular-nums">{formatNumber(entry.deltaCredits, locale)}</span>
+            <span className="text-xs text-muted-foreground">{formatDate(entry.effectiveAt, locale)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
 
