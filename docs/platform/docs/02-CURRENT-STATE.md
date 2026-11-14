@@ -1,6 +1,6 @@
 # 02 — Verified Repository Baseline and Honest Status
 
-**Operational checkpoint 2026-11-13:** `30746e513a990b37a63ced4973e80f704a92308c` on GitHub `main` — [PR **#131**](https://github.com/Holagpt-ai/webxxl-website-system/pull/131) Batch 8A **MERGED**. **Batch 8B** staging acceptance: migration **39/39** read-only **verified** on `vcgibefnhneaqhcguhnt`; authenticated matrix **BLOCKED** (AUTH-STAGING-8B). Production deployment `7773401135` @ same SHA (SHA only). Issue **#105** authenticated QA **BLOCKED** → Batch **8C**. Lifecycle: [`docs/CONTINUITY-04-SESSION-LIFECYCLE.md`](../../CONTINUITY-04-SESSION-LIFECYCLE.md).
+**Operational checkpoint 2026-11-14:** `d82d32382d2eee10473cf5f9c5281a92799046ad` on GitHub `main` — [PR **#133**](https://github.com/Holagpt-ai/webxxl-website-system/pull/133) Batch 8D **MERGED**. Staging credential rotation **VERIFIED** on `vcgibefnhneaqhcguhnt`; migrations **39/39** on rotated creds; acceptance Preview **`dpl_CUpAftyiuiPUVGarnDT9YaxGF6BL`**. Authenticated Batch 8B remainder **BLOCKED** (AUTH-STAGING-8C). Production deployment `7779811057` @ `d82d323` (SHA only). Production migrate / provider activation **UNVERIFIED**. Lifecycle: [`docs/CONTINUITY-04-SESSION-LIFECYCLE.md`](../../CONTINUITY-04-SESSION-LIFECYCLE.md).
 
 Older module sections below may describe earlier October pull-request states as **historical notes**. Current index: `docs/PROJECT_MEMORY.md`, `docs/SESSION_HANDOFF.md`, and `docs/DEPLOYMENT_STATUS.md`.
 
