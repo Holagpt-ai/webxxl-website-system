@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Check, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { CrmWorkspaceCopy } from '@/lib/i18n/dictionaries/crm-workspace-en'
 import { useAction, useWorkspace } from '@/lib/crm-ui/use-workspace'
 import { DASH, enumLabel, fill, formatDate, isGateError, workspaceSend } from '@/lib/crm-ui/workspace'
+import { scrollToDomId, useQueryRecordFocus } from '@/lib/crm-ui/deep-link'
 import {
   CRM_API,
   TASK_PRIORITIES,
@@ -50,6 +51,17 @@ export function CrmTasks({ accountId, locale, copy }: Props) {
   const t = copy.tasks
   const kit = copy.kit
   const f = copy.fields
+
+  const taskIds = useMemo(() => (list.data?.tasks ?? []).map((task) => task.id), [list.data?.tasks])
+  const focusTask = useCallback(
+    (id: string) => {
+      setNotice(null)
+      setEditingId(id)
+    },
+    [],
+  )
+  const scrollTask = useCallback((id: string) => scrollToDomId(`crm-task-${id}`), [])
+  useQueryRecordFocus('taskId', !list.isLoading && Boolean(list.data), taskIds, focusTask, scrollTask)
 
   if (isGateError(list.error)) {
     return (
@@ -169,7 +181,7 @@ function TaskRow({
 
   return (
     <>
-      <tr>
+      <tr id={`crm-task-${task.id}`}>
         <td className={`${td} font-medium text-foreground`}>
           {task.title}
           {task.disposition && <span className="block text-xs font-normal text-muted-foreground">{task.disposition}</span>}

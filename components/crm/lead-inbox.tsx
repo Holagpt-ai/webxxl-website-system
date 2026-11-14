@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useCallback, useMemo, useRef, useState } from 'react'
+import { useQueryRecordFocus } from '@/lib/crm-ui/deep-link'
 import { LineChart } from 'lucide-react'
 import { useSWRConfig } from 'swr'
 import { ChevronLeft, ChevronRight, Inbox } from 'lucide-react'
@@ -70,12 +71,25 @@ export function CrmLeadInbox({ accountId, locale, copy, base, leadsCopy: lc, sit
   const filtered = Boolean(status || siteId || from || to)
   const gate = [summary.error, list.error].find((e) => e && GATE_ISSUES.has(leadIssue(e)))
 
-  function select(lead: SiteLead) {
-    setSelected({ accountId, id: lead.id })
-    if (window.matchMedia('(max-width: 1023px)').matches) {
-      requestAnimationFrame(() => detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
-    }
-  }
+  const select = useCallback(
+    (lead: SiteLead) => {
+      setSelected({ accountId, id: lead.id })
+      if (window.matchMedia('(max-width: 1023px)').matches) {
+        requestAnimationFrame(() => detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+      }
+    },
+    [accountId],
+  )
+
+  const leadIds = useMemo(() => (list.data?.leads ?? []).map((lead) => lead.id), [list.data?.leads])
+  const focusLead = useCallback(
+    (id: string) => {
+      const lead = list.data?.leads.find((row) => row.id === id)
+      if (lead) select(lead)
+    },
+    [list.data?.leads, select],
+  )
+  useQueryRecordFocus('leadId', !list.isLoading && Boolean(list.data), leadIds, focusLead)
 
   function clearFilters() {
     setStatus('')

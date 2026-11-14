@@ -127,7 +127,7 @@ export async function loadRecentLeadLineage(customerAccountId: string): Promise<
         crm,
         project,
         destinations: {
-          leadReview: { path: BUSINESS_DESTINATIONS.crmLeads },
+          leadReview: { path: BUSINESS_DESTINATIONS.crmLead(lead.id) },
         },
       })
     }

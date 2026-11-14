@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-14 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `d82d32382d2eee10473cf5f9c5281a92799046ad` (PR **#133** Batch 8D MERGED)
+**Evidence review:** 2026-11-14 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `d05b176a92b936e8a3d65a73e3665f8ae9867720` (PR **#134** Batch 8C MERGED)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,12 +35,12 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | GitHub `main` `d82d323` ([PR **#133**](https://github.com/Holagpt-ai/webxxl-website-system/pull/133) Batch 8D MERGED). **SEC-STAGING-CRED-2026-11-12** **VERIFIED** 2026-11-14 (`vcgibefnhneaqhcguhnt`; Preview DB updated). Acceptance Preview **`dpl_CUpAftyiuiPUVGarnDT9YaxGF6BL`** @ `staging/acceptance` `94235dd`. Staging **39/39** on rotated creds. Authenticated matrix **BLOCKED** (AUTH-STAGING-8C). |
-| 2 | GitHub SHA, branch, active PR | **`d82d32382d2eee10473cf5f9c5281a92799046ad`** on `main`. [PR **#134**](https://github.com/Holagpt-ai/webxxl-website-system/pull/134) Batch 8C release evidence **open**. `staging/acceptance` @ `94235dd`. |
-| 3 | Production deployment | GitHub deployment **`7779811057`** Production **success** 2026-11-14 @ `d82d323` (SHA only). Acceptance Preview separate; not Production. |
+| 1 | Last verified checkpoint | GitHub `main` `d05b176` ([PR **#134**](https://github.com/Holagpt-ai/webxxl-website-system/pull/134) Batch 8C MERGED). **SEC-STAGING-CRED-2026-11-12** **VERIFIED** 2026-11-14 (`vcgibefnhneaqhcguhnt`; Preview DB updated). Pilot A reached dashboard on staging. Broad authenticated acceptance **deferred** by owner until functional development completes. |
+| 2 | GitHub SHA, branch, active PR | **`d05b176a92b936e8a3d65a73e3665f8ae9867720`** on `main`. Batch **9A** CRM action deep links **IN PR** (`feat/batch9a-business-crm-action-destinations`). `staging/acceptance` @ `94235dd`. |
+| 3 | Production deployment | Production SHA evidence last recorded @ `d82d323` (SHA only). Post-`d05b176` Production deploy **UNVERIFIED** this session. |
 | 4 | Last updated | 2026-11-14 |
-| 5 | Next task / responsible platform | Owner: Deployment Protection + **authorize magic links** for Pilot A/B → execute [`BATCH8C-AUTHENTICATED-ACCEPTANCE-QUEUE.md`](BATCH8C-AUTHENTICATED-ACCEPTANCE-QUEUE.md). Cursor: record VERIFIED matrix; v0 if CRM-SUBNAV-105 reproduces. |
-| 6 | Open blocker / gate IDs | **AUTH-STAGING-8C** (authenticated acceptance). **ISSUE-105-QA** **BLOCKED**. **RELEASE-001** **gated**. Production migrate **UNVERIFIED**. Module/provider flags **not activated**. |
+| 5 | Next task / responsible platform | **Cursor:** merge Batch 9A then continue portal end-to-end wiring (marketing review deep links, project lifecycle mutations). **v0:** polish only if Business Center/CRM focus affordances need visual emphasis (no route overlap). |
+| 6 | Open blocker / gate IDs | **AUTH-STAGING-8C** **DEFERRED** (owner). **RELEASE-001** **gated**. Production migrate **UNVERIFIED**. Module/provider flags **not activated**. |
 
 ### Evidence table
 

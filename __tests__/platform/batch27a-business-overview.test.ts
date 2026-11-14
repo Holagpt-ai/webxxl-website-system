@@ -97,6 +97,7 @@ describe('Batch 27A business command center backend', () => {
 
   it('uses Batch 16 locale-neutral customer destinations', () => {
     expect(BUSINESS_DESTINATIONS.crmTasks).toBe('/dashboard/crm/tasks')
+    expect(BUSINESS_DESTINATIONS.crmTask('x')).toContain('taskId=x')
     expect(BUSINESS_DESTINATIONS.marketingApprovals).toBe('/dashboard/marketing/approvals')
     expect(BUSINESS_DESTINATIONS.projectApprovals).toBe('/dashboard/approvals')
     expect(BUSINESS_DESTINATIONS.commsConversation('c1')).toBe('/dashboard/communications/conversations/c1')

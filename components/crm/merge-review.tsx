@@ -1,13 +1,15 @@
 'use client'
 
 import Link from 'next/link'
-import { useId, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ArrowLeft, Check, GitMerge, RefreshCw, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { StatusPill, type PillTone } from '@/components/commerce/ui'
 import type { CrmWorkspaceCopy } from '@/lib/i18n/dictionaries/crm-workspace-en'
 import { useAction, useWorkspace } from '@/lib/crm-ui/use-workspace'
+import { scrollToDomId, useQueryRecordFocus } from '@/lib/crm-ui/deep-link'
 import {
   DASH,
   enumLabel,
@@ -57,6 +59,22 @@ export function CrmMergeReview({ accountId, locale, copy, base }: Props) {
   const [status, setStatus] = useState<string>('PENDING')
   const [outcome, setOutcome] = useState<Outcome>(null)
   const list = useWorkspace<{ proposals: CrmMergeProposal[] }>(withQuery(CRM_API.mergeProposals, { status }), accountId)
+  const search = useSearchParams()
+  const focusProposalId = search.get('proposalId')
+
+  useEffect(() => {
+    if (focusProposalId && status !== 'PENDING') setStatus('PENDING')
+  }, [focusProposalId, status])
+
+  const proposalIds = useMemo(() => (list.data?.proposals ?? []).map((p) => p.id), [list.data?.proposals])
+  const scrollProposal = useCallback((id: string) => scrollToDomId(`crm-merge-proposal-${id}`), [])
+  useQueryRecordFocus(
+    'proposalId',
+    !list.isLoading && Boolean(list.data) && status === 'PENDING',
+    proposalIds,
+    () => {},
+    scrollProposal,
+  )
 
   const heading = (
     <div className="flex flex-col gap-3">
@@ -127,7 +145,7 @@ export function CrmMergeReview({ accountId, locale, copy, base }: Props) {
       ) : (
         <ol className="flex flex-col gap-4">
           {proposals.map((proposal, index) => (
-            <li key={proposal.id}>
+            <li key={proposal.id} id={`crm-merge-proposal-${proposal.id}`}>
               <ProposalCard
                 proposal={proposal}
                 index={index + 1}

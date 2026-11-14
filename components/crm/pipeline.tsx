@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { CrmWorkspaceCopy } from '@/lib/i18n/dictionaries/crm-workspace-en'
 import { useAction, useWorkspace } from '@/lib/crm-ui/use-workspace'
+import { scrollToDomId, useQueryRecordFocus } from '@/lib/crm-ui/deep-link'
 import { enumLabel, fill, formatDate, formatMoney, isGateError, workspaceSend } from '@/lib/crm-ui/workspace'
 import {
   CRM_API,
@@ -40,6 +41,10 @@ export function CrmPipelineView({ accountId, locale, copy }: Props) {
   const [createdNote, setCreatedNote] = useState(false)
   const t = copy.pipeline
   const kit = copy.kit
+
+  const dealIds = useMemo(() => (deals.data?.deals ?? []).map((deal) => deal.id), [deals.data?.deals])
+  const scrollDeal = useCallback((id: string) => scrollToDomId(`crm-deal-${id}`), [])
+  useQueryRecordFocus('dealId', !deals.isLoading && Boolean(deals.data), dealIds, () => {}, scrollDeal)
 
   const gate = [pipelines.error, deals.error].find(isGateError)
   if (gate) {
@@ -138,7 +143,11 @@ export function CrmPipelineView({ accountId, locale, copy }: Props) {
                       ) : (
                         <ul className="flex flex-col gap-2">
                           {column.deals.map((deal) => (
-                            <li key={deal.id} className="flex flex-col gap-1.5 rounded-md border bg-card p-3 shadow-sm">
+                            <li
+                              key={deal.id}
+                              id={`crm-deal-${deal.id}`}
+                              className="flex flex-col gap-1.5 rounded-md border bg-card p-3 shadow-sm"
+                            >
                               <p className="text-sm font-medium leading-snug text-foreground">{deal.title}</p>
                               <p className="text-sm tabular-nums text-foreground">
                                 {formatMoney(deal.amountMinorUnits, deal.currencyCode, locale)}
