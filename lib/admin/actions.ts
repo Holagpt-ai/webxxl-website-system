@@ -916,6 +916,32 @@ export async function updateChangeRequestStatusAction(
   }
 }
 
+export async function replyStaffSupportRequestAction(
+  supportRequestId: string,
+  message: string,
+): Promise<AdminActionResult> {
+  try {
+    const staff = await requireStaff()
+    const { addStaffSupportReply } = await import('@/lib/portal/support-messages')
+    const result = await addStaffSupportReply({
+      supportRequestId,
+      authorUserId: staff.id,
+      body: message,
+    })
+    if (!result.ok) {
+      if (result.error === 'empty') return { ok: false, error: 'empty' }
+      if (result.error === 'not_found') return { ok: false, error: 'not_found' }
+      if (result.error === 'closed') return { ok: false, error: 'closed' }
+    }
+    revalidateAdmin()
+    revalidatePath('/dashboard/support')
+    revalidatePath('/es/dashboard/support')
+    return { ok: true }
+  } catch {
+    return { ok: false, error: 'unauthorized' }
+  }
+}
+
 export async function updateSupportRequestStatusAction(
   supportRequestId: string,
   status: SupportRequestStatus,

@@ -18,6 +18,7 @@ type Props = {
   reviewNotice: string
   selectProjectLabel?: string
   projects?: { id: string; name: string }[]
+  errorMessages?: Record<string, string>
 }
 
 export function InfrastructureRequestForm({
@@ -33,6 +34,7 @@ export function InfrastructureRequestForm({
   reviewNotice,
   projects,
   selectProjectLabel,
+  errorMessages,
 }: Props) {
   const [message, setMessage] = useState('')
   const [projectId, setProjectId] = useState(defaultProjectId ?? '')
@@ -54,7 +56,7 @@ export function InfrastructureRequestForm({
             assetPublicId,
           })
           if (!result.ok) {
-            setFeedback(reviewNotice)
+            setFeedback(errorMessages?.[result.error] ?? reviewNotice)
             return
           }
           setFeedback(result.duplicate ? duplicateMessage : successMessage)

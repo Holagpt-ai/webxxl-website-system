@@ -2,7 +2,13 @@ import { notFound } from 'next/navigation'
 import { getPageContext } from '@/lib/i18n/server'
 import { requireCustomerMembership } from '@/lib/portal/authz'
 import { isEnabled } from '@/config/features'
-import { getCustomerInfrastructureOverview, listCustomerProjectsForInfrastructure } from '@/lib/infrastructure/queries'
+import {
+  getCustomerInfrastructureOverview,
+  listCustomerInfrastructureActivity,
+  listCustomerInfrastructureSupportRequests,
+  listCustomerProjectsForInfrastructure,
+} from '@/lib/infrastructure/queries'
+import { InfrastructureActivityPanel, InfrastructureRequestsPanel } from '@/components/dashboard/infrastructure-customer-panels'
 import { PageTitle, SectionCard } from '@/components/dashboard/primitives'
 import { LocaleLink } from '@/components/site/primitives'
 import { InfrastructureOverviewCards } from '@/components/dashboard/infrastructure-summary'
@@ -17,10 +23,13 @@ export default async function InfrastructureOverviewPage({ params }: { params: P
   const d = dict.dashboard
   const loc = locale === 'es' ? 'es' : 'en'
 
-  const [overview, projects] = await Promise.all([
+  const [overview, projects, activity, infraTickets] = await Promise.all([
     getCustomerInfrastructureOverview(portal.customerAccount.id),
     listCustomerProjectsForInfrastructure(portal.customerAccount.id),
+    listCustomerInfrastructureActivity(portal.customerAccount.id),
+    listCustomerInfrastructureSupportRequests(portal.customerAccount.id),
   ])
+  const requestErrors = d.infrastructureRequestErrors as Record<string, string>
 
   const infraDict = {
     dataSourceLabel: d.infrastructureDataSource,
@@ -48,6 +57,22 @@ export default async function InfrastructureOverviewPage({ params }: { params: P
       <p className="mb-6 text-sm text-muted-foreground">{d.infrastructureProviderSyncUnavailable}</p>
       <InfrastructureOverviewCards locale={loc} overview={overview} dict={infraDict} />
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <InfrastructureActivityPanel
+          locale={loc}
+          items={activity}
+          title={d.infrastructureActivityTitle}
+          empty={d.infrastructureActivityEmpty}
+        />
+        <InfrastructureRequestsPanel
+          locale={loc}
+          items={infraTickets}
+          title={d.infrastructureRequestsTitle}
+          empty={d.infrastructureRequestsEmpty}
+          viewSupportLabel={d.infrastructureViewSupport}
+          supportStatuses={d.supportStatuses}
+        />
+      </div>
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <SectionCard title={d.infrastructureRequestTitle}>
           <InfrastructureRequestForm
             locale={loc}
@@ -60,6 +85,7 @@ export default async function InfrastructureOverviewPage({ params }: { params: P
             reviewNotice={d.infrastructureRequestReview}
             projects={projects}
             selectProjectLabel={d.marketplaceSelectProject}
+            errorMessages={requestErrors}
           />
         </SectionCard>
         <SectionCard title={d.servicesTitle}>

@@ -24,6 +24,14 @@ export type InfrastructureAdminActionResult = { ok: true } | { ok: false; error:
 function revalidateAdminInfrastructure() {
   revalidatePath('/admin/infrastructure')
   revalidatePath('/es/admin/infrastructure')
+  revalidatePath('/dashboard/infrastructure')
+  revalidatePath('/es/dashboard/infrastructure')
+  revalidatePath('/dashboard/infrastructure/hosting')
+  revalidatePath('/es/dashboard/infrastructure/hosting')
+  revalidatePath('/dashboard/infrastructure/domains')
+  revalidatePath('/es/dashboard/infrastructure/domains')
+  revalidatePath('/dashboard/infrastructure/email')
+  revalidatePath('/es/dashboard/infrastructure/email')
 }
 
 function parseDate(value: string | undefined): Date | null {
@@ -152,6 +160,85 @@ export async function adminSetProviderConfigNoteAction(formData: FormData): Prom
     return { ok: true }
   } catch {
     return { ok: false, error: 'unauthorized' }
+  }
+}
+
+export async function adminUpdateHostingLifecycleAction(formData: FormData): Promise<void> {
+  try {
+    const staff = await requireStaff()
+    const hostingId = String(formData.get('hostingId') ?? '')
+    const status = String(formData.get('status') ?? '') as HostingServiceStatus
+    if (!hostingId || !status) return
+    const row = await prisma.hostingService.update({
+      where: { id: hostingId },
+      data: { status },
+    })
+    await prisma.infrastructureActivity.create({
+      data: {
+        assetType: 'HOSTING',
+        assetId: hostingId,
+        customerAccountId: row.customerAccountId,
+        actorUserId: staff.id,
+        summary: `Hosting status updated to ${status}`,
+      },
+    })
+    revalidateAdminInfrastructure()
+  } catch {
+    return
+  }
+}
+
+export async function adminUpdateDomainLifecycleAction(formData: FormData): Promise<void> {
+  try {
+    const staff = await requireStaff()
+    const domainId = String(formData.get('domainId') ?? '')
+    const verificationStatus = String(formData.get('verificationStatus') ?? '') as DomainVerificationStatus
+    const renewalStatus = String(formData.get('renewalStatus') ?? '') as DomainRenewalStatus
+    if (!domainId) return
+    const row = await prisma.managedDomain.update({
+      where: { id: domainId },
+      data: {
+        ...(verificationStatus ? { verificationStatus } : {}),
+        ...(renewalStatus ? { renewalStatus } : {}),
+      },
+    })
+    await prisma.infrastructureActivity.create({
+      data: {
+        assetType: 'DOMAIN',
+        assetId: domainId,
+        customerAccountId: row.customerAccountId,
+        actorUserId: staff.id,
+        summary: 'Domain lifecycle fields updated by staff (no DNS writes)',
+      },
+    })
+    revalidateAdminInfrastructure()
+  } catch {
+    return
+  }
+}
+
+export async function adminUpdateEmailLifecycleAction(formData: FormData): Promise<void> {
+  try {
+    const staff = await requireStaff()
+    const emailId = String(formData.get('emailId') ?? '')
+    const status = String(formData.get('status') ?? '') as BusinessEmailServiceStatus
+    if (!emailId || !status) return
+    const row = await prisma.businessEmailService.update({
+      where: { id: emailId },
+      data: { status },
+    })
+    await prisma.infrastructureActivity.create({
+      data: {
+        assetType: 'EMAIL',
+        assetId: emailId,
+        customerAccountId: row.customerAccountId,
+        actorUserId: staff.id,
+        summary: `Business email status updated to ${status}`,
+      },
+    })
+    revalidateAdminInfrastructure()
+  } catch {
+    return
   }
 }
 

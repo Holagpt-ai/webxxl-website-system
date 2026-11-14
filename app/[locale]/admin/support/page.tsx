@@ -8,6 +8,8 @@ import { getDictionary } from '@/lib/i18n/dictionaries'
 import { enumLabel } from '@/lib/i18n/labels'
 import { resolveLocale } from '@/lib/i18n/server'
 import { SupportStatusForm } from '@/components/admin/forms'
+import { StaffSupportReplyForm } from '@/components/admin/staff-support-reply-form'
+import { RecordQueryFocus } from '@/components/dashboard/record-query-focus'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,13 +23,14 @@ export default async function AdminSupportPage({ params }: { params: Promise<{ l
 
   return (
     <>
+      <RecordQueryFocus param="ticketId" domIdPrefix="admin-support-ticket-" ready />
       <PageTitle title={copy.support.title} description={copy.support.description} />
       {tickets.length === 0 ? (
         <EmptyState title={copy.support.emptyTitle} body={copy.support.emptyBody} />
       ) : (
         <ul className="flex flex-col gap-4">
           {tickets.map((sr) => (
-            <li key={sr.id} className="rounded-xl border bg-card p-4 text-sm">
+            <li key={sr.id} id={`admin-support-ticket-${sr.id}`} className="rounded-xl border bg-card p-4 text-sm">
               <div className="flex flex-col gap-2 md:flex-row md:justify-between">
                 <div>
                   <p className="font-semibold">{sr.subject}</p>
@@ -63,7 +66,22 @@ export default async function AdminSupportPage({ params }: { params: Promise<{ l
                     {copy.customer}
                   </Link>
                 </div>
-                <SupportStatusForm supportRequestId={sr.id} current={sr.status} />
+                <div className="flex flex-col items-end gap-2">
+                  <SupportStatusForm supportRequestId={sr.id} current={sr.status} />
+                  {sr.status !== 'CLOSED' && (
+                    <StaffSupportReplyForm
+                      supportRequestId={sr.id}
+                      labels={{
+                        staffReplyLabel: copy.support.staffReplyLabel,
+                        staffReplyPlaceholder: copy.support.staffReplyPlaceholder,
+                        staffReplySubmit: copy.support.staffReplySubmit,
+                        staffReplySuccess: copy.support.staffReplySuccess,
+                        staffReplyErrors: copy.support.staffReplyErrors,
+                        save: copy.save,
+                      }}
+                    />
+                  )}
+                </div>
               </div>
             </li>
           ))}
