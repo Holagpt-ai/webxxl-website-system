@@ -302,7 +302,7 @@ describe('SOCIAL-04A Prisma campaign quota (mocked persistence)', () => {
         customerAccountId,
         subscriptions: [{ customerAccountId, productKey: 'website.subscription', status: 'ACTIVE' }],
         legacyWebsiteServices: [],
-        loadOutcome: 'synthetic' as const,
+        loadOutcome: 'ok' as const,
       }),
     }))
     vi.doMock('@/lib/db', () => ({
