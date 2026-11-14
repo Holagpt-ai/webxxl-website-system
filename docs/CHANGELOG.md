@@ -119,5 +119,6 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 | 2026-11-13 | Issue #109 Batch 7C public conversion + responsive UI | [PR **#130**](https://github.com/Holagpt-ai/webxxl-website-system/pull/130) merged @ `8058565e11fed8927147c54e2b4ee0a58cc184bf` | Production deploy `7772915207` (SHA only). Completes Batch 7 frontend scope |
 | 2026-11-13 | Issue #109 Batch 8A release baseline | [PR **#131**](https://github.com/Holagpt-ai/webxxl-website-system/pull/131) merged @ `30746e513a990b37a63ced4973e80f704a92308c` | Baseline fixes + release readiness; production deploy `7773401135` (SHA only) |
 | 2026-11-13 | Batch 8B staging acceptance (partial) | [`BATCH8B-STAGING-ACCEPTANCE-REPORT.md`](BATCH8B-STAGING-ACCEPTANCE-REPORT.md) | Staging migration 39/39 read-only verify; public conversion read-only PASS; authenticated matrix BLOCKED — no code merge claim |
+| 2026-11-14 | Batch 8D customer portal + CRM release hardening | [PR **#133**](https://github.com/Holagpt-ai/webxxl-website-system/pull/133) on `ac5afb5` | OPEN-001 module API gate fails closed on unverified subscription evidence; CRM layout revalidation on account switch; focused Vitest harness (no live staging) |
 
 Earlier decision history: [`platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).

@@ -18,6 +18,8 @@ export async function switchCustomerAccountAction(customerAccountId: string): Pr
     await setActiveCustomerAccountCookie(customerAccountId)
     revalidatePath('/dashboard', 'layout')
     revalidatePath('/es/dashboard', 'layout')
+    revalidatePath('/dashboard/crm', 'layout')
+    revalidatePath('/es/dashboard/crm', 'layout')
     return { ok: true }
   } catch {
     return { ok: false, error: 'unauthorized' }
