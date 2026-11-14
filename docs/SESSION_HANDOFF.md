@@ -19,7 +19,7 @@
 
 ## Next assignment
 
-Owner merge **9E** when CI green. Stage: **final UI completion + launch stabilization**.
+Owner review/merge [PR **#139**](https://github.com/Holagpt-ai/webxxl-website-system/pull/139) Batch **9E**. **Next exact assignment / owning tool:** v0.app optional UI polish per [`BATCH9E-V0-HANDOFF.md`](BATCH9E-V0-HANDOFF.md); then owner-led **launch stabilization** (not another development batch).
 
 ## PENDING REPOSITORY SYNC
 
@@ -30,9 +30,11 @@ Owner merge **9E** when CI green. Stage: **final UI completion + launch stabiliz
 ```
 Date / scope / owner: 2026-11-14 / Batch 9E / Cursor
 Repo / main SHA: Holagpt-ai/webxxl-website-system / f8677600dc26dd911bd4343d6c214023883e62ee
-Branch / PR: feat/batch9e-infrastructure-platform-completion / (open after push)
-Merged through 9D: #135 #136 #137 #138
-Migration: batch9d_support_request_messages — not prod without owner auth
-Providers: DNS/payments/mail provision — not activated
-Next: v0 polish + launch stabilization after 9E merge
+Branch: feat/batch9e-infrastructure-platform-completion
+Merged: NO (9E open PR #139; main through 9D #138)
+Migration applied: NO in production (incl. batch9d_support_request_messages — owner auth only)
+Do NOT touch:
+- Production migrations, DNS/registrar writes, paid provider activation, live checkout, outbound sends without separate owner authorization
+- v0-owned public/customer/admin visual files while Cursor 9E PR is open
+Next exact assignment / owning tool: Owner merge #139 → v0 launch polish → stabilization QA
 ```
