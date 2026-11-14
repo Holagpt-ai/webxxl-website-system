@@ -18,6 +18,17 @@ import type {
   InfrastructureManagementMode,
 } from '@prisma/client'
 import { prisma } from '@/lib/db'
+import {
+  parseBusinessEmailServiceStatus,
+  parseDomainRenewalStatus,
+  parseDomainVerificationStatus,
+  parseHostingServiceStatus,
+} from '@/lib/infrastructure/lifecycle-enums'
+import {
+  applyDomainLifecycleStatus,
+  applyEmailLifecycleStatus,
+  applyHostingLifecycleStatus,
+} from '@/lib/infrastructure/lifecycle-mutations'
 
 export type InfrastructureAdminActionResult = { ok: true } | { ok: false; error: string }
 
@@ -163,82 +174,59 @@ export async function adminSetProviderConfigNoteAction(formData: FormData): Prom
   }
 }
 
-export async function adminUpdateHostingLifecycleAction(formData: FormData): Promise<void> {
+export async function adminUpdateHostingLifecycleAction(formData: FormData): Promise<InfrastructureAdminActionResult> {
   try {
     const staff = await requireStaff()
-    const hostingId = String(formData.get('hostingId') ?? '')
-    const status = String(formData.get('status') ?? '') as HostingServiceStatus
-    if (!hostingId || !status) return
-    const row = await prisma.hostingService.update({
-      where: { id: hostingId },
-      data: { status },
-    })
-    await prisma.infrastructureActivity.create({
-      data: {
-        assetType: 'HOSTING',
-        assetId: hostingId,
-        customerAccountId: row.customerAccountId,
-        actorUserId: staff.id,
-        summary: `Hosting status updated to ${status}`,
-      },
-    })
+    const hostingId = String(formData.get('hostingId') ?? '').trim()
+    const statusRaw = String(formData.get('status') ?? '')
+    if (!hostingId) return { ok: false, error: 'missing_id' }
+    const status = parseHostingServiceStatus(statusRaw)
+    if (!status) return { ok: false, error: 'invalid_status' }
+    const result = await applyHostingLifecycleStatus({ hostingId, status, actorUserId: staff.id })
+    if (!result.ok) return { ok: false, error: result.error }
     revalidateAdminInfrastructure()
+    return { ok: true }
   } catch {
-    return
+    return { ok: false, error: 'unauthorized' }
   }
 }
 
-export async function adminUpdateDomainLifecycleAction(formData: FormData): Promise<void> {
+export async function adminUpdateDomainLifecycleAction(formData: FormData): Promise<InfrastructureAdminActionResult> {
   try {
     const staff = await requireStaff()
-    const domainId = String(formData.get('domainId') ?? '')
-    const verificationStatus = String(formData.get('verificationStatus') ?? '') as DomainVerificationStatus
-    const renewalStatus = String(formData.get('renewalStatus') ?? '') as DomainRenewalStatus
-    if (!domainId) return
-    const row = await prisma.managedDomain.update({
-      where: { id: domainId },
-      data: {
-        ...(verificationStatus ? { verificationStatus } : {}),
-        ...(renewalStatus ? { renewalStatus } : {}),
-      },
+    const domainId = String(formData.get('domainId') ?? '').trim()
+    const verificationStatus = parseDomainVerificationStatus(String(formData.get('verificationStatus') ?? ''))
+    const renewalStatus = parseDomainRenewalStatus(String(formData.get('renewalStatus') ?? ''))
+    if (!domainId) return { ok: false, error: 'missing_id' }
+    if (!verificationStatus || !renewalStatus) return { ok: false, error: 'invalid_status' }
+    const result = await applyDomainLifecycleStatus({
+      domainId,
+      verificationStatus,
+      renewalStatus,
+      actorUserId: staff.id,
     })
-    await prisma.infrastructureActivity.create({
-      data: {
-        assetType: 'DOMAIN',
-        assetId: domainId,
-        customerAccountId: row.customerAccountId,
-        actorUserId: staff.id,
-        summary: 'Domain lifecycle fields updated by staff (no DNS writes)',
-      },
-    })
+    if (!result.ok) return { ok: false, error: result.error }
     revalidateAdminInfrastructure()
+    return { ok: true }
   } catch {
-    return
+    return { ok: false, error: 'unauthorized' }
   }
 }
 
-export async function adminUpdateEmailLifecycleAction(formData: FormData): Promise<void> {
+export async function adminUpdateEmailLifecycleAction(formData: FormData): Promise<InfrastructureAdminActionResult> {
   try {
     const staff = await requireStaff()
-    const emailId = String(formData.get('emailId') ?? '')
-    const status = String(formData.get('status') ?? '') as BusinessEmailServiceStatus
-    if (!emailId || !status) return
-    const row = await prisma.businessEmailService.update({
-      where: { id: emailId },
-      data: { status },
-    })
-    await prisma.infrastructureActivity.create({
-      data: {
-        assetType: 'EMAIL',
-        assetId: emailId,
-        customerAccountId: row.customerAccountId,
-        actorUserId: staff.id,
-        summary: `Business email status updated to ${status}`,
-      },
-    })
+    const emailId = String(formData.get('emailId') ?? '').trim()
+    const statusRaw = String(formData.get('status') ?? '')
+    if (!emailId) return { ok: false, error: 'missing_id' }
+    const status = parseBusinessEmailServiceStatus(statusRaw)
+    if (!status) return { ok: false, error: 'invalid_status' }
+    const result = await applyEmailLifecycleStatus({ emailId, status, actorUserId: staff.id })
+    if (!result.ok) return { ok: false, error: result.error }
     revalidateAdminInfrastructure()
+    return { ok: true }
   } catch {
-    return
+    return { ok: false, error: 'unauthorized' }
   }
 }
 

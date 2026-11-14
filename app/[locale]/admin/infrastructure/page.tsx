@@ -38,6 +38,11 @@ export default async function AdminInfrastructurePage({
   const prefix = locale === 'es' ? '/es' : ''
   const data = await listAdminInfrastructure({ q: sp.q, customerAccountId: sp.customerAccountId })
   const providerProbe = await probeProviderReadOnly({ kind: 'dns', providerId: 'manual', domain: 'example.com' })
+  const lifecycleLabels = {
+    save: copy.save,
+    lifecycleSaved: copy.infrastructure.lifecycleSaved,
+    lifecycleErrors: copy.infrastructure.lifecycleErrors,
+  }
 
   return (
     <>
@@ -159,7 +164,7 @@ export default async function AdminInfrastructurePage({
                 <HostingLifecycleForm
                   hostingId={h.id}
                   currentStatus={h.status}
-                  labels={{ statusUpdate: copy.infrastructure.statusUpdate, save: copy.save, hostingStatuses: dash.hostingStatuses }}
+                  labels={{ ...lifecycleLabels, hostingStatuses: dash.hostingStatuses }}
                 />
                 <form action={adminMarkSyncRequestedFormAction}>
                   <input type="hidden" name="assetType" value="HOSTING" />
@@ -191,7 +196,7 @@ export default async function AdminInfrastructurePage({
                 verificationStatus={d.verificationStatus}
                 renewalStatus={d.renewalStatus}
                 labels={{
-                  save: copy.save,
+                  ...lifecycleLabels,
                   domainVerificationStatuses: dash.domainVerificationStatuses,
                   domainRenewalStatuses: dash.domainRenewalStatuses,
                 }}
@@ -223,7 +228,7 @@ export default async function AdminInfrastructurePage({
               <EmailLifecycleForm
                 emailId={e.id}
                 currentStatus={e.status}
-                labels={{ save: copy.save, emailStatuses: dash.emailStatuses }}
+                labels={{ ...lifecycleLabels, emailStatuses: dash.emailStatuses }}
               />
               <form action={adminMarkSyncRequestedFormAction}>
                 <input type="hidden" name="assetType" value="EMAIL" />
