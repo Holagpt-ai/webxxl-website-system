@@ -1,25 +1,25 @@
 # WebXXL — Session Handoff
 
-**Compiled:** 2026-11-14 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `d82d32382d2eee10473cf5f9c5281a92799046ad` (PR **#133** Batch 8D MERGED)
+**Compiled:** 2026-11-14 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `d05b176a92b936e8a3d65a73e3665f8ae9867720` (PR **#134** Batch 8C MERGED)
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | GitHub `main` `d82d323` ([PR **#133**](https://github.com/Holagpt-ai/webxxl-website-system/pull/133) Batch 8D MERGED). **SEC-STAGING-CRED-2026-11-12** **VERIFIED** 2026-11-14 (`vcgibefnhneaqhcguhnt`; Preview DB updated). Acceptance Preview **`dpl_CUpAftyiuiPUVGarnDT9YaxGF6BL`** @ `staging/acceptance` `94235dd`. Staging **39/39** on rotated creds. Authenticated matrix **BLOCKED** (AUTH-STAGING-8C). |
-| 2 | GitHub SHA, branch, active PR | **`d82d32382d2eee10473cf5f9c5281a92799046ad`** on `main`. [PR **#134**](https://github.com/Holagpt-ai/webxxl-website-system/pull/134) Batch 8C release evidence **open**. `staging/acceptance` @ `94235dd`. |
-| 3 | Production deployment | GitHub deployment **`7779811057`** Production **success** 2026-11-14 @ `d82d323` (SHA only). Acceptance Preview separate; not Production. |
+| 1 | Last verified checkpoint | GitHub `main` `d05b176` ([PR **#134**](https://github.com/Holagpt-ai/webxxl-website-system/pull/134) Batch 8C MERGED). **SEC-STAGING-CRED-2026-11-12** **VERIFIED** 2026-11-14 (`vcgibefnhneaqhcguhnt`; Preview DB updated). Pilot A reached dashboard on staging. Broad authenticated acceptance **deferred** by owner until functional development completes. |
+| 2 | GitHub SHA, branch, active PR | **`d05b176a92b936e8a3d65a73e3665f8ae9867720`** on `main`. [PR **#135**](https://github.com/Holagpt-ai/webxxl-website-system/pull/135) Batch **9A** open; [PR **#136**](https://github.com/Holagpt-ai/webxxl-website-system/pull/136) Batch **9B** open (stacks on #135). `staging/acceptance` @ `94235dd`. |
+| 3 | Production deployment | Production SHA evidence last recorded @ `d82d323` (SHA only). Post-`d05b176` Production deploy **UNVERIFIED** this session. |
 | 4 | Last updated | 2026-11-14 |
-| 5 | Next task / responsible platform | Owner: Deployment Protection + **authorize magic links** for Pilot A/B → execute [`BATCH8C-AUTHENTICATED-ACCEPTANCE-QUEUE.md`](BATCH8C-AUTHENTICATED-ACCEPTANCE-QUEUE.md). Cursor: record VERIFIED matrix; v0 if CRM-SUBNAV-105 reproduces. |
-| 6 | Open blocker / gate IDs | **AUTH-STAGING-8C** (authenticated acceptance). **ISSUE-105-QA** **BLOCKED**. **RELEASE-001** **gated**. Production migrate **UNVERIFIED**. Module/provider flags **not activated**. |
+| 5 | Next task / responsible platform | **Owner:** review/merge **#135** then **#9B PR**. **Cursor:** Batch **9C** (comms, SEO, analytics, AI workforce) after 9B merge. **v0:** optional focus-state emphasis on approvals/project/lead panels (no backend overlap). |
+| 6 | Open blocker / gate IDs | **AUTH-STAGING-8C** **DEFERRED** (owner). **RELEASE-001** **gated**. Production migrate **UNVERIFIED**. Module/provider flags **not activated**. |
 
 ## This session
 
-**Batch 8C release — staging credential rotation VERIFIED** (Management API + Preview DB sync + redeploy). Evidence: [`BATCH8C-STAGING-ROTATION-RESULT.md`](BATCH8C-STAGING-ROTATION-RESULT.md). Authenticated matrix queued: [`BATCH8C-AUTHENTICATED-ACCEPTANCE-QUEUE.md`](BATCH8C-AUTHENTICATED-ACCEPTANCE-QUEUE.md). No magic links sent this session.
+**Batch 9B (PR #136 complete):** CRM/Business deep links (9A); marketing review GET + off-list fetch; social campaign + change request + support Business Overview actions; portal collaboration destinations and query focus; approval/dependency/message/request/support mutations refresh with user feedback. v0: [`BATCH9B-V0-HANDOFF.md`](BATCH9B-V0-HANDOFF.md).
 
 ## Next assignment
 
-Owner authorizes Deployment Protection tester access + Pilot A/B magic-link sends on acceptance Preview only. Cursor completes matrix items 1–8, 10–11 and updates Batch 8B report with **VERIFIED** rows.
+Owner merge **#135** then review Batch **9B** PR. Cursor starts consolidated **Batch 9C** (comms, SEO, analytics, AI workforce).
 
 ## PENDING REPOSITORY SYNC
 

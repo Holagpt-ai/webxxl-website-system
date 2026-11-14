@@ -95,7 +95,7 @@ async function collectCrm(
         recordRef: { kind: 'crm_task', id: task.id },
         priority: priorityFromDueDate(task.dueAt, now),
         title: task.title,
-        destination: { path: BUSINESS_DESTINATIONS.crmTasks },
+        destination: { path: BUSINESS_DESTINATIONS.crmTask(task.id) },
         timestamp: (task.dueAt ?? task.updatedAt).toISOString(),
         dueAt: task.dueAt?.toISOString() ?? null,
         customerAccountId: accountId,
@@ -108,7 +108,7 @@ async function collectCrm(
         recordRef: { kind: 'crm_deal', id: deal.id },
         priority: 'normal',
         title: deal.title,
-        destination: { path: BUSINESS_DESTINATIONS.crmPipeline },
+        destination: { path: BUSINESS_DESTINATIONS.crmDeal(deal.id) },
         timestamp: deal.updatedAt.toISOString(),
         dueAt: null,
         customerAccountId: accountId,
@@ -121,7 +121,7 @@ async function collectCrm(
         recordRef: { kind: 'crm_merge_proposal', id: merge.id },
         priority: 'medium',
         title: 'Pending contact merge review',
-        destination: { path: BUSINESS_DESTINATIONS.crmMerges },
+        destination: { path: BUSINESS_DESTINATIONS.crmMergeProposal(merge.id) },
         timestamp: merge.createdAt.toISOString(),
         dueAt: null,
         customerAccountId: accountId,
@@ -168,18 +168,28 @@ async function collectMarketing(
   const accountId = ctx.portal.customerAccount.id
   const checkedAt = now.toISOString()
   try {
-    const [draftRequestsTotal, submittedReviewsTotal, draftArtifactsTotal, draftRequests, reviewsResult, artifactsResult] =
-      await Promise.all([
-        data.countMarketingDraftRequests(accountId),
-        data.countMarketingSubmittedReviews(accountId),
-        data.countMarketingDraftArtifacts(accountId),
-        data.fetchMarketingDraftRequests(accountId),
-        data.fetchMarketingReviews({
-          customerAccountId: accountId,
-          viewerCanDecide: marketingViewerCanDecide(ctx),
-        }),
-        data.fetchMarketingDraftArtifacts(accountId),
-      ])
+    const [
+      draftRequestsTotal,
+      submittedReviewsTotal,
+      draftArtifactsTotal,
+      draftCampaignsTotal,
+      draftRequests,
+      reviewsResult,
+      artifactsResult,
+      draftCampaigns,
+    ] = await Promise.all([
+      data.countMarketingDraftRequests(accountId),
+      data.countMarketingSubmittedReviews(accountId),
+      data.countMarketingDraftArtifacts(accountId),
+      data.countDraftSocialCampaigns(accountId),
+      data.fetchMarketingDraftRequests(accountId),
+      data.fetchMarketingReviews({
+        customerAccountId: accountId,
+        viewerCanDecide: marketingViewerCanDecide(ctx),
+      }),
+      data.fetchMarketingDraftArtifacts(accountId),
+      data.fetchDraftSocialCampaigns(accountId),
+    ])
     if (!reviewsResult.ok) {
       return moduleUnavailable('marketing', reviewsResult.code ?? 'SOURCE_UNAVAILABLE')
     }
@@ -208,7 +218,7 @@ async function collectMarketing(
         recordRef: { kind: 'marketing_review', id: review.id },
         priority: review.expiresAt ? priorityFromDueDate(review.expiresAt, now) : 'medium',
         title: `Deliverable review (${review.revisionHash.slice(0, 8)})`,
-        destination: { path: BUSINESS_DESTINATIONS.marketingApprovals },
+        destination: { path: BUSINESS_DESTINATIONS.marketingReview(review.id) },
         timestamp: review.createdAt.toISOString(),
         dueAt: review.expiresAt?.toISOString() ?? null,
         customerAccountId: accountId,
@@ -227,13 +237,29 @@ async function collectMarketing(
         customerAccountId: accountId,
       })
     }
+    for (const campaign of draftCampaigns) {
+      actions.push({
+        module: 'marketing',
+        actionType:
+          campaign.status === 'AWAITING_APPROVAL' ? 'marketing.campaign.awaiting_approval' : 'marketing.campaign.draft',
+        recordRef: { kind: 'social_campaign', id: campaign.id },
+        priority: campaign.status === 'AWAITING_APPROVAL' ? 'medium' : 'normal',
+        title: campaign.goal.trim() || 'Social campaign',
+        destination: { path: BUSINESS_DESTINATIONS.marketingCampaign(campaign.id) },
+        timestamp: campaign.updatedAt.toISOString(),
+        dueAt: null,
+        customerAccountId: accountId,
+      })
+    }
     const summary = {
       draftRequests: accountTotal(draftRequestsTotal),
       pendingReviews: accountTotal(submittedReviewsTotal),
       preparedArtifacts: accountTotal(draftArtifactsTotal),
+      draftCampaigns: accountTotal(draftCampaignsTotal),
       draftRequestsSample: boundedSample(draftRequests.length),
       pendingReviewsSample: boundedSample(reviewsResult.value.reviews.length),
       preparedArtifactsSample: boundedSample(artifactsResult.value.artifacts.length),
+      draftCampaignsSample: boundedSample(draftCampaigns.length),
     }
     return {
       module: 'marketing',
@@ -388,11 +414,24 @@ async function collectWebsiteProjects(
 ): Promise<BusinessOverviewModuleSnapshot & { actions: BusinessOverviewAction[] }> {
   const accountId = portal.customerAccount.id
   const checkedAt = now.toISOString()
-  const [pendingApprovalsTotal, openDependenciesTotal, approvals, dependencies] = await Promise.all([
+  const [
+    pendingApprovalsTotal,
+    openDependenciesTotal,
+    openChangeRequestsTotal,
+    supportAwaitingTotal,
+    approvals,
+    dependencies,
+    changeRequests,
+    supportTickets,
+  ] = await Promise.all([
     data.countPendingProjectApprovals(accountId),
     data.countOpenProjectDependencies(accountId),
+    data.countOpenChangeRequests(accountId),
+    data.countSupportAwaitingCustomer(accountId),
     data.fetchPendingProjectApprovals(accountId),
     data.fetchOpenProjectDependencies(accountId),
+    data.fetchOpenChangeRequests(accountId),
+    data.fetchSupportAwaitingCustomer(accountId),
   ])
   const actions: BusinessOverviewAction[] = []
   for (const approval of approvals) {
@@ -402,7 +441,7 @@ async function collectWebsiteProjects(
       recordRef: { kind: 'project_approval', id: approval.id },
       priority: 'medium',
       title: approval.title,
-      destination: { path: BUSINESS_DESTINATIONS.projectApprovals },
+      destination: { path: BUSINESS_DESTINATIONS.projectApproval(approval.id) },
       timestamp: approval.requestedAt.toISOString(),
       dueAt: null,
       customerAccountId: accountId,
@@ -415,17 +454,47 @@ async function collectWebsiteProjects(
       recordRef: { kind: 'project_dependency', id: dep.id },
       priority: priorityFromDueDate(dep.dueDate, now),
       title: dep.title,
-      destination: { path: BUSINESS_DESTINATIONS.projectDetail },
+      destination: { path: BUSINESS_DESTINATIONS.projectDependency(dep.id) },
       timestamp: (dep.dueDate ?? dep.requestedFromCustomerAt).toISOString(),
       dueAt: dep.dueDate?.toISOString() ?? null,
+      customerAccountId: accountId,
+    })
+  }
+  for (const request of changeRequests) {
+    actions.push({
+      module: 'website_projects',
+      actionType: 'website_projects.change_request.open',
+      recordRef: { kind: 'change_request', id: request.id },
+      priority: 'normal',
+      title: request.title,
+      destination: { path: BUSINESS_DESTINATIONS.portalChangeRequest(request.id) },
+      timestamp: request.createdAt.toISOString(),
+      dueAt: null,
+      customerAccountId: accountId,
+    })
+  }
+  for (const ticket of supportTickets) {
+    actions.push({
+      module: 'website_projects',
+      actionType: 'website_projects.support.awaiting_customer',
+      recordRef: { kind: 'support_request', id: ticket.id },
+      priority: 'medium',
+      title: ticket.subject,
+      destination: { path: BUSINESS_DESTINATIONS.portalSupportTicket(ticket.id) },
+      timestamp: ticket.updatedAt.toISOString(),
+      dueAt: null,
       customerAccountId: accountId,
     })
   }
   const summary = {
     pendingApprovals: accountTotal(pendingApprovalsTotal),
     openDependencies: accountTotal(openDependenciesTotal),
+    openChangeRequests: accountTotal(openChangeRequestsTotal),
+    supportAwaitingCustomer: accountTotal(supportAwaitingTotal),
     pendingApprovalsSample: boundedSample(approvals.length),
     openDependenciesSample: boundedSample(dependencies.length),
+    openChangeRequestsSample: boundedSample(changeRequests.length),
+    supportAwaitingSample: boundedSample(supportTickets.length),
   }
   return {
     module: 'website_projects',

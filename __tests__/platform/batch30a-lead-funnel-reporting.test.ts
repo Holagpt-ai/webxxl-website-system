@@ -71,8 +71,10 @@ function baseDataAccess(overrides: Partial<BusinessOverviewDataAccess> = {}): Bu
     fetchMarketingDraftRequests: vi.fn(async () => []),
     countMarketingSubmittedReviews: vi.fn(async () => 0),
     countMarketingDraftArtifacts: vi.fn(async () => 0),
+    countDraftSocialCampaigns: vi.fn(async () => 0),
     fetchMarketingReviews: vi.fn(async () => ({ ok: true as const, value: { reviews: [] } })),
     fetchMarketingDraftArtifacts: vi.fn(async () => ({ ok: true as const, value: { artifacts: [] } })),
+    fetchDraftSocialCampaigns: vi.fn(async () => []),
     countSeoActionableOpportunities: vi.fn(async () => 0),
     fetchSeoActionableOpportunities: vi.fn(async () => []),
     countCommsInboxes: vi.fn(async () => 0),
@@ -83,6 +85,10 @@ function baseDataAccess(overrides: Partial<BusinessOverviewDataAccess> = {}): Bu
     fetchPendingProjectApprovals: vi.fn(async () => []),
     countOpenProjectDependencies: vi.fn(async () => 0),
     fetchOpenProjectDependencies: vi.fn(async () => []),
+    countOpenChangeRequests: vi.fn(async () => 0),
+    fetchOpenChangeRequests: vi.fn(async () => []),
+    countSupportAwaitingCustomer: vi.fn(async () => 0),
+    fetchSupportAwaitingCustomer: vi.fn(async () => []),
   }
   return { ...noop, ...overrides } as BusinessOverviewDataAccess
 }
@@ -263,7 +269,7 @@ describe('Batch 30A lead funnel reporting', () => {
     const overview = await getBusinessOverview(portal, baseDataAccess())
     const leadActions = overview.actions.filter((a) => a.actionType.startsWith('crm.website_lead'))
     expect(leadActions.length).toBeGreaterThan(0)
-    expect(leadActions[0]?.destination.path).toBe(BUSINESS_DESTINATIONS.crmLeads)
+    expect(leadActions[0]?.destination.path).toBe(BUSINESS_DESTINATIONS.crmLead('lead_1'))
     expect(leadActions[0]?.recordRef).toEqual({ kind: 'managed_site_lead', id: 'lead_1' })
   })
 

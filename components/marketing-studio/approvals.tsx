@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { scrollToDomId, useQueryRecordFocus } from '@/lib/crm-ui/deep-link'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -13,6 +15,7 @@ import {
   MKT_PAGE_SIZE,
   REVIEW_INBOX_STATUSES,
   type MarketingReview,
+  type MarketingReviewDetailResponse,
   type MarketingReviewListResponse,
 } from '@/lib/marketing-studio-ui/types'
 import type { MarketingViewProps } from '@/lib/marketing-studio-ui/server'
@@ -53,8 +56,36 @@ export function MarketingApprovals(props: MarketingViewProps) {
     }
   }, [list.error, paging.cursor, first])
 
-  const rows = list.data?.reviews ?? []
+  const search = useSearchParams()
+  const focusReviewId = search.get('reviewId')
+  const needsDirectReview =
+    Boolean(focusReviewId) && !list.isLoading && !(list.data?.reviews ?? []).some((r) => r.id === focusReviewId)
+  const directReview = useWorkspace<MarketingReviewDetailResponse>(
+    needsDirectReview && focusReviewId ? MKT_API.review(focusReviewId) : null,
+    accountId,
+  )
+
+  const rows = useMemo(() => {
+    const base = list.data?.reviews ?? []
+    const extra = directReview.data?.review
+    if (!extra || base.some((r) => r.id === extra.id)) return base
+    return [extra, ...base]
+  }, [list.data?.reviews, directReview.data?.review])
+
   const anyDecidable = rows.some((r) => r.allowedActions.canDecide)
+  useEffect(() => {
+    if (focusReviewId && status !== 'SUBMITTED') setStatus('SUBMITTED')
+  }, [focusReviewId, status])
+
+  const reviewIds = useMemo(() => rows.map((r) => r.id), [rows])
+  const scrollReview = useCallback((id: string) => scrollToDomId(`marketing-review-${id}`), [])
+  useQueryRecordFocus(
+    'reviewId',
+    !list.isLoading && rows.length > 0 && status === 'SUBMITTED',
+    reviewIds,
+    () => {},
+    scrollReview,
+  )
 
   const decide = async () => {
     if (!confirm) return
@@ -195,7 +226,7 @@ function ReviewCard({
   const stored = review.status
 
   return (
-    <li className="flex flex-col gap-4 rounded-lg border border-border bg-card p-5 text-card-foreground">
+    <li id={`marketing-review-${review.id}`} className="flex flex-col gap-4 rounded-lg border border-border bg-card p-5 text-card-foreground">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">{a.intendedAction}</p>

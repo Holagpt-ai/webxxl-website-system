@@ -97,7 +97,7 @@ export async function loadWebsiteLeadOverviewAttachment(input: {
       recordRef: { kind: 'managed_site_lead', id: lead.id },
       priority: lead.status === 'DUPLICATE_REVIEW' ? 'medium' : 'normal',
       title: actionTitle({ status: lead.status, formReference: lead.formReference }),
-      destination: { path: BUSINESS_DESTINATIONS.crmLeads },
+      destination: { path: BUSINESS_DESTINATIONS.crmLead(lead.id) },
       timestamp: lead.createdAt.toISOString(),
       dueAt: null,
       customerAccountId: input.customerAccountId,

@@ -94,6 +94,7 @@ describe('Batch 28C CRM Lead Inbox UI integration', () => {
     expect(shouldRefreshSiteLeadCache([LEADS_API.lead(leadId), accountId], accountId, leadId)).toBe(true)
     expect(shouldRefreshSiteLeadCache([LEADS_API.lead(leadId), 'other'], accountId, leadId)).toBe(false)
     expect(read('components/crm/lead-inbox.tsx')).toContain('shouldRefreshSiteLeadCache')
+    expect(read('components/crm/lead-inbox.tsx')).toContain('LEADS_API.lead')
   })
 
   it('surfaces backend 409 conflicts and preserves reject reason on failure', () => {

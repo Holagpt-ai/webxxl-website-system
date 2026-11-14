@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { useQueryRecordFocus } from '@/lib/crm-ui/deep-link'
 import { LineChart } from 'lucide-react'
 import { useSWRConfig } from 'swr'
 import { ChevronLeft, ChevronRight, Inbox } from 'lucide-react'
@@ -21,6 +23,7 @@ import {
   dayStartIso,
   leadIssue,
   shouldRefreshSiteLeadCache,
+  type LeadDetailResponse,
   type LeadListResponse,
   type LeadSummaryResponse,
   type SiteLead,
@@ -70,12 +73,41 @@ export function CrmLeadInbox({ accountId, locale, copy, base, leadsCopy: lc, sit
   const filtered = Boolean(status || siteId || from || to)
   const gate = [summary.error, list.error].find((e) => e && GATE_ISSUES.has(leadIssue(e)))
 
-  function select(lead: SiteLead) {
-    setSelected({ accountId, id: lead.id })
-    if (window.matchMedia('(max-width: 1023px)').matches) {
-      requestAnimationFrame(() => detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
-    }
-  }
+  const select = useCallback(
+    (lead: SiteLead) => {
+      setSelected({ accountId, id: lead.id })
+      if (window.matchMedia('(max-width: 1023px)').matches) {
+        requestAnimationFrame(() => detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+      }
+    },
+    [accountId],
+  )
+
+  const leadIds = useMemo(() => (list.data?.leads ?? []).map((lead) => lead.id), [list.data?.leads])
+  const focusLead = useCallback(
+    (id: string) => {
+      const lead = list.data?.leads.find((row) => row.id === id)
+      if (lead) select(lead)
+    },
+    [list.data?.leads, select],
+  )
+  useQueryRecordFocus('leadId', !list.isLoading && Boolean(list.data), leadIds, focusLead)
+
+  const search = useSearchParams()
+  const deepLinkLeadId = search.get('leadId')
+  const needsDirectLead =
+    Boolean(deepLinkLeadId) && !list.isLoading && !list.data?.leads.some((lead) => lead.id === deepLinkLeadId)
+  const directLead = useWorkspace<LeadDetailResponse>(
+    needsDirectLead && deepLinkLeadId ? LEADS_API.lead(deepLinkLeadId) : null,
+    accountId,
+  )
+
+  useEffect(() => {
+    const lead = directLead.data?.lead
+    if (!lead || lead.id !== deepLinkLeadId) return
+    if (selectedId === lead.id) return
+    select(lead)
+  }, [directLead.data?.lead, deepLinkLeadId, select, selectedId])
 
   function clearFilters() {
     setStatus('')

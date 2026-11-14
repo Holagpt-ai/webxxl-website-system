@@ -33,11 +33,15 @@ export type BusinessActionType =
   | 'marketing.request.draft'
   | 'marketing.review.pending'
   | 'marketing.artifact.prepared'
+  | 'marketing.campaign.draft'
+  | 'marketing.campaign.awaiting_approval'
   | 'local_seo.opportunity.actionable'
   | 'communications.conversation.needs_attention'
   | 'communications.inbox.setup'
   | 'website_projects.approval.pending'
   | 'website_projects.dependency.open'
+  | 'website_projects.change_request.open'
+  | 'website_projects.support.awaiting_customer'
 
 export type BusinessRecordRef = {
   kind: string

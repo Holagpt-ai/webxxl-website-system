@@ -80,6 +80,11 @@ export async function getCustomerOperationsSummary(portal: PortalUser): Promise<
       crmLeads: BUSINESS_DESTINATIONS.crmLeads,
       crmFunnel: '/dashboard/crm/leads/funnel',
       projectDashboard: BUSINESS_DESTINATIONS.projectDetail,
+      projectFiles: BUSINESS_DESTINATIONS.portalFiles(),
+      projectMessages: BUSINESS_DESTINATIONS.portalMessages,
+      projectRequests: BUSINESS_DESTINATIONS.portalRequests,
+      projectSupport: BUSINESS_DESTINATIONS.portalSupport,
+      projectApprovals: BUSINESS_DESTINATIONS.projectApprovals,
     },
   }
 }

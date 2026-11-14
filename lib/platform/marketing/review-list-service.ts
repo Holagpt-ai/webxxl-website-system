@@ -163,3 +163,34 @@ export async function listMarketingReviews(
 
   return { ok: true, value: { reviews, nextCursor } }
 }
+
+export type GetMarketingReviewInput = {
+  customerAccountId: string
+  reviewId: string
+  viewerCanDecide: boolean
+  approvalWorkflowEnabled: boolean
+}
+
+export async function getMarketingReviewForAccount(
+  input: GetMarketingReviewInput,
+): Promise<MktResult<MarketingReviewListItem>> {
+  const row = await prisma.marketingArtifactReview.findFirst({
+    where: { id: input.reviewId, customerAccountId: input.customerAccountId },
+    select: reviewListSelect,
+  })
+  if (!row) return { ok: false, code: 'NOT_FOUND', message: 'Review not found' }
+  const now = new Date()
+  return {
+    ok: true,
+    value: {
+      ...row,
+      effectiveStatus: computeReviewEffectiveStatus(row, now),
+      allowedActions: reviewAllowedActions({
+        review: row,
+        viewerCanDecide: input.viewerCanDecide,
+        approvalWorkflowEnabled: input.approvalWorkflowEnabled,
+        now,
+      }),
+    },
+  }
+}

@@ -7,6 +7,7 @@ import { enumLabel } from '@/lib/i18n/labels'
 import { previewDecisionIsBound } from '@/lib/website-preview/binding'
 import { LinkedFileList } from '@/components/files/project-file-list'
 import { isStorageConfigured } from '@/lib/integrations/storage'
+import { RecordQueryFocus } from '@/components/dashboard/record-query-focus'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,6 +38,7 @@ export default async function ApprovalsPage({ params }: { params: Promise<{ loca
 
   return (
     <>
+      <RecordQueryFocus param="approvalId" domIdPrefix="project-approval-" ready />
       <PageTitle title={d.approvalsTitle} />
       {approvals.length === 0 ? (
         <EmptyState title={d.emptyApprovals} body={d.emptyApprovalsBody} />
@@ -59,7 +61,7 @@ export default async function ApprovalsPage({ params }: { params: Promise<{ loca
               ? enumLabel(d.websitePreviewStatuses, 'SUPERSEDED')
               : enumLabel(d.approvalStatuses, approval.status)
             return (
-            <SectionCard key={approval.id} title={title}>
+            <SectionCard key={approval.id} title={title} sectionId={`project-approval-${approval.id}`}>
               {previewVersion ? (
                 <p className="mb-3 text-sm text-muted-foreground">
                   {d.deploymentId}: <span className="font-mono text-xs">{previewVersion.deploymentId}</span>
