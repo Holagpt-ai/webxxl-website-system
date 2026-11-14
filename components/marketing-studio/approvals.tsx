@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { scrollToDomId, useQueryRecordFocus } from '@/lib/crm-ui/deep-link'
+import { useQueryRecordFocus } from '@/lib/crm-ui/deep-link'
+import { focusRecordElement } from '@/components/dashboard/record-query-focus'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -78,7 +79,7 @@ export function MarketingApprovals(props: MarketingViewProps) {
   }, [focusReviewId, status])
 
   const reviewIds = useMemo(() => rows.map((r) => r.id), [rows])
-  const scrollReview = useCallback((id: string) => scrollToDomId(`marketing-review-${id}`), [])
+  const scrollReview = useCallback((id: string) => focusRecordElement(`marketing-review-${id}`), [])
   useQueryRecordFocus(
     'reviewId',
     !list.isLoading && rows.length > 0 && status === 'SUBMITTED',

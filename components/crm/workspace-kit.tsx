@@ -383,9 +383,9 @@ export function StatTile({ label, value, hint }: { label: string; value: string;
 /** Inline gap notice used for honest "this has no API yet" explanations. */
 export function GapNotice({ title, body }: { title: string; body: string }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg border bg-muted px-4 py-3 text-sm">
+    <div role="note" className="flex items-start gap-3 rounded-lg border bg-muted px-4 py-3 text-sm">
       <Ban className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-      <p className="leading-relaxed text-muted-foreground">
+      <p className="min-w-0 break-words leading-relaxed text-muted-foreground">
         <span className="font-medium text-foreground">{title}.</span> {body}
       </p>
     </div>
