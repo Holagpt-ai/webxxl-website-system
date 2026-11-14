@@ -721,7 +721,7 @@ export function AttachApprovalFilesForm({
               setSelected((current) => (e.target.checked ? [...current, file.id] : current.filter((id) => id !== file.id)))
             }
           />
-          <span className="truncate">{file.originalName}</span>
+          <span className="min-w-0 truncate">{file.originalName}</span>
         </label>
       ))}
       {error && <p className="text-xs text-destructive">{error}</p>}

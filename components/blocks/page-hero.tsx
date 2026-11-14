@@ -28,10 +28,10 @@ export function PageHero({
   return (
     <section className={cn('bg-grid relative overflow-hidden border-b', className)}>
       <Container className={cn('grid gap-12 py-12 md:py-16', visual && 'lg:grid-cols-2 lg:items-center lg:gap-16 lg:py-20')}>
-        <div className="flex max-w-2xl flex-col gap-6">
+        <div className="flex min-w-0 max-w-2xl flex-col gap-6">
           <Breadcrumbs locale={locale} items={crumbs} />
           {eyebrow && <Pill className="self-start">{eyebrow}</Pill>}
-          <h1 className="text-balance text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl lg:text-6xl">{title}</h1>
+          <h1 className="text-balance break-words text-4xl font-extrabold leading-[1.05] tracking-tight [hyphens:auto] md:text-5xl lg:text-6xl">{title}</h1>
           {description && <p className="max-w-xl text-pretty text-lg leading-relaxed text-muted-foreground">{description}</p>}
           {actions && <div className="flex flex-wrap gap-3">{actions}</div>}
           {trust && trust.length > 0 && (

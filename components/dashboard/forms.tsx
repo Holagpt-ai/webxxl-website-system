@@ -440,7 +440,7 @@ function FileCheckboxGroup({
               onChange(e.target.checked ? [...selected, file.id] : selected.filter((id) => id !== file.id))
             }}
           />
-          <span className="truncate">{file.originalName}</span>
+          <span className="min-w-0 truncate">{file.originalName}</span>
         </label>
       ))}
     </fieldset>

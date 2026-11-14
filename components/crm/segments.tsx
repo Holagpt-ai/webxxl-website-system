@@ -502,7 +502,7 @@ function SegmentBuilder({
             return (
               <li key={rule.key} className="flex flex-col gap-3 rounded-lg border bg-muted p-4">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-medium text-foreground">{fill(t.rule, { index: index + 1 })}</p>
+                  <p className="min-w-0 text-sm font-medium text-foreground">{fill(t.rule, { index: index + 1 })}</p>
                   {rules.length > 1 && (
                     <Button
                       variant="ghost"

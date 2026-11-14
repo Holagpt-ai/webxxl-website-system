@@ -67,10 +67,10 @@ export function CrmOverview({ accountId, locale, copy, base }: Props) {
             <ul className="flex flex-col divide-y">
               {contacts.data.contacts.slice(0, 5).map((c) => (
                 <li key={c.id} className="flex items-center justify-between gap-3 py-3">
-                  <Link href={`${base}/contacts/${c.id}`} className="font-medium text-foreground underline-offset-4 hover:underline">
+                  <Link href={`${base}/contacts/${c.id}`} className="min-w-0 truncate font-medium text-foreground underline-offset-4 hover:underline">
                     {contactName(c, copy.fields.unnamed)}
                   </Link>
-                  <span className="text-xs text-muted-foreground">{formatDate(c.updatedAt, locale)}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">{formatDate(c.updatedAt, locale)}</span>
                 </li>
               ))}
             </ul>

@@ -178,7 +178,7 @@ function ProductCard({
   return (
     <li className="flex flex-col gap-3 rounded-lg border bg-background p-4">
       <div className="flex items-start justify-between gap-2">
-        <p className="font-semibold leading-snug text-foreground">{product.name}</p>
+        <p className="min-w-0 break-words font-semibold leading-snug text-foreground">{product.name}</p>
         <StatusPill label={copy.kinds[product.kind] ?? product.kind} tone="info" />
       </div>
       <div className="mt-auto flex flex-col gap-1">
@@ -226,7 +226,7 @@ function ServicesSection({ url, copy, loginHref }: { url: string; copy: Commerce
         <ul className="flex flex-col divide-y rounded-lg border">
           {data.map((service) => (
             <li key={service.id} className="flex items-center justify-between gap-3 px-4 py-3">
-              <span className="font-mono text-sm text-foreground">{service.productKey}</span>
+              <span className="min-w-0 break-all font-mono text-sm text-foreground">{service.productKey}</span>
               <StatusPill
                 label={copy.serviceStatuses[service.status] ?? service.status}
                 tone={service.status === 'ACTIVE' ? 'success' : 'neutral'}

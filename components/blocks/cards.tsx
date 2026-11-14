@@ -43,7 +43,7 @@ export function IndustryCard({ industry, locale, variant = 'tile' }: { industry:
     return (
       <LocaleLink locale={locale} href={routes.industry(industry.slug)} className={cn(cardBase, 'flex-row items-start gap-4 p-5')}>
         <IconTile name={industry.icon} />
-        <span className="flex flex-1 flex-col gap-1">
+        <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="font-bold">{t(industry.name, locale)}</span>
           <span className="text-sm leading-relaxed text-muted-foreground">{t(industry.tagline, locale)}</span>
         </span>
@@ -164,9 +164,9 @@ export function ItemList({ items, locale, marker = 'check' }: { items: ContentIt
           >
             {marker === 'check' ? <Check className="size-3.5" strokeWidth={3} aria-hidden="true" /> : <CircleAlert className="size-3.5" aria-hidden="true" />}
           </span>
-          <span className="flex flex-col gap-1">
+          <span className="flex min-w-0 flex-col gap-1">
             <span className="font-bold">{t(item.title, locale)}</span>
-            <span className="text-sm leading-relaxed text-muted-foreground">{t(item.description, locale)}</span>
+            <span className="text-pretty text-sm leading-relaxed text-muted-foreground">{t(item.description, locale)}</span>
           </span>
         </li>
       ))}

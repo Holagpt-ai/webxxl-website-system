@@ -184,7 +184,7 @@ function ConversationDetail({
           <ul className="flex flex-col divide-y rounded-lg border">
             {handoffs.map((h) => (
               <li key={h.id} className="flex flex-col gap-1 p-3">
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <StatusPill tone={h.status === 'COMPLETED' ? 'success' : h.status === 'CANCELLED' ? 'muted' : 'info'} label={copy.handoffStatus[h.status] ?? h.status} />
                   <span className="text-xs text-muted-foreground">{formatDate(h.createdAt, locale)}</span>
                 </div>

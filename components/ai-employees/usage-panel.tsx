@@ -43,7 +43,7 @@ export function UsagePanel({ ctx }: { ctx: WorkforceContext }) {
         <ul className="flex flex-col divide-y rounded-lg border">
           {switches.map(([label, value, kind]) => (
             <li key={label} className="flex items-center justify-between gap-3 px-4 py-3">
-              <span className="text-sm text-foreground">{label}</span>
+              <span className="min-w-0 text-sm text-foreground">{label}</span>
               {kind === 'emergency' ? (
                 <StatusPill tone={value ? 'danger' : 'muted'} label={value ? copy.usage.active : copy.usage.clear} />
               ) : (

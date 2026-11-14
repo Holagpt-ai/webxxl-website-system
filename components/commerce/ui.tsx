@@ -172,7 +172,7 @@ export function Pagination({
   const from = total === 0 ? 0 : skip + 1
   const to = Math.min(skip + take, total)
   return (
-    <nav aria-label={copy.pagination.label} className="flex items-center justify-between gap-3 border-t pt-4">
+    <nav aria-label={copy.pagination.label} className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
       <p className="text-sm text-muted-foreground" aria-live="polite">
         {fill(copy.pagination.range, { from, to, total })}
       </p>

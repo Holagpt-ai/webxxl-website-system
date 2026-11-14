@@ -75,7 +75,7 @@ function CommandCenterBody({ accountId, locale, copy }: BusinessViewProps) {
           {copy.dashboardLink}
         </Link>
       </p>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         {overview && (
           <p className="text-xs text-muted-foreground">
             <time dateTime={overview.generatedAt}>{fill(copy.generatedAt, { time: formatDateTime(overview.generatedAt, locale) })}</time>

@@ -159,7 +159,7 @@ export function CrmPipelineView({ accountId, locale, copy }: Props) {
                                     .join(' · ')}
                                 </p>
                               )}
-                              <div className="flex items-center justify-between gap-2">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
                                 <StatusPill label={enumLabel(copy.enums.dealStatus, deal.status)} tone={DEAL_TONE[deal.status] ?? 'muted'} />
                                 <span className="text-xs text-muted-foreground">{formatDate(deal.updatedAt, locale)}</span>
                               </div>

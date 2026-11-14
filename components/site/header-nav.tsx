@@ -86,13 +86,18 @@ export function HeaderNav({ items, label }: { items: HeaderItem[]; label: string
                   <ul className={cn('grid gap-1', item.columns === 3 ? 'grid-cols-3' : 'grid-cols-4')}>
                     {item.entries.map((entry) => {
                       const EntryIcon = icons[entry.icon]
+                      const current = pathname === entry.href
                       return (
-                        <li key={entry.href}>
-                          <Link href={entry.href} className="group flex items-start gap-3 rounded-lg p-2.5 transition-colors hover:bg-muted">
+                        <li key={entry.href} className="min-w-0">
+                          <Link
+                            href={entry.href}
+                            aria-current={current ? 'page' : undefined}
+                            className={cn('group flex items-start gap-3 rounded-lg p-2.5 transition-colors hover:bg-muted', current && 'bg-muted')}
+                          >
                             <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary">
                               <EntryIcon className="size-4" aria-hidden="true" />
                             </span>
-                            <span className="flex flex-col gap-0.5">
+                            <span className="flex min-w-0 flex-col gap-0.5">
                               <span className="text-sm font-semibold group-hover:text-primary">{entry.label}</span>
                               {entry.description && <span className="text-xs leading-snug text-muted-foreground">{entry.description}</span>}
                             </span>
