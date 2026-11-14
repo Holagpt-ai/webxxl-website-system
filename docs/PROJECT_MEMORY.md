@@ -35,11 +35,11 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | GitHub `main` `f867760` ([PR **#138**](https://github.com/Holagpt-ai/webxxl-website-system/pull/138) Batch **9D** MERGED; **9A–9D** complete at source). **SEC-STAGING-CRED-2026-11-12** **VERIFIED** 2026-11-14 (`vcgibefnhneaqhcguhnt`; Preview DB updated). Approved functional development **9E in progress**. Broad acceptance **deferred** to launch stabilization. |
-| 2 | GitHub SHA, branch, active PR | **`f8677600dc26dd911bd4343d6c214023883e62ee`** on `main`. Batch **9E** implementation PR (infrastructure + platform completion) expected next. Batches **9A** [#135], **9B** [#136], **9C** [#137], **9D** [#138] **MERGED**. |
+| 1 | Last verified checkpoint | GitHub `main` `f867760` ([PR **#138**](https://github.com/Holagpt-ai/webxxl-website-system/pull/138) Batch **9D** MERGED; **9A–9D** complete at source). **SEC-STAGING-CRED-2026-11-12** **VERIFIED** 2026-11-14 (`vcgibefnhneaqhcguhnt`; Preview DB updated). Batch **9E** [PR **#139**](https://github.com/Holagpt-ai/webxxl-website-system/pull/139) open. Broad acceptance **deferred** to launch stabilization. |
+| 2 | GitHub SHA, branch, active PR | **`f8677600dc26dd911bd4343d6c214023883e62ee`** on `main`. [PR **#139**](https://github.com/Holagpt-ai/webxxl-website-system/pull/139) Batch **9E** open @ `7df5a73`. Batches **9A** [#135], **9B** [#136], **9C** [#137], **9D** [#138] **MERGED**. |
 | 3 | Production deployment | Production SHA evidence last recorded @ `d82d323` (SHA only). Post-`f867760` Production deploy **UNVERIFIED** this session. |
 | 4 | Last updated | 2026-11-14 |
-| 5 | Next task / responsible platform | **Owner:** review/merge Batch **9E** PR. **Cursor:** after 9E — **final UI (v0) + launch stabilization** only. **v0:** [`BATCH9E-V0-HANDOFF.md`](BATCH9E-V0-HANDOFF.md) optional polish. |
+| 5 | Next task / responsible platform | **Owner:** review/merge [PR **#139**](https://github.com/Holagpt-ai/webxxl-website-system/pull/139) Batch **9E**. **Cursor / v0:** after merge — **final UI + launch stabilization** only. **v0:** optional [`BATCH9E-V0-HANDOFF.md`](BATCH9E-V0-HANDOFF.md). |
 | 6 | Open blocker / gate IDs | **AUTH-STAGING-8C** **DEFERRED** (owner). **RELEASE-001** **gated**. Production migrate + support-messages migration **UNVERIFIED**/owner-gated. Provider/DNS/live checkout **not activated**. |
 
 ### Evidence table
