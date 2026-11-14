@@ -15,9 +15,9 @@
 
 | Check | Result |
 |---|---|
-| New credential DB preflight | **PASS** — `supabase:vcgibefnhneaqhcguhnt/postgres` |
-| Migration history (read-only) | **PASS** — **39/39** |
-| Pre-rotation credential rejection | **PASS** — old URI fails preflight after rotation |
+| New credential (identity preflight) | **PASS** — `migration-rehearsal --verify-db` → `supabase:vcgibefnhneaqhcguhnt/postgres` |
+| Migration history (read-only) | **PASS** — **39/39** (`PILOT_READINESS_DB_PROBE=1` + authenticated Prisma read on staging) |
+| Pre-rotation credential rejection | **PASS** — pre-rotation URI rejected by **authenticated Prisma database connection probe** (not `migration-rehearsal --verify-db` URL preflight alone) |
 | Preview acceptance alias | **READY** — `dpl_CUpAftyiuiPUVGarnDT9YaxGF6BL` on `staging/acceptance` git host |
 | Branch `AUTH_URL` | **Aligned** to stable `…-git-stagi-add2b3-…vercel.app` |
 | `WEBXXL_STAGING_DATABASE_IDENTITY` (Preview) | **Unchanged** — `supabase:vcgibefnhneaqhcguhnt/postgres` |

@@ -6,12 +6,12 @@
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | GitHub `main` `d82d323` (PR **#133** MERGED). **SEC-STAGING-CRED** **VERIFIED** 2026-11-14. Preview **`dpl_CUpAftyiuiPUVGarnDT9YaxGF6BL`**. Staging **39/39**. Authenticated Batch 8B items **BLOCKED** (**AUTH-STAGING-8C**). |
-| 2 | GitHub SHA, branch, active PR | **`d82d323`** on `main`. Batch 8C release-evidence PR open. `staging/acceptance` @ `94235dd`. |
-| 3 | Production deployment | **`7779811057`** @ `d82d323` (SHA only). |
+| 1 | Last verified checkpoint | GitHub `main` `d82d323` ([PR **#133**](https://github.com/Holagpt-ai/webxxl-website-system/pull/133) Batch 8D MERGED). **SEC-STAGING-CRED-2026-11-12** **VERIFIED** 2026-11-14 (`vcgibefnhneaqhcguhnt`; Preview DB updated). Acceptance Preview **`dpl_CUpAftyiuiPUVGarnDT9YaxGF6BL`** @ `staging/acceptance` `94235dd`. Staging **39/39** on rotated creds. Authenticated matrix **BLOCKED** (AUTH-STAGING-8C). |
+| 2 | GitHub SHA, branch, active PR | **`d82d32382d2eee10473cf5f9c5281a92799046ad`** on `main`. [PR **#134**](https://github.com/Holagpt-ai/webxxl-website-system/pull/134) Batch 8C release evidence **open**. `staging/acceptance` @ `94235dd`. |
+| 3 | Production deployment | GitHub deployment **`7779811057`** Production **success** 2026-11-14 @ `d82d323` (SHA only). Acceptance Preview separate; not Production. |
 | 4 | Last updated | 2026-11-14 |
-| 5 | Next task / responsible platform | Owner: authorize Pilot A/B magic links + tester access → [`BATCH8C-AUTHENTICATED-ACCEPTANCE-QUEUE.md`](BATCH8C-AUTHENTICATED-ACCEPTANCE-QUEUE.md). |
-| 6 | Open blocker / gate IDs | **AUTH-STAGING-8C**. **ISSUE-105-QA** **BLOCKED**. **RELEASE-001** **gated**. Production migrate **UNVERIFIED**. |
+| 5 | Next task / responsible platform | Owner: Deployment Protection + **authorize magic links** for Pilot A/B → execute [`BATCH8C-AUTHENTICATED-ACCEPTANCE-QUEUE.md`](BATCH8C-AUTHENTICATED-ACCEPTANCE-QUEUE.md). Cursor: record VERIFIED matrix; v0 if CRM-SUBNAV-105 reproduces. |
+| 6 | Open blocker / gate IDs | **AUTH-STAGING-8C** (authenticated acceptance). **ISSUE-105-QA** **BLOCKED**. **RELEASE-001** **gated**. Production migrate **UNVERIFIED**. Module/provider flags **not activated**. |
 
 ## This session
 
