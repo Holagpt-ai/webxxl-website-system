@@ -7,19 +7,19 @@
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | GitHub `main` `d05b176` ([PR **#134**](https://github.com/Holagpt-ai/webxxl-website-system/pull/134) Batch 8C MERGED). **SEC-STAGING-CRED-2026-11-12** **VERIFIED** 2026-11-14 (`vcgibefnhneaqhcguhnt`; Preview DB updated). Pilot A reached dashboard on staging. Broad authenticated acceptance **deferred** by owner until functional development completes. |
-| 2 | GitHub SHA, branch, active PR | **`d05b176a92b936e8a3d65a73e3665f8ae9867720`** on `main`. [PR **#135**](https://github.com/Holagpt-ai/webxxl-website-system/pull/135) Batch **9A** CRM action deep links **open**. `staging/acceptance` @ `94235dd`. |
+| 2 | GitHub SHA, branch, active PR | **`d05b176a92b936e8a3d65a73e3665f8ae9867720`** on `main`. [PR **#135**](https://github.com/Holagpt-ai/webxxl-website-system/pull/135) Batch **9A** open; Batch **9B** portal/marketing/project wiring **IN PR** (`feat/batch9b-portal-business-crm-marketing`). `staging/acceptance` @ `94235dd`. |
 | 3 | Production deployment | Production SHA evidence last recorded @ `d82d323` (SHA only). Post-`d05b176` Production deploy **UNVERIFIED** this session. |
 | 4 | Last updated | 2026-11-14 |
-| 5 | Next task / responsible platform | **Cursor:** merge Batch 9A then continue portal end-to-end wiring (marketing review deep links, project lifecycle mutations). **v0:** polish only if Business Center/CRM focus affordances need visual emphasis (no route overlap). |
+| 5 | Next task / responsible platform | **Owner:** review/merge **#135** then **#9B PR**. **Cursor:** Batch **9C** (comms, SEO, analytics, AI workforce) after 9B merge. **v0:** optional focus-state emphasis on approvals/project/lead panels (no backend overlap). |
 | 6 | Open blocker / gate IDs | **AUTH-STAGING-8C** **DEFERRED** (owner). **RELEASE-001** **gated**. Production migrate **UNVERIFIED**. Module/provider flags **not activated**. |
 
 ## This session
 
-**Batch 9A — Business Center / Customer Operations CRM action deep links:** record-scoped `destination.path` for tasks, deals, merges, and website leads; CRM workspace query-param focus for those records. Owner deferred broad acceptance QA until functional development completes.
+**Batch 9B — Portal / Business / CRM / Marketing:** record-scoped marketing review, project approval, and dependency destinations; direct `GET /api/v1/site-leads/:id` when deep-linking off inbox page; dashboard query focus on approvals, project dependencies, and marketing reviews.
 
 ## Next assignment
 
-Owner review Batch 9A PR. Cursor continues Issue #109 portal wiring: marketing pending-review destinations, project approval/dependency actions, comms conversation handoffs.
+Owner merge **#135** then review Batch **9B** PR. Cursor starts consolidated **Batch 9C** (comms, SEO, analytics, AI workforce).
 
 ## PENDING REPOSITORY SYNC
 

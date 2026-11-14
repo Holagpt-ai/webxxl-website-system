@@ -22,13 +22,17 @@ export const BUSINESS_DESTINATIONS = {
   marketingRequests: '/dashboard/marketing/requests',
   marketingRequest: (requestId: string) => `/dashboard/marketing/requests/${encodeURIComponent(requestId)}`,
   marketingApprovals: '/dashboard/marketing/approvals',
+  marketingReview: (reviewId: string) => dashboardPathWithQuery('/dashboard/marketing/approvals', { reviewId }),
   marketingDeliverable: (artifactId: string) => `/dashboard/marketing/deliverables/${encodeURIComponent(artifactId)}`,
+  marketingCampaign: (campaignId: string) => `/dashboard/marketing/campaigns/${encodeURIComponent(campaignId)}`,
   seoOpportunities: '/dashboard/seo/opportunities',
   seoOpportunitySite: (siteId: string) => `/dashboard/seo/opportunities?site=${encodeURIComponent(siteId)}`,
   commsInbox: '/dashboard/communications',
   commsConversation: (conversationId: string) =>
     `/dashboard/communications/conversations/${encodeURIComponent(conversationId)}`,
   projectApprovals: '/dashboard/approvals',
+  projectApproval: (approvalId: string) => dashboardPathWithQuery('/dashboard/approvals', { approvalId }),
   projectDetail: '/dashboard/project',
+  projectDependency: (dependencyId: string) => dashboardPathWithQuery('/dashboard/project', { dependencyId }),
   dashboardOverview: '/dashboard',
 } as const

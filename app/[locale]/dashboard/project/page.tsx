@@ -12,6 +12,7 @@ import { ProjectDeliverySummary } from '@/components/dashboard/project-delivery-
 import { MilestoneRoadmap } from '@/components/dashboard/milestone-roadmap'
 import { DependencyActionCenter } from '@/components/dashboard/dependency-action-center'
 import { ActivityTimeline } from '@/components/dashboard/activity-timeline'
+import { RecordQueryFocus } from '@/components/dashboard/record-query-focus'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,6 +41,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ locale
 
   return (
     <>
+      <RecordQueryFocus param="dependencyId" domIdPrefix="project-dependency-" ready />
       <PageTitle title={project.name} description={project.summary ?? undefined} />
       {hasOwnerReviewPackage(project.id) && (
         <div className="mb-6 rounded-lg border bg-muted/30 p-4 text-sm">

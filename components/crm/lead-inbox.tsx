@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useQueryRecordFocus } from '@/lib/crm-ui/deep-link'
 import { LineChart } from 'lucide-react'
 import { useSWRConfig } from 'swr'
@@ -22,6 +23,7 @@ import {
   dayStartIso,
   leadIssue,
   shouldRefreshSiteLeadCache,
+  type LeadDetailResponse,
   type LeadListResponse,
   type LeadSummaryResponse,
   type SiteLead,
@@ -90,6 +92,22 @@ export function CrmLeadInbox({ accountId, locale, copy, base, leadsCopy: lc, sit
     [list.data?.leads, select],
   )
   useQueryRecordFocus('leadId', !list.isLoading && Boolean(list.data), leadIds, focusLead)
+
+  const search = useSearchParams()
+  const deepLinkLeadId = search.get('leadId')
+  const needsDirectLead =
+    Boolean(deepLinkLeadId) && !list.isLoading && !list.data?.leads.some((lead) => lead.id === deepLinkLeadId)
+  const directLead = useWorkspace<LeadDetailResponse>(
+    needsDirectLead && deepLinkLeadId ? LEADS_API.lead(deepLinkLeadId) : null,
+    accountId,
+  )
+
+  useEffect(() => {
+    const lead = directLead.data?.lead
+    if (!lead || lead.id !== deepLinkLeadId) return
+    if (selectedId === lead.id) return
+    select(lead)
+  }, [directLead.data?.lead, deepLinkLeadId, select, selectedId])
 
   function clearFilters() {
     setStatus('')

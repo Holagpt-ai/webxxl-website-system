@@ -23,9 +23,17 @@ export function StatusBadge({ label, tone }: { label: string; tone?: 'default' |
   return <Badge variant={variant}>{label}</Badge>
 }
 
-export function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+export function SectionCard({
+  title,
+  children,
+  sectionId,
+}: {
+  title: string
+  children: React.ReactNode
+  sectionId?: string
+}) {
   return (
-    <section className="rounded-xl border bg-card p-5 shadow-sm">
+    <section id={sectionId} className="rounded-xl border bg-card p-5 shadow-sm">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">{title}</h2>
       {children}
     </section>

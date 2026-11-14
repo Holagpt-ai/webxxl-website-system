@@ -57,7 +57,7 @@ export function DependencyActionCenter({
         const href = dependencyActionHref(actionKey, localePrefix)
         const due = fmtDate(dep.dueDate, locale)
         return (
-          <li key={dep.id} className="rounded-lg border p-3 text-sm">
+          <li key={dep.id} id={`project-dependency-${dep.id}`} className="rounded-lg border p-3 text-sm">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <p className="font-medium">{dep.title}</p>
               <StatusBadge label={enumLabel(copy.dependencyStatuses, dep.status)} />
