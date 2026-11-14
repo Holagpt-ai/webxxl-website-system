@@ -52,7 +52,7 @@ export function MilestoneRoadmap({
         const summary = milestoneTaskSummary(milestoneTasks)
         const completedLabel = fmtDate(milestone.completedAt, locale)
         return (
-          <li key={milestone.id} className="rounded-xl border bg-card p-4 text-sm">
+          <li key={milestone.id} id={`project-milestone-${milestone.id}`} className="rounded-xl border bg-card p-4 text-sm">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-foreground">

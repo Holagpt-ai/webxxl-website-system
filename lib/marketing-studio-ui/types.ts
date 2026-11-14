@@ -13,6 +13,7 @@ export const MKT_API = {
   decide: (reviewId: string) => `/api/v1/marketing/reviews/${enc(reviewId)}/decide`,
   artifacts: '/api/v1/marketing/artifacts',
   reviews: '/api/v1/marketing/reviews',
+  review: (reviewId: string) => `/api/v1/marketing/reviews/${enc(reviewId)}`,
   followUps: '/api/v1/marketing/follow-ups',
   evaluate: '/api/v1/marketing/follow-ups/evaluate',
   prepareTask: (id: string) => `/api/v1/marketing/follow-ups/${enc(id)}/prepare-task`,
@@ -275,6 +276,7 @@ export type MarketingReview = {
 }
 
 export type MarketingReviewListResponse = { reviews: MarketingReview[]; nextCursor?: string }
+export type MarketingReviewDetailResponse = { review: MarketingReview }
 
 export type MarketingArtifactRevision = {
   id: string

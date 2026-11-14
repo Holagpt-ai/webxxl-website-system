@@ -5,6 +5,7 @@ import { PageTitle, SectionCard, EmptyState } from '@/components/dashboard/primi
 import { FileUploadForm } from '@/components/dashboard/forms'
 import { ProjectFileList } from '@/components/files/project-file-list'
 import { isStorageConfigured } from '@/lib/integrations/storage'
+import { RecordQueryFocus } from '@/components/dashboard/record-query-focus'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,6 +39,7 @@ export default async function FilesPage({ params }: { params: Promise<{ locale: 
 
   return (
     <>
+      <RecordQueryFocus param="fileId" domIdPrefix="project-file-" ready />
       <PageTitle title={d.filesTitle} description={d.filesDescription} />
       {!storageReady && (
         <div className="mb-6">

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
@@ -36,6 +37,7 @@ export function CommentForm({
   successMessage: string
   errorMessage: string
 }) {
+  const router = useRouter()
   const [body, setBody] = useState('')
   const [feedback, setFeedback] = useState<'ok' | 'error' | null>(null)
   const [pending, startTransition] = useTransition()
@@ -53,6 +55,7 @@ export function CommentForm({
           }
           setBody('')
           setFeedback('ok')
+          router.refresh()
         })
       }}
     >
@@ -71,28 +74,64 @@ export function ApprovalActions({
   approveLabel,
   changesLabel,
   notesPlaceholder,
+  errorMessage = 'Unable to save your decision. Try again.',
+  successMessage,
 }: {
   approvalId: string
   approveLabel: string
   changesLabel: string
   notesPlaceholder: string
+  errorMessage?: string
+  successMessage?: string
 }) {
+  const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [notes, setNotes] = useState('')
+  const [outcome, setOutcome] = useState<'ok' | 'error' | null>(null)
   return (
     <div className="flex flex-col gap-3">
       <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={notesPlaceholder} rows={2} />
+      {outcome === 'ok' && successMessage && <p className="text-sm text-success">{successMessage}</p>}
+      {outcome === 'error' && (
+        <p className="text-sm text-destructive" role="alert">
+          {errorMessage}
+        </p>
+      )}
       <div className="flex flex-wrap gap-2">
         <Button
           disabled={pending}
-          onClick={() => startTransition(() => void respondApprovalAction(approvalId, 'APPROVED', notes))}
+          onClick={() =>
+            startTransition(async () => {
+              setOutcome(null)
+              const result = await respondApprovalAction(approvalId, 'APPROVED', notes)
+              if (!result.ok) {
+                setOutcome('error')
+                return
+              }
+              setNotes('')
+              setOutcome('ok')
+              router.refresh()
+            })
+          }
         >
           {approveLabel}
         </Button>
         <Button
           variant="outline"
           disabled={pending}
-          onClick={() => startTransition(() => void respondApprovalAction(approvalId, 'CHANGES_REQUESTED', notes))}
+          onClick={() =>
+            startTransition(async () => {
+              setOutcome(null)
+              const result = await respondApprovalAction(approvalId, 'CHANGES_REQUESTED', notes)
+              if (!result.ok) {
+                setOutcome('error')
+                return
+              }
+              setNotes('')
+              setOutcome('ok')
+              router.refresh()
+            })
+          }
         >
           {changesLabel}
         </Button>
@@ -137,6 +176,7 @@ export function ChangeRequestForm({
   const [priority, setPriority] = useState<'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'>('NORMAL')
   const [category, setCategory] = useState<'DESIGN' | 'CONTENT' | 'MEDIA' | 'FUNCTIONALITY' | 'OTHER'>('DESIGN')
   const [fileIds, setFileIds] = useState<string[]>([])
+  const router = useRouter()
   const [feedback, setFeedback] = useState<'ok' | 'error' | null>(null)
   const [pending, startTransition] = useTransition()
   return (
@@ -158,6 +198,7 @@ export function ChangeRequestForm({
           setDescription('')
           setFileIds([])
           setFeedback('ok')
+          router.refresh()
         })
       }}
     >
@@ -222,9 +263,11 @@ export function SupportForm({
   attachLabel?: string
   files?: { id: string; originalName: string }[]
 }) {
+  const router = useRouter()
   const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
   const [fileIds, setFileIds] = useState<string[]>([])
+  const [feedback, setFeedback] = useState<'ok' | 'error' | null>(null)
   const [pending, startTransition] = useTransition()
   return (
     <form
@@ -232,12 +275,17 @@ export function SupportForm({
       onSubmit={(e) => {
         e.preventDefault()
         startTransition(async () => {
+          setFeedback(null)
           const result = await createSupportRequestAction(subject, message, projectId, fileIds)
-          if (result.ok) {
-            setSubject('')
-            setMessage('')
-            setFileIds([])
+          if (!result.ok) {
+            setFeedback('error')
+            return
           }
+          setSubject('')
+          setMessage('')
+          setFileIds([])
+          setFeedback('ok')
+          router.refresh()
         })
       }}
     >
@@ -252,6 +300,11 @@ export function SupportForm({
       {files.length > 0 && attachLabel && (
         <FileCheckboxGroup label={attachLabel} files={files} selected={fileIds} onChange={setFileIds} />
       )}
+      {feedback === 'error' && (
+        <p className="text-sm text-destructive" role="alert">
+          Unable to submit. Try again.
+        </p>
+      )}
       <Button type="submit" disabled={pending}>
         {submitLabel}
       </Button>
@@ -259,12 +312,44 @@ export function SupportForm({
   )
 }
 
-export function DependencyResolveButton({ dependencyId, label }: { dependencyId: string; label: string }) {
+export function DependencyResolveButton({
+  dependencyId,
+  label,
+  errorMessage = 'Unable to mark this item complete. Try again.',
+}: {
+  dependencyId: string
+  label: string
+  errorMessage?: string
+}) {
+  const router = useRouter()
   const [pending, startTransition] = useTransition()
+  const [failed, setFailed] = useState(false)
   return (
-    <Button size="sm" variant="outline" disabled={pending} onClick={() => startTransition(() => void resolveDependencyAction(dependencyId))}>
-      {label}
-    </Button>
+    <div className="flex flex-col gap-1">
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={pending}
+        onClick={() =>
+          startTransition(async () => {
+            setFailed(false)
+            const result = await resolveDependencyAction(dependencyId)
+            if (!result.ok) {
+              setFailed(true)
+              return
+            }
+            router.refresh()
+          })
+        }
+      >
+        {label}
+      </Button>
+      {failed && (
+        <p className="text-xs text-destructive" role="alert">
+          {errorMessage}
+        </p>
+      )}
+    </div>
   )
 }
 

@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { PageTitle, SectionCard, EmptyState } from '@/components/dashboard/primitives'
 import { CommentForm } from '@/components/dashboard/forms'
 import { filterCustomerComments } from '@/lib/portal/access-rules'
+import { RecordQueryFocus } from '@/components/dashboard/record-query-focus'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,6 +34,7 @@ export default async function MessagesPage({ params }: { params: Promise<{ local
 
   return (
     <>
+      <RecordQueryFocus param="commentId" domIdPrefix="project-comment-" ready />
       <PageTitle title={d.messagesTitle} />
       <SectionCard title={d.recentMessages}>
         {comments.length === 0 ? (
@@ -40,7 +42,7 @@ export default async function MessagesPage({ params }: { params: Promise<{ local
         ) : (
           <ul className="flex flex-col gap-4">
             {comments.map((comment) => (
-              <li key={comment.id} className="rounded-lg border p-3 text-sm">
+              <li key={comment.id} id={`project-comment-${comment.id}`} className="rounded-lg border p-3 text-sm">
                 <p className="whitespace-pre-wrap">{comment.body}</p>
                 <p className="mt-2 text-xs text-muted-foreground">
                   {comment.author.name ?? comment.author.email} · {dateFormat.format(comment.createdAt)}

@@ -49,8 +49,10 @@ function baseDataAccess(overrides: Partial<BusinessOverviewDataAccess> = {}): Bu
     fetchMarketingDraftRequests: vi.fn(async () => []),
     countMarketingSubmittedReviews: vi.fn(async () => 0),
     countMarketingDraftArtifacts: vi.fn(async () => 0),
+    countDraftSocialCampaigns: vi.fn(async () => 0),
     fetchMarketingReviews: vi.fn(async () => ({ ok: true as const, value: { reviews: [] } })),
     fetchMarketingDraftArtifacts: vi.fn(async () => ({ ok: true as const, value: { artifacts: [] } })),
+    fetchDraftSocialCampaigns: vi.fn(async () => []),
     countSeoActionableOpportunities: vi.fn(async () => 0),
     fetchSeoActionableOpportunities: vi.fn(async () => []),
     countCommsInboxes: vi.fn(async () => 0),
@@ -61,6 +63,10 @@ function baseDataAccess(overrides: Partial<BusinessOverviewDataAccess> = {}): Bu
     fetchPendingProjectApprovals: vi.fn(async () => []),
     countOpenProjectDependencies: vi.fn(async () => 0),
     fetchOpenProjectDependencies: vi.fn(async () => []),
+    countOpenChangeRequests: vi.fn(async () => 0),
+    fetchOpenChangeRequests: vi.fn(async () => []),
+    countSupportAwaitingCustomer: vi.fn(async () => 0),
+    fetchSupportAwaitingCustomer: vi.fn(async () => []),
   }
   return { ...noop, ...overrides } as BusinessOverviewDataAccess
 }
@@ -77,6 +83,31 @@ describe('Batch 9B portal record destinations', () => {
     expect(BUSINESS_DESTINATIONS.marketingReview('rv_1')).toBe('/dashboard/marketing/approvals?reviewId=rv_1')
     expect(BUSINESS_DESTINATIONS.projectApproval('ap_1')).toBe('/dashboard/approvals?approvalId=ap_1')
     expect(BUSINESS_DESTINATIONS.projectDependency('dp_1')).toBe('/dashboard/project?dependencyId=dp_1')
+  })
+
+  it('emits portal collaboration and campaign destinations', async () => {
+    const now = new Date('2026-10-31T00:00:00.000Z')
+    const data = baseDataAccess({
+      fetchOpenChangeRequests: vi.fn(async () => [
+        { id: 'cr_a', title: 'Header update', status: 'REVIEWING' as const, createdAt: now, projectId: 'p1' },
+      ]),
+      fetchSupportAwaitingCustomer: vi.fn(async () => [
+        { id: 'sup_a', subject: 'Need logo', updatedAt: now },
+      ]),
+      fetchDraftSocialCampaigns: vi.fn(async () => [
+        { id: 'camp_a', goal: 'Spring promo', status: 'DRAFT' as const, updatedAt: now },
+      ]),
+    })
+    const overview = await getBusinessOverview(portal, data)
+    expect(overview.actions.find((a) => a.actionType === 'website_projects.change_request.open')?.destination.path).toBe(
+      BUSINESS_DESTINATIONS.portalChangeRequest('cr_a'),
+    )
+    expect(
+      overview.actions.find((a) => a.actionType === 'website_projects.support.awaiting_customer')?.destination.path,
+    ).toBe(BUSINESS_DESTINATIONS.portalSupportTicket('sup_a'))
+    expect(overview.actions.find((a) => a.actionType === 'marketing.campaign.draft')?.destination.path).toBe(
+      BUSINESS_DESTINATIONS.marketingCampaign('camp_a'),
+    )
   })
 
   it('emits record-scoped marketing and website project actions', async () => {

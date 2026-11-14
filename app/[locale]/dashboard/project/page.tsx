@@ -42,6 +42,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ locale
   return (
     <>
       <RecordQueryFocus param="dependencyId" domIdPrefix="project-dependency-" ready />
+      <RecordQueryFocus param="milestoneId" domIdPrefix="project-milestone-" ready />
       <PageTitle title={project.name} description={project.summary ?? undefined} />
       {hasOwnerReviewPackage(project.id) && (
         <div className="mb-6 rounded-lg border bg-muted/30 p-4 text-sm">

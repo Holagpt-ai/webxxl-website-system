@@ -24,6 +24,8 @@ export const BUSINESS_DESTINATIONS = {
   marketingApprovals: '/dashboard/marketing/approvals',
   marketingReview: (reviewId: string) => dashboardPathWithQuery('/dashboard/marketing/approvals', { reviewId }),
   marketingDeliverable: (artifactId: string) => `/dashboard/marketing/deliverables/${encodeURIComponent(artifactId)}`,
+  marketingDeliverableReview: (artifactId: string, reviewId: string) =>
+    dashboardPathWithQuery(`/dashboard/marketing/deliverables/${encodeURIComponent(artifactId)}`, { reviewId }),
   marketingCampaign: (campaignId: string) => `/dashboard/marketing/campaigns/${encodeURIComponent(campaignId)}`,
   seoOpportunities: '/dashboard/seo/opportunities',
   seoOpportunitySite: (siteId: string) => `/dashboard/seo/opportunities?site=${encodeURIComponent(siteId)}`,
@@ -34,5 +36,14 @@ export const BUSINESS_DESTINATIONS = {
   projectApproval: (approvalId: string) => dashboardPathWithQuery('/dashboard/approvals', { approvalId }),
   projectDetail: '/dashboard/project',
   projectDependency: (dependencyId: string) => dashboardPathWithQuery('/dashboard/project', { dependencyId }),
+  projectMilestone: (milestoneId: string) => dashboardPathWithQuery('/dashboard/project', { milestoneId }),
+  portalFiles: (fileId?: string) =>
+    fileId ? dashboardPathWithQuery('/dashboard/files', { fileId }) : '/dashboard/files',
+  portalMessages: '/dashboard/messages',
+  portalMessage: (commentId: string) => dashboardPathWithQuery('/dashboard/messages', { commentId }),
+  portalRequests: '/dashboard/requests',
+  portalChangeRequest: (requestId: string) => dashboardPathWithQuery('/dashboard/requests', { requestId }),
+  portalSupport: '/dashboard/support',
+  portalSupportTicket: (ticketId: string) => dashboardPathWithQuery('/dashboard/support', { ticketId }),
   dashboardOverview: '/dashboard',
 } as const

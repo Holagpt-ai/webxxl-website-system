@@ -29,7 +29,11 @@ export function ProjectFileList({
   return (
     <ul className="flex flex-col gap-3 text-sm">
       {files.map((file) => (
-        <li key={file.id} className="flex flex-col gap-2 border-b pb-3 sm:flex-row sm:items-start sm:justify-between">
+        <li
+          key={file.id}
+          id={`project-file-${file.id}`}
+          className="flex flex-col gap-2 border-b pb-3 sm:flex-row sm:items-start sm:justify-between"
+        >
           <div className="min-w-0">
             <p className="truncate font-medium">{file.originalName}</p>
             <p className="text-muted-foreground">

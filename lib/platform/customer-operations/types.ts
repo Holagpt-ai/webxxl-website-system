@@ -52,5 +52,10 @@ export type CustomerOperationsSummaryResponse = {
     crmLeads: string
     crmFunnel: string
     projectDashboard: string
+    projectFiles: string
+    projectMessages: string
+    projectRequests: string
+    projectSupport: string
+    projectApprovals: string
   }
 }

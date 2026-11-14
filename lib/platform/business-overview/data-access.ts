@@ -10,9 +10,12 @@ import {
   BUSINESS_OVERVIEW_CRM_TASKS,
   BUSINESS_OVERVIEW_MKT_ARTIFACTS,
   BUSINESS_OVERVIEW_MKT_REQUESTS,
+  BUSINESS_OVERVIEW_MKT_CAMPAIGNS,
   BUSINESS_OVERVIEW_MKT_REVIEWS,
   BUSINESS_OVERVIEW_PROJECT_APPROVALS,
+  BUSINESS_OVERVIEW_PROJECT_CHANGE_REQUESTS,
   BUSINESS_OVERVIEW_PROJECT_DEPENDENCIES,
+  BUSINESS_OVERVIEW_SUPPORT_ACTIONS,
   BUSINESS_OVERVIEW_SEO_OPPORTUNITIES,
 } from '@/lib/platform/business-overview/constants'
 import { listMarketingArtifacts } from '@/lib/platform/marketing/artifact-list-service'
@@ -197,6 +200,57 @@ export async function fetchOpenProjectDependencies(customerAccountId: string) {
   })
 }
 
+export async function countOpenChangeRequests(customerAccountId: string) {
+  return prisma.changeRequest.count({
+    where: {
+      project: { customerAccountId },
+      status: { in: ['SUBMITTED', 'REVIEWING'] },
+    },
+  })
+}
+
+export async function fetchOpenChangeRequests(customerAccountId: string) {
+  return prisma.changeRequest.findMany({
+    where: {
+      project: { customerAccountId },
+      status: { in: ['SUBMITTED', 'REVIEWING'] },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: BUSINESS_OVERVIEW_PROJECT_CHANGE_REQUESTS,
+    select: { id: true, title: true, status: true, createdAt: true, projectId: true },
+  })
+}
+
+export async function countSupportAwaitingCustomer(customerAccountId: string) {
+  return prisma.supportRequest.count({
+    where: { customerAccountId, status: 'WAITING_ON_CUSTOMER' },
+  })
+}
+
+export async function fetchSupportAwaitingCustomer(customerAccountId: string) {
+  return prisma.supportRequest.findMany({
+    where: { customerAccountId, status: 'WAITING_ON_CUSTOMER' },
+    orderBy: { updatedAt: 'desc' },
+    take: BUSINESS_OVERVIEW_SUPPORT_ACTIONS,
+    select: { id: true, subject: true, updatedAt: true },
+  })
+}
+
+export async function countDraftSocialCampaigns(customerAccountId: string) {
+  return prisma.socialCampaign.count({
+    where: { customerAccountId, status: { in: ['DRAFT', 'AWAITING_APPROVAL'] } },
+  })
+}
+
+export async function fetchDraftSocialCampaigns(customerAccountId: string) {
+  return prisma.socialCampaign.findMany({
+    where: { customerAccountId, status: { in: ['DRAFT', 'AWAITING_APPROVAL'] } },
+    orderBy: { updatedAt: 'desc' },
+    take: BUSINESS_OVERVIEW_MKT_CAMPAIGNS,
+    select: { id: true, goal: true, status: true, updatedAt: true },
+  })
+}
+
 export const businessOverviewDataAccess = {
   countCrmOpenTasks,
   fetchCrmOpenTasks,
@@ -220,6 +274,12 @@ export const businessOverviewDataAccess = {
   fetchPendingProjectApprovals,
   countOpenProjectDependencies,
   fetchOpenProjectDependencies,
+  countOpenChangeRequests,
+  fetchOpenChangeRequests,
+  countSupportAwaitingCustomer,
+  fetchSupportAwaitingCustomer,
+  countDraftSocialCampaigns,
+  fetchDraftSocialCampaigns,
 }
 
 export type BusinessOverviewDataAccess = typeof businessOverviewDataAccess

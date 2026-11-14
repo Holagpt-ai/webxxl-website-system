@@ -15,7 +15,7 @@
 
 ## This session
 
-**Batch 9B — Portal / Business / CRM / Marketing:** record-scoped marketing review, project approval, and dependency destinations; direct `GET /api/v1/site-leads/:id` when deep-linking off inbox page; dashboard query focus on approvals, project dependencies, and marketing reviews.
+**Batch 9B (PR #136 complete):** CRM/Business deep links (9A); marketing review GET + off-list fetch; social campaign + change request + support Business Overview actions; portal collaboration destinations and query focus; approval/dependency/message/request/support mutations refresh with user feedback. v0: [`BATCH9B-V0-HANDOFF.md`](BATCH9B-V0-HANDOFF.md).
 
 ## Next assignment
 

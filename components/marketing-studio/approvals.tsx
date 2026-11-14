@@ -15,6 +15,7 @@ import {
   MKT_PAGE_SIZE,
   REVIEW_INBOX_STATUSES,
   type MarketingReview,
+  type MarketingReviewDetailResponse,
   type MarketingReviewListResponse,
 } from '@/lib/marketing-studio-ui/types'
 import type { MarketingViewProps } from '@/lib/marketing-studio-ui/server'
@@ -55,11 +56,23 @@ export function MarketingApprovals(props: MarketingViewProps) {
     }
   }, [list.error, paging.cursor, first])
 
-  const rows = list.data?.reviews ?? []
-  const anyDecidable = rows.some((r) => r.allowedActions.canDecide)
-
   const search = useSearchParams()
   const focusReviewId = search.get('reviewId')
+  const needsDirectReview =
+    Boolean(focusReviewId) && !list.isLoading && !(list.data?.reviews ?? []).some((r) => r.id === focusReviewId)
+  const directReview = useWorkspace<MarketingReviewDetailResponse>(
+    needsDirectReview && focusReviewId ? MKT_API.review(focusReviewId) : null,
+    accountId,
+  )
+
+  const rows = useMemo(() => {
+    const base = list.data?.reviews ?? []
+    const extra = directReview.data?.review
+    if (!extra || base.some((r) => r.id === extra.id)) return base
+    return [extra, ...base]
+  }, [list.data?.reviews, directReview.data?.review])
+
+  const anyDecidable = rows.some((r) => r.allowedActions.canDecide)
   useEffect(() => {
     if (focusReviewId && status !== 'SUBMITTED') setStatus('SUBMITTED')
   }, [focusReviewId, status])

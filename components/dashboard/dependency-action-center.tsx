@@ -54,7 +54,7 @@ export function DependencyActionCenter({
     <ul className="flex flex-col gap-3">
       {open.map((dep) => {
         const actionKey = parseDependencyCustomerActionKey(dep.customerActionKey)
-        const href = dependencyActionHref(actionKey, localePrefix)
+        const href = dependencyActionHref(actionKey, localePrefix, { dependencyId: dep.id })
         const due = fmtDate(dep.dueDate, locale)
         return (
           <li key={dep.id} id={`project-dependency-${dep.id}`} className="rounded-lg border p-3 text-sm">

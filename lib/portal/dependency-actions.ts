@@ -17,12 +17,17 @@ export function parseDependencyCustomerActionKey(value: unknown): DependencyCust
     : null
 }
 
-export function dependencyActionHref(key: DependencyCustomerActionKey | null | undefined, localePrefix: string): string | null {
+export function dependencyActionHref(
+  key: DependencyCustomerActionKey | null | undefined,
+  localePrefix: string,
+  options?: { dependencyId?: string },
+): string | null {
   if (!key) return null
   const base = localePrefix || ''
+  const dep = options?.dependencyId ? `dependencyId=${encodeURIComponent(options.dependencyId)}` : ''
   switch (key) {
     case 'PROJECT':
-      return `${base}/dashboard/project`
+      return dep ? `${base}/dashboard/project?${dep}` : `${base}/dashboard/project`
     case 'FILES':
       return `${base}/dashboard/files`
     case 'APPROVALS':
@@ -32,7 +37,7 @@ export function dependencyActionHref(key: DependencyCustomerActionKey | null | u
     case 'REQUESTS':
       return `${base}/dashboard/requests`
     case 'WEBSITE_REVIEW':
-      return `${base}/dashboard/project`
+      return dep ? `${base}/dashboard/project?${dep}` : `${base}/dashboard/project`
     default:
       return null
   }

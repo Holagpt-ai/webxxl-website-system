@@ -7,6 +7,7 @@ import { LinkedFileList } from '@/components/files/project-file-list'
 import { isStorageConfigured } from '@/lib/integrations/storage'
 import { enumLabel } from '@/lib/i18n/labels'
 import { findCustomerWebsitePreview } from '@/lib/website-preview/operations'
+import { RecordQueryFocus } from '@/components/dashboard/record-query-focus'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,6 +54,7 @@ export default async function RequestsPage({ params }: { params: Promise<{ local
 
   return (
     <>
+      <RecordQueryFocus param="requestId" domIdPrefix="change-request-" ready />
       <PageTitle title={d.requestsTitle} />
       <SectionCard title={d.newRequest}>
         <ChangeRequestForm
@@ -80,7 +82,7 @@ export default async function RequestsPage({ params }: { params: Promise<{ local
           ) : (
             <ul className="flex flex-col gap-3 text-sm">
               {requests.map((request) => (
-                <li key={request.id} className="rounded-lg border p-3">
+                <li key={request.id} id={`change-request-${request.id}`} className="rounded-lg border p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="font-medium">{request.title}</p>
                     <StatusBadge label={enumLabel(d.changeRequestStatuses, request.status)} />
