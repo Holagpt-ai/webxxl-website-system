@@ -30,6 +30,13 @@ export const legalDocuments: LegalDocument[] = [
     lastUpdated: '2026-11-17',
     sections: [
       {
+        heading: l('Who we are', 'Quiénes somos'),
+        body: l(
+          'WebXXL is operated by Yaas Ventures LLC, a Florida limited liability company. If you have questions about this policy or your personal information, email us at hello@webbxxl.com or contact us through our contact page.',
+          'WebXXL es operado por Yaas Ventures LLC, una sociedad de responsabilidad limitada de Florida. Si tienes preguntas sobre esta política o tu información personal, escríbenos a hello@webbxxl.com o contáctanos desde nuestra página de contacto.',
+        ),
+      },
+      {
         heading: l('Information we collect', 'Información que recopilamos'),
         body: l(
           'We collect information you provide through contact and quote forms: your name, email address, phone number, and business details. Clients also provide billing and account information needed to deliver services, including payment details processed by our payment provider. We automatically collect basic usage data such as pages visited, browser type, device information, and approximate location derived from your IP address. If you connect a social media account to our scheduler, we access the account information described in the "TikTok and connected social accounts" section below.',
@@ -53,8 +60,8 @@ export const legalDocuments: LegalDocument[] = [
       {
         heading: l('How we share information', 'Cómo compartimos la información'),
         body: l(
-          'We share your information only as needed to run our services: with the providers that host our website and scheduler, with the payment provider that processes your billing, and with the social media platforms you connect, solely to publish the content you approve. We do not sell your personal information. We may disclose information if required by law or to protect our rights, your safety, or the safety of others.',
-          'Compartimos tu información solo cuando es necesario para operar nuestros servicios: con los proveedores que alojan nuestro sitio web y programador, con el proveedor de pagos que procesa tu facturación, y con las plataformas de redes sociales que conectes, únicamente para publicar el contenido que apruebes. No vendemos tu información personal. Podemos divulgar información si lo exige la ley o para proteger nuestros derechos, tu seguridad o la seguridad de otros.',
+          'We share your information only as needed to run our services: with the providers that host our website and scheduler (Vercel hosts this website, and our scheduler runs on our own server), and with the social media platforms you connect, solely to publish the content you approve. We do not sell your personal information. We may disclose information if required by law or to protect our rights, your safety, or the safety of others.',
+          'Compartimos tu información solo cuando es necesario para operar nuestros servicios: con los proveedores que alojan nuestro sitio web y programador (Vercel aloja este sitio web, y nuestro programador funciona en nuestro propio servidor), y con las plataformas de redes sociales que conectes, únicamente para publicar el contenido que apruebes. No vendemos tu información personal. Podemos divulgar información si lo exige la ley o para proteger nuestros derechos, tu seguridad o la seguridad de otros.',
         ),
       },
       {
@@ -74,8 +81,8 @@ export const legalDocuments: LegalDocument[] = [
       {
         heading: l('Your rights and choices', 'Tus derechos y opciones'),
         body: l(
-          'You may ask us to access, correct, or delete your personal information, and to receive a copy of the personal information we hold about you. You may opt out of marketing messages at any time by following the unsubscribe link or contacting us through our contact page. To exercise any of these rights, contact us through our contact page and we will respond within 30 days.',
-          'Puedes solicitarnos acceder, corregir o eliminar tu información personal, y recibir una copia de la información personal que tenemos sobre ti. Puedes dejar de recibir mensajes de marketing en cualquier momento siguiendo el enlace para cancelar la suscripción o contactándonos desde nuestra página de contacto. Para ejercer cualquiera de estos derechos, contáctanos desde nuestra página de contacto y responderemos dentro de 30 días.',
+          'You may ask us to access, correct, or delete your personal information, and to receive a copy of the personal information we hold about you. You may opt out of marketing messages at any time by following the unsubscribe link or contacting us through our contact page. To exercise any of these rights, email us at hello@webbxxl.com or contact us through our contact page, and we will respond within 30 days.',
+          'Puedes solicitarnos acceder, corregir o eliminar tu información personal, y recibir una copia de la información personal que tenemos sobre ti. Puedes dejar de recibir mensajes de marketing en cualquier momento siguiendo el enlace para cancelar la suscripción o contactándonos desde nuestra página de contacto. Para ejercer cualquiera de estos derechos, escríbenos a hello@webbxxl.com o contáctanos desde nuestra página de contacto, y responderemos dentro de 30 días.',
         ),
       },
       {
@@ -99,7 +106,7 @@ export const legalDocuments: LegalDocument[] = [
           'Podemos actualizar esta política de vez en cuando. Publicaremos la política actualizada en esta página y actualizaremos la fecha de "Última actualización". Si realizamos un cambio importante en la forma en que manejamos tu información, te lo notificaremos a través del sitio web o por correo electrónico. Tu uso continuado de nuestros servicios después de un cambio significa que aceptas la política actualizada.',
         ),
       },
-      { heading: l('Contact', 'Contacto'), body: l('Questions about this policy can be sent through our contact page.', 'Las preguntas sobre esta política pueden enviarse desde nuestra página de contacto.') },
+      { heading: l('Contact', 'Contacto'), body: l('Questions about this policy can be sent to hello@webbxxl.com or through our contact page.', 'Las preguntas sobre esta política pueden enviarse a hello@webbxxl.com o desde nuestra página de contacto.') },
     ],
   },
   {
@@ -111,8 +118,8 @@ export const legalDocuments: LegalDocument[] = [
       {
         heading: l('Use of this website', 'Uso de este sitio'),
         body: l(
-          'This website is operated by WebXXL. You may browse it for information about our services. You agree not to misuse the site, attempt to disrupt it, scrape it aggressively, or use it for any unlawful purpose. We may change or remove content on this website at any time.',
-          'Este sitio web es operado por WebXXL. Puedes navegar en él para informarte sobre nuestros servicios. Aceptas no usarlo indebidamente, intentar interrumpirlo, extraer datos de forma agresiva ni utilizarlo para fines ilegales. Podemos cambiar o eliminar contenido del sitio en cualquier momento.',
+          'This website is operated by WebXXL (Yaas Ventures LLC). You may browse it for information about our services. You agree not to misuse the site, attempt to disrupt it, scrape it aggressively, or use it for any unlawful purpose. We may change or remove content on this website at any time.',
+          'Este sitio web es operado por WebXXL (Yaas Ventures LLC). Puedes navegar en él para informarte sobre nuestros servicios. Aceptas no usarlo indebidamente, intentar interrumpirlo, extraer datos de forma agresiva ni utilizarlo para fines ilegales. Podemos cambiar o eliminar contenido del sitio en cualquier momento.',
         ),
       },
       {
@@ -178,7 +185,7 @@ export const legalDocuments: LegalDocument[] = [
           'Estos términos se rigen por las leyes del Estado de Florida, sin tener en cuenta las normas sobre conflicto de leyes. Cualquier disputa derivada de estos términos o de nuestros servicios se resolverá en los tribunales estatales o federales ubicados en Florida.',
         ),
       },
-      { heading: l('Contact', 'Contacto'), body: l('Questions about these terms can be sent through our contact page.', 'Las preguntas sobre estos términos pueden enviarse desde nuestra página de contacto.') },
+      { heading: l('Contact', 'Contacto'), body: l('Questions about these terms can be sent to hello@webbxxl.com or through our contact page.', 'Las preguntas sobre estos términos pueden enviarse a hello@webbxxl.com o desde nuestra página de contacto.') },
     ],
   },
   {
