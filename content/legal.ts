@@ -27,13 +27,13 @@ export const legalDocuments: LegalDocument[] = [
     slug: 'privacy',
     title: l('Privacy Policy', 'Política de privacidad'),
     description: l('How WebXXL handles information collected through this website.', 'Cómo WebXXL maneja la información recopilada en este sitio.'),
-    lastUpdated: '2026-11-17',
+    lastUpdated: '2026-11-18',
     sections: [
       {
         heading: l('Who we are', 'Quiénes somos'),
         body: l(
-          'WebXXL is operated by Yaas Ventures LLC, a Florida limited liability company. If you have questions about this policy or your personal information, email us at hello@webbxxl.com or contact us through our contact page.',
-          'WebXXL es operado por Yaas Ventures LLC, una sociedad de responsabilidad limitada de Florida. Si tienes preguntas sobre esta política o tu información personal, escríbenos a hello@webbxxl.com o contáctanos desde nuestra página de contacto.',
+          'WebXXL is operated by Yaas Ventures LLC, a Florida limited liability company. If you have questions about this policy or your personal information, email us at hello@webbxxl.com, call us at (239) 205-0449, or contact us through our contact page.',
+          'WebXXL es operado por Yaas Ventures LLC, una sociedad de responsabilidad limitada de Florida. Si tienes preguntas sobre esta política o tu información personal, escríbenos a hello@webbxxl.com, llámanos al (239) 205-0449, o contáctanos desde nuestra página de contacto.',
         ),
       },
       {
@@ -81,8 +81,8 @@ export const legalDocuments: LegalDocument[] = [
       {
         heading: l('Your rights and choices', 'Tus derechos y opciones'),
         body: l(
-          'You may ask us to access, correct, or delete your personal information, and to receive a copy of the personal information we hold about you. You may opt out of marketing messages at any time by following the unsubscribe link or contacting us through our contact page. To exercise any of these rights, email us at hello@webbxxl.com or contact us through our contact page, and we will respond within 30 days.',
-          'Puedes solicitarnos acceder, corregir o eliminar tu información personal, y recibir una copia de la información personal que tenemos sobre ti. Puedes dejar de recibir mensajes de marketing en cualquier momento siguiendo el enlace para cancelar la suscripción o contactándonos desde nuestra página de contacto. Para ejercer cualquiera de estos derechos, escríbenos a hello@webbxxl.com o contáctanos desde nuestra página de contacto, y responderemos dentro de 30 días.',
+          'You may ask us to access, correct, or delete your personal information, and to receive a copy of the personal information we hold about you. You may opt out of marketing messages at any time by following the unsubscribe link or contacting us through our contact page. To exercise any of these rights, email us at hello@webbxxl.com, call us at (239) 205-0449, or contact us through our contact page, and we will respond within 30 days.',
+          'Puedes solicitarnos acceder, corregir o eliminar tu información personal, y recibir una copia de la información personal que tenemos sobre ti. Puedes dejar de recibir mensajes de marketing en cualquier momento siguiendo el enlace para cancelar la suscripción o contactándonos desde nuestra página de contacto. Para ejercer cualquiera de estos derechos, escríbenos a hello@webbxxl.com, llámanos al (239) 205-0449, o contáctanos desde nuestra página de contacto, y responderemos dentro de 30 días.',
         ),
       },
       {
@@ -106,14 +106,14 @@ export const legalDocuments: LegalDocument[] = [
           'Podemos actualizar esta política de vez en cuando. Publicaremos la política actualizada en esta página y actualizaremos la fecha de "Última actualización". Si realizamos un cambio importante en la forma en que manejamos tu información, te lo notificaremos a través del sitio web o por correo electrónico. Tu uso continuado de nuestros servicios después de un cambio significa que aceptas la política actualizada.',
         ),
       },
-      { heading: l('Contact', 'Contacto'), body: l('Questions about this policy can be sent to hello@webbxxl.com or through our contact page.', 'Las preguntas sobre esta política pueden enviarse a hello@webbxxl.com o desde nuestra página de contacto.') },
+      { heading: l('Contact', 'Contacto'), body: l('Questions about this policy can be sent to hello@webbxxl.com, by phone at (239) 205-0449, or through our contact page.', 'Las preguntas sobre esta política pueden enviarse a hello@webbxxl.com, por teléfono al (239) 205-0449, o desde nuestra página de contacto.') },
     ],
   },
   {
     slug: 'terms',
     title: l('Terms of Service', 'Términos del servicio'),
     description: l('Terms that apply to use of this website and WebXXL services.', 'Términos aplicables al uso de este sitio y los servicios de WebXXL.'),
-    lastUpdated: '2026-11-17',
+    lastUpdated: '2026-11-18',
     sections: [
       {
         heading: l('Use of this website', 'Uso de este sitio'),
@@ -160,8 +160,8 @@ export const legalDocuments: LegalDocument[] = [
       {
         heading: l('Payment, refunds, and cancellation', 'Pagos, reembolsos y cancelación'),
         body: l(
-          'Plans are billed monthly unless you choose annual billing. A one-time $79 setup fee applies, waived when you pay annually. Annual billing includes two months free. Every plan includes a 30-day money-back guarantee: if you cancel within 30 days of your first payment, we will refund that payment. After 30 days, fees already paid are non-refundable, and you may cancel at any time with no further charges after your current billing period ends. Website ownership transfers to you after 12 paid months, as described in the "Services and agreements" section.',
-          'Los planes se facturan mensualmente, salvo que elijas la facturación anual. Se aplica un cargo único de $79 por configuración, exento con pago anual. La facturación anual incluye dos meses gratis. Todos los planes incluyen una garantía de devolución de 30 días: si cancelas dentro de los 30 días posteriores a tu primer pago, te reembolsaremos ese pago. Después de 30 días, las tarifas ya pagadas no son reembolsables, y puedes cancelar en cualquier momento sin más cargos después de que termine tu período de facturación actual. La propiedad del sitio web se transfiere a ti después de 12 meses pagados, como se describe en la sección "Servicios y acuerdos".',
+          'Plans are billed monthly unless you choose annual billing. Your plan renews automatically at the end of each billing period until you cancel. A one-time $79 setup fee applies, waived when you pay annually. Annual billing includes two months free. Every plan includes a 30-day money-back guarantee: if you cancel within 30 days of your first payment, we will refund that payment. After 30 days, fees already paid are non-refundable, and you may cancel at any time with no further charges after your current billing period ends. If we change our prices, we will tell you at least 30 days before the new price applies to your next renewal. If you do not agree with the change, you can cancel before it applies. Website ownership transfers to you after 12 paid months, as described in the "Services and agreements" section.',
+          'Los planes se facturan mensualmente, salvo que elijas la facturación anual. Tu plan se renueva automáticamente al final de cada período de facturación hasta que lo canceles. Se aplica un cargo único de $79 por configuración, exento con pago anual. La facturación anual incluye dos meses gratis. Todos los planes incluyen una garantía de devolución de 30 días: si cancelas dentro de los 30 días posteriores a tu primer pago, te reembolsaremos ese pago. Después de 30 días, las tarifas ya pagadas no son reembolsables, y puedes cancelar en cualquier momento sin más cargos después de que termine tu período de facturación actual. Si cambiamos nuestros precios, te avisaremos al menos 30 días antes de que el nuevo precio se aplique a tu próxima renovación. Si no estás de acuerdo con el cambio, puedes cancelar antes de que se aplique. La propiedad del sitio web se transfiere a ti después de 12 meses pagados, como se describe en la sección "Servicios y acuerdos".',
         ),
       },
       {
@@ -185,7 +185,7 @@ export const legalDocuments: LegalDocument[] = [
           'Estos términos se rigen por las leyes del Estado de Florida, sin tener en cuenta las normas sobre conflicto de leyes. Cualquier disputa derivada de estos términos o de nuestros servicios se resolverá en los tribunales estatales o federales ubicados en Florida.',
         ),
       },
-      { heading: l('Contact', 'Contacto'), body: l('Questions about these terms can be sent to hello@webbxxl.com or through our contact page.', 'Las preguntas sobre estos términos pueden enviarse a hello@webbxxl.com o desde nuestra página de contacto.') },
+      { heading: l('Contact', 'Contacto'), body: l('Questions about these terms can be sent to hello@webbxxl.com, by phone at (239) 205-0449, or through our contact page.', 'Las preguntas sobre estos términos pueden enviarse a hello@webbxxl.com, por teléfono al (239) 205-0449, o desde nuestra página de contacto.') },
     ],
   },
   {
