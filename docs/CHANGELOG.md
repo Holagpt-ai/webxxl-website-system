@@ -4,9 +4,9 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 
 | Date (UTC) | Event | Evidence | Release claim |
 |---|---|---|---|
+| 2026-11-19 | Final UI/UX responsive polish (owner squash merge) | [PR #140](https://github.com/Holagpt-ai/webxxl-website-system/pull/140) MERGED @ `197eb4f` from branch head `4a27473` | Presentation-only UI on `main`; authenticated portal/admin UI **not verified** (deferred to release stabilization) |
 | 2026-11-18 | Terms of Service legal contact / auto-renewal / price-change text | [PR #142](https://github.com/Holagpt-ai/webxxl-website-system/pull/142) MERGED @ `623a9e9` | `content/legal.ts` only; does not certify UI or live provider behavior |
 | 2026-11-17 | Privacy Policy and Terms expanded for TikTok review | [PR #141](https://github.com/Holagpt-ai/webxxl-website-system/pull/141) MERGED @ `74044c8` | `content/legal.ts` only; no TikTok approval or provider activation claimed |
-| 2026-11-14 | Final UI/UX completion (v0 branch, in progress) | [PR #140](https://github.com/Holagpt-ai/webxxl-website-system/pull/140), `v0/final-ui-ux-completion` (`c88244e`, `b4f6a01` visual baseline; branch originally from `b26dc0b`) | Draft/unmerged; UI incomplete; authenticated browser QA not performed |
 | 2026-11-14 | Batch 9E Infrastructure, staff support, platform completion | [PR #139](https://github.com/Holagpt-ai/webxxl-website-system/pull/139) merged @ `b26dc0b` | Lifecycle transactions, staff support replies, infra panels. No DNS/provider activation |
 | 2026-11-14 | Batch 9D Commerce, Billing, Support, Portal completion | [PR #138](https://github.com/Holagpt-ai/webxxl-website-system/pull/138) merged @ `f867760` | Support message thread + customer replies, marketplace quote/order/detail, wallet ledger, checkout prep without charges. Migration for support messages |
 | 2026-11-14 | Batch 9A Business Center CRM deep links | [PR #135](https://github.com/Holagpt-ai/webxxl-website-system/pull/135) **CLOSED/SUPERSEDED**, code included in merged [PR #136](https://github.com/Holagpt-ai/webxxl-website-system/pull/136) | 9A code source-merged through #136; #135 was not independently merged |
