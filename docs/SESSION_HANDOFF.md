@@ -1,6 +1,6 @@
 # WebXXL — Session Handoff
 
-**Compiled:** 2026-11-19 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `0abfb373233a542ddbae2109916713d045d410ca` · **PR #140 squash:** `197eb4f056c17e6e5547d221c8a3a3a2ca71690e`
+**Compiled:** 2026-11-19 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `570b223f22b855f703c48d5da5504d92a5c5125f` · **PR #140 squash:** `197eb4f056c17e6e5547d221c8a3a3a2ca71690e`
 
 ## Canonical checkpoint (six-field)
 
