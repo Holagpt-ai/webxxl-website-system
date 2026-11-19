@@ -44,6 +44,8 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 ### Evidence table
 
+| Item | State | Evidence |
+|---|---|---|
 | Vercel Production 2026-11-18, PR #142 | DEPLOYED (SHA only) | `623a9e98eb7b1bae7c219a20120d3cc710ea8b3b`; Vercel `dpl_Adby8MqB9urDBVUWBMt2NEPsaicH` **READY**, Production, aliases include `www.webbxxl.com` and `webbxxl.com`. No authenticated live behavior, migrations or flags verified |
 | Vercel Production 2026-11-17, PR #141 | DEPLOYED (SHA only) | `74044c8d63fed123dcb9c44d654c09be06d26229`; Vercel `dpl_5prSp6vHBubwrYDQTAjgjPSnhVZT` **READY**; superseded by #142 |
 | Vercel Production 2026-11-14, PR #139 | DEPLOYED (SHA only) | `b26dc0b6490709a76b5721e3e689d70cc0d195d5`; Vercel `dpl_7ReHJmepSAXP3kCZ9zZUbifXqeLJ` **READY**; superseded by #141 |
@@ -51,9 +53,6 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Batches 9A–9E functional completion | MERGED | #135 **closed/superseded** (its 9A changes included in merged [PR #136](https://github.com/Holagpt-ai/webxxl-website-system/pull/136)); #137 @ `964b3ab`, #138 @ `f867760`, #139 @ `b26dc0b`. Source completion only, not activation |
 | Legal Privacy/Terms update | MERGED | [PR #141](https://github.com/Holagpt-ai/webxxl-website-system/pull/141) @ `74044c8` — TikTok app review legal content; [PR #142](https://github.com/Holagpt-ai/webxxl-website-system/pull/142) @ `623a9e9` — business phone / auto-renewal / price-change text, `content/legal.ts` only |
 | Final UI/UX completion | IN PR | [PR #140](https://github.com/Holagpt-ai/webxxl-website-system/pull/140), `v0/final-ui-ux-completion`, DRAFT/unmerged; `8b53454` pre-doc-sync head; v0 checklist incomplete and authenticated visual QA pending |
-
-| Item | State | Evidence |
-|---|---|---|
 | PR #48 analytics backend | MERGED | [PR #48](https://github.com/Holagpt-ai/webxxl-website-system/pull/48), `336b89b6ae59784c5cdd001e9b88ecfe1e874d78` |
 | PR #49 analytics dashboard | MERGED | [PR #49](https://github.com/Holagpt-ai/webxxl-website-system/pull/49), head `402d762004cd4fa696b18d48b94bff0c5dc0b478`, squash `c0a21db93d730c838fc58d9b862ed547927bd72f` |
 | Vercel production SHA (2026-10-21) | DEPLOYED | GitHub deployment `7233002736` by `vercel[bot]`, environment Production, state success, 2026-10-21T17:41:12Z, SHA `c0a21db93d730c838fc58d9b862ed547927bd72f`. Preserved record |
