@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-19 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `0abfb373233a542ddbae2109916713d045d410ca` · **PR #140 squash:** `197eb4f056c17e6e5547d221c8a3a3a2ca71690e` (head `4a27473`; legal **#141–#142** preserved)
+**Evidence review:** 2026-11-19 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `570b223f22b855f703c48d5da5504d92a5c5125f` · **PR #140 squash:** `197eb4f056c17e6e5547d221c8a3a3a2ca71690e` (head `4a27473`; legal **#141–#142** preserved)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
