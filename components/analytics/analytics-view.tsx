@@ -104,7 +104,7 @@ export function AnalyticsView({
         }}
       />
 
-      <p className="text-xs text-muted-foreground" role="note">
+      <p className="text-pretty text-xs leading-relaxed text-muted-foreground" role="note">
         {fill(copy.filters.period, {
           start: filters.start,
           end: filters.end,
@@ -123,7 +123,7 @@ export function AnalyticsView({
         role="tablist"
         aria-label={copy.tablistLabel}
         onKeyDown={onTabKeyDown}
-        className="-mx-1 flex gap-1 overflow-x-auto border-b px-1"
+        className="-mx-1 flex snap-x gap-1 overflow-x-auto border-b px-1 [scrollbar-width:thin]"
       >
         {TABS.map((key) => {
           const selected = key === tab
@@ -144,7 +144,7 @@ export function AnalyticsView({
                 syncUrl(filters, key, choice)
               }}
               className={cn(
-                '-mb-px whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50',
+                '-mb-px inline-flex min-h-11 shrink-0 snap-start items-center whitespace-nowrap border-b-2 px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50',
                 selected
                   ? 'border-primary text-foreground'
                   : 'border-transparent text-muted-foreground hover:text-foreground',

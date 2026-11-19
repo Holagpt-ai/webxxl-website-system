@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-14 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `f8677600dc26dd911bd4343d6c214023883e62ee` (PR **#138** Batch 9D MERGED)
+**Evidence review:** 2026-11-18 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `623a9e98eb7b1bae7c219a20120d3cc710ea8b3b` (legal PRs **#141–#142** MERGED; last functional PR **#139** / Batch 9E MERGED)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,17 +35,33 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | GitHub `main` `f867760` ([PR **#138**](https://github.com/Holagpt-ai/webxxl-website-system/pull/138) Batch **9D** MERGED; **9A–9D** complete at source). **SEC-STAGING-CRED-2026-11-12** **VERIFIED** 2026-11-14 (`vcgibefnhneaqhcguhnt`; Preview DB updated). Batch **9E** [PR **#139**](https://github.com/Holagpt-ai/webxxl-website-system/pull/139) open. Broad acceptance **deferred** to launch stabilization. |
-| 2 | GitHub SHA, branch, active PR | **`f8677600dc26dd911bd4343d6c214023883e62ee`** on `main`. [PR **#139**](https://github.com/Holagpt-ai/webxxl-website-system/pull/139) Batch **9E** open @ `7df5a73`. Batches **9A** [#135], **9B** [#136], **9C** [#137], **9D** [#138] **MERGED**. |
-| 3 | Production deployment | Production SHA evidence last recorded @ `d82d323` (SHA only). Post-`f867760` Production deploy **UNVERIFIED** this session. |
-| 4 | Last updated | 2026-11-14 |
-| 5 | Next task / responsible platform | **Owner:** review/merge [PR **#139**](https://github.com/Holagpt-ai/webxxl-website-system/pull/139) Batch **9E**. **Cursor / v0:** after merge — **final UI + launch stabilization** only. **v0:** optional [`BATCH9E-V0-HANDOFF.md`](BATCH9E-V0-HANDOFF.md). |
-| 6 | Open blocker / gate IDs | **AUTH-STAGING-8C** **DEFERRED** (owner). **RELEASE-001** **gated**. Production migrate + support-messages migration **UNVERIFIED**/owner-gated. Provider/DNS/live checkout **not activated**. |
+| 1 | Last verified checkpoint | GitHub `main` **`623a9e98eb7b1bae7c219a20120d3cc710ea8b3b`** (legal PRs **#141–#142**; last functional PR **#139** @ `b26dc0b`). [PR **#140**](https://github.com/Holagpt-ai/webxxl-website-system/pull/140) FINAL UI/UX is **reconciled with `main`** (merge includes `content/legal.ts` from #141/#142). Integration head **`92fb0ca31a204f26e38332043d2cb616f6625b5a`** (merge `0251d6e` + integration docs). Local **typecheck PASS**; Batch **9** focused tests **24/24 PASS**. Diff vs `main` is presentation-only (components, `app/globals.css`); **no** `lib/`, `app/api/`, or `prisma/` changes. **Authenticated portal/admin UI verification DEFERRED** to release stabilization (**AUTH-STAGING-8C / ISSUE-105-QA**); signed-in modules were **not** verified this cycle. Prior pass: public EN/ES only (no demonstrated defect). |
+| 2 | GitHub SHA, branch, active PR | **`623a9e98eb7b1bae7c219a20120d3cc710ea8b3b`** on `main`. [PR **#140**](https://github.com/Holagpt-ai/webxxl-website-system/pull/140): `v0/final-ui-ux-completion` → `main` (OPEN; prepared for owner merge review; **not merged**). Head **`92fb0ca31a204f26e38332043d2cb616f6625b5a`**. v0 delivery `84dc32f` preserved. Confirm GitHub CI on pushed head before merge. |
+| 3 | Production deployment | Vercel Production **READY** at GitHub `main` `623a9e98` ([deployment](https://vercel.com/tone4real-7828s-projects/webxxl-website-system/Adby8MqB9urDBVUWBMt2NEPsaicH), `dpl_Adby8MqB9urDBVUWBMt2NEPsaicH`, 2026-11-18). PR #140 Preview deploys separately; post-merge production SHA **not claimed**. |
+| 4 | Last updated | 2026-11-18 |
+| 5 | Next task / responsible platform | **Owner:** merge review on PR #140 (explicit approval required; no auto-merge). Authenticated UI acceptance remains in **release stabilization**, not a blocker to reviewing this visual-only integration. **Cursor/v0:** presentation fixes only if owner finds defects in review. |
+| 6 | Open blocker / gate IDs | **AUTH-STAGING-8C / ISSUE-105-QA** authenticated acceptance **DEFERRED** (not completed; do not treat as PASS). **RELEASE-001** production gate. **POLICY-SUB-001**. Production migrations, providers, live sends, DNS, publishing **not activated**. |
+
+## 2026-11-18 — final v0 visual delivery (PR #140)
+
+- v0 pushed `84dc32fe27db9f74f95ebd92753fa63a4d468b27` on `v0/final-ui-ux-completion`, extending `7174a7c` with seven presentation-only file edits: `components/ai-employees/ui.tsx`, `components/commerce/ui.tsx`, `components/commerce/order-detail-panel.tsx`, `components/commerce/order-list.tsx`, `components/crm/workspace-kit.tsx`, `components/dashboard/primitives.tsx`, `components/admin/infrastructure-lifecycle-forms.tsx`.
+- Reviewed diff: wrapping/`min-w-0`/`shrink-0`/`break-all`/`text-balance`/`text-pretty` utility classes and two end-of-file newline normalizations. `order-detail-panel.tsx` is Batch 9D Cursor-owned for behavior, but these edits are solely permitted visual layout. No backend, Prisma, API, auth, money, provider, feature flags, or content changes.
+- v0 reported typecheck PASS and 24/24 tests across seven Batch 9 test files. GitHub checks at UI delivery head: Continuity PASS, App Validate PASS, Vercel PASS. No authenticated desktop/mobile browser verification; visual acceptance is NOT YET COMPLETE.
+- PR #140 already exists as OPEN/DRAFT (do not create another PR). Current `main` includes legal PRs #141/#142 in `content/legal.ts`, absent from the UI branch base; preserve those merges during eventual integration. No branch reset, production deployment, migration, provider activation, payments, DNS or publishing authorized.
+- Staging remains `vcgibefnhneaqhcguhnt` (credential rotation and 39/39 migrations verified at prior 2026-11-14 checkpoint); production DB `txfxeehglqfszletuumn` migrations/flags/activation not verified. Configuration names remain `DATABASE_URL`, `DIRECT_URL`, `NEXT_PUBLIC_SITE_URL` and module/provider gates already documented in `docs/PROJECT_MEMORY.md`; **none changed** in this delivery. No secret values in documentation.
+- 2026-11-18: PR #140 merged with `main` @ `623a9e9` so legal `content/legal.ts` (#141/#142) is preserved. Authenticated UI **deferred** to release stabilization; not verified. Prepared for owner merge review. Fallback email and canonical naming require owner confirmation.
 
 ### Evidence table
 
 | Item | State | Evidence |
 |---|---|---|
+| Vercel Production 2026-11-18, PR #142 | DEPLOYED (SHA only) | `623a9e98eb7b1bae7c219a20120d3cc710ea8b3b`; Vercel `dpl_Adby8MqB9urDBVUWBMt2NEPsaicH` **READY**, Production, aliases include `www.webbxxl.com` and `webbxxl.com`. No authenticated live behavior, migrations or flags verified |
+| Vercel Production 2026-11-17, PR #141 | DEPLOYED (SHA only) | `74044c8d63fed123dcb9c44d654c09be06d26229`; Vercel `dpl_5prSp6vHBubwrYDQTAjgjPSnhVZT` **READY**; superseded by #142 |
+| Vercel Production 2026-11-14, PR #139 | DEPLOYED (SHA only) | `b26dc0b6490709a76b5721e3e689d70cc0d195d5`; Vercel `dpl_7ReHJmepSAXP3kCZ9zZUbifXqeLJ` **READY**; superseded by #141 |
+
+| Batches 9A–9E functional completion | MERGED | #135 **closed/superseded** (its 9A changes included in merged [PR #136](https://github.com/Holagpt-ai/webxxl-website-system/pull/136)); #137 @ `964b3ab`, #138 @ `f867760`, #139 @ `b26dc0b`. Source completion only, not activation |
+| Legal Privacy/Terms update | MERGED | [PR #141](https://github.com/Holagpt-ai/webxxl-website-system/pull/141) @ `74044c8` — TikTok app review legal content; [PR #142](https://github.com/Holagpt-ai/webxxl-website-system/pull/142) @ `623a9e9` — business phone / auto-renewal / price-change text, `content/legal.ts` only |
+| Final UI/UX completion | IN PR | [PR #140](https://github.com/Holagpt-ai/webxxl-website-system/pull/140), `v0/final-ui-ux-completion`, DRAFT/unmerged; `8b53454` pre-doc-sync head; v0 checklist incomplete and authenticated visual QA pending |
 | PR #48 analytics backend | MERGED | [PR #48](https://github.com/Holagpt-ai/webxxl-website-system/pull/48), `336b89b6ae59784c5cdd001e9b88ecfe1e874d78` |
 | PR #49 analytics dashboard | MERGED | [PR #49](https://github.com/Holagpt-ai/webxxl-website-system/pull/49), head `402d762004cd4fa696b18d48b94bff0c5dc0b478`, squash `c0a21db93d730c838fc58d9b862ed547927bd72f` |
 | Vercel production SHA (2026-10-21) | DEPLOYED | GitHub deployment `7233002736` by `vercel[bot]`, environment Production, state success, 2026-10-21T17:41:12Z, SHA `c0a21db93d730c838fc58d9b862ed547927bd72f`. Preserved record |

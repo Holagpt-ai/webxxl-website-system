@@ -54,7 +54,7 @@ export function CommerceState({
       <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
         <Icon className="size-5" aria-hidden="true" />
       </span>
-      <div className="flex flex-1 flex-col gap-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="font-semibold text-foreground">{state.title}</p>
         <p className="text-sm leading-relaxed text-muted-foreground">{state.body}</p>
       </div>
@@ -172,7 +172,7 @@ export function Pagination({
   const from = total === 0 ? 0 : skip + 1
   const to = Math.min(skip + take, total)
   return (
-    <nav aria-label={copy.pagination.label} className="flex items-center justify-between gap-3 border-t pt-4">
+    <nav aria-label={copy.pagination.label} className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
       <p className="text-sm text-muted-foreground" aria-live="polite">
         {fill(copy.pagination.range, { from, to, total })}
       </p>

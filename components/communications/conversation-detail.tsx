@@ -163,7 +163,7 @@ export function CommsConversationDetail({
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
                   <UserRound className="size-5" aria-hidden="true" />
                 </span>
-                <p className={conv.crmContact.displayName ? 'font-medium text-foreground' : 'text-sm text-muted-foreground'}>
+                <p className={conv.crmContact.displayName ? 'min-w-0 break-words font-medium text-foreground' : 'min-w-0 text-sm text-muted-foreground'}>
                   {conv.crmContact.displayName ?? d.contactUnnamed}
                 </p>
               </div>

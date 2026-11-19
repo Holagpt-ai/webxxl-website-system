@@ -240,9 +240,9 @@ function WalletLedgerPanel({
       <p className="text-xs text-muted-foreground">{b.ledgerDescription}</p>
       <ul className="flex flex-col divide-y rounded-lg border text-sm">
         {data.ledger.map((entry) => (
-          <li key={entry.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
-            <span className="font-medium">{entry.type}</span>
-            <span className="tabular-nums">{formatNumber(entry.deltaCredits, locale)}</span>
+          <li key={entry.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-0.5 px-3 py-2">
+            <span className="break-words font-medium">{entry.type}</span>
+            <span className="text-right font-medium tabular-nums">{formatNumber(entry.deltaCredits, locale)}</span>
             <span className="text-xs text-muted-foreground">{formatDate(entry.effectiveAt, locale)}</span>
           </li>
         ))}

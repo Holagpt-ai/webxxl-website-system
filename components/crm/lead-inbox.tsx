@@ -224,7 +224,7 @@ export function CrmLeadInbox({ accountId, locale, copy, base, leadsCopy: lc, sit
             </ul>
           )}
           {(cursors.length > 0 || nextCursor) && !list.error && (
-            <nav className="flex items-center justify-between gap-3" aria-label={lc.list.title}>
+            <nav className="flex flex-wrap items-center justify-between gap-3" aria-label={lc.list.title}>
               <Button
                 variant="outline"
                 size="sm"

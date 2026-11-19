@@ -118,8 +118,8 @@ function Breakdown({
         <dl className="flex flex-col gap-1.5 text-sm">
           {entries.map(([status, n]) => (
             <div key={status} className="flex items-center justify-between gap-3">
-              <dt className="text-foreground">{enumLabel(labels, status)}</dt>
-              <dd className="font-medium tabular-nums text-foreground">{formatNumber(n, locale)}</dd>
+              <dt className="min-w-0 break-words text-foreground">{enumLabel(labels, status)}</dt>
+              <dd className="shrink-0 font-medium tabular-nums text-foreground">{formatNumber(n, locale)}</dd>
             </div>
           ))}
         </dl>
@@ -229,8 +229,8 @@ export function AudiencePlanningPanel({
               <dl className="flex flex-col gap-1.5 text-sm">
                 {Object.entries(slice.data.latestPreview.audience).map(([key, n]) => (
                   <div key={key} className="flex items-center justify-between gap-3">
-                    <dt className="text-foreground">{e.buckets[key] ?? key}</dt>
-                    <dd className="font-medium tabular-nums text-foreground">{formatNumber(n, locale)}</dd>
+                    <dt className="min-w-0 break-words text-foreground">{e.buckets[key] ?? key}</dt>
+                    <dd className="shrink-0 font-medium tabular-nums text-foreground">{formatNumber(n, locale)}</dd>
                   </div>
                 ))}
               </dl>

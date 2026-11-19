@@ -57,7 +57,7 @@ export function LeadDetail({
   return (
     <div className="flex flex-col gap-5 rounded-xl border bg-card p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">{d.title}</h2>
+        <h2 className="min-w-0 break-words text-lg font-semibold tracking-tight text-foreground">{d.title}</h2>
         <Button variant="ghost" size="icon" onClick={onClose} aria-label={d.close}>
           <X className="size-4" aria-hidden="true" />
         </Button>

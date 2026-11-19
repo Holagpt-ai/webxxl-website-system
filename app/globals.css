@@ -133,6 +133,16 @@
   h4 {
     @apply tracking-tight text-balance;
   }
+  [data-query-focus='true'] {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+    scroll-margin-block: 6rem;
+    background-color: color-mix(in oklch, var(--accent) 60%, transparent);
+    transition: background-color 600ms ease;
+  }
+  [data-query-focus='true']:focus-visible {
+    outline-width: 3px;
+  }
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;

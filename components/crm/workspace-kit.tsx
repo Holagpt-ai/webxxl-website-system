@@ -78,7 +78,7 @@ export function WorkspaceState({
         <Icon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
         <span>
           <span className="font-medium text-foreground">{fill(state.title, { workspace })}.</span> {text}
-          {detail && <span className="mt-1 block font-mono text-xs">{detail}</span>}
+          {detail && <span className="mt-1 block break-all font-mono text-xs">{detail}</span>}
         </span>
       </p>
     )
@@ -89,10 +89,10 @@ export function WorkspaceState({
       <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
         <Icon className="size-5" aria-hidden="true" />
       </span>
-      <div className="flex flex-1 flex-col gap-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="font-semibold text-foreground">{fill(state.title, { workspace })}</p>
         <p className="text-sm leading-relaxed text-muted-foreground">{text}</p>
-        {detail && <p className="font-mono text-xs text-muted-foreground">{detail}</p>}
+        {detail && <p className="break-all font-mono text-xs text-muted-foreground">{detail}</p>}
       </div>
       {retry && (
         <Button variant="outline" size="sm" onClick={onRetry}>
@@ -110,7 +110,7 @@ export function DisconnectedState({ title, body }: { title: string; body: string
       <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
         <PlugZap className="size-5" aria-hidden="true" />
       </span>
-      <div className="flex flex-1 flex-col gap-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="font-semibold text-foreground">{title}</p>
         <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
       </div>
@@ -383,9 +383,9 @@ export function StatTile({ label, value, hint }: { label: string; value: string;
 /** Inline gap notice used for honest "this has no API yet" explanations. */
 export function GapNotice({ title, body }: { title: string; body: string }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg border bg-muted px-4 py-3 text-sm">
+    <div role="note" className="flex items-start gap-3 rounded-lg border bg-muted px-4 py-3 text-sm">
       <Ban className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-      <p className="leading-relaxed text-muted-foreground">
+      <p className="min-w-0 break-words leading-relaxed text-muted-foreground">
         <span className="font-medium text-foreground">{title}.</span> {body}
       </p>
     </div>

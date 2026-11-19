@@ -42,9 +42,9 @@ export function LineageRow({
         <div className="flex flex-wrap items-center gap-2">
           <StatusPill label={copy.leadStatus[lead.status] ?? copy.unknownStatus} tone={STATUS_TONE[lead.status] ?? 'muted'} />
         </div>
-        <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+        <p className="flex min-w-0 items-center gap-1.5 text-sm font-medium text-foreground">
           <Globe className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-          <span className="truncate">{lead.managedSiteName || copy.unnamedSite}</span>
+          <span className="min-w-0 truncate">{lead.managedSiteName || copy.unnamedSite}</span>
         </p>
         <ul className="flex flex-col gap-0.5 text-xs text-muted-foreground">
           <li>
@@ -99,7 +99,7 @@ function ProjectColumn({ lead, locale, copy }: { lead: OperationsLeadLineage; lo
   const href = safeDestination(locale, project.destination?.path)
 
   return (
-    <div className="flex flex-col gap-2 border-t pt-4 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
+    <div className="flex min-w-0 flex-col gap-2 border-t pt-4 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
       <ColumnTitle icon={FolderKanban} title={copy.projectTitle} />
       <p className="truncate text-sm font-medium text-foreground">{project.projectName}</p>
       {percent !== null && (

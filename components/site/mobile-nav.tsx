@@ -27,6 +27,8 @@ export function MobileNav({
   const [open, setOpen] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
   const pathname = usePathname()
+  const isCurrent = (href: string) => pathname === href
+  const isWithin = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
 
   useEffect(() => setOpen(false), [pathname])
 
@@ -48,7 +50,14 @@ export function MobileNav({
             {items.map((item) =>
               item.type === 'link' ? (
                 <li key={item.href}>
-                  <Link href={item.href} className="flex h-12 items-center rounded-lg px-3 font-medium hover:bg-muted">
+                  <Link
+                    href={item.href}
+                    aria-current={isCurrent(item.href) ? 'page' : undefined}
+                    className={cn(
+                      'flex min-h-12 items-center rounded-lg px-3 font-medium hover:bg-muted',
+                      isWithin(item.href) && 'bg-muted text-primary',
+                    )}
+                  >
                     {item.label}
                   </Link>
                 </li>
@@ -57,26 +66,42 @@ export function MobileNav({
                   <button
                     type="button"
                     aria-expanded={expanded === item.label}
+                    aria-controls={`mobile-menu-${item.match.replace(/\W/g, '')}`}
                     onClick={() => setExpanded(expanded === item.label ? null : item.label)}
-                    className="flex h-12 w-full items-center justify-between rounded-lg px-3 font-medium hover:bg-muted"
+                    className={cn(
+                      'flex min-h-12 w-full items-center justify-between gap-3 rounded-lg px-3 text-left font-medium hover:bg-muted',
+                      isWithin(item.href) && 'text-primary',
+                    )}
                   >
                     {item.label}
-                    <ChevronDown className={cn('size-4 transition-transform', expanded === item.label && 'rotate-180')} aria-hidden="true" />
+                    <ChevronDown className={cn('size-4 shrink-0 transition-transform', expanded === item.label && 'rotate-180')} aria-hidden="true" />
                   </button>
                   {expanded === item.label && (
-                    <ul className="mb-2 flex flex-col border-l ml-4 pl-2">
+                    <ul id={`mobile-menu-${item.match.replace(/\W/g, '')}`} className="mb-2 ml-4 flex flex-col border-l pl-2">
                       <li>
-                        <Link href={item.href} className="flex h-10 items-center rounded-md px-3 text-sm font-semibold text-primary hover:bg-muted">
+                        <Link
+                          href={item.href}
+                          aria-current={isCurrent(item.href) ? 'page' : undefined}
+                          className="flex min-h-11 items-center rounded-md px-3 text-sm font-semibold text-primary hover:bg-muted"
+                        >
                           {item.viewAllLabel}
                         </Link>
                       </li>
                       {item.entries.map((entry) => {
                         const EntryIcon = icons[entry.icon]
+                        const current = isCurrent(entry.href)
                         return (
                           <li key={entry.href}>
-                            <Link href={entry.href} className="flex h-10 items-center gap-2.5 rounded-md px-3 text-sm hover:bg-muted">
-                              <EntryIcon className="size-4 text-primary" aria-hidden="true" />
-                              {entry.label}
+                            <Link
+                              href={entry.href}
+                              aria-current={current ? 'page' : undefined}
+                              className={cn(
+                                'flex min-h-11 items-center gap-2.5 rounded-md px-3 py-2 text-sm leading-snug hover:bg-muted',
+                                current && 'bg-muted font-semibold text-primary',
+                              )}
+                            >
+                              <EntryIcon className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                              <span className="min-w-0">{entry.label}</span>
                             </Link>
                           </li>
                         )

@@ -57,8 +57,8 @@ export function OrderDetailPanel({
   return (
     <div className="rounded-lg border bg-card p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="text-sm font-semibold">{o.title}</p>
-        <Button variant="ghost" size="sm" type="button" onClick={onClose}>
+        <p className="min-w-0 break-words text-sm font-semibold">{o.title}</p>
+        <Button variant="ghost" size="sm" type="button" className="shrink-0" onClick={onClose}>
           {o.close}
         </Button>
       </div>

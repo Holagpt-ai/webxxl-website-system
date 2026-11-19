@@ -14,12 +14,12 @@ import { LanguageSwitcher } from './language-switcher'
 
 function FooterColumn({ title, links }: { title: string; links: { label: string; href: string }[] }) {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex min-w-0 flex-col gap-3">
       <h2 className="text-sm font-semibold text-inverse-foreground">{title}</h2>
-      <ul className="flex flex-col gap-2">
+      <ul className="flex flex-col gap-1">
         {links.map((link) => (
           <li key={link.href + link.label}>
-            <Link href={link.href} className="text-sm text-inverse-muted transition-colors hover:text-inverse-foreground">
+            <Link href={link.href} className="inline-flex min-h-8 items-center break-words text-sm text-inverse-muted transition-colors hover:text-inverse-foreground">
               {link.label}
             </Link>
           </li>
@@ -59,7 +59,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             {siteConfig.email}
           </a>
         </div>
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:col-span-6">
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 md:col-span-2 md:row-start-2 lg:col-span-6 lg:row-start-auto">
           <FooterColumn title={dict.footer.solutions} links={solutions} />
           <FooterColumn title={dict.footer.industries} links={industries} />
           <FooterColumn title={dict.footer.company} links={company} />
@@ -88,7 +88,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             {'© '}
             {new Date().getFullYear()} {siteConfig.name}. {dict.footer.rights}
           </p>
-          <div className="flex items-center gap-4 [&_a]:text-inverse-muted [&_a[aria-current]]:bg-inverse-foreground/10 [&_a[aria-current]]:text-inverse-foreground">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 [&_a]:text-inverse-muted [&_a[aria-current]]:bg-inverse-foreground/10 [&_a[aria-current]]:text-inverse-foreground">
             <LanguageSwitcher locale={locale} label={dict.common.language} />
             <span>{dict.footer.bottomNote}</span>
           </div>
