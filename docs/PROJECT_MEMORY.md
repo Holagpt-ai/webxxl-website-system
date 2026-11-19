@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-14 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `b26dc0b6490709a76b5721e3e689d70cc0d195d5` (PR **#139** Batch 9E MERGED)
+**Evidence review:** 2026-11-18 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `623a9e98eb7b1bae7c219a20120d3cc710ea8b3b` (legal PRs **#141–#142** MERGED; last functional PR **#139** / Batch 9E MERGED)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,14 +35,18 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | GitHub `main` `b26dc0b` ([PR **#139**](https://github.com/Holagpt-ai/webxxl-website-system/pull/139) Batch **9E** MERGED). Batches **9A–9E** complete at source. **FINAL UI/UX** draft PR **IN PROGRESS** on `v0/final-ui-ux-completion` (`c88244e`, `b4f6a01`). No authenticated browser verification this phase. |
-| 2 | GitHub SHA, branch, active PR | **`b26dc0b6490709a76b5721e3e689d70cc0d195d5`** on `main`. Draft **FINAL UI/UX** from `v0/final-ui-ux-completion` → `main` (not merged). Head @ `7854a14` on `v0/final-ui-ux-completion`. |
-| 3 | Production deployment | Production SHA evidence last recorded @ `d82d323` (SHA only). Post-`b26dc0b` Production deploy **UNVERIFIED** this session. |
-| 4 | Last updated | 2026-11-14 |
-| 5 | Next task / responsible platform | **v0.app:** complete remaining presentation per [`FINAL-UI-V0-REMAINING.md`](FINAL-UI-V0-REMAINING.md). **Cursor:** after v0 — consolidated desktop/mobile visual QA, focused fixes, ready draft for owner (no auto-merge). |
-| 6 | Open blocker / gate IDs | **AUTH-STAGING-8C** **DEFERRED**. **RELEASE-001** **gated**. Prod migrate + providers + DNS + publishing **not activated**. Final UI **INCOMPLETE**. |
+| 1 | Last verified checkpoint | GitHub `main` `623a9e9` after merged legal PRs **#141** and **#142**; last completed functional batch **9E**, [PR **#139**](https://github.com/Holagpt-ai/webxxl-website-system/pull/139) @ `b26dc0b`. Batches **9A–9E** source-merged. [PR **#140**](https://github.com/Holagpt-ai/webxxl-website-system/pull/140) **FINAL UI/UX** remains DRAFT / IN PROGRESS and unmerged, without authenticated visual QA. |
+| 2 | GitHub SHA, branch, active PR | **`623a9e98eb7b1bae7c219a20120d3cc710ea8b3b`** on GitHub `main`. Active [PR **#140**](https://github.com/Holagpt-ai/webxxl-website-system/pull/140): `v0/final-ui-ux-completion` → `main`, DRAFT (not merged). Pre-documentation-sync branch head: `8b5345491eb1a397b1521a7b4fe2090158379e36`; verify live head on GitHub after subsequent commits. UI branch originally forked from `b26dc0b6490709a76b5721e3e689d70cc0d195d5`. |
+| 3 | Production deployment | Last recorded Production deployment evidence: `d82d323` (SHA only, 2026-11-14). Deployment of current `main` `623a9e9`, production migrations, provider activation, and live behavior **UNVERIFIED**; no launch authorization implied. |
+| 4 | Last updated | 2026-11-18 |
+| 5 | Next task / responsible platform | **v0.app:** finish the presentation checklist in [`FINAL-UI-V0-REMAINING.md`](FINAL-UI-V0-REMAINING.md) on PR #140. **Cursor:** maintain continuity docs and, after v0 handoff, perform ONE consolidated authenticated desktop/mobile visual verification and owner review. No auto-merge. |
+| 6 | Open blocker / gate IDs | **AUTH-STAGING-8C** / **ISSUE-105-QA** broad acceptance **DEFERRED**; **RELEASE-001** gated; **POLICY-SUB-001** awaits commercial policy decision. PR #140 UI incomplete; production migrations, providers, live sends, DNS, billing and public publishing remain separately owner-gated. |
 
 ### Evidence table
+
+| Batches 9A–9E functional completion | MERGED | #135 **closed/superseded** (its 9A changes included in merged [PR #136](https://github.com/Holagpt-ai/webxxl-website-system/pull/136)); #137 @ `964b3ab`, #138 @ `f867760`, #139 @ `b26dc0b`. Source completion only, not activation |
+| Legal Privacy/Terms update | MERGED | [PR #141](https://github.com/Holagpt-ai/webxxl-website-system/pull/141) @ `74044c8` — TikTok app review legal content; [PR #142](https://github.com/Holagpt-ai/webxxl-website-system/pull/142) @ `623a9e9` — business phone / auto-renewal / price-change text, `content/legal.ts` only |
+| Final UI/UX completion | IN PR | [PR #140](https://github.com/Holagpt-ai/webxxl-website-system/pull/140), `v0/final-ui-ux-completion`, DRAFT/unmerged; `8b53454` pre-doc-sync head; v0 checklist incomplete and authenticated visual QA pending |
 
 | Item | State | Evidence |
 |---|---|---|
