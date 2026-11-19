@@ -12,8 +12,8 @@ export function PageTitle({ title, description }: { title: string; description?:
 export function EmptyState({ title, body }: { title: string; body: string }) {
   return (
     <div className="rounded-xl border border-dashed bg-card p-8 text-center">
-      <p className="font-semibold">{title}</p>
-      <p className="mt-2 text-sm text-muted-foreground">{body}</p>
+      <p className="text-balance break-words font-semibold">{title}</p>
+      <p className="mt-2 text-pretty break-words text-sm leading-relaxed text-muted-foreground">{body}</p>
     </div>
   )
 }

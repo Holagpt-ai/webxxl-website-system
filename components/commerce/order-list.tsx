@@ -38,13 +38,13 @@ export function OrderList({
             <details className="group">
               <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
                 <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="font-mono text-sm font-medium text-foreground">{order.publicId}</span>
+                  <span className="break-all font-mono text-sm font-medium text-foreground">{order.publicId}</span>
                   <span className="text-xs text-muted-foreground">
                     {order.createdAt ? formatDate(order.createdAt, locale) : account}
                   </span>
                 </span>
                 <StatusPill label={status} tone={orderTone(order.status)} />
-                <span className="w-28 text-right font-semibold tabular-nums text-foreground">
+                <span className="min-w-28 shrink-0 text-right font-semibold tabular-nums text-foreground">
                   {formatMoney(order.totalMinor, order.currency, locale)}
                 </span>
                 <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
@@ -69,7 +69,7 @@ export function OrderList({
                   <ul className="flex flex-col gap-1.5">
                     {order.items.map((item, i) => (
                       <li key={`${item.productKey}-${i}`} className="flex flex-wrap items-baseline justify-between gap-2">
-                        <span className="font-mono text-foreground">{item.productKey}</span>
+                        <span className="min-w-0 break-all font-mono text-foreground">{item.productKey}</span>
                         <span className="text-muted-foreground tabular-nums">
                           {item.quantity} × {formatMoney(item.unitAmountMinor, item.currency, locale)}
                           {item.creditAmount !== null && ` · ${formatNumber(item.creditAmount, locale)} ${copy.common.credits}`}
@@ -82,7 +82,7 @@ export function OrderList({
                 {order.legacyMarketplace && (
                   <p className="text-muted-foreground">
                     {copy.common.linkedRequest}:{' '}
-                    <span className="font-mono text-foreground">{order.legacyMarketplace.publicId}</span> ·{' '}
+                    <span className="break-all font-mono text-foreground">{order.legacyMarketplace.publicId}</span> ·{' '}
                     {copy.requestStatuses[order.legacyMarketplace.status] ?? order.legacyMarketplace.status}
                   </p>
                 )}

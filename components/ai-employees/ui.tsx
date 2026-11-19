@@ -48,12 +48,12 @@ export function AiState({
     return (
       <div role="alert" className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm">
         <Icon className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden="true" />
-        <div className="flex flex-col gap-0.5">
+        <div className="flex min-w-0 flex-col gap-0.5">
           <p className="text-foreground">
             <span className="font-medium">{state.title}.</span> <span className="text-muted-foreground">{state.body}</span>
           </p>
           {message && (
-            <p className="text-xs text-muted-foreground">
+            <p className="break-words text-xs text-muted-foreground">
               {copy.common.serverMessage}: {message}
             </p>
           )}
@@ -67,7 +67,7 @@ export function AiState({
       <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
         <Icon className="size-5" aria-hidden="true" />
       </span>
-      <div className="flex flex-1 flex-col gap-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="font-semibold text-foreground">{state.title}</p>
         <p className="text-sm leading-relaxed text-muted-foreground">{state.body}</p>
       </div>
@@ -106,9 +106,9 @@ export function Notice({
       )}
     >
       <Icon className={cn('mt-0.5 size-5 shrink-0', tone === 'danger' ? 'text-destructive' : 'text-secondary-foreground')} aria-hidden="true" />
-      <div className="flex flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1">
         <p className="text-sm font-semibold text-foreground">{title}</p>
-        <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
+        <p className="break-words text-sm leading-relaxed text-muted-foreground">{body}</p>
       </div>
     </div>
   )

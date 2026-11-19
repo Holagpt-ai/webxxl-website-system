@@ -54,7 +54,7 @@ export function CommerceState({
       <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
         <Icon className="size-5" aria-hidden="true" />
       </span>
-      <div className="flex flex-1 flex-col gap-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="font-semibold text-foreground">{state.title}</p>
         <p className="text-sm leading-relaxed text-muted-foreground">{state.body}</p>
       </div>

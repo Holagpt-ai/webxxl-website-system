@@ -26,7 +26,7 @@ type LifecycleLabels = {
 
 function LifecycleFeedback({ message, tone }: { message: string; tone: 'ok' | 'err' }) {
   return (
-    <p className={`text-xs ${tone === 'ok' ? 'text-muted-foreground' : 'text-destructive'}`} role="status">
+    <p className={`break-words text-xs ${tone === 'ok' ? 'text-muted-foreground' : 'text-destructive'}`} role="status">
       {message}
     </p>
   )
