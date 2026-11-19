@@ -6,12 +6,12 @@
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | GitHub `main` `623a9e9` after legal PRs **#141–#142**; functional Batches **9A–9E** remain source-merged (last functional PR **#139** @ `b26dc0b`). [PR **#140**](https://github.com/Holagpt-ai/webxxl-website-system/pull/140) FINAL UI/UX remains **DRAFT / UNMERGED** at head `bdce94df38a3efd3a85210c3762f9422fcbb6f49`. Required CI at that head is **SUCCESS** (scope, continuity, app, app-validate-gate, Vercel, Vercel Preview Comments; completed 2026-11-19T00:37:13Z). Authenticated visual QA on Preview `https://webxxl-website-system-dynevvx4h-tone4real-7828s-projects.vercel.app` is **BLOCKED**: existing Chrome Vercel session opened Deployment Protection; `/dashboard` redirected to `/login` (magic link only) and no Auth.js session was present. Magic-link send was not performed. Public EN `/` and ES `/es` at desktop ~1366px, and ES with the viewport split to ~650px, showed no demonstrated overflow defect. Phone-width, customer, and admin modules were not reached. |
-| 2 | GitHub SHA, branch, active PR | **`623a9e98eb7b1bae7c219a20120d3cc710ea8b3b`** on GitHub `main`. Active [PR **#140**](https://github.com/Holagpt-ai/webxxl-website-system/pull/140): `v0/final-ui-ux-completion` → `main` (DRAFT/unmerged) head **`bdce94df38a3efd3a85210c3762f9422fcbb6f49`**. v0 UI delivery `84dc32fe27db9f74f95ebd92753fa63a4d468b27` is included. UI branch originally forked from `b26dc0b`. Legal PRs **#141** and **#142** stay on `main` and must be preserved at integration. |
-| 3 | Production deployment | Vercel Production **READY** at GitHub `main` `623a9e98` ([deployment](https://vercel.com/tone4real-7828s-projects/webxxl-website-system/Adby8MqB9urDBVUWBMt2NEPsaicH), `dpl_Adby8MqB9urDBVUWBMt2NEPsaicH`, 2026-11-18). Deployment SHA/alias metadata verified; database migrations, provider/flag activation, authenticated behavior and customer workflows **UNVERIFIED**. |
+| 1 | Last verified checkpoint | GitHub `main` **`623a9e98eb7b1bae7c219a20120d3cc710ea8b3b`** (legal PRs **#141–#142**; last functional PR **#139** @ `b26dc0b`). [PR **#140**](https://github.com/Holagpt-ai/webxxl-website-system/pull/140) FINAL UI/UX is **reconciled with `main`** (merge includes `content/legal.ts` from #141/#142). Integration head **`0251d6e05cf1e13fd250de5fa19f1790063209aa`** (after prior docs commit `7175bf6`). Local **typecheck PASS**; Batch **9** focused tests **24/24 PASS**. Diff vs `main` is presentation-only (components, `app/globals.css`); **no** `lib/`, `app/api/`, or `prisma/` changes. **Authenticated portal/admin UI verification DEFERRED** to release stabilization (**AUTH-STAGING-8C / ISSUE-105-QA**); signed-in modules were **not** verified this cycle. Prior pass: public EN/ES only (no demonstrated defect). |
+| 2 | GitHub SHA, branch, active PR | **`623a9e98eb7b1bae7c219a20120d3cc710ea8b3b`** on `main`. [PR **#140**](https://github.com/Holagpt-ai/webxxl-website-system/pull/140): `v0/final-ui-ux-completion` → `main` (OPEN; prepared for owner merge review; **not merged**). Head **`0251d6e05cf1e13fd250de5fa19f1790063209aa`**. v0 delivery `84dc32f` preserved. Confirm GitHub CI on pushed head before merge. |
+| 3 | Production deployment | Vercel Production **READY** at GitHub `main` `623a9e98` ([deployment](https://vercel.com/tone4real-7828s-projects/webxxl-website-system/Adby8MqB9urBDVUWBMt2NEPsaicH), `dpl_Adby8MqB9urDBVUWBMt2NEPsaicH`, 2026-11-18). PR #140 Preview deploys separately; post-merge production SHA **not claimed**. |
 | 4 | Last updated | 2026-11-18 |
-| 5 | Next task / responsible platform | **Owner:** supply an existing authenticated session on the PR #140 Preview, or explicitly authorize one magic-link send for that host. **Cursor:** repeat the single authenticated desktop/mobile pass after that session exists. **v0.app:** no presentation correction from this pass (no demonstrated authenticated defect). Keep PR #140 DRAFT. No auto-merge. |
-| 6 | Open blocker / gate IDs | **FINAL-UI-AUTH-QA BLOCKED** — Preview app sign-in is magic-link only; no session cookie on `webxxl-website-system-dynevvx4h` or the branch alias; outbound send not authorized. **AUTH-STAGING-8C / ISSUE-105-QA** broad acceptance **DEFERRED**. **RELEASE-001** production gate. **POLICY-SUB-001** commercial decision. Production migrations, payment, providers, live sends, DNS, and public publishing still owner-gated. `config/site.ts` fallback `hello@webbxxl.com` / canonical domain require owner confirmation before changing. |
+| 5 | Next task / responsible platform | **Owner:** merge review on PR #140 (explicit approval required; no auto-merge). Authenticated UI acceptance remains in **release stabilization**, not a blocker to reviewing this visual-only integration. **Cursor/v0:** presentation fixes only if owner finds defects in review. |
+| 6 | Open blocker / gate IDs | **AUTH-STAGING-8C / ISSUE-105-QA** authenticated acceptance **DEFERRED** (not completed; do not treat as PASS). **RELEASE-001** production gate. **POLICY-SUB-001**. Production migrations, providers, live sends, DNS, publishing **not activated**. |
 
 ## 2026-11-18 — final v0 visual delivery (PR #140)
 
@@ -20,7 +20,7 @@
 - v0 reported typecheck PASS and 24/24 tests across seven Batch 9 test files. GitHub checks at UI delivery head: Continuity PASS, App Validate PASS, Vercel PASS. No authenticated desktop/mobile browser verification; visual acceptance is NOT YET COMPLETE.
 - PR #140 already exists as OPEN/DRAFT (do not create another PR). Current `main` includes legal PRs #141/#142 in `content/legal.ts`, absent from the UI branch base; preserve those merges during eventual integration. No branch reset, production deployment, migration, provider activation, payments, DNS or publishing authorized.
 - Staging remains `vcgibefnhneaqhcguhnt` (credential rotation and 39/39 migrations verified at prior 2026-11-14 checkpoint); production DB `txfxeehglqfszletuumn` migrations/flags/activation not verified. Configuration names remain `DATABASE_URL`, `DIRECT_URL`, `NEXT_PUBLIC_SITE_URL` and module/provider gates already documented in `docs/PROJECT_MEMORY.md`; **none changed** in this delivery. No secret values in documentation.
-- 2026-11-18 authenticated pass is **BLOCKED** (see the section below). No v0 correction. Keep PR #140 draft. Fallback email and canonical `webbxxl.com` / `webxxl.com` naming require owner confirmation, not silent edits.
+- 2026-11-18: PR #140 merged with `main` @ `623a9e9` so legal `content/legal.ts` (#141/#142) is preserved. Authenticated UI **deferred** to release stabilization; not verified. Prepared for owner merge review.
 
 ## Final UI integration (Cursor)
 
@@ -33,18 +33,17 @@
 - `components/dashboard/record-query-focus.tsx`: client focus-ring UX (v0); does not change server APIs.
 - **No** production publishing, provider activation, DNS, or migrations.
 
-## 2026-11-18 — authenticated visual QA attempt (BLOCKED)
+## 2026-11-18 — PR #140 final integration (Cursor)
 
-- PR head verified on GitHub: `bdce94df38a3efd3a85210c3762f9422fcbb6f49`. Checks **SUCCESS**: scope, continuity, app, app-validate-gate, Vercel, Vercel Preview Comments (app-validate-gate completed 2026-11-19T00:37:13Z).
-- Preview exercised: deployment URL `https://webxxl-website-system-dynevvx4h-tone4real-7828s-projects.vercel.app` (GitHub deployment `7900440643`, SHA `bdce94d`). Unauthenticated curl receives Vercel SSO `302`. The owner Chrome profile already had a Vercel session, so the same URL rendered the app.
-- Public evidence, no defect handed to v0: EN `/` and ES `/es` at desktop ~1366×768 (`components/site/site-header.tsx` CTA “Solicita una cotización gratis” fully inside the button). ES with DevTools docked (~650px content width) collapsed to the hamburger and wrapped the hero. EN `/login` at ~1366px showed the magic-link card without overflow.
-- Authenticated evidence: `/dashboard` on that host redirected to `/login`. Copy: “We will email you a secure one-time link.” No Auth.js session cookie. `.env.staging.local` has database identity only. A magic-link send was not performed.
-- Not reached: phone ~390px, Spanish login, customer portal, CRM, Marketing Studio, Communications, Local SEO, Analytics, AI Employees, Commerce/Billing order list/detail, infrastructure lifecycle feedback, admin, deep-link focus, approvals.
-- Legal PRs #141 and #142 remain only on `main`. This pass did not rebase or merge. PR #140 stays DRAFT. Not ready for owner merge review.
+- Merged `origin/main` @ `623a9e9` into `v0/final-ui-ux-completion`. Merge commit `0251d6e`; `content/legal.ts` matches main (#141 TikTok legal expansion, #142 business phone / auto-renewal / price-change).
+- Scope review vs `main`: 37 presentation paths (components + `app/globals.css` + continuity docs). No backend, API, Prisma, auth, or commerce logic diffs.
+- Local validation: `pnpm typecheck` PASS; Batch 9 vitest **24/24** PASS (seven files).
+- Authenticated UI: **DEFERRED** to release stabilization. Do not claim portal, CRM, admin, order list/detail, or lifecycle screens were verified. Only prior unauthenticated public samples (EN/ES) recorded—no v0 defect queue.
+- PR prepared for **owner merge review**; merge requires explicit owner approval.
 
 ## Next assignment
 
-**Owner** provides an existing authenticated Preview session, or explicitly authorizes one magic-link send on the PR #140 host. **Cursor** then repeats the single desktop/mobile pass. **v0.app** has no correction from this pass. PR #140 remains DRAFT.
+**Owner:** review and merge PR #140 when satisfied. Authenticated visual acceptance stays in release stabilization (**AUTH-STAGING-8C / ISSUE-105-QA**).
 
 ## PENDING REPOSITORY SYNC
 
@@ -53,18 +52,14 @@
 ## Handoff template
 
 ```
-Date / scope / owner: 2026-11-18 / Final UI authenticated visual QA / Cursor
+Date / scope / owner: 2026-11-18 / PR #140 final integration / Cursor
 Repo / main SHA: Holagpt-ai/webxxl-website-system / 623a9e98eb7b1bae7c219a20120d3cc710ea8b3b
-Branch: v0/final-ui-ux-completion @ bdce94df38a3efd3a85210c3762f9422fcbb6f49
-PR: #140 DRAFT, not ready for merge review
-CI at head: SUCCESS (scope, continuity, app, app-validate-gate, Vercel, Vercel Preview Comments)
-Merged: PR #139 YES (functional); #141 and #142 YES (legal); PR #140 NO (draft)
+Branch: v0/final-ui-ux-completion @ 0251d6e05cf1e13fd250de5fa19f1790063209aa (+ integration docs commit after push)
+PR: #140 OPEN, reconciled with main, prepared for owner merge review (not merged)
+Local checks: typecheck PASS; Batch 9 tests 24/24 PASS
+Merged: PR #139 YES; #141/#142 YES on main; PR #140 NO
 Migration applied: NO in production (owner-gated)
-Authenticated QA: BLOCKED — Preview /dashboard → /login, no Auth.js session, magic-link send not performed
-Public QA: EN / and ES /es desktop ~1366, ES ~650 split — no overflow defect demonstrated
-Do NOT touch:
-- Cursor-owned backend paths in BATCH9C/9D/9E handoffs without explicit handoff
-- Production migrations, DNS, paid providers, live checkout, outbound sends, customer site publishing
-- content/legal.ts from PRs #141 and #142
-Next exact assignment / owning tool: Owner existing Preview session or one authorized magic-link send → Cursor repeats the authenticated pass. v0 has no correction from this pass.
+Authenticated UI: DEFERRED to release stabilization — NOT VERIFIED
+Do NOT touch: production migrate, providers, DNS, publishing, live checkout/sends without owner gate
+Next: Owner merge review on PR #140
 ```

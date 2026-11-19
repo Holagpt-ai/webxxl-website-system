@@ -3,10 +3,9 @@
 **Branch:** `v0/final-ui-ux-completion`  
 **Base `main`:** `b26dc0b6490709a76b5721e3e689d70cc0d195d5` (PR **#139** / Batch 9E merged)  
 **v0 commits (in branch):** `c88244e` (focus highlight, analytics tabs, ledger density), `b4f6a01` (public/portal mobile wrapping, tap targets)  
-**Status:** **BLOCKED** — not ready for owner merge  
-**PR head:** `bdce94df38a3efd3a85210c3762f9422fcbb6f49` (includes v0 `84dc32f`)  
-**CI at head:** SUCCESS — scope, continuity, app, app-validate-gate, Vercel, Vercel Preview Comments (2026-11-19T00:37:13Z)  
-**Verification:** Authenticated pass **BLOCKED** 2026-11-18. Preview `https://webxxl-website-system-dynevvx4h-tone4real-7828s-projects.vercel.app` opened with the existing Chrome Vercel session. `/dashboard` redirected to `/login` (magic link only). No Auth.js session. Magic-link send not performed.  
+**Status:** Integrated with `main` `623a9e9`; **prepared for owner merge review** (not merged).  
+**PR head:** `0251d6e05cf1e13fd250de5fa19f1790063209aa` (includes v0 `84dc32f` + legal #141/#142 via merge).  
+**Verification:** Authenticated portal/admin UI **DEFERRED** to release stabilization — **not verified**. Public-only spot checks recorded earlier; not a pass on signed-in modules.  
 **Activation:** No production publishing, provider activation, DNS, or migrations
 
 ## Do not edit (Cursor-owned — see BATCH9C/9D/9E handoffs)
