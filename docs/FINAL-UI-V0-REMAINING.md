@@ -4,7 +4,7 @@
 **Base `main`:** `b26dc0b6490709a76b5721e3e689d70cc0d195d5` (PR **#139** / Batch 9E merged)  
 **v0 commits (in branch):** `c88244e` (focus highlight, analytics tabs, ledger density), `b4f6a01` (public/portal mobile wrapping, tap targets)  
 **Status:** Integrated with `main` `623a9e9`; **prepared for owner merge review** (not merged).  
-**PR head:** `11642af6ff4768ce5fb864e9ead6f5ebde44830d` (includes v0 `84dc32f` + legal #141/#142 via merge).  
+**PR head:** `6d43c4f4dec33683aa1dcd97c9bc2b9019308c51` (includes v0 `84dc32f` + legal #141/#142 via merge).  
 **Verification:** Authenticated portal/admin UI **DEFERRED** to release stabilization — **not verified**. Public-only spot checks recorded earlier; not a pass on signed-in modules.  
 **Activation:** No production publishing, provider activation, DNS, or migrations
 
