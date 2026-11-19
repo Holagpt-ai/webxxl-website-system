@@ -1,17 +1,24 @@
 # WebXXL — Session Handoff
 
-**Compiled:** 2026-11-18 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `623a9e98eb7b1bae7c219a20120d3cc710ea8b3b` (PRs **#141–#142** legal merged; last functional PR **#139**, Batch 9E MERGED)
+**Compiled:** 2026-11-18 · **Repository:** `Holagpt-ai/webxxl-website-system` · **PR #140 squash merge:** `197eb4f056c17e6e5547d221c8a3a3a2ca71690e` (post-merge docs-only sync may advance `main`)
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | GitHub `main` **`623a9e98eb7b1bae7c219a20120d3cc710ea8b3b`** (legal PRs **#141–#142**; last functional PR **#139** @ `b26dc0b`). [PR **#140**](https://github.com/Holagpt-ai/webxxl-website-system/pull/140) FINAL UI/UX is **reconciled with `main`** (merge includes `content/legal.ts` from #141/#142). Integration head **`92fb0ca31a204f26e38332043d2cb616f6625b5a`** (merge `0251d6e` + integration docs). Local **typecheck PASS**; Batch **9** focused tests **24/24 PASS**. Diff vs `main` is presentation-only (components, `app/globals.css`); **no** `lib/`, `app/api/`, or `prisma/` changes. **Authenticated portal/admin UI verification DEFERRED** to release stabilization (**AUTH-STAGING-8C / ISSUE-105-QA**); signed-in modules were **not** verified this cycle. Prior pass: public EN/ES only (no demonstrated defect). |
-| 2 | GitHub SHA, branch, active PR | **`623a9e98eb7b1bae7c219a20120d3cc710ea8b3b`** on `main`. [PR **#140**](https://github.com/Holagpt-ai/webxxl-website-system/pull/140): `v0/final-ui-ux-completion` → `main` (OPEN; prepared for owner merge review; **not merged**). Head **`92fb0ca31a204f26e38332043d2cb616f6625b5a`**. v0 delivery `84dc32f` preserved. Confirm GitHub CI on pushed head before merge. |
-| 3 | Production deployment | Vercel Production **READY** at GitHub `main` `623a9e98` ([deployment](https://vercel.com/tone4real-7828s-projects/webxxl-website-system/Adby8MqB9urDBVUWBMt2NEPsaicH), `dpl_Adby8MqB9urDBVUWBMt2NEPsaicH`, 2026-11-18). PR #140 Preview deploys separately; post-merge production SHA **not claimed**. |
+| 1 | Last verified checkpoint | Owner-authorized [PR **#140**](https://github.com/Holagpt-ai/webxxl-website-system/pull/140) **SQUASH MERGED** on 2026-11-18: approved unchanged head `4a27473b113da736b9892a86442b205a6db8c047`, GitHub merge SHA `197eb4f056c17e6e5547d221c8a3a3a2ca71690e`. PR closed/merged; mergeability true and required scope, continuity, app, app-validate-gate and Vercel checks SUCCESS before merge. UI source integrated; no backend/API/Prisma diff. Authenticated customer/admin portal, CRM, commerce, support and lifecycle UI **NOT VERIFIED** (deferred to release stabilization **AUTH-STAGING-8C / ISSUE-105-QA**). Legal PRs **#141–#142** preserved. |
+| 2 | GitHub SHA, branch, active PR | GitHub `main` immediately after squash merge: **`197eb4f056c17e6e5547d221c8a3a3a2ca71690e`** (parent `623a9e98eb7b1bae7c219a20120d3cc710ea8b3b`). PR #140: **MERGED**, historical head `4a27473b113da736b9892a86442b205a6db8c047` on `v0/final-ui-ux-completion`. Post-merge documentation-only synchronization may advance `main`; resolve the live head from GitHub rather than interpreting this merge SHA as the permanent branch tip. |
+| 3 | Production deployment | Prior independently verified Vercel Production READY deployment: `dpl_Adby8MqB9urDBVUWBMt2NEPsaicH` at `623a9e98eb7b1bae7c219a20120d3cc710ea8b3b`, 2026-11-18. **Post-PR-#140 production deployment/status NOT VERIFIED in this checkpoint**; GitHub merge does not prove delivery, migration, activation, or runtime acceptance. No manual deployment requested or performed. |
 | 4 | Last updated | 2026-11-18 |
-| 5 | Next task / responsible platform | **Owner:** merge review on PR #140 (explicit approval required; no auto-merge). Authenticated UI acceptance remains in **release stabilization**, not a blocker to reviewing this visual-only integration. **Cursor/v0:** presentation fixes only if owner finds defects in review. |
-| 6 | Open blocker / gate IDs | **AUTH-STAGING-8C / ISSUE-105-QA** authenticated acceptance **DEFERRED** (not completed; do not treat as PASS). **RELEASE-001** production gate. **POLICY-SUB-001**. Production migrations, providers, live sends, DNS, publishing **not activated**. |
+| 5 | Next task / responsible platform | **Owner + Cursor:** proceed only with **release-stabilization planning / authorization gates**, not another development batch. Pending verified authenticated desktop/mobile EN/ES customer/admin UI acceptance; production migration/readiness evidence; POLICY-SUB-001. Execute credentials, migrations, provider activation, messaging, DNS, or publishing only after explicit scope-specific approval. **v0.app:** no work unless a demonstrated visual defect is assigned. |
+| 6 | Open blocker / gate IDs | **AUTH-STAGING-8C / ISSUE-105-QA** authenticated acceptance **DEFERRED / NOT VERIFIED**; **RELEASE-001** production release gate outstanding; **POLICY-SUB-001** commercial owner decision outstanding. Production DB migration status, provider/flag activation, live sends, payments, DNS and customer publishing **not verified or authorized**. Canonical domain and fallback `hello@webbxxl.com` remain owner decisions. |
+
+## 2026-11-18 — PR #140 owner-authorized squash merge (verified)
+
+- **Repository:** `Holagpt-ai/webxxl-website-system`. **PR:** [#140](https://github.com/Holagpt-ai/webxxl-website-system/pull/140), **MERGED/CLOSED** from `v0/final-ui-ux-completion`. Owner-authorized exact head `4a27473b113da736b9892a86442b205a6db8c047`; squash commit `197eb4f056c17e6e5547d221c8a3a3a2ca71690e`. GitHub `main` was verified at the squash SHA immediately after merge, parent `623a9e98eb7b1bae7c219a20120d3cc710ea8b3b`.
+- **Prerequisites:** PR head unchanged and mergeable; required CI SUCCESS on exact head: scope, continuity, app, app-validate-gate, Vercel. Existing local typecheck and Batch 9 focused 24/24 tests passed as reported by Cursor. Legal content from PRs #141/#142 included; no `lib/**`, `app/api/**`, or `prisma/**` changes in UI PR.
+- **Boundaries:** No manual Vercel deployment, production SQL/migrations, provider or flag activation, outbound email/SMS, payment activity, DNS or customer publishing initiated. GitHub-linked auto-deploy may follow a `main` push; its outcome is **not evidence** of verified production features. No new development batch started.
+- **Release stabilization carryover:** authenticated customer/admin desktop/mobile UI with EN/ES still **NOT VERIFIED** (AUTH-STAGING-8C / ISSUE-105-QA). RELEASE-001 and POLICY-SUB-001 remain gated; do not mark as passed. Next action is scoped owner/Cursor release-stabilization plan and authorization, not another staging credential troubleshooting loop.
 
 ## 2026-11-18 — final v0 visual delivery (PR #140)
 
@@ -43,7 +50,7 @@
 
 ## Next assignment
 
-**Owner:** review and merge PR #140 when satisfied. Authenticated visual acceptance stays in release stabilization (**AUTH-STAGING-8C / ISSUE-105-QA**).
+**Owner + Cursor:** next is controlled final release-stabilization readiness planning and explicit approval gates. Authenticated UI acceptance stays unverified (AUTH-STAGING-8C / ISSUE-105-QA). No new development batch or staging credentials loop; no migration/activation/publishing without new authorization.
 
 ## PENDING REPOSITORY SYNC
 
@@ -52,14 +59,16 @@
 ## Handoff template
 
 ```
-Date / scope / owner: 2026-11-18 / PR #140 final integration / Cursor
-Repo / main SHA: Holagpt-ai/webxxl-website-system / 623a9e98eb7b1bae7c219a20120d3cc710ea8b3b
-Branch: v0/final-ui-ux-completion @ 92fb0ca31a204f26e38332043d2cb616f6625b5a
-PR: #140 OPEN, reconciled with main, prepared for owner merge review (not merged)
-Local checks: typecheck PASS; Batch 9 tests 24/24 PASS
-Merged: PR #139 YES; #141/#142 YES on main; PR #140 NO
-Migration applied: NO in production (owner-gated)
+Date / scope / owner: 2026-11-18 / PR #140 approved squash merge / Owner + GitHub
+Repo / post-merge main: Holagpt-ai/webxxl-website-system / 197eb4f056c17e6e5547d221c8a3a3a2ca71690e (post-merge docs-only commit(s) may advance main)
+Branch: v0/final-ui-ux-completion @ 4a27473b113da736b9892a86442b205a6db8c047 (historical merged PR head)
+PR: #140 MERGED/CLOSED; GitHub squash SHA 197eb4f056c17e6e5547d221c8a3a3a2ca71690e
+Required GitHub checks: scope, continuity, app, app-validate-gate, Vercel PASS before merge
+Local checks (Cursor report): typecheck PASS; Batch 9 focused tests 24/24 PASS
+Merged: #139 YES, #141/#142 YES; #140 YES (source)
+Production deployment: previous READY evidence at 623a9e98eb7b1bae7c219a20120d3cc710ea8b3b; post-merge status UNVERIFIED
+Migration applied: production UNVERIFIED, no action authorized
 Authenticated UI: DEFERRED to release stabilization — NOT VERIFIED
 Do NOT touch: production migrate, providers, DNS, publishing, live checkout/sends without owner gate
-Next: Owner merge review on PR #140
+Next: owner/Cursor controlled release-stabilization readiness planning; no new development batch
 ```
