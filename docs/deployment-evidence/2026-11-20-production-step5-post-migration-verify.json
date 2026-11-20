@@ -1,0 +1,54 @@
+{
+  "gate": "RELEASE-001",
+  "step": 5,
+  "result": "PASS_WITH_BLOCKERS",
+  "recorded_at_utc": "2026-11-20",
+  "github": {
+    "origin_main_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
+    "latest_github_production_deployment_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
+    "github_production_deployment_id": 7919995501,
+    "sha_match_main": true
+  },
+  "vercel": {
+    "latest_production_deployment_id": "dpl_CN76Ffr4bLc517tTEw6UuQXypd4c",
+    "status": "Ready",
+    "aliases_include_www_webbxxl_com": true,
+    "created_utc_approx": "2026-11-19T16:59:01Z",
+    "github_deployment_target_url": "https://webxxl-website-system-76q7ut570-tone4real-7828s-projects.vercel.app",
+    "github_deployment_state": "success",
+    "deploy_initiated": false
+  },
+  "production_database": {
+    "supabase_ref": "txfxeehglqfszletuumn",
+    "identity_verified_local_pooler": "supabase:txfxeehglqfszletuumn/postgres",
+    "migration_folders_in_repo": 40,
+    "ledger_finished": 40,
+    "ledger_unresolved": 0,
+    "ledger_rolled_back_history": 1,
+    "SupportRequestMessage_table": true,
+    "database_writes_in_step5": false
+  },
+  "vercel_environment_non_secret": {
+    "DATABASE_URL": { "present": true, "value_verifiable": false, "note": "Vercel Production secret; cannot confirm txfx vs vcgib without decrypt" },
+    "DIRECT_URL": { "present": true, "value_verifiable": false },
+    "AUTH_URL": { "present": true, "value_verifiable_partial": "https://www.webbxxl… (non-secret config visible in Vercel list)" },
+    "NEXT_PUBLIC_SITE_URL": { "present": true, "value_verifiable_partial": "https://www.webbxxl…" },
+    "LEADS_TO_EMAIL": "hello@webbxxl.com (non-secret)",
+    "runtime_db_binding_proof": "BLOCKED"
+  },
+  "read_only_http_checks": {
+    "www_homepage": { "result": "PASS", "note": "200/marketing content reachable" },
+    "login_page": { "status": 200, "result": "PASS" },
+    "api_admin_operations_summary_unauthenticated": { "status": 401, "result": "PASS" },
+    "api_customer_operations_summary_unauthenticated": { "status": 401, "result": "PASS" },
+    "dashboard_unauthenticated": { "status": 200, "result": "INCONCLUSIVE", "note": "returns page shell; authenticated CRM flows not tested (AUTH-STAGING-8C)" }
+  },
+  "remaining_gates": [
+    "AUTH-STAGING-8C / ISSUE-105-QA — authenticated customer/admin desktop/mobile EN/ES acceptance",
+    "POLICY-SUB-001",
+    "Vercel Production DATABASE_URL/DIRECT_URL binding to txfx — unverified (secrets)",
+    "Provider activation / feature flags — UNVERIFIED",
+    "Post-migrate authenticated production smoke — not run in Step 5"
+  ],
+  "uncommitted_repo_docs": "RELEASE-001 Steps 3–5 evidence and continuity doc edits local only; not committed per assignment"
+}
