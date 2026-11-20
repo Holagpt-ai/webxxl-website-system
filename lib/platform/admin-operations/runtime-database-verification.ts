@@ -13,6 +13,12 @@ export type RuntimeDatabaseVerdict =
 
 export type ConnectivityState = 'OK' | 'FAIL' | 'SKIPPED'
 
+/** Production release gate (Step 6A): finished ledger rows must match repo chain. */
+export const EXPECTED_PRODUCTION_FINISHED_MIGRATIONS = 40
+
+/** Bound probe wait (direct IPv6 / pooler stalls must not hang staff requests). */
+export const DATABASE_PROBE_TIMEOUT_MS = 12_000
+
 export type RuntimeDatabaseVerificationResult = {
   verdict: RuntimeDatabaseVerdict
   configuration: {
@@ -29,14 +35,33 @@ export type RuntimeDatabaseVerificationResult = {
 const PRODUCTION_IDENTITY = `supabase:${WEBXXL_RECORDED_PRODUCTION_SUPABASE_REF}/postgres` as const
 const STAGING_IDENTITY = `supabase:${WEBXXL_RECORDED_STAGING_SUPABASE_REF}/postgres` as const
 
+type ConfigurationTarget = 'PRODUCTION' | 'STAGING' | 'MISMATCH' | 'UNVERIFIED'
+
 export type DatabaseConnectivityProbe = {
   probeDatabaseUrl: () => Promise<{ ok: boolean; finishedMigrations: number | null }>
   probeDirectUrl: (directUrl: string) => Promise<{ ok: boolean }>
 }
 
-async function defaultProbeDatabaseUrl(): Promise<{ ok: boolean; finishedMigrations: number | null }> {
-  const { prisma } = await import('@/lib/db')
+export async function withProbeTimeout<T>(
+  work: Promise<T>,
+  timeoutMs: number = DATABASE_PROBE_TIMEOUT_MS,
+): Promise<T | 'TIMEOUT'> {
+  let timer: ReturnType<typeof setTimeout> | undefined
   try {
+    return await Promise.race([
+      work,
+      new Promise<'TIMEOUT'>((resolve) => {
+        timer = setTimeout(() => resolve('TIMEOUT'), timeoutMs)
+      }),
+    ])
+  } finally {
+    if (timer) clearTimeout(timer)
+  }
+}
+
+async function probeDatabaseUrlInner(): Promise<{ ok: boolean; finishedMigrations: number | null }> {
+  try {
+    const { prisma } = await import('@/lib/db')
     await prisma.$queryRaw`SELECT 1 AS ok`
     const row = await prisma.$queryRaw<{ count: number }[]>`
       SELECT count(*)::int AS count FROM "_prisma_migrations"
@@ -47,7 +72,11 @@ async function defaultProbeDatabaseUrl(): Promise<{ ok: boolean; finishedMigrati
   }
 }
 
-async function defaultProbeDirectUrl(directUrl: string): Promise<{ ok: boolean }> {
+async function defaultProbeDatabaseUrl(): Promise<{ ok: boolean; finishedMigrations: number | null }> {
+  return probeDatabaseUrlInner()
+}
+
+async function probeDirectUrlInner(directUrl: string): Promise<{ ok: boolean }> {
   const client = new PrismaClient({ datasourceUrl: directUrl })
   try {
     await client.$queryRaw`SELECT 1 AS ok`
@@ -59,17 +88,44 @@ async function defaultProbeDirectUrl(directUrl: string): Promise<{ ok: boolean }
   }
 }
 
-function resolveVerdict(databaseIdentity: string | null, directIdentity: string | null): RuntimeDatabaseVerdict {
+async function defaultProbeDirectUrl(directUrl: string): Promise<{ ok: boolean }> {
+  return probeDirectUrlInner(directUrl)
+}
+
+function resolveConfigurationTarget(
+  databaseIdentity: string | null,
+  directIdentity: string | null,
+): ConfigurationTarget {
   if (!databaseIdentity || !directIdentity) return 'UNVERIFIED'
   if (databaseIdentity !== directIdentity) return 'MISMATCH'
-  if (databaseIdentity === PRODUCTION_IDENTITY) return 'VERIFIED_PRODUCTION'
-  if (databaseIdentity === STAGING_IDENTITY) return 'VERIFIED_STAGING'
+  if (databaseIdentity === PRODUCTION_IDENTITY) return 'PRODUCTION'
+  if (databaseIdentity === STAGING_IDENTITY) return 'STAGING'
   return 'UNVERIFIED'
 }
 
+function finalizeVerdict(
+  config: ConfigurationTarget,
+  databaseUrlConnectivity: ConnectivityState,
+  directUrlConnectivity: ConnectivityState,
+  migrationLedgerFinished: number | null,
+): RuntimeDatabaseVerdict {
+  if (config === 'MISMATCH') return 'MISMATCH'
+  if (config === 'UNVERIFIED') return 'UNVERIFIED'
+
+  const connectivityPass =
+    databaseUrlConnectivity === 'OK' && directUrlConnectivity === 'OK'
+  if (!connectivityPass) return 'UNVERIFIED'
+
+  if (config === 'STAGING') return 'VERIFIED_STAGING'
+
+  if (migrationLedgerFinished !== EXPECTED_PRODUCTION_FINISHED_MIGRATIONS) return 'UNVERIFIED'
+
+  return 'VERIFIED_PRODUCTION'
+}
+
 /**
- * Staff-only runtime check: derive verdict from live env URLs (never logged) + read-only connectivity.
- * Response must remain minimal — no hostnames, refs, or customer data.
+ * Staff-only runtime check: live env URLs (never logged) + bounded read-only connectivity.
+ * Configuration identity alone never yields VERIFIED_PRODUCTION.
  */
 export async function evaluateRuntimeDatabaseVerification(
   env: Record<string, string | undefined>,
@@ -86,24 +142,32 @@ export async function evaluateRuntimeDatabaseVerification(
   const directIdentity = directUrl ? authorizedDatabaseIdentityFromUrl(directUrl) : null
   const urlsAligned = Boolean(databaseIdentity && directIdentity && databaseIdentity === directIdentity)
 
-  const verdict = resolveVerdict(databaseIdentity, directIdentity)
+  const configTarget = resolveConfigurationTarget(databaseIdentity, directIdentity)
 
   let databaseUrlConnectivity: ConnectivityState = 'SKIPPED'
   let directUrlConnectivity: ConnectivityState = 'SKIPPED'
   let migrationLedgerFinished: number | null = null
 
-  if (databaseUrl && verdict !== 'MISMATCH') {
-    const dbProbe = await probe.probeDatabaseUrl()
+  if (databaseUrl && configTarget !== 'MISMATCH') {
+    const raced = await withProbeTimeout(probe.probeDatabaseUrl())
+    const dbProbe =
+      raced === 'TIMEOUT' ? { ok: false, finishedMigrations: null as number | null } : raced
     databaseUrlConnectivity = dbProbe.ok ? 'OK' : 'FAIL'
     migrationLedgerFinished = dbProbe.finishedMigrations
-  } else if (databaseUrl) {
-    databaseUrlConnectivity = 'SKIPPED'
   }
 
   if (directUrl && urlsAligned) {
-    const directProbe = await probe.probeDirectUrl(directUrl)
-    directUrlConnectivity = directProbe.ok ? 'OK' : 'FAIL'
+    const raced = await withProbeTimeout(probe.probeDirectUrl(directUrl))
+    const directOk = raced === 'TIMEOUT' ? false : raced.ok
+    directUrlConnectivity = directOk ? 'OK' : 'FAIL'
   }
+
+  const verdict = finalizeVerdict(
+    configTarget,
+    databaseUrlConnectivity,
+    directUrlConnectivity,
+    migrationLedgerFinished,
+  )
 
   return {
     verdict,

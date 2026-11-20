@@ -1,6 +1,6 @@
 # RELEASE-001 Step 6A — Runtime database verification API (implementation)
 
-**Status:** Implemented on branch `feat/release-001-runtime-db-verification` — **not deployed** to Production in Step 6A.
+**Status:** PR #145 — **not deployed** to Production until merge + owner-authorized deploy.
 
 ## Endpoint
 
@@ -24,24 +24,41 @@
 
 `verdict` is one of: `VERIFIED_PRODUCTION` | `VERIFIED_STAGING` | `MISMATCH` | `UNVERIFIED`.
 
-Derived from **live** `process.env.DATABASE_URL` and `process.env.DIRECT_URL` via `authorizedDatabaseIdentityFromUrl()` — not from a manual identity label.
+Configuration identity **alone never** yields `VERIFIED_PRODUCTION`. Probes are bounded (**12s** timeout per check) so unreachable direct hosts cannot hang the request.
 
-Read-only connectivity: `SELECT 1` on the default Prisma client (`DATABASE_URL`) and a short-lived client for `DIRECT_URL`; migration ledger **finished count only** (no customer tables).
+## Release PASS criteria (Production)
+
+All of the following must be true in a single staff-authenticated response:
+
+| # | Criterion |
+|---|-----------|
+| 1 | `DATABASE_URL` and `DIRECT_URL` parse to **`supabase:txfxeehglqfszletuumn/postgres`** (live env, not a label) |
+| 2 | `configuration.urlsAligned === true` |
+| 3 | `connectivity.databaseUrl === "OK"` |
+| 4 | `connectivity.directUrl === "OK"` |
+| 5 | `connectivity.migrationLedgerFinished === 40` |
+| 6 | `verdict === "VERIFIED_PRODUCTION"` |
+
+If (1)–(2) hold but (3)–(5) fail → `verdict` is **`UNVERIFIED`** (connectivity fields show `FAIL` / non-40 count).  
+`MISMATCH` = different targets between the two URLs.  
+`VERIFIED_STAGING` = both URLs identify staging **and** connectivity probes pass (no production release).
+
+Read-only SQL: `SELECT 1` + finished migration ledger count only (no customer tables).
 
 ## Controlled deployment and verification (owner)
 
-1. Merge PR (after review) — **separate** from documentation PR #144.
-2. Authorize **one** Vercel Production deployment of the merge commit (no env changes required if URLs already correct).
-3. Sign in to `https://www.webbxxl.com` as a **staff** user (existing Auth.js session).
-4. `GET https://www.webbxxl.com/api/v1/admin/operations/database-verification` with session cookie (browser devtools or authenticated curl).
-5. Require `verdict === "VERIFIED_PRODUCTION"`, `configuration.urlsAligned === true`, `connectivity.databaseUrl` and `directUrl` === `"OK"`.
-6. If `MISMATCH` or `VERIFIED_STAGING` — **stop**; fix Vercel Production `DATABASE_URL`/`DIRECT_URL` (owner), redeploy, re-check.
-7. Record verdict + timestamp in owner evidence; then proceed to **AUTH-STAGING-8C**.
+1. Merge PR #145 after review — **separate** from documentation PR #144.
+2. Authorize **one** Vercel Production deployment of the merge commit.
+3. Staff session on `https://www.webbxxl.com`.
+4. `GET /api/v1/admin/operations/database-verification` (session cookie only).
+5. Confirm **Release PASS criteria** table above.
+6. If not PASS → **stop**; fix Vercel `DATABASE_URL`/`DIRECT_URL` or DB/migration state (owner); redeploy; re-check.
+7. Record verdict + timestamp; then **AUTH-STAGING-8C** may proceed.
 
-## Operator-only alternative (pre-deploy)
+## Operator-only alternative
 
-If staff session is unavailable locally: after deploy, owner may invoke the same `GET` from an authenticated staff browser session only — **no public diagnostic**.
+Staff browser session only after deploy — **no** public diagnostic.
 
 ## ADR
 
-Not required — staff-gated read-only operational diagnostic; no schema or policy change.
+Not required — staff-gated read-only operational diagnostic.

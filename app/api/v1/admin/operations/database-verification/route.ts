@@ -14,7 +14,7 @@ export async function GET() {
     if (error instanceof AuthError) {
       return NextResponse.json({ code: 'UNAUTHORIZED', message: 'Staff access required' }, { status: 401 })
     }
-    console.error('admin database verification GET failed', error)
+    console.error('admin database verification GET failed')
     return NextResponse.json({ code: 'ERROR', message: 'Unable to verify database routing' }, { status: 500 })
   }
 }
