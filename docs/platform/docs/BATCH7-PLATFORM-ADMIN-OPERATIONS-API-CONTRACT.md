@@ -11,6 +11,7 @@ Unified **staff-only**, **read-only** operations composition across platform que
 | Method | Path | Auth |
 |---|---|---|
 | `GET` | `/api/v1/admin/operations/summary` | `requireStaff()` |
+| `GET` | `/api/v1/admin/operations/database-verification` | `requireStaff()` — RELEASE-001 runtime DB verdict only (no secrets) |
 
 ### Query parameters
 
