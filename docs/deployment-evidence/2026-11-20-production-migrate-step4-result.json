@@ -1,0 +1,34 @@
+{
+  "gate": "RELEASE-001",
+  "step": 4,
+  "result": "FAIL",
+  "recorded_at_utc": "2026-11-20",
+  "github_main_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
+  "supabase_ref": "txfxeehglqfszletuumn",
+  "connection_method": "session_pooler_ipv4_BACKUP_DATABASE_URL",
+  "preflight": {
+    "migration_folders_in_repo": 40,
+    "pre_apply_finished": 11,
+    "pre_apply_pending_expected": 29,
+    "pre_apply_unresolved": 0
+  },
+  "migrate_command": "npx prisma migrate deploy",
+  "failure": {
+    "prisma_code": "P3018",
+    "postgres_code": "42710",
+    "migration_name": "20261014190000_batch24_change_requests",
+    "message": "type ChangeRequestCategory already exists"
+  },
+  "post_state": {
+    "finished_migrations": 11,
+    "unresolved_migrations": 1,
+    "unresolved_name": "20261014190000_batch24_change_requests",
+    "ChangeRequestCategory_enum_present": true
+  },
+  "owner_actions_prohibited_in_run": [
+    "no migrate resolve",
+    "no manual ledger edit",
+    "no automatic restore"
+  ],
+  "next_owner_gate": "Separate DBA / runbook for schema-ledger drift before retry"
+}
