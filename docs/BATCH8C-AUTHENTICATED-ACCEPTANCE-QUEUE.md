@@ -1,12 +1,16 @@
 # Batch 8C — Authenticated acceptance queue (Batch 8B matrix remainder)
 
-**Baseline `main`:** `d82d32382d2eee10473cf5f9c5281a92799046ad` (PR **#133**).  
-**Acceptance Preview:** branch `staging/acceptance` @ `94235dd`, deployment **`dpl_CUpAftyiuiPUVGarnDT9YaxGF6BL`**, host `https://webxxl-website-system-git-stagi-add2b3-tone4real-7828s-projects.vercel.app`.  
+**Production path (2026-11-21):** RELEASE-001 Step 6A **PASS** on `https://www.webbxxl.com` unblocks **Production** acceptance. **ADMIN** login + diagnostic **VERIFIED**; run the **Production** customer matrix in [`SESSION_HANDOFF.md`](SESSION_HANDOFF.md) (owner-mapped accounts — **not** the staging Pilot A/B IDs below).
+
+**Staging Preview path (below):** fixtures and matrix rows reference **Preview host + staging DB only**. They do **not** authorize copying `acct_pilot_staging_*` into Production, creating Production accounts, or production magic-link sends without separate owner authorization.
+
+**Baseline `main`:** `ef5776e4129a835cc7df72ebc1d00d04092c00a2` (PR **#145**); historical Preview baseline `d82d323` (PR **#133**).  
+**Acceptance Preview (staging only):** branch `staging/acceptance` @ `94235dd`, deployment **`dpl_CUpAftyiuiPUVGarnDT9YaxGF6BL`**, host `https://webxxl-website-system-git-stagi-add2b3-tone4real-7828s-projects.vercel.app`.  
 **Staging DB:** `vcgibefnhneaqhcguhnt` — rotation **verified** 2026-11-14 ([`BATCH8C-STAGING-ROTATION-RESULT.md`](BATCH8C-STAGING-ROTATION-RESULT.md)).
 
-**Not authorized in this queue:** magic-link sends, staff role changes, production migrate, providers, cron, outbound mail.
+**Not authorized in this queue:** magic-link sends, staff role changes, production migrate, providers, cron, outbound mail; **Production** account creation or staging-fixture seeding.
 
-## Reuse fixtures (no new seeding)
+## Staging Preview fixtures only (no new seeding; not Production)
 
 | Role | CustomerAccount | Staging user (DB) | Notes |
 |---|---|---|---|

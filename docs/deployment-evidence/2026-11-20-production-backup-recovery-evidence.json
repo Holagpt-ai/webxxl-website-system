@@ -1,0 +1,41 @@
+{
+  "gate": "RELEASE-001",
+  "step": 2,
+  "environment": "Production",
+  "supabase_ref": "txfxeehglqfszletuumn",
+  "recorded_at_utc": "2026-11-20T18:30:53.852Z",
+  "github_main_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
+  "prisma_baseline_at_backup": {
+    "applied": 11,
+    "pending_vs_repo_40": 29,
+    "unresolved": 0,
+    "latest_applied": "20261013170000_website_preview"
+  },
+  "backup": {
+    "method": "pg_dump_Fc_via_docker_postgres17_session_pooler_streamed_to_gpg_aes256",
+    "encrypted_artifact": "C:\\Users\\user\\AppData\\Local\\WebXXL-SecureBackups\\webxxl-txfx-pooler-pre-migrate-2026-11-20T18-28-33-994Z.dump.gpg",
+    "sha256": "1cf20467f7fbed1efbfdda0eb626e1c388f6634fbfb8604d6e18f8bd7fd659e8",
+    "bytes": 551731,
+    "passphrase_storage": "local_restricted_bin_separate_from_backup_owner_must_duplicate_to_credential_manager"
+  },
+  "recovery_test": {
+    "recorded_at_utc": "2026-11-20T18:30:53.852Z",
+    "method": "isolated_docker_postgres17_ephemeral_volume_gpg_stream_pg_restore",
+    "stocksist_untouched": true,
+    "migrations_finished": 11,
+    "migrations_unresolved": 0,
+    "restorable": "yes_demonstrated_locally",
+    "supabase_schema_limitations": "auth_extensions_realtime_vault_not_in_vanilla_restore"
+  },
+  "notes": "No secrets in this file. Step 3 readiness only; production migrate deploy not executed.",
+  "service": "webxxl-website-system",
+  "released_at_utc": "2026-11-20T18:30:53.852Z",
+  "git_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
+  "deployment_id": "7919995501",
+  "state": "success",
+  "evidence_url": "https://api.github.com/repos/Holagpt-ai/webxxl-website-system/deployments/7919995501/statuses",
+  "migration_ids_applied": "11 applied at backup",
+  "flags": "UNVERIFIED",
+  "provider_scope": "UNVERIFIED",
+  "result": "RELEASE_001_STEP2_BACKUP"
+}

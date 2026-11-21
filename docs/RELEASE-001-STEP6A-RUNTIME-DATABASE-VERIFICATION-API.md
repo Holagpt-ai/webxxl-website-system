@@ -1,6 +1,6 @@
 # RELEASE-001 Step 6A — Runtime database verification API (implementation)
 
-**Status:** PR #145 — **not deployed** to Production until merge + owner-authorized deploy.
+**Status:** PR **#145** **MERGED** on `main` @ `ef5776e4129a835cc7df72ebc1d00d04092c00a2`. Production deploy **success** 2026-11-20 (GitHub deployment `7952960484`). Step 6A live verification **PASS** 2026-11-21 — [`RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md`](RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md).
 
 ## Endpoint
 

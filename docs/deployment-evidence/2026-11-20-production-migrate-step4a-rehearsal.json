@@ -1,0 +1,153 @@
+{
+  "gate": "RELEASE-001",
+  "step": "4A",
+  "result": "RELEASE_001_STEP4A_REHEARSAL",
+  "recorded_at_utc": "2026-11-20T19:34:20.416Z",
+  "github_main_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
+  "isolated": {
+    "container": "webxxl-rehearsal-4a-2026-11-20-pg",
+    "volume": "webxxl-rehearsal-4a-2026-11-20-vol",
+    "image": "postgres:17",
+    "port": 54329
+  },
+  "stocksist_unchanged": null,
+  "phases": {
+    "restore": {
+      "ledger": {
+        "finished": "11",
+        "unresolved": "0",
+        "rolled_back": "0"
+      },
+      "rows": {
+        "CustomerAccount": "2",
+        "User": "4",
+        "ChangeRequest": "1",
+        "Project": "4"
+      }
+    },
+    "drift_simulated": {
+      "ledger": {
+        "finished": "11",
+        "unresolved": "0",
+        "rolled_back": "0"
+      },
+      "schemaChecks": {
+        "b24_enum": true,
+        "b24_event": true,
+        "b24_category_col": true,
+        "b24_fks": true,
+        "b25_cols": true,
+        "b25_default": true,
+        "b26_cols": true,
+        "b283_table": true,
+        "b283_enums": true,
+        "b283_owner_event": true,
+        "b283_unique": true
+      }
+    },
+    "deploy_fail_expected": {
+      "exitCode": 1,
+      "ledger": {
+        "finished": "11",
+        "unresolved": "1",
+        "rolled_back": "0"
+      },
+      "containsP3018": true,
+      "excerpt": "Prisma schema loaded from prisma\\schema.prisma\nDatasource \"db\": PostgreSQL database \"postgres\", schema \"public\" at \"127.0.0.1:54329\"\n\n40 migrations found in prisma/migrations\n\nApplying migration `20261014190000_batch24_change_requests`\nwarn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).\nFor more information, see: https://pris.ly/prisma-config\n\nError: P3018\n\nA migration failed to apply. New migrations cannot be applied before the error is recovered from. Read more about how to resolve migration issues in a production database: https://pris.ly/d/migrate-resolve\n\nMigration name: 20261014190000_batch24_change_requests\n\nDatabase error code: 42710\n\nDatabase error:\nERROR: type \"ChangeRequestCategory\" already exists\n\nDbError { severity: \"ERROR\", parsed_severity: Some(Error), code: SqlState(E42710), message: \"type \\\"ChangeRequestCategory\\\" already exists\", detail: None, hint: None, position: None, where_: None, schema: None, table: None, column: None, datatype: None, constraint: None, file: Some(\"typecmds.c\"), line: Some(1197), routine: Some(\"DefineEnum\") }\n\n\n"
+    },
+    "resolve_applied_direct": {
+      "exitCode": 0,
+      "ledger": {
+        "finished": "12",
+        "unresolved": "0",
+        "rolled_back": "1"
+      },
+      "works": true,
+      "excerpt": "Prisma schema loaded from prisma\\schema.prisma\nDatasource \"db\": PostgreSQL database \"postgres\", schema \"public\" at \"127.0.0.1:54329\"\n\nMigration 20261014190000_batch24_change_requests marked as applied.\n\nwarn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).\nFor more information, see: https://pris.ly/prisma-config\n\n"
+    },
+    "after_batch24_resolve": {
+      "ledger": {
+        "finished": "12",
+        "unresolved": "0",
+        "rolled_back": "1"
+      },
+      "b24_finished_rows": "1",
+      "b24_rows": "null/2026-11-20 19:35:47.431719+00\n2026-11-20 19:35:47.440553+00/null"
+    },
+    "resolve_batch24_method": "direct_applied_on_failed_record",
+    "resolve_25_26_283": {
+      "ledger": {
+        "finished": "15",
+        "unresolved": "0",
+        "rolled_back": "1"
+      }
+    },
+    "deploy_remainder": {
+      "exitCode": 0,
+      "excerpt": "Prisma schema loaded from prisma\\schema.prisma\nDatasource \"db\": PostgreSQL database \"postgres\", schema \"public\" at \"127.0.0.1:54329\"\n\n40 migrations found in prisma/migrations\n\nApplying migration `20261017220000_found01_platform_identity`\nApplying migration `20261018130000_agent03_internal_workforce`\nApplying migration `20261018170000_social04_marketing_studio`\nApplying migration `20261018180000_social04a_integrity`\nApplying migration `20261018190000_crm05_foundation`\nApplying migration `20261018200000_crm05a_integrity`\nApplying migration `20261018210000_comms06_foundation`\nApplying migration `20261018220000_comms06a_integrity`\nApplying migration `20261018230000_seo07_foundation`\nApplying migration `20261018240000_mkt08_foundation`\nApplying migration `20261018250000_wallet09_foundation`\nApplying migration `20261018260000_wallet09b_integrity`\nApplying migration `20261018270000_wallet09c_ledger_actor_service`\nApplying migration `20261018280000_auto10_workflow_foundation`\nApplying migration `20261018290000_auto10c_outbox_dispatch_lease`\nApplying migration `20261020120000_commerce11_foundation`\nApplying migration `20261020140000_ai_customer_13_foundation`\nApplying migration `20261021120000_analytics14_foundation`\nApplying migration `20261025120000_analytics15_ingestion`\nApplying migration `20261025180000_analytics151_rate_limit`\nApplying migration `20261031120000_batch28a_managed_site_leads`\nApplying migration `20261031120000_mkt25_crm_audience_planning`\nApplying migration `20261031140000_batch28a_2_intake_payload_fingerprint`\nApplying migration `20261102130000_batch37_customer_ai_pilot_persistence`\nApplying migration `20261114143000_batch9d_support_request_messages`\n\nThe following migration(s) have been applied:\n\nmigrations/\n  └─ 20261017220000_found01_platform_identity/\n    └─ migration.sql\n  └─ 20261018130000_agent03_internal_workforce/\n    └─ migration.sql\n  └─ 20261018170000_social04_marketing_studio/\n    └─ migration.sql\n  └─ 20261018180000_social04a_integrity/\n   ",
+      "ledger": {
+        "finished": "40",
+        "unresolved": "0",
+        "rolled_back": "1"
+      }
+    },
+    "final": {
+      "ledger": {
+        "finished": "40",
+        "unresolved": "0",
+        "rolled_back": "1"
+      },
+      "migration_folders_in_repo": 40,
+      "SupportRequestMessage": true,
+      "rows": {
+        "CustomerAccount": "2",
+        "User": "4",
+        "ChangeRequest": "1",
+        "Project": "4"
+      },
+      "schemaChecks": {
+        "b24_enum": true,
+        "b24_event": true,
+        "b24_category_col": true,
+        "b24_fks": true,
+        "b25_cols": true,
+        "b25_default": true,
+        "b26_cols": true,
+        "b283_table": true,
+        "b283_enums": true,
+        "b283_owner_event": true,
+        "b283_unique": true
+      }
+    }
+  },
+  "production_repair_proposal": {
+    "connection": "session_pooler_ipv4; set DATABASE_URL and DIRECT_URL identically",
+    "batch24_failed_record": "npx prisma migrate resolve --applied \"20261014190000_batch24_change_requests\"",
+    "mark_applied": [
+      "npx prisma migrate resolve --applied \"20261014193000_batch25_dependency_actions\"",
+      "npx prisma migrate resolve --applied \"20261014194500_batch26_project_template_snapshot\"",
+      "npx prisma migrate resolve --applied \"20261014203000_batch28_3_owner_review\""
+    ],
+    "then": "npx prisma migrate deploy",
+    "prerequisites": [
+      "fresh_encrypted_production_backup_post_failure",
+      "explicit_owner_authorization"
+    ],
+    "supabase_limitations": [
+      "pg_restore from pooler dump omits auth/extensions/realtime/vault roles",
+      "production uses Supabase pooler; rehearsal used vanilla PostgreSQL 17 trust auth",
+      "REVOKE/GRANT lines in later migrations may behave differently vs Supabase roles"
+    ]
+  },
+  "gate_outcome": "PASS",
+  "environment": "Production",
+  "service": "webxxl-website-system",
+  "released_at_utc": "2026-11-20T00:00:00Z",
+  "git_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
+  "deployment_id": "7919995501",
+  "state": "success",
+  "evidence_url": "https://api.github.com/repos/Holagpt-ai/webxxl-website-system/deployments/7919995501/statuses",
+  "migration_ids_applied": "rehearsal only",
+  "flags": "UNVERIFIED",
+  "provider_scope": "UNVERIFIED"
+}

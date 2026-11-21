@@ -1,0 +1,42 @@
+{
+  "gate": "RELEASE-001",
+  "step": 6,
+  "runtime_database_identity": "UNVERIFIED",
+  "recorded_at_utc": "2026-11-20",
+  "github_main_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
+  "vercel_production_deployment_id": "dpl_CN76Ffr4bLc517tTEw6UuQXypd4c",
+  "expected_production_ref": "txfxeehglqfszletuumn",
+  "forbidden_staging_ref": "vcgibefnhneaqhcguhnt",
+  "vercel_production_env_non_secret": {
+    "DATABASE_URL_present_type_secret": true,
+    "DIRECT_URL_present_type_secret": true,
+    "WEBXXL_PRODUCTION_DATABASE_IDENTITY_configured": false,
+    "AUTH_URL_visible_prefix": "https://www.webbxxl",
+    "NEXT_PUBLIC_SITE_URL_visible_prefix": "https://www.webbxxl"
+  },
+  "public_html_probe_www": {
+    "txfx_ref_in_html": false,
+    "vcgib_ref_in_html": false,
+    "supabase_host_in_html": false
+  },
+  "repository_runtime_diagnostic": "none_public_redacted_identity",
+  "supabase_txfx_direct_probe_step4c_5": {
+    "identity": "supabase:txfxeehglqfszletuumn/postgres",
+    "migrations_finished": 40,
+    "note": "proves database only not vercel runtime binding"
+  },
+  "blocker": "sensitive_vercel_database_urls_not_observable_without_owner_dashboard_or_new_diagnostic",
+  "smallest_next_action": "Option_A_owner_vercel_dashboard_confirm_postgres.txfx_in_DATABASE_URL_and_DIRECT_URL",
+  "authenticated_acceptance_authorized": false,
+  "environment": "Production",
+  "service": "webxxl-website-system",
+  "released_at_utc": "2026-11-20T00:00:00Z",
+  "git_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
+  "deployment_id": "7919995501",
+  "state": "success",
+  "evidence_url": "https://api.github.com/repos/Holagpt-ai/webxxl-website-system/deployments/7919995501/statuses",
+  "migration_ids_applied": "40 finished DB-only",
+  "flags": "UNVERIFIED",
+  "provider_scope": "UNVERIFIED",
+  "result": "RELEASE_001_STEP6_UNVERIFIED"
+}

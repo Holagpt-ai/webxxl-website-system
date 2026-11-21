@@ -1,0 +1,129 @@
+{
+  "gate": "RELEASE-001",
+  "step": "4C",
+  "result": "RELEASE_001_STEP4C_PASS",
+  "recorded_at_utc": "2026-11-20T20:05:41.365Z",
+  "github_main_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
+  "supabase_ref": "txfxeehglqfszletuumn",
+  "phases": {
+    "step4b_verify": {
+      "sha256": "44aed9eb9fa54964bd2dd90a6f506916e85c5e5783b1e09f595278b5b67d58fd",
+      "bytes": 103109,
+      "passphrase_accessible": true
+    },
+    "identity": {
+      "identity": "supabase:txfxeehglqfszletuumn/postgres",
+      "connection": "session_pooler_BACKUP_DATABASE_URL"
+    },
+    "preflight": {
+      "ledger": {
+        "finished": 11,
+        "unresolved": 1,
+        "rolled_back": 0
+      },
+      "rows": {
+        "CustomerAccount": "2",
+        "User": "4",
+        "ChangeRequest": "1",
+        "Project": "4"
+      },
+      "schemaChecks": {
+        "b24_enum": true,
+        "b24_event": true,
+        "b24_cols": true,
+        "b24_comment_col": true,
+        "b24_idx": true,
+        "b24_fk": true,
+        "b25_cols": true,
+        "b26_cols": true,
+        "b283_table": true,
+        "b283_enums": true,
+        "b283_fk": true,
+        "b283_unique": true
+      }
+    },
+    "resolve": {
+      "commands": [
+        {
+          "migration": "20261014190000_batch24_change_requests",
+          "started": "2026-11-20T20:05:46.173Z",
+          "exitCode": 0,
+          "output": "Prisma schema loaded from prisma\\schema.prisma\nDatasource \"db\": PostgreSQL database \"postgres\", schema \"public\" at \"aws-0-us-east-1.pooler.supabase.com:5432\"\n\nMigration 20261014190000_batch24_change_requests marked as applied.\n\nwarn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).\nFor more information, see: https://pris.ly/prisma-config\n\n"
+        },
+        {
+          "migration": "20261014193000_batch25_dependency_actions",
+          "started": "2026-11-20T20:06:19.437Z",
+          "exitCode": 0,
+          "output": "Prisma schema loaded from prisma\\schema.prisma\nDatasource \"db\": PostgreSQL database \"postgres\", schema \"public\" at \"aws-0-us-east-1.pooler.supabase.com:5432\"\n\nMigration 20261014193000_batch25_dependency_actions marked as applied.\n\nwarn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).\nFor more information, see: https://pris.ly/prisma-config\n\n"
+        },
+        {
+          "migration": "20261014194500_batch26_project_template_snapshot",
+          "started": "2026-11-20T20:06:31.019Z",
+          "exitCode": 0,
+          "output": "Prisma schema loaded from prisma\\schema.prisma\nDatasource \"db\": PostgreSQL database \"postgres\", schema \"public\" at \"aws-0-us-east-1.pooler.supabase.com:5432\"\n\nMigration 20261014194500_batch26_project_template_snapshot marked as applied.\n\nwarn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).\nFor more information, see: https://pris.ly/prisma-config\n\n"
+        },
+        {
+          "migration": "20261014203000_batch28_3_owner_review",
+          "started": "2026-11-20T20:06:39.306Z",
+          "exitCode": 0,
+          "output": "Prisma schema loaded from prisma\\schema.prisma\nDatasource \"db\": PostgreSQL database \"postgres\", schema \"public\" at \"aws-0-us-east-1.pooler.supabase.com:5432\"\n\nMigration 20261014203000_batch28_3_owner_review marked as applied.\n\nwarn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).\nFor more information, see: https://pris.ly/prisma-config\n\n"
+        }
+      ],
+      "ledger": {
+        "finished": 15,
+        "unresolved": 0,
+        "rolled_back": 1
+      }
+    },
+    "deploy": {
+      "started": "2026-11-20T20:06:50.163Z",
+      "exitCode": 0,
+      "output": "Prisma schema loaded from prisma\\schema.prisma\nDatasource \"db\": PostgreSQL database \"postgres\", schema \"public\" at \"aws-0-us-east-1.pooler.supabase.com:5432\"\n\n40 migrations found in prisma/migrations\n\nApplying migration `20261017220000_found01_platform_identity`\nApplying migration `20261018130000_agent03_internal_workforce`\nApplying migration `20261018170000_social04_marketing_studio`\nApplying migration `20261018180000_social04a_integrity`\nApplying migration `20261018190000_crm05_foundation`\nApplying migration `20261018200000_crm05a_integrity`\nApplying migration `20261018210000_comms06_foundation`\nApplying migration `20261018220000_comms06a_integrity`\nApplying migration `20261018230000_seo07_foundation`\nApplying migration `20261018240000_mkt08_foundation`\nApplying migration `20261018250000_wallet09_foundation`\nApplying migration `20261018260000_wallet09b_integrity`\nApplying migration `20261018270000_wallet09c_ledger_actor_service`\nApplying migration `20261018280000_auto10_workflow_foundation`\nApplying migration `20261018290000_auto10c_outbox_dispatch_lease`\nApplying migration `20261020120000_commerce11_foundation`\nApplying migration `20261020140000_ai_customer_13_foundation`\nApplying migration `20261021120000_analytics14_foundation`\nApplying migration `20261025120000_analytics15_ingestion`\nApplying migration `20261025180000_analytics151_rate_limit`\nApplying migration `20261031120000_batch28a_managed_site_leads`\nApplying migration `20261031120000_mkt25_crm_audience_planning`\nApplying migration `20261031140000_batch28a_2_intake_payload_fingerprint`\nApplying migration `20261102130000_batch37_customer_ai_pilot_persistence`\nApplying migration `20261114143000_batch9d_support_request_messages`\n\nThe following migration(s) have been applied:\n\nmigrations/\n  └─ 20261017220000_found01_platform_identity/\n    └─ migration.sql\n  └─ 20261018130000_agent03_internal_workforce/\n    └─ migration.sql\n  └─ 20261018170000_social04_marketing_studio/\n    └─ migration.sql\n  └─ 20261018180000_social04a_integrity/\n    └─ migration.sql\n  └─ 20261018190000_crm05_foundation/\n    └─ migration.sql\n  └─ 20261018200000_crm05a_integrity/\n    └─ migration.sql\n  └─ 20261018210000_comms06_foundation/\n    └─ migration.sql\n  └─ 20261018220000_comms06a_integrity/\n    └─ migration.sql\n  └─ 20261018230000_seo07_foundation/\n    └─ migration.sql\n  └─ 20261018240000_mkt08_foundation/\n    └─ migration.sql\n  └─ 20261018250000_wallet09_foundation/\n    └─ migration.sql\n  └─ 20261018260000_wallet09b_integrity/\n    └─ migration.sql\n  └─ 20261018270000_wallet09c_ledger_actor_service/\n    └─ migration.sql\n  └─ 20261018280000_auto10_workflow_foundation/\n    └─ migration.sql\n  └─ 20261018290000_auto10c_outbox_dispatch_lease/\n    └─ migration.sql\n  └─ 20261020120000_commerce11_foundation/\n    └─ migration.sql\n  └─ 20261020140000_ai_customer_13_foundation/\n    └─ migration.sql\n  └─ 20261021120000_analytics14_foundation/\n    └─ migration.sql\n  └─ 20261025120000_analytics15_ingestion/\n    └─ migration.sql\n  └─ 20261025180000_analytics151_rate_limit/\n    └─ migration.sql\n  └─ 20261031120000_batch28a_managed_site_leads/\n    └─ migration.sql\n  └─ 20261031120000_mkt25_crm_audience_planning/\n    └─ migration.sql\n  └─ 20261031140000_batch28a_2_intake_payload_fingerprint/\n    └─ migration.sql\n  └─ 20261102130000_batch37_customer_ai_pilot_persistence/\n    └─ migration.sql\n  └─ 20261114143000_batch9d_support_request_messages/\n    └─ migration.sql\n      \nAll migrations have been successfully applied.\nwarn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).\nFor more information, see: https://pris.ly/prisma-config\n\n",
+      "ledger": {
+        "finished": 40,
+        "unresolved": 0,
+        "rolled_back": 1
+      }
+    },
+    "final": {
+      "ledger": {
+        "finished": 40,
+        "unresolved": 0,
+        "rolled_back": 1
+      },
+      "migration_folders": 40,
+      "SupportRequestMessage": true,
+      "rows": {
+        "CustomerAccount": "2",
+        "User": "4",
+        "ChangeRequest": "1",
+        "Project": "4"
+      },
+      "schemaChecks": {
+        "b24_enum": true,
+        "b24_event": true,
+        "b24_cols": true,
+        "b24_comment_col": true,
+        "b24_idx": true,
+        "b24_fk": true,
+        "b25_cols": true,
+        "b26_cols": true,
+        "b283_table": true,
+        "b283_enums": true,
+        "b283_fk": true,
+        "b283_unique": true
+      }
+    }
+  },
+  "gate_outcome": "PASS",
+  "environment": "Production",
+  "service": "webxxl-website-system",
+  "released_at_utc": "2026-11-20T20:05:41.365Z",
+  "git_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
+  "deployment_id": "7919995501",
+  "state": "success",
+  "evidence_url": "https://api.github.com/repos/Holagpt-ai/webxxl-website-system/deployments/7919995501/statuses",
+  "migration_ids_applied": "40 finished verified",
+  "flags": "UNVERIFIED",
+  "provider_scope": "UNVERIFIED"
+}

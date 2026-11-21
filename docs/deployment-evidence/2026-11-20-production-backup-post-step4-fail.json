@@ -1,0 +1,52 @@
+{
+  "gate": "RELEASE-001",
+  "step": "4B",
+  "result": "RELEASE_001_STEP4_FAIL",
+  "recorded_at_utc": "2026-11-20T19:39:14.940Z",
+  "supabase_ref": "txfxeehglqfszletuumn",
+  "github_main_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
+  "connection_method": "session_pooler_ipv4_BACKUP_DATABASE_URL",
+  "identity": "supabase:txfxeehglqfszletuumn/postgres",
+  "preflight_ledger": {
+    "finished": 11,
+    "unresolved": 1,
+    "rolled_back": 0,
+    "batch24_unresolved": 1,
+    "ChangeRequestCategory_present": true
+  },
+  "backup": {
+    "method": "docker_postgres17_pg_dump_Fc_session_pooler_to_gpg_aes256",
+    "encrypted_artifact": "C:\\Users\\user\\AppData\\Local\\WebXXL-SecureBackups\\webxxl-txfx-pooler-post-step4-fail-2026-11-20T19-39-21-194Z.dump.gpg",
+    "passphrase_artifact": "C:\\Users\\user\\AppData\\Local\\WebXXL-SecureBackups\\webxxl-txfx-pooler-post-step4-fail-2026-11-20T19-39-21-194Z.gpg-passphrase.bin",
+    "bytes": 103109,
+    "sha256": "44aed9eb9fa54964bd2dd90a6f506916e85c5e5783b1e09f595278b5b67d58fd",
+    "pg_dump_stderr_excerpt_chars": 0
+  },
+  "verification": {
+    "gpg_decrypt_list": "PASS",
+    "pg_restore_list_exit": 0,
+    "prior_pre_migrate_artifact": "C:\\Users\\user\\AppData\\Local\\WebXXL-SecureBackups\\webxxl-txfx-pooler-pre-migrate-2026-11-20T18-28-33-994Z.dump.gpg",
+    "prior_pre_migrate_sha256": "1cf20467f7fbed1efbfdda0eb626e1c388f6634fbfb8604d6e18f8bd7fd659e8",
+    "prior_unchanged": true
+  },
+  "prior_backup_preserved": {
+    "pre_migrate_gpg": true,
+    "pre_migrate_passphrase": true
+  },
+  "passphrase_guidance": {
+    "local_file": "co_located_with_gpg_artifact",
+    "recommended_separate_copy": "Owner password manager or Windows Credential Manager entry titled WebXXL-txfx-post-step4-fail; optional second copy on offline removable media — do not move or delete existing pre-migrate passphrase file"
+  },
+  "ready_for_authorized_production_repair": true,
+  "gate_outcome": "PASS",
+  "environment": "Production",
+  "service": "webxxl-website-system",
+  "released_at_utc": "2026-11-20T00:00:00Z",
+  "git_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
+  "deployment_id": "7919995501",
+  "state": "success",
+  "evidence_url": "https://api.github.com/repos/Holagpt-ai/webxxl-website-system/deployments/7919995501/statuses",
+  "migration_ids_applied": "11 applied pre-repair",
+  "flags": "UNVERIFIED",
+  "provider_scope": "UNVERIFIED"
+}
