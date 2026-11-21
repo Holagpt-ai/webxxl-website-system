@@ -17,17 +17,22 @@
 
 **Prerequisites now satisfied:** Production runtime DB **`VERIFIED_PRODUCTION`** (Step 6A); **ADMIN** magic-link + `/admin` **VERIFIED**; customer login path available on Production (exercise matrix).
 
+**Production vs staging (do not conflate):**
+
+- **Production** (`https://www.webbxxl.com`, DB `txfxeehglqfszletuumn`): use **existing owner-authorized customer memberships** on Production (for example a verified subscriber account and a separate non-subscriber account the owner designates). **Do not** assume `acct_pilot_staging_a` / `acct_pilot_staging_b` or Preview-only emails exist in Production unless the owner explicitly maps and authorizes them.
+- **Staging Preview only** (`vcgibefnhneaqhcguhnt`, acceptance host): Pilot A/B fixture table in [`BATCH8C-AUTHENTICATED-ACCEPTANCE-QUEUE.md`](BATCH8C-AUTHENTICATED-ACCEPTANCE-QUEUE.md) applies **only** to the historical Preview deployment — not to Production acceptance.
+
 **Already credited (do not re-audit):** Step 6A diagnostic; ADMIN dashboard operational; Batch 8D / Issue #105 page-entitlement source on `main`.
 
 | Step | Item | Owner action | Pass criteria |
 |------|------|--------------|---------------|
-| A | Customer login + dashboard | Magic link for production customer account on `www.webbxxl.com`; `/dashboard` and `/es/dashboard` | Shell loads; locale persists |
-| B | CRM included / denial | Subscriber vs non-subscriber accounts per OPEN-001 | Same as [`BATCH8C-AUTHENTICATED-ACCEPTANCE-QUEUE.md`](BATCH8C-AUTHENTICATED-ACCEPTANCE-QUEUE.md) rows 2–5 |
-| C | CRM-SUBNAV-105 | Subnav vs paste URL | Match or open v0 visual ticket |
+| A | Customer login + dashboard | Magic link for an **authorized Production** customer user on `www.webbxxl.com`; `/dashboard` and `/es/dashboard` | Shell loads; locale persists |
+| B | CRM included / denial | **Production** subscriber vs non-subscriber sessions per OPEN-001 (same *behaviors* as Batch 8C matrix rows 2–5, not staging fixture IDs) | Included vs locked UI; API denial codes as documented |
+| C | CRM-SUBNAV-105 | Subnav vs paste URL on Production | Match or open v0 visual ticket |
 | D | Staff admin summary | **DONE** — admin + operations API baseline | Row 7 satisfied by Step 6A |
-| E | AI Employees / review / responsive | Rows 8, 10, 11 on Production | EN+ES; narrow viewport spot checks |
+| E | AI Employees / review / responsive | Batch 8C rows 8, 10, 11 behaviors on Production | EN+ES; narrow viewport spot checks |
 
-**Not authorized:** staging-only pilot fixtures on production without owner mapping; new staff roles; provider activation; outbound mail/SMS.
+**Not authorized:** creating Production users/accounts or memberships; seeding staging pilot fixtures into Production; magic-link tests against staging-only addresses without explicit Production mapping; new staff roles; provider activation; outbound mail/SMS.
 
 ## 2026-11-21 — RELEASE-001 Step 6A production verification (owner)
 
@@ -50,7 +55,7 @@
 - Reviewed diff: wrapping/`min-w-0`/`shrink-0`/`break-all`/`text-balance`/`text-pretty` utility classes and two end-of-file newline normalizations. `order-detail-panel.tsx` is Batch 9D Cursor-owned for behavior, but these edits are solely permitted visual layout. No backend, Prisma, API, auth, money, provider, feature flags, or content changes.
 - v0 reported typecheck PASS and 24/24 tests across seven Batch 9 test files. GitHub checks at UI delivery head: Continuity PASS, App Validate PASS, Vercel PASS. No authenticated desktop/mobile browser verification; visual acceptance is NOT YET COMPLETE.
 - PR #140 already exists as OPEN/DRAFT (do not create another PR). Current `main` includes legal PRs #141/#142 in `content/legal.ts`, absent from the UI branch base; preserve those merges during eventual integration. No branch reset, production deployment, migration, provider activation, payments, DNS or publishing authorized.
-- Staging `vcgibefnhneaqhcguhnt` **40/40**. Production `txfxeehglqfszletuumn`: ledger **11 + 1 unresolved**; schema/ledger drift documented in [`docs/RELEASE-001-STEP4-RECOVERY-INVESTIGATION.md`](RELEASE-001-STEP4-RECOVERY-INVESTIGATION.md). Step 2 backup evidence [`docs/deployment-evidence/2026-11-20-production-backup-recovery-evidence.json`](deployment-evidence/2026-11-20-production-backup-recovery-evidence.json). Step 4 deploy **FAIL** — no resolve executed.
+- Staging `vcgibefnhneaqhcguhnt` **40/40**. **Production `txfxeehglqfszletuumn` (current, 2026-11-21):** migration ledger **40/40 finished**, **0 unresolved**; Step 6A live diagnostic **`VERIFIED_PRODUCTION`**. **Historical (pre–Step 4C):** ledger **11 finished + 1 unresolved**; Step 4 initial `migrate deploy` **FAIL** (P3018) — repaired in Step 4C. See [`docs/RELEASE-001-STEP4-RECOVERY-INVESTIGATION.md`](RELEASE-001-STEP4-RECOVERY-INVESTIGATION.md), Step 4C/5/6A evidence JSON. Step 2 backup: [`docs/deployment-evidence/2026-11-20-production-backup-recovery-evidence.json`](deployment-evidence/2026-11-20-production-backup-recovery-evidence.json).
 - 2026-11-18: PR #140 merged with `main` @ `623a9e9` so legal `content/legal.ts` (#141/#142) is preserved. Authenticated UI **deferred** to release stabilization; not verified. Prepared for owner merge review.
 
 ## Final UI integration (Cursor)
