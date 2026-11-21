@@ -33,6 +33,7 @@ New records are files under `docs/adr/`. ADR-018, ADR-019, and ADR-020 were adde
 | Open ID | Decision | Recorded |
 |---|---|---|
 | OPEN-001 | **Website subscribers** receive WebXXL included FREE business software (CRM, Marketing Studio, Local SEO, Communications inbox software). **Non-subscribers do not automatically qualify.** Active cohort: **`SUBSCRIBER_ONLY`**. Future **`ALL_SIGNUPS`** and **`HYBRID`** remain in schema/env but inactive until separate owner authorization and a new **`OPEN001_AUTHORIZED_COHORTS_BY_POLICY_VERSION`** entry. Env `OPEN001_FREE_SOFTWARE_COHORT` alone cannot broaden eligibility (Batch **22A**). Included FREE software stays included for qualifying subscribers; external provider charges remain separately governed. Policy implementation: `lib/platform/open001/` on `main` @ `2de0f7f` ([PR #64](https://github.com/Holagpt-ai/webxxl-website-system/pull/64) **MERGED**). | **2026-10-29 — RESOLVED OWNER APPROVED** |
+| OPEN-014 — primary domain | **OWNER APPROVED 2026-11-19:** WebXXL's intended official registrable domain is **`webbxxl.com`** (double `b`), **not** `webxxl.com`. Existing `https://www.webbxxl.com` operational host and `webbxxl.com` → `www` redirect remain unchanged. No DNS, Vercel domains, configuration, email, publishing, or deployment change is authorized. Fallback `hello@webbxxl.com` mailbox/delivery is **unverified**. Future service subdomains unresolved. | **2026-11-19 — OWNER RESOLVED primary-domain choice only** |
 
 ## Open decisions (must be resolved at the specified gate, not guessed)
 
@@ -50,7 +51,7 @@ New records are files under `docs/adr/`. ADR-018, ADR-019, and ADR-020 were adde
 | OPEN-011 | AI model and voice selection, human escalation, unit cost budgets and legally permitted outbound call classes | Bounded content/draft agents; outbound AI voice disabled |
 | OPEN-012 | Free-service fair usage, marketing promises, customer terms | No hidden customer charge; operator quotas can be configured |
 | OPEN-013 | How existing `abmed-account` projects move to three operational siblings safely | Preserve current objects and IDs until owner-approved migration |
-| OPEN-014 | Exact canonical WebXXL production domain and future service subdomains | Preserve currently observed `www.webbxxl.com`; no DNS assumptions |
+| OPEN-014 — service subdomains | Service subdomain mapping, redirects and any future operational cutover (primary domain now resolved as `webbxxl.com`) | Preserve existing `www.webbxxl.com` host and apex redirect; no DNS/host changes without owner authorization |
 | OPEN-015 | Specific per-customer AI employee paid offerings if ever activated | Structurally ready, **disabled**, base marketing agents free |
 | OPEN-016 | Whether `PAST_DUE` / `CANCEL_SCHEDULED` subscriptions grant included-free access beyond current code defaults | Code treats them as qualifying until owner decides otherwise; see **POLICY-SUB-001** in [`ISSUE_REGISTER.md`](../../ISSUE_REGISTER.md) | Fail-closed subscriber proof; no new grace period without owner approval |
 
@@ -73,10 +74,13 @@ Owner explicit APPROVED / REJECTED / PENDING:
 TAD version after approval:
 ```
 
+**2026-11-19 owner decision:** OPEN-014 primary domain selection recorded as a clarification of an existing open operational decision, not a new platform architecture version or permission to change production configuration. Service subdomains remain pending.
+
 ## Revision log
 
 | Date | Version | Event |
 |---|---|---|
+| 2026-11-19 | 1.0.0-doc | OPEN-014 primary registrable domain resolved by owner as `webbxxl.com`; zero DNS/hosting/email/publishing authorization; service subdomains remain open. |
 | 2026-10-17 | 1.0.0 | Initial consolidated documentation deliverable derived from owner-approved project direction and focused GitHub main/screenshot review. Does not claim deployment or GitHub commit. |
 | 2026-10-18 | 1.0.0-doc | FOUND-01 merged PR #33 @ `68c5fde`. INFRA-02 repository staging assets added; live Hostinger staging explicitly **BLOCKED**; Postiz at `app.webbxxl.com` inventoried read-only, not reinstalled. |
 | 2026-10-18 | 1.0.0-doc | INFRA-02A: Docker Compose merge hardening (`!reset`/`!override`), Chatwoot `x-` anchor fix, effective `docker compose config` validation. |

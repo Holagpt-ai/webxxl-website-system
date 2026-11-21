@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-20 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `570b223f22b855f703c48d5da5504d92a5c5125f` · **PR #140 squash:** `197eb4f056c17e6e5547d221c8a3a3a2ca71690e` (head `4a27473`; legal **#141–#142** preserved)
+**Evidence review:** 2026-11-21 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `ef5776e4129a835cc7df72ebc1d00d04092c00a2` · **PR #140 squash:** `197eb4f056c17e6e5547d221c8a3a3a2ca71690e` (head `4a27473`; legal **#141–#142** preserved)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,19 +35,32 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | Owner-authorized [PR **#140**](https://github.com/Holagpt-ai/webxxl-website-system/pull/140) **SQUASH MERGED** on 2026-11-18: approved unchanged head `4a27473b113da736b9892a86442b205a6db8c047`, GitHub merge SHA `197eb4f056c17e6e5547d221c8a3a3a2ca71690e`. PR closed/merged; mergeability true and required scope, continuity, app, app-validate-gate and Vercel checks SUCCESS before merge. UI source integrated; no backend/API/Prisma diff. Authenticated customer/admin portal, CRM, commerce, support and lifecycle UI **NOT VERIFIED** (deferred to release stabilization **AUTH-STAGING-8C / ISSUE-105-QA**). Legal PRs **#141–#142** preserved. |
-| 2 | GitHub SHA, branch, active PR | GitHub `main` **`570b223f22b855f703c48d5da5504d92a5c5125f`** (verified 2026-11-20). PR #140: **MERGED**. No open PR for final UI. |
-| 3 | Production deployment | Prior independently verified Vercel Production READY deployment: `dpl_Adby8MqB9urDBVUWBMt2NEPsaicH` at `623a9e98eb7b1bae7c219a20120d3cc710ea8b3b`, 2026-11-18. **Post-PR-#140 production deployment/status NOT VERIFIED in this checkpoint**; GitHub merge does not prove delivery, migration, activation, or runtime acceptance. No manual deployment requested or performed. |
-| 4 | Last updated | 2026-11-20 |
-| 5 | Next task / responsible platform | **Owner:** prove Vercel runtime DB = `txfx…` (Step 6 **UNVERIFIED** — [`docs/RELEASE-001-STEP6-RUNTIME-DATABASE-IDENTITY.md`](RELEASE-001-STEP6-RUNTIME-DATABASE-IDENTITY.md)). **No AUTH-STAGING-8C** until verified. |
-| 6 | Open blocker / gate IDs | **RELEASE-001** migration **40/40**; Step 6 runtime DB **UNVERIFIED**; **AUTH-STAGING-8C** held; **POLICY-SUB-001**. Staging **40/40**. |
+| 1 | Last verified checkpoint | **RELEASE-001 Step 6A PASS** 2026-11-21: staff-authenticated Production `GET /api/v1/admin/operations/database-verification` → `VERIFIED_PRODUCTION`, migration ledger **40**, ADMIN dashboard operational on `https://www.webbxxl.com`. Evidence: [`RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md`](RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md). GitHub `main` **`ef5776e4129a835cc7df72ebc1d00d04092c00a2`** (PR **#145** merged). Prior PR **#140** UI source merged; full authenticated EN/ES customer matrix still **NOT VERIFIED** (**AUTH-STAGING-8C / ISSUE-105-QA**). |
+| 2 | GitHub SHA, branch, active PR | GitHub `main` **`ef5776e4129a835cc7df72ebc1d00d04092c00a2`**. Draft docs: [PR **#144**](https://github.com/Holagpt-ai/webxxl-website-system/pull/144) (RELEASE-001 evidence + continuity); [PR **#143**](https://github.com/Holagpt-ai/webxxl-website-system/pull/143) OPEN-014 (reconciled into #144 — close #143 after #144 merge). |
+| 3 | Production deployment | GitHub Production deployment **`7952960484`** @ `ef5776e4129a835cc7df72ebc1d00d04092c00a2`, Vercel **success** 2026-11-20T21:29:14Z ([status](https://vercel.com/tone4real-7828s-projects/webxxl-website-system/NXefwAmMRYaXDEMPXJ5nVjoBxK75)). SHA + Step 6A runtime DB identity **VERIFIED**; providers/flags/activation **not** verified. |
+| 4 | Last updated | 2026-11-21 |
+| 5 | Next task / responsible platform | **Owner + Cursor:** execute bounded **AUTH-STAGING-8C / ISSUE-105-QA** on Production (customer dashboard + CRM matrix; admin already verified). **v0.app:** only assigned visual defects (e.g. CRM-SUBNAV-105). No providers, sends, DNS, or publishing without new authorization. |
+| 6 | Open blocker / gate IDs | **RELEASE-001** runtime DB **VERIFIED** (Step 6A); production migrations **40/40**; **AUTH-STAGING-8C / ISSUE-105-QA** **IN PROGRESS** (admin login PASS); **POLICY-SUB-001** open. Provider activation / live sends / payments / DNS **not authorized**. **OPEN-014** primary domain **`webbxxl.com`** resolved; service subdomains open. |
+
+## 2026-11-21 — RELEASE-001 Step 6A production verification (owner)
+
+- Live staff session on `https://www.webbxxl.com`; diagnostic API returned **`VERIFIED_PRODUCTION`** with full Step 6A PASS table; ADMIN dashboard operational.
+- Recorded without secrets in [`deployment-evidence/2026-11-21-production-step6a-runtime-db-verification.json`](deployment-evidence/2026-11-21-production-step6a-runtime-db-verification.json).
+- Unblocks **AUTH-STAGING-8C** planning on Production; does **not** approve provider activation, outbound communications, or DNS changes.
+
+## 2026-11-19 — OPEN-014 official domain owner decision
+
+- **OWNER APPROVED:** The intended official WebXXL domain is **`webbxxl.com`** (double `b`). **`webxxl.com`** (single `b`) is **not** the selected domain. This resolves the primary-domain selection portion of OPEN-014.
+- Preserve the existing observed operational website host **`https://www.webbxxl.com`** and apex **`https://webbxxl.com`** redirect to `www` until independently authorized to change their configuration. Selecting the domain does **not** authorize changing a host, canonical URL setting, redirect, or DNS record.
+- **NO AUTHORIZATION** for DNS changes, Vercel project domains or redirects, `AUTH_URL`, `NEXT_PUBLIC_SITE_URL`, email addresses/sender configurations, verified mail domains, customer website publishing, migrations, production deployment, or provider activation. `hello@webbxxl.com` remains a configured fallback, **not** evidence of mailbox or email-delivery readiness.
+- Future service subdomain placement and operational cutover are **still separate, open decisions**. This is a documentation-only owner decision, not release approval or live verification.
 
 ## 2026-11-18 — PR #140 owner-authorized squash merge (verified)
 
 - **Repository:** `Holagpt-ai/webxxl-website-system`. **PR:** [#140](https://github.com/Holagpt-ai/webxxl-website-system/pull/140), **MERGED/CLOSED** from `v0/final-ui-ux-completion`. Owner-authorized exact head `4a27473b113da736b9892a86442b205a6db8c047`; squash commit `197eb4f056c17e6e5547d221c8a3a3a2ca71690e`. GitHub `main` was verified at the squash SHA immediately after merge, parent `623a9e98eb7b1bae7c219a20120d3cc710ea8b3b`.
 - **Prerequisites:** PR head unchanged and mergeable; required CI SUCCESS on exact head: scope, continuity, app, app-validate-gate, Vercel. Existing local typecheck and Batch 9 focused 24/24 tests passed as reported by Cursor. Legal content from PRs #141/#142 included; no `lib/**`, `app/api/**`, or `prisma/**` changes in UI PR.
 - **Boundaries:** No manual Vercel deployment, production SQL/migrations, provider or flag activation, outbound email/SMS, payment activity, DNS or customer publishing initiated. GitHub-linked auto-deploy may follow a `main` push; its outcome is **not evidence** of verified production features. No new development batch started.
-- **Release stabilization carryover:** authenticated customer/admin desktop/mobile UI with EN/ES still **NOT VERIFIED** (AUTH-STAGING-8C / ISSUE-105-QA). RELEASE-001 and POLICY-SUB-001 remain gated; do not mark as passed. Next action is scoped owner/Cursor release-stabilization plan and authorization, not another staging credential troubleshooting loop.
+- **Release stabilization carryover:** **ADMIN** access and runtime DB identity **VERIFIED** on Production (Step 6A, 2026-11-21). Authenticated **customer** desktop/mobile EN/ES matrix still **NOT VERIFIED** (AUTH-STAGING-8C / ISSUE-105-QA). **POLICY-SUB-001** remains open.
 
 ## 2026-11-18 — final v0 visual delivery (PR #140)
 

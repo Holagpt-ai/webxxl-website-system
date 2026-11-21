@@ -5,11 +5,15 @@
 **Live:** `https://www.webbxxl.com`  
 **Evidence:** [`deployment-evidence/2026-11-20-production-step6-runtime-db-identity.json`](deployment-evidence/2026-11-20-production-step6-runtime-db-identity.json)
 
-## Runtime database identity: **UNVERIFIED**
+## Runtime database identity: **VERIFIED** (Step 6A live, 2026-11-21)
 
-The deployed application’s Prisma datasource target (`DATABASE_URL` / `DIRECT_URL`) **cannot be proven** to be `txfxeehglqfszletuumn` from available non-secret, read-only evidence alone.
+**Supersedes** the 2026-11-20 **UNVERIFIED** state below for release gating.
 
-This is **not** a statement that production is on staging — only that **routing is unproven** until owner-visible proof or an authorized minimal diagnostic ships.
+Staff-authenticated Production `GET /api/v1/admin/operations/database-verification` returned **`VERIFIED_PRODUCTION`** with connectivity **OK**, ledger **40**, and aligned URLs. See [`RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md`](RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md) and [`deployment-evidence/2026-11-21-production-step6a-runtime-db-verification.json`](deployment-evidence/2026-11-21-production-step6a-runtime-db-verification.json).
+
+### Historical (2026-11-20) — UNVERIFIED
+
+The deployed application’s Prisma datasource target (`DATABASE_URL` / `DIRECT_URL`) **could not be proven** to be `txfxeehglqfszletuumn` from available non-secret, read-only evidence alone before Step 6A shipped and was exercised live.
 
 ---
 
@@ -73,10 +77,10 @@ Excluded from PR: credentials, GPG/passphrase paths, local env, scratch `.pr-bod
 
 ---
 
-## Remaining release gates (unchanged)
+## Remaining release gates
 
-1. **Runtime DB identity** — **UNVERIFIED** (this step)
-2. **AUTH-STAGING-8C / ISSUE-105-QA** — do **not** start until identity verified
+1. **Runtime DB identity (Step 6A)** — **VERIFIED** (2026-11-21)
+2. **AUTH-STAGING-8C / ISSUE-105-QA** — **authorized to proceed** (customer + admin login baseline verified; full matrix outstanding)
 3. **POLICY-SUB-001**
 4. Provider activation / flags / DNS / publishing — separate authorization
 
