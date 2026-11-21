@@ -1,7 +1,7 @@
 {
   "gate": "RELEASE-001",
   "step": 4,
-  "result": "FAIL",
+  "result": "RELEASE_001_STEP4_FAIL",
   "recorded_at_utc": "2026-11-20",
   "github_main_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
   "supabase_ref": "txfxeehglqfszletuumn",
@@ -30,5 +30,16 @@
     "no manual ledger edit",
     "no automatic restore"
   ],
-  "next_owner_gate": "Separate DBA / runbook for schema-ledger drift before retry"
+  "next_owner_gate": "Separate DBA / runbook for schema-ledger drift before retry",
+  "gate_outcome": "FAIL",
+  "environment": "Production",
+  "service": "webxxl-website-system",
+  "released_at_utc": "2026-11-20T00:00:00Z",
+  "git_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
+  "deployment_id": "7919995501",
+  "state": "success",
+  "evidence_url": "https://api.github.com/repos/Holagpt-ai/webxxl-website-system/deployments/7919995501/statuses",
+  "migration_ids_applied": "FAILED deploy attempt",
+  "flags": "UNVERIFIED",
+  "provider_scope": "UNVERIFIED"
 }

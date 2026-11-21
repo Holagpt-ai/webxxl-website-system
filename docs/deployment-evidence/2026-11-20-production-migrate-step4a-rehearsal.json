@@ -1,7 +1,7 @@
 {
   "gate": "RELEASE-001",
   "step": "4A",
-  "result": "PASS",
+  "result": "RELEASE_001_STEP4A_REHEARSAL",
   "recorded_at_utc": "2026-11-20T19:34:20.416Z",
   "github_main_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
   "isolated": {
@@ -138,5 +138,16 @@
       "production uses Supabase pooler; rehearsal used vanilla PostgreSQL 17 trust auth",
       "REVOKE/GRANT lines in later migrations may behave differently vs Supabase roles"
     ]
-  }
+  },
+  "gate_outcome": "PASS",
+  "environment": "Production",
+  "service": "webxxl-website-system",
+  "released_at_utc": "2026-11-20T00:00:00Z",
+  "git_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
+  "deployment_id": "7919995501",
+  "state": "success",
+  "evidence_url": "https://api.github.com/repos/Holagpt-ai/webxxl-website-system/deployments/7919995501/statuses",
+  "migration_ids_applied": "rehearsal only",
+  "flags": "UNVERIFIED",
+  "provider_scope": "UNVERIFIED"
 }

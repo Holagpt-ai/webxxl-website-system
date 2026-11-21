@@ -27,5 +27,16 @@
   "admin_dashboard_verified": true,
   "notes": "Owner-confirmed live staff-authenticated response on Production; no secrets recorded.",
   "release_pass_criteria_met": true,
-  "authenticated_acceptance_authorized_next": "AUTH-STAGING-8C / ISSUE-105-QA"
+  "authenticated_acceptance_authorized_next": "AUTH-STAGING-8C / ISSUE-105-QA",
+  "environment": "Production",
+  "service": "webxxl-website-system",
+  "released_at_utc": "2026-11-21T00:00:00Z",
+  "git_sha": "ef5776e4129a835cc7df72ebc1d00d04092c00a2",
+  "deployment_id": "7952960484",
+  "state": "success",
+  "evidence_url": "https://api.github.com/repos/Holagpt-ai/webxxl-website-system/deployments/7952960484/statuses",
+  "migration_ids_applied": "40 finished live verified",
+  "flags": "UNVERIFIED",
+  "provider_scope": "UNVERIFIED",
+  "result": "RELEASE_001_STEP6A_VERIFIED"
 }

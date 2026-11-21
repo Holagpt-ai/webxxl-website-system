@@ -1,7 +1,7 @@
 {
   "gate": "RELEASE-001",
   "step": 5,
-  "result": "PASS_WITH_BLOCKERS",
+  "result": "RELEASE_001_STEP5_PASS_WITH_BLOCKERS",
   "recorded_at_utc": "2026-11-20",
   "github": {
     "origin_main_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
@@ -29,19 +29,48 @@
     "database_writes_in_step5": false
   },
   "vercel_environment_non_secret": {
-    "DATABASE_URL": { "present": true, "value_verifiable": false, "note": "Vercel Production secret; cannot confirm txfx vs vcgib without decrypt" },
-    "DIRECT_URL": { "present": true, "value_verifiable": false },
-    "AUTH_URL": { "present": true, "value_verifiable_partial": "https://www.webbxxl… (non-secret config visible in Vercel list)" },
-    "NEXT_PUBLIC_SITE_URL": { "present": true, "value_verifiable_partial": "https://www.webbxxl…" },
+    "DATABASE_URL": {
+      "present": true,
+      "value_verifiable": false,
+      "note": "Vercel Production secret; cannot confirm txfx vs vcgib without decrypt"
+    },
+    "DIRECT_URL": {
+      "present": true,
+      "value_verifiable": false
+    },
+    "AUTH_URL": {
+      "present": true,
+      "value_verifiable_partial": "https://www.webbxxl… (non-secret config visible in Vercel list)"
+    },
+    "NEXT_PUBLIC_SITE_URL": {
+      "present": true,
+      "value_verifiable_partial": "https://www.webbxxl…"
+    },
     "LEADS_TO_EMAIL": "hello@webbxxl.com (non-secret)",
     "runtime_db_binding_proof": "BLOCKED"
   },
   "read_only_http_checks": {
-    "www_homepage": { "result": "PASS", "note": "200/marketing content reachable" },
-    "login_page": { "status": 200, "result": "PASS" },
-    "api_admin_operations_summary_unauthenticated": { "status": 401, "result": "PASS" },
-    "api_customer_operations_summary_unauthenticated": { "status": 401, "result": "PASS" },
-    "dashboard_unauthenticated": { "status": 200, "result": "INCONCLUSIVE", "note": "returns page shell; authenticated CRM flows not tested (AUTH-STAGING-8C)" }
+    "www_homepage": {
+      "result": "PASS",
+      "note": "200/marketing content reachable"
+    },
+    "login_page": {
+      "status": 200,
+      "result": "PASS"
+    },
+    "api_admin_operations_summary_unauthenticated": {
+      "status": 401,
+      "result": "PASS"
+    },
+    "api_customer_operations_summary_unauthenticated": {
+      "status": 401,
+      "result": "PASS"
+    },
+    "dashboard_unauthenticated": {
+      "status": 200,
+      "result": "INCONCLUSIVE",
+      "note": "returns page shell; authenticated CRM flows not tested (AUTH-STAGING-8C)"
+    }
   },
   "remaining_gates": [
     "AUTH-STAGING-8C / ISSUE-105-QA — authenticated customer/admin desktop/mobile EN/ES acceptance",
@@ -50,5 +79,16 @@
     "Provider activation / feature flags — UNVERIFIED",
     "Post-migrate authenticated production smoke — not run in Step 5"
   ],
-  "uncommitted_repo_docs": "RELEASE-001 Steps 3–5 evidence and continuity doc edits local only; not committed per assignment"
+  "uncommitted_repo_docs": "RELEASE-001 Steps 3–5 evidence and continuity doc edits local only; not committed per assignment",
+  "gate_outcome": "PASS_WITH_BLOCKERS",
+  "environment": "Production",
+  "service": "webxxl-website-system",
+  "released_at_utc": "2026-11-19T16:59:01Z",
+  "git_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
+  "deployment_id": "7919995501",
+  "state": "success",
+  "evidence_url": "https://api.github.com/repos/Holagpt-ai/webxxl-website-system/deployments/7919995501/statuses",
+  "migration_ids_applied": "40 finished verified",
+  "flags": "UNVERIFIED",
+  "provider_scope": "UNVERIFIED"
 }

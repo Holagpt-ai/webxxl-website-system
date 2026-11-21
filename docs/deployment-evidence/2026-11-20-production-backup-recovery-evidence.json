@@ -27,5 +27,15 @@
     "restorable": "yes_demonstrated_locally",
     "supabase_schema_limitations": "auth_extensions_realtime_vault_not_in_vanilla_restore"
   },
-  "notes": "No secrets in this file. Step 3 readiness only; production migrate deploy not executed."
+  "notes": "No secrets in this file. Step 3 readiness only; production migrate deploy not executed.",
+  "service": "webxxl-website-system",
+  "released_at_utc": "2026-11-20T18:30:53.852Z",
+  "git_sha": "570b223f22b855f703c48d5da5504d92a5c5125f",
+  "deployment_id": "7919995501",
+  "state": "success",
+  "evidence_url": "https://api.github.com/repos/Holagpt-ai/webxxl-website-system/deployments/7919995501/statuses",
+  "migration_ids_applied": "11 applied at backup",
+  "flags": "UNVERIFIED",
+  "provider_scope": "UNVERIFIED",
+  "result": "RELEASE_001_STEP2_BACKUP"
 }
