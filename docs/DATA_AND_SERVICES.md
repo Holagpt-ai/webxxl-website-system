@@ -117,14 +117,15 @@ Services: `lib/platform/crm/import-analysis.ts`, `import-export-service.ts`, `ex
 | POST | `/api/v1/crm/merge-proposals` | `crm.admin` | Create merge proposal |
 | POST | `/api/v1/crm/merge-proposals/[id]` | `crm.admin` | Body `{ action: "approve" \| "reject" }`; account-scoped merge audit |
 
-## Marketing customer HTTP (MKT-08 + Batch 18A)
+## Marketing customer HTTP (MKT-08 + Batch 18A + Batch 11 handoffs)
 
-Session-scoped `CustomerAccount`; gates via `requireMktApiActor` (`MKT_BACKEND_ENABLED` + entitlement + permission).
+Session-scoped `CustomerAccount`; gates via `requireMktApiActor` (`MKT_BACKEND_ENABLED` + entitlement + permission). Contract: [`platform/docs/BATCH11-MARKETING-ARTIFACTS-REVIEWS.md`](platform/docs/BATCH11-MARKETING-ARTIFACTS-REVIEWS.md).
 
 | Method | Path | Permission | Notes |
 |---|---|---|---|
-| GET | `/api/v1/marketing/artifacts` | `marketing.read` | Account-wide list; optional filters; cursor pagination; list omits `payload` |
-| GET | `/api/v1/marketing/reviews` | `marketing.read` | Approval inbox; `effectiveStatus` and `allowedActions`; cursor pagination |
+| GET | `/api/v1/marketing/artifacts` | `marketing.read` | Account-wide list; filters + cursor; each row `destination`; response `navigation` workspaces |
+| GET | `/api/v1/marketing/reviews` | `marketing.read` | Approval inbox; `effectiveStatus`, `allowedActions`, `destination`; `navigation` workspaces |
+| GET | `/api/v1/marketing/reviews/[id]` | `marketing.read` | Review detail + `destination` |
 | GET | `/api/v1/marketing/requests/[id]/artifacts` | `marketing.read` | Request-scoped list (unchanged) |
 | GET | `/api/v1/marketing/artifacts/[id]` | `marketing.read` | Detail + revisions (unchanged) |
 | POST | `/api/v1/marketing/artifacts/[id]/submit-review` | `marketing.artifact.review` | Requires `MKT_APPROVAL_WORKFLOW_ENABLED`; atomic with artifact status |

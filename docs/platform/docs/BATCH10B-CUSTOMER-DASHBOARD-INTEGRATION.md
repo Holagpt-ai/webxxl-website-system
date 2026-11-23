@@ -1,7 +1,7 @@
 # Batch 10B — Customer dashboard context and module handoffs
 
-**Status:** source implementation (owner-review PR). Flags unchanged. No production migrate, provider activation, or browser QA.  
-**Baseline:** GitHub `main` `142395b51f54a62d93a70e23d1a16eb3b62e8db0` (PR **#146** MERGED — Batch 10A).  
+**Status:** **MERGED** [PR **#147**](https://github.com/Holagpt-ai/webxxl-website-system/pull/147) @ `b2e2d4a3a93bfead122a41ce5c0194acb2f9de4a`. Flags unchanged.  
+**Baseline:** GitHub `main` `b2e2d4a3a93bfead122a41ce5c0194acb2f9de4a` (PR **#146** + **#147**).  
 **Date:** 2026-11-23. **Owner:** Cursor. **ADR:** not required — composes existing portal cookies, OPEN-001 gates, and Business Command Center APIs.
 
 ## Purpose

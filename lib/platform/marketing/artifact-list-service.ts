@@ -3,6 +3,7 @@ import { MKT_LIST_DEFAULT_TAKE, MKT_LIST_MAX_TAKE } from '@/config/mkt-backend'
 import { prisma } from '@/lib/db'
 import { decodeMktListCursor, encodeMktListCursor } from '@/lib/platform/marketing/mkt-list-cursor'
 import { validateMarketingListScope } from '@/lib/platform/marketing/mkt-list-scope'
+import { marketingArtifactListDestination } from '@/lib/platform/marketing/list-handoffs'
 import type { MktResult } from '@/lib/platform/marketing/types'
 
 const artifactListSelect = {
@@ -19,7 +20,9 @@ const artifactListSelect = {
   createdAt: true,
 } satisfies Prisma.MarketingArtifactSelect
 
-export type MarketingArtifactListItem = Prisma.MarketingArtifactGetPayload<{ select: typeof artifactListSelect }>
+export type MarketingArtifactListItem = Prisma.MarketingArtifactGetPayload<{ select: typeof artifactListSelect }> & {
+  destination: { path: string }
+}
 
 function clampTake(take?: number): number {
   const defaultTake = Number.isFinite(MKT_LIST_DEFAULT_TAKE) ? MKT_LIST_DEFAULT_TAKE : 50
@@ -114,12 +117,17 @@ export async function listMarketingArtifacts(
     where = cursorWhere(where, decoded.value)
   }
 
-  const artifacts = await prisma.marketingArtifact.findMany({
+  const rows = await prisma.marketingArtifact.findMany({
     where,
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     take,
     select: artifactListSelect,
   })
+
+  const artifacts: MarketingArtifactListItem[] = rows.map((row) => ({
+    ...row,
+    destination: marketingArtifactListDestination(row.id),
+  }))
 
   let nextCursor: string | undefined
   if (artifacts.length === take) {

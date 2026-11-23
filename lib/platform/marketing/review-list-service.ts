@@ -8,6 +8,7 @@ import {
   reviewAllowedActions,
   type ReviewEffectiveStatus,
 } from '@/lib/platform/marketing/review-presentation'
+import { marketingReviewListDestination } from '@/lib/platform/marketing/list-handoffs'
 import type { MktResult } from '@/lib/platform/marketing/types'
 
 const reviewListSelect = {
@@ -34,6 +35,7 @@ type ReviewRow = Prisma.MarketingArtifactReviewGetPayload<{ select: typeof revie
 export type MarketingReviewListItem = ReviewRow & {
   effectiveStatus: ReviewEffectiveStatus
   allowedActions: ReturnType<typeof reviewAllowedActions>
+  destination: { path: string }
 }
 
 function clampTake(take?: number): number {
@@ -152,7 +154,12 @@ export async function listMarketingReviews(
       approvalWorkflowEnabled: input.approvalWorkflowEnabled,
       now,
     })
-    return { ...row, effectiveStatus, allowedActions }
+    return {
+      ...row,
+      effectiveStatus,
+      allowedActions,
+      destination: marketingReviewListDestination(row.id, row.marketingArtifactId),
+    }
   })
 
   let nextCursor: string | undefined
@@ -191,6 +198,7 @@ export async function getMarketingReviewForAccount(
         approvalWorkflowEnabled: input.approvalWorkflowEnabled,
         now,
       }),
+      destination: marketingReviewListDestination(row.id, row.marketingArtifactId),
     },
   }
 }

@@ -1,8 +1,7 @@
 import type { PortalUser } from '@/lib/portal/authz'
 import { getActiveManagedSite, getActiveProject } from '@/lib/portal/authz'
-import {
-  buildModuleHandoff,
-} from '@/lib/platform/customer-dashboard/module-handoffs'
+import { buildModuleHandoff } from '@/lib/platform/customer-dashboard/module-handoffs'
+import { MARKETING_STUDIO_WORKSPACES } from '@/lib/platform/marketing/list-handoffs'
 import {
   CUSTOMER_DASHBOARD_MODULES,
   type CustomerDashboardContextResponse,
@@ -41,6 +40,11 @@ export async function getCustomerDashboardContext(portal: PortalUser): Promise<C
       customerOperations: '/api/v1/customer-operations/summary',
       siteIntelligence: '/api/v1/site-intelligence/sites/{managedSiteId}/summary',
       businessCommandCenter: '/dashboard/business',
+      marketingWorkspaces: {
+        requests: MARKETING_STUDIO_WORKSPACES.requests,
+        deliverables: MARKETING_STUDIO_WORKSPACES.deliverables,
+        approvals: MARKETING_STUDIO_WORKSPACES.approvals,
+      },
     },
   }
 }

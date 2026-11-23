@@ -22,7 +22,12 @@ const HANDOFF_TEMPLATES: Record<CustomerDashboardModule, HandoffTemplate> = {
   marketing_studio: {
     workspacePath: '/dashboard/marketing',
     siteScoped: false,
-    apis: [{ method: 'GET', path: '/api/v1/marketing/requests' }],
+    apis: [
+      { method: 'GET', path: '/api/v1/marketing/requests' },
+      { method: 'GET', path: '/api/v1/marketing/artifacts' },
+      { method: 'GET', path: '/api/v1/marketing/reviews' },
+      { method: 'GET', path: '/api/v1/marketing/reviews/{reviewId}' },
+    ],
   },
   local_seo: {
     workspacePath: '/dashboard/seo',
