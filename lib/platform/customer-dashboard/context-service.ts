@@ -2,6 +2,7 @@ import type { PortalUser } from '@/lib/portal/authz'
 import { getActiveManagedSite, getActiveProject } from '@/lib/portal/authz'
 import { buildModuleHandoff } from '@/lib/platform/customer-dashboard/module-handoffs'
 import { MARKETING_STUDIO_WORKSPACES } from '@/lib/platform/marketing/list-handoffs'
+import { LOCAL_SEO_WORKSPACES } from '@/lib/platform/seo/local-seo-workspaces'
 import {
   CUSTOMER_DASHBOARD_MODULES,
   type CustomerDashboardContextResponse,
@@ -44,6 +45,14 @@ export async function getCustomerDashboardContext(portal: PortalUser): Promise<C
         requests: MARKETING_STUDIO_WORKSPACES.requests,
         deliverables: MARKETING_STUDIO_WORKSPACES.deliverables,
         approvals: MARKETING_STUDIO_WORKSPACES.approvals,
+      },
+      seoWorkspaces: {
+        overview: LOCAL_SEO_WORKSPACES.overview,
+        keywords: LOCAL_SEO_WORKSPACES.keywords,
+        opportunities: LOCAL_SEO_WORKSPACES.opportunities,
+        pages: LOCAL_SEO_WORKSPACES.pages,
+        localMarket: LOCAL_SEO_WORKSPACES.localMarket,
+        connections: LOCAL_SEO_WORKSPACES.connections,
       },
     },
   }

@@ -45,7 +45,16 @@ Account-scoped dashboard **context** and **module handoffs** across CRM, website
       "businessOverview": "/api/v1/business/overview",
       "customerOperations": "/api/v1/customer-operations/summary",
       "siteIntelligence": "/api/v1/site-intelligence/sites/{managedSiteId}/summary",
-      "businessCommandCenter": "/dashboard/business"
+      "businessCommandCenter": "/dashboard/business",
+      "marketingWorkspaces": { "requests": "...", "deliverables": "...", "approvals": "..." },
+      "seoWorkspaces": {
+        "overview": "/dashboard/seo",
+        "keywords": "/dashboard/seo/keywords",
+        "opportunities": "/dashboard/seo/opportunities",
+        "pages": "/dashboard/seo/pages",
+        "localMarket": "/dashboard/seo/local-market",
+        "connections": "/dashboard/seo/connections"
+      }
     }
   }
 }

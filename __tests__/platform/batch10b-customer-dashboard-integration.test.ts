@@ -115,6 +115,7 @@ describe('Batch 10B customer dashboard integration', () => {
     expect(context.accountScope).toBe('session_membership')
     expect(context.modules.map((m) => m.module)).toEqual([...CUSTOMER_DASHBOARD_MODULES])
     expect(context.crossModule.businessOverview).toBe('/api/v1/business/overview')
+    expect(context.crossModule.seoWorkspaces.keywords).toBe('/dashboard/seo/keywords')
   })
 
   it('exposes GET /api/v1/portal/dashboard-context with tenant scope checks', () => {

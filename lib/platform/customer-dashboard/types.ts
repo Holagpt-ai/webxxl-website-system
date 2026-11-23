@@ -50,5 +50,13 @@ export type CustomerDashboardContextResponse = {
       deliverables: string
       approvals: string
     }
+    seoWorkspaces: {
+      overview: string
+      keywords: string
+      opportunities: string
+      pages: string
+      localMarket: string
+      connections: string
+    }
   }
 }

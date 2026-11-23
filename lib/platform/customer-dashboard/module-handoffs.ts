@@ -32,7 +32,15 @@ const HANDOFF_TEMPLATES: Record<CustomerDashboardModule, HandoffTemplate> = {
   local_seo: {
     workspacePath: '/dashboard/seo',
     siteScoped: true,
-    apis: [{ method: 'GET', path: '/api/v1/seo/sites/{managedSiteId}/opportunities' }],
+    apis: [
+      { method: 'GET', path: '/api/v1/seo/sites/{managedSiteId}/overview' },
+      { method: 'GET', path: '/api/v1/seo/sites/{managedSiteId}/keywords' },
+      { method: 'GET', path: '/api/v1/seo/sites/{managedSiteId}/keywords/intelligence' },
+      { method: 'GET', path: '/api/v1/seo/sites/{managedSiteId}/competitors' },
+      { method: 'GET', path: '/api/v1/seo/sites/{managedSiteId}/crawl-runs' },
+      { method: 'GET', path: '/api/v1/seo/sites/{managedSiteId}/google/oauth-handoff' },
+      { method: 'GET', path: '/api/v1/seo/sites/{managedSiteId}/opportunities' },
+    ],
   },
   analytics: {
     workspacePath: '/dashboard/analytics',
@@ -76,9 +84,15 @@ export function buildModuleHandoff(
 ): DashboardModuleHandoff {
   const template = HANDOFF_TEMPLATES[module]
   let workspacePath = template.workspacePath
+  let apis = template.apis
   if (template.siteScoped && input?.managedSiteId) {
     if (module === 'local_seo') {
       workspacePath = BUSINESS_DESTINATIONS.seoOpportunitySite(input.managedSiteId)
+      const siteId = input.managedSiteId
+      apis = template.apis.map((row) => ({
+        ...row,
+        path: row.path.replace('{managedSiteId}', siteId),
+      }))
     } else if (module === 'analytics') {
       workspacePath = BUSINESS_DESTINATIONS.analyticsDashboard({ siteId: input.managedSiteId })
     }
@@ -87,7 +101,7 @@ export function buildModuleHandoff(
     module,
     readiness,
     workspace: { label: module, path: workspacePath },
-    apis: template.apis,
+    apis,
     siteScoped: template.siteScoped,
   }
 }
