@@ -24,6 +24,21 @@ export type AnalyticsMetricRow = {
   observedAt: Date
 }
 
+export type AnalyticsMetricMeasurementRow = AnalyticsMetricRow & {
+  sourceRef: string
+  idempotencyKey: string
+}
+
+export type AnalyticsConversionDailyRow = {
+  periodDate: Date
+  count: number
+  uniqueCount: number
+  dataState: import('@/lib/platform/analytics/types').AnalyticsFreshnessState
+  sourceProvider: string
+  observedAt: Date
+  idempotencyKey: string
+}
+
 export type AnalyticsConversionDefRow = {
   id: string
   publicId: string
@@ -86,6 +101,19 @@ export type AnalyticsStore = {
     managedSiteId: string
     range: AnalyticsDateRange
   }): Promise<AnalyticsConversionObsRow[]>
+  listConversionDaily(input: {
+    customerAccountId: string
+    managedSiteId: string
+    conversionKey: string
+    range: AnalyticsDateRange
+  }): Promise<AnalyticsConversionDailyRow[]>
+  listMetricMeasurements(input: {
+    customerAccountId: string
+    managedSiteId: string
+    provider: SeoAnalyticsProvider
+    metricDefinition: string
+    range: AnalyticsDateRange
+  }): Promise<AnalyticsMetricMeasurementRow[]>
   listSyncRuns(customerAccountId: string, managedSiteId: string): Promise<AnalyticsSyncRunRow[]>
   crmCounts(customerAccountId: string, range: AnalyticsDateRange): Promise<{
     leadsCreated: number

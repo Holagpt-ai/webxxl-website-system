@@ -1,24 +1,27 @@
-import { NextResponse } from 'next/server'
+import { listAccountInboxes } from '@/lib/platform/comms/inbox-service'
 import { listCommsConnections } from '@/lib/platform/comms/connections-service'
-import { commsResultHttpStatus } from '@/lib/platform/comms/comms-api-map'
-import { requireCommsApiActor, CommsApiError } from '@/lib/platform/comms/route-auth'
+import { buildCommsConnectionsAuthorizationContract } from '@/lib/platform/comms/connections-authorization-contract'
+import { commsRouteError, commsServiceResponse } from '@/lib/platform/comms/http'
+import { requireCommsApiActor } from '@/lib/platform/comms/route-auth'
 
 export async function GET() {
   try {
     const actor = await requireCommsApiActor('comms.read')
-    const result = await listCommsConnections({
-      customerAccountId: actor.customerAccountId,
-      actorUserId: actor.userId,
+    const [result, inboxes] = await Promise.all([
+      listCommsConnections({
+        customerAccountId: actor.customerAccountId,
+        actorUserId: actor.userId,
+      }),
+      listAccountInboxes({ customerAccountId: actor.customerAccountId }),
+    ])
+    if (!result.ok) return commsServiceResponse(result)
+    if (!inboxes.ok) return commsServiceResponse(inboxes)
+    const authorization = buildCommsConnectionsAuthorizationContract({
+      chatwoot: result.value.chatwoot,
+      inboxes: inboxes.value.inboxes,
     })
-    if (!result.ok) {
-      return NextResponse.json({ code: result.code, message: result.message }, { status: commsResultHttpStatus(result.code) })
-    }
-    return NextResponse.json(result.value)
+    return Response.json({ ...result.value, authorization })
   } catch (error) {
-    if (error instanceof CommsApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    console.error('communications connections GET failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to load connections' }, { status: 500 })
+    return commsRouteError(error)
   }
 }

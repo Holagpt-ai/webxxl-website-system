@@ -58,5 +58,16 @@ export type CustomerDashboardContextResponse = {
       localMarket: string
       connections: string
     }
+    analyticsWorkspaces: {
+      overview: string
+      traffic: string
+      search: string
+      local: string
+      conversions: string
+    }
+    communicationsWorkspaces: {
+      inbox: string
+      connections: string
+    }
   }
 }

@@ -47,6 +47,8 @@ Account-scoped dashboard **context** and **module handoffs** across CRM, website
       "siteIntelligence": "/api/v1/site-intelligence/sites/{managedSiteId}/summary",
       "businessCommandCenter": "/dashboard/business",
       "marketingWorkspaces": { "requests": "...", "deliverables": "...", "approvals": "..." },
+      "analyticsWorkspaces": { "overview": "...", "traffic": "...", "search": "...", "local": "...", "conversions": "..." },
+      "communicationsWorkspaces": { "inbox": "...", "connections": "..." },
       "seoWorkspaces": {
         "overview": "/dashboard/seo",
         "keywords": "/dashboard/seo/keywords",

@@ -45,12 +45,26 @@ const HANDOFF_TEMPLATES: Record<CustomerDashboardModule, HandoffTemplate> = {
   analytics: {
     workspacePath: '/dashboard/analytics',
     siteScoped: true,
-    apis: [{ method: 'GET', path: '/api/v1/analytics/accounts/{customerAccountId}/overview' }],
+    apis: [
+      { method: 'GET', path: '/api/v1/analytics/accounts/{customerAccountId}/overview' },
+      { method: 'GET', path: '/api/v1/analytics/accounts/{customerAccountId}/traffic' },
+      { method: 'GET', path: '/api/v1/analytics/accounts/{customerAccountId}/search' },
+      { method: 'GET', path: '/api/v1/analytics/accounts/{customerAccountId}/local' },
+      { method: 'GET', path: '/api/v1/analytics/accounts/{customerAccountId}/conversions' },
+      { method: 'GET', path: '/api/v1/analytics/accounts/{customerAccountId}/measurements' },
+      { method: 'GET', path: '/api/v1/analytics/accounts/{customerAccountId}/google/readiness' },
+    ],
   },
   communications: {
     workspacePath: BUSINESS_DESTINATIONS.commsInbox,
     siteScoped: false,
-    apis: [{ method: 'GET', path: '/api/v1/comms/inboxes' }],
+    apis: [
+      { method: 'GET', path: '/api/v1/communications/inboxes' },
+      { method: 'GET', path: '/api/v1/communications/conversations' },
+      { method: 'GET', path: '/api/v1/communications/connections' },
+      { method: 'GET', path: '/api/v1/communications/execution/summary' },
+      { method: 'GET', path: '/api/v1/communications/provider-readiness' },
+    ],
   },
   commerce: {
     workspacePath: '/dashboard/marketplace',
@@ -80,16 +94,22 @@ const HANDOFF_TEMPLATES: Record<CustomerDashboardModule, HandoffTemplate> = {
 export function buildModuleHandoff(
   module: CustomerDashboardModule,
   readiness: BusinessModuleReadiness,
-  input?: { managedSiteId?: string | null },
+  input?: { managedSiteId?: string | null; customerAccountId?: string | null },
 ): DashboardModuleHandoff {
   const template = HANDOFF_TEMPLATES[module]
   let workspacePath = template.workspacePath
   let apis = template.apis
+  if (input?.customerAccountId) {
+    apis = apis.map((row) => ({
+      ...row,
+      path: row.path.replace('{customerAccountId}', input.customerAccountId!),
+    }))
+  }
   if (template.siteScoped && input?.managedSiteId) {
     if (module === 'local_seo') {
       workspacePath = BUSINESS_DESTINATIONS.seoOpportunitySite(input.managedSiteId)
       const siteId = input.managedSiteId
-      apis = template.apis.map((row) => ({
+      apis = apis.map((row) => ({
         ...row,
         path: row.path.replace('{managedSiteId}', siteId),
       }))
