@@ -236,15 +236,14 @@ describe('Batch 34 — Marketing Studio execution gates', () => {
     expect(publishedWithoutUrl.kind).toBe('RECONCILIATION_REQUIRED')
   })
 
-  it('schedule HTTP route returns 503 DISPATCH_BLOCKED without implying intent persistence', () => {
+  it('schedule HTTP route persists guarded intent when execution gates are on (202, no live dispatch)', () => {
     const route = readFileSync(
       join(process.cwd(), 'app/api/v1/social/campaigns/[id]/schedule/route.ts'),
       'utf8',
     )
-    expect(route).toContain("code: 'DISPATCH_BLOCKED'")
-    expect(route).toContain('status: 503')
-    expect(route).toContain('intentPersisted: false')
-    expect(route).toContain('No scheduling intent was persisted')
-    expect(route).not.toContain('status: 202')
+    expect(route).toContain('prepareGuardedSchedulingIntentPersist')
+    expect(route).toContain('intentPersisted: true')
+    expect(route).toContain('status: 202')
+    expect(route).toContain('isPostizLivePublishingEnabled')
   })
 })

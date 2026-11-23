@@ -29,6 +29,8 @@ export async function requireSocialApiActor() {
     userId: portal.id,
     customerAccountId: portal.customerAccount.id,
     managedSiteId: undefined as string | undefined,
+    membershipRole: portal.membership.role,
+    platformRole: portal.role,
   }
 }
 

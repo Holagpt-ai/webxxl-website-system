@@ -203,12 +203,14 @@ Request categories accepted by `POST /api/v1/marketing/requests`: `LANDING_PAGE`
 | Campaigns | `GET /api/v1/social/campaigns` | — | `{ campaigns }` Prisma `SocialCampaign`, take 50 | Social flag. Account from the session. No site filter | None | Read | PARTIAL and DISABLED |
 | Campaigns | `POST /api/v1/social/campaigns` | JSON `goal`, `locale` `en` or `es`, `targetPlatforms` non-empty string[] required. Optional `targetAudience`, `brandProfile`, `idempotencyKey` | `201` `{ campaign }` Prisma `SocialCampaign` | Social flag, then draft quota (`MARKETING_STUDIO_DRAFTS_PER_MONTH`, default 50) | — | Create a draft campaign. Site id is not taken from the body | PARTIAL and DISABLED |
 | Campaign detail | `POST /api/v1/social/campaigns/[id]/revisions` | JSON `captionEn` and `targetChannelIds` string[] required. Optional `captionEs`, `scheduledAt`, `mediaRefs`, `platformPayloads` | `201` `{ revision }` which is `{ id, contentHash, revisionNumber }` | Social flag. Campaign must be in the account. Channel ids are validated for the account | — | Save a revision. This does not approve or publish | IMPLEMENTED and DISABLED |
-| Campaign detail | `POST /api/v1/social/campaigns/[id]/approve` | Body ignored | `501` `{ code: "PENDING_PILOT", message }` after the flag check | Social flag | — | None. Domain approval is not wired to this route | NOT IMPLEMENTED on HTTP. DEFERRED until a later backend batch |
-| Schedule | `GET /api/v1/social/calendar` | Query `from` and `to` ISO dates. Defaults are now and now plus 30 days | `{ from, to, campaigns }` Prisma campaigns whose `startDate` or `endDate` falls in the window, take 200 | Social flag | Date window only. Invalid dates become an Invalid Date query and can 500 | Read campaign date overlap. This is not a post-level calendar | PARTIAL and DISABLED |
+| Campaign detail | `POST /api/v1/social/campaigns/[id]/approve` | JSON `action` `submit` or `decide` with `approvalId` + `decision` when deciding | `201` submit or `200` decide with approval + campaign status | Social flag. Decide requires account OWNER or staff | — | Prisma-backed approval (Batch 12). No live publish | IMPLEMENTED and DISABLED |
+| Campaign detail | `GET /api/v1/social/campaigns/[id]/approvals` | — | `{ approvals }` history with PENDING/APPROVED/REJECTED/EXPIRED | Social flag | Account scope | Read approval history | IMPLEMENTED and DISABLED |
+| Schedule | `GET /api/v1/social/calendar` | Query `from` and `to` ISO dates. Defaults are now and now plus 30 days | `{ from, to, campaigns }` Prisma campaigns whose `startDate` or `endDate` falls in the window, take 200 | Social flag | Invalid dates return `400` | Read campaign date overlap. This is not a post-level calendar | IMPLEMENTED and DISABLED |
 | Schedule | `GET /api/v1/social/publications` | — | `{ publications }` Prisma `SocialPublication`, take 100 | Social flag | None | Read stored publication rows | IMPLEMENTED and DISABLED |
-| Schedule | `POST /api/v1/social/campaigns/[id]/schedule` | Body ignored | Flag off: `503` `NOT_CONFIGURED`. Flag on: `501` `PENDING_PILOT` | `POSTIZ_LIVE_PUBLISHING_ENABLED` | — | No schedule is created | DEFERRED |
-| Connections | `GET /api/v1/social/connections` | — | `{ connections }` Prisma `BusinessSocialConnection`, take 100 | Social flag | None | Read. No connect or disconnect route | PARTIAL and DISABLED. OAuth connect is DEFERRED |
-| Social handoff from an approved artifact | no route | — | — | `prepareSocialHandoffFromApprovedCreative` is a server function, not HTTP | — | Do not call it from the browser | NOT IMPLEMENTED as a customer API |
+| Schedule | `POST /api/v1/social/campaigns/[id]/schedule` | JSON `channelId`, `approvalId`, `idempotencyKey`, `scheduledAt` | Execution gates off: `503`. Live publish on: `501`. Gates on + live off: `202` persisted intent, dispatch blocked | Social + execution gates | Approved campaign + channel scope | Guarded prep only (Batch 12) | IMPLEMENTED and DISABLED |
+| Schedule | `GET /api/v1/social/campaigns/[id]/scheduling` | — | `{ campaignId, campaignStatus, intents[] }` | Social flag | Account scope | Read scheduling intent status | IMPLEMENTED and DISABLED |
+| Connections | `GET /api/v1/social/connections` | — | `{ connections, authorization }` authorization contract (`oauthConnectEnabled: false`) | Social flag | None | Read. No connect or disconnect route | IMPLEMENTED and DISABLED. OAuth connect is DEFERRED |
+| Social handoff from an approved artifact | `POST /api/v1/marketing/artifacts/[id]/social-handoff` | JSON `revisionHash` required | `201`/`200` handoff DTO · `schedulingAllowed: false` | MKT + external handoff flags | Approved review required | No Postiz call | IMPLEMENTED and DISABLED |
 
 The deliverables index must be built by listing requests and then loading each request’s artifacts, or by opening an artifact id the user already has. Do not invent `GET /api/v1/marketing/artifacts`.
 
@@ -335,11 +337,12 @@ These are gaps for a later Cursor batch. They are not v0 workarounds and not per
 | CRM search, cursor pagination, deal stage move, task update, consent read/write | Implemented in Batch 17A backend (see `BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md` for UI). Still DISABLED at source flag defaults |
 | Company detail HTTP, custom fields, suppression lift API | Implemented in Batch 10A backend (see `BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md`). Still DISABLED at source flag defaults |
 | Account-wide marketing artifact list and marketing review list | Implemented (Batch 18A HTTP + Batch 11 handoffs). Still DISABLED at source flag defaults |
-| HTTP social handoff, HTTP social approve, live schedule, channel connect | NOT IMPLEMENTED or DEFERRED (`501` / `503`) |
+| HTTP social handoff, HTTP social approve, guarded schedule status, channel authorization contract | IMPLEMENTED (Batch 12) — still DISABLED by flags |
+| Live Postiz schedule dispatch, OAuth channel connect | DEFERRED — owner activation gates |
 | Per-query keyword rows, SEO overview GSC totals, OAuth connect, crawl execution, opportunity execution, live rank | NOT IMPLEMENTED or DEFERRED |
 | Stable `{ code, message }` for `AuthError` on CRM, Marketing, and SEO routes | PARTIAL |
 | Social route does not apply the OPEN-001 `503` used by the other three families | PARTIAL |
-| `GET /api/v1/social/calendar` can throw on an unparseable date | PARTIAL |
+| `GET /api/v1/social/calendar` invalid date handling | IMPLEMENTED (Batch 12) |
 
 ## 8. Execution sequence
 

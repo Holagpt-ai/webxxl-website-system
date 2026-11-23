@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server'
 import { isPostizLivePublishingEnabled, isSocialExecutionGatesEnabled } from '@/config/social-marketing'
+import { prepareGuardedSchedulingIntentPersist } from '@/lib/platform/social/prepare-guarded-scheduling-persist'
 import { requireSocialApiActor, SocialApiError } from '@/lib/platform/social/route-auth'
+import { socialResultHttpStatus } from '@/lib/platform/social/social-api-map'
+
 type Params = { params: Promise<{ id: string }> }
 
 export async function POST(request: Request, { params }: Params) {
   try {
     const { id: campaignId } = await params
-    await requireSocialApiActor()
+    const actor = await requireSocialApiActor()
 
     if (isPostizLivePublishingEnabled()) {
       return NextResponse.json(
@@ -20,7 +23,10 @@ export async function POST(request: Request, { params }: Params) {
         {
           code: 'NOT_CONFIGURED',
           message:
-            'POSTIZ_LIVE_PUBLISHING_ENABLED is false and SOCIAL_EXECUTION_GATES_ENABLED is false; use domain prep tests or enable execution gates.',
+            'POSTIZ_LIVE_PUBLISHING_ENABLED is false and SOCIAL_EXECUTION_GATES_ENABLED is false; enable execution gates for guarded scheduling prep.',
+          intentPersisted: false,
+          schedulingOccurred: false,
+          publishingOccurred: false,
         },
         { status: 503 },
       )
@@ -38,20 +44,37 @@ export async function POST(request: Request, { params }: Params) {
         { status: 400 },
       )
     }
+    const scheduledAt = new Date(body.scheduledAt)
+    if (Number.isNaN(scheduledAt.getTime())) {
+      return NextResponse.json({ code: 'INVALID_BODY', message: 'scheduledAt is invalid' }, { status: 400 })
+    }
+
+    const prep = await prepareGuardedSchedulingIntentPersist({
+      campaignId,
+      customerAccountId: actor.customerAccountId,
+      actorUserId: actor.userId,
+      channelId: body.channelId,
+      approvalId: body.approvalId,
+      idempotencyKey: body.idempotencyKey,
+      scheduledAt,
+    })
+    if (!prep.ok) {
+      return NextResponse.json(
+        { code: prep.code, message: prep.message, intentPersisted: false },
+        { status: socialResultHttpStatus(prep.code) },
+      )
+    }
 
     return NextResponse.json(
       {
-        code: 'DISPATCH_BLOCKED',
-        message:
-          'POSTIZ_LIVE_PUBLISHING_ENABLED is false. Only request shape was checked; campaign approval and scheduling authorization were not verified on this route. No scheduling intent was persisted and no scheduling or publishing occurred.',
         campaignId,
-        intentPersisted: false,
-        schedulingOccurred: false,
-        publishingOccurred: false,
-        livePublishingEnabled: false,
+        ...prep.value,
+        intentPersisted: true,
         executionGatesEnabled: true,
+        code: prep.value.dispatchBlocked.code,
+        message: prep.value.dispatchBlocked.message,
       },
-      { status: 503 },
+      { status: 202 },
     )
   } catch (error) {
     if (error instanceof SocialApiError) {

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { buildSocialConnectionsAuthorizationContract } from '@/lib/platform/social/connections-authorization-contract'
 import { requireSocialApiActor, SocialApiError } from '@/lib/platform/social/route-auth'
 
 export async function GET() {
@@ -10,7 +11,8 @@ export async function GET() {
       orderBy: { updatedAt: 'desc' },
       take: 100,
     })
-    return NextResponse.json({ connections })
+    const authorization = buildSocialConnectionsAuthorizationContract(connections)
+    return NextResponse.json({ connections, authorization })
   } catch (error) {
     if (error instanceof SocialApiError) {
       return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
