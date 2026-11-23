@@ -7,7 +7,7 @@
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | **RELEASE-001 Step 6A PASS** 2026-11-21: staff-authenticated Production `GET /api/v1/admin/operations/database-verification` → `VERIFIED_PRODUCTION`, migration ledger **40**, ADMIN dashboard operational on `https://www.webbxxl.com`. Evidence: [`RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md`](RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md). GitHub `main` **`2361ef9d014125cbdefe9ad96fddef78bbdcd7f0`** (PR **#144** MERGED; PR **#145** @ `ef5776e`; PR **#143** CLOSED without merge). Authenticated EN/ES customer matrix still **NOT VERIFIED** (**AUTH-STAGING-8C / ISSUE-105-QA**). |
-| 2 | GitHub SHA, branch, active PR | GitHub `main` **`2361ef9d014125cbdefe9ad96fddef78bbdcd7f0`**. Working branch `feat/batch10a-crm-company-custom-fields` (Batch 10A CRM company / custom fields / suppression lift). Open PR recorded after `gh pr create`. |
+| 2 | GitHub SHA, branch, active PR | GitHub `main` **`2361ef9d014125cbdefe9ad96fddef78bbdcd7f0`**. Branch `feat/batch10a-crm-company-custom-fields` — [PR **#146**](https://github.com/Holagpt-ai/webxxl-website-system/pull/146) OPEN (Batch 10A CRM company / custom fields / suppression lift). Not merged. |
 | 3 | Production deployment | Last independently recorded GitHub Production deployment **`7952960484`** @ `ef5776e4129a835cc7df72ebc1d00d04092c00a2`, Vercel **success** 2026-11-20T21:29:14Z ([status](https://vercel.com/tone4real-7828s-projects/webxxl-website-system/NXefwAmMRYaXDEMPXJ5nVjoBxK75)). Post-#144 production SHA **UNVERIFIED**. Step 6A runtime DB identity **VERIFIED**; providers/flags/activation **not** verified. |
 | 4 | Last updated | 2026-11-23 |
 | 5 | Next task / responsible platform | **Cursor:** Batch 10A CRM company detail, custom fields, and suppression lift — IN PR, unmerged. After merge: next unfinished source batch (not a docs-only PR). **v0.app:** CRM company/custom-field/lift UI after this API lands; visual defects only when assigned. AUTH-STAGING-8C deferred until remaining source batches complete. |
@@ -15,7 +15,7 @@
 
 ## 2026-11-23 — Batch 10A CRM company / custom fields / suppression lift
 
-Cursor implementation on `feat/batch10a-crm-company-custom-fields`. Completes company detail HTTP, scalar custom fields, same-account company–contact links, and suppression lift without consent grant. See [`BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md`](platform/docs/BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md). PR **#144** MERGED; PR **#143** CLOSED without merge. Leave this PR unmerged for owner review.
+Cursor implementation on `feat/batch10a-crm-company-custom-fields` — [PR **#146**](https://github.com/Holagpt-ai/webxxl-website-system/pull/146) OPEN, not merged. Completes company detail HTTP, scalar custom fields, same-account company–contact links, and suppression lift without consent grant. See [`BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md`](platform/docs/BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md). PR **#144** MERGED; PR **#143** CLOSED without merge.
 
 ## 2026-11-21 — AUTH-STAGING-8C / ISSUE-105-QA — Production sequence (deferred)
 

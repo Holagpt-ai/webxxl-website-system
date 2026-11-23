@@ -48,7 +48,7 @@ GitHub `main` at `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` (PR #52) has moved p
 
 **Batch 8B–8D / RELEASE-001:** staging/production verification recorded separately. Authenticated customer EN/ES matrix remains **NOT VERIFIED** (AUTH-STAGING-8C / ISSUE-105-QA). Deferred to owner inspection after remaining source batches.
 
-**Batch 10A:** CRM company detail, custom fields, and suppression lift — **IN PR** ([`BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md`](BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md)). Does not rebuild Batches 17–23 CRM. Migration in Git only.
+**Batch 10A:** CRM company detail, custom fields, and suppression lift — **IN PR** ([PR **#146**](https://github.com/Holagpt-ai/webxxl-website-system/pull/146); [`BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md`](BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md)). Does not rebuild Batches 17–23 CRM. Migration in Git only.
 
 ---
 
