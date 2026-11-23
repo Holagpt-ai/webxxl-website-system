@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-21 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `ef5776e4129a835cc7df72ebc1d00d04092c00a2` · **PR #140 squash:** `197eb4f056c17e6e5547d221c8a3a3a2ca71690e` (head `4a27473`; legal **#141–#142** preserved)
+**Evidence review:** 2026-11-23 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `2361ef9d014125cbdefe9ad96fddef78bbdcd7f0` · **PR #144 MERGED** (RELEASE-001 docs); **PR #143 CLOSED** without merge; **PR #140 squash:** `197eb4f056c17e6e5547d221c8a3a3a2ca71690e`
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,12 +35,18 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **RELEASE-001 Step 6A PASS** 2026-11-21: staff-authenticated Production `GET /api/v1/admin/operations/database-verification` → `VERIFIED_PRODUCTION`, migration ledger **40**, ADMIN dashboard operational on `https://www.webbxxl.com`. Evidence: [`RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md`](RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md). GitHub `main` **`ef5776e4129a835cc7df72ebc1d00d04092c00a2`** (PR **#145** merged). Prior PR **#140** UI source merged; full authenticated EN/ES customer matrix still **NOT VERIFIED** (**AUTH-STAGING-8C / ISSUE-105-QA**). |
-| 2 | GitHub SHA, branch, active PR | GitHub `main` **`ef5776e4129a835cc7df72ebc1d00d04092c00a2`**. Draft docs: [PR **#144**](https://github.com/Holagpt-ai/webxxl-website-system/pull/144) (RELEASE-001 evidence + continuity); [PR **#143**](https://github.com/Holagpt-ai/webxxl-website-system/pull/143) OPEN-014 (reconciled into #144 — close #143 after #144 merge). |
-| 3 | Production deployment | GitHub Production deployment **`7952960484`** @ `ef5776e4129a835cc7df72ebc1d00d04092c00a2`, Vercel **success** 2026-11-20T21:29:14Z ([status](https://vercel.com/tone4real-7828s-projects/webxxl-website-system/NXefwAmMRYaXDEMPXJ5nVjoBxK75)). SHA + Step 6A runtime DB identity **VERIFIED**; providers/flags/activation **not** verified. |
-| 4 | Last updated | 2026-11-21 |
-| 5 | Next task / responsible platform | **Owner + Cursor:** execute bounded **AUTH-STAGING-8C / ISSUE-105-QA** on Production (customer dashboard + CRM matrix; admin already verified). **v0.app:** only assigned visual defects (e.g. CRM-SUBNAV-105). No providers, sends, DNS, or publishing without new authorization. |
-| 6 | Open blocker / gate IDs | **RELEASE-001** runtime DB **VERIFIED** (Step 6A); production migrations **40/40**; **AUTH-STAGING-8C / ISSUE-105-QA** **IN PROGRESS** (admin login PASS); **POLICY-SUB-001** open. Provider activation / live sends / payments / DNS **not authorized**. **OPEN-014** primary domain **`webbxxl.com`** resolved; service subdomains open. |
+| 1 | Last verified checkpoint | **RELEASE-001 Step 6A PASS** 2026-11-21: staff-authenticated Production `GET /api/v1/admin/operations/database-verification` → `VERIFIED_PRODUCTION`, migration ledger **40**, ADMIN dashboard operational on `https://www.webbxxl.com`. Evidence: [`RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md`](RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md). GitHub `main` **`2361ef9d014125cbdefe9ad96fddef78bbdcd7f0`** (PR **#144** MERGED; PR **#145** @ `ef5776e`; PR **#143** CLOSED without merge). Authenticated EN/ES customer matrix still **NOT VERIFIED** (**AUTH-STAGING-8C / ISSUE-105-QA**). |
+| 2 | GitHub SHA, branch, active PR | GitHub `main` **`2361ef9d014125cbdefe9ad96fddef78bbdcd7f0`**. Branch `feat/batch10a-crm-company-custom-fields` — [PR **#146**](https://github.com/Holagpt-ai/webxxl-website-system/pull/146) OPEN (Batch 10A CRM company / custom fields / suppression lift). Not merged. |
+| 3 | Production deployment | Last independently recorded GitHub Production deployment **`7952960484`** @ `ef5776e4129a835cc7df72ebc1d00d04092c00a2`, Vercel **success** 2026-11-20T21:29:14Z ([status](https://vercel.com/tone4real-7828s-projects/webxxl-website-system/NXefwAmMRYaXDEMPXJ5nVjoBxK75)). Post-#144 production SHA **UNVERIFIED**. Step 6A runtime DB identity **VERIFIED**; providers/flags/activation **not** verified. |
+| 4 | Last updated | 2026-11-23 |
+| 5 | Next task / responsible platform | **Cursor:** Batch 10A CRM company detail, custom fields, and suppression lift — IN PR, unmerged. After merge: next unfinished source batch (not a docs-only PR). **v0.app:** CRM company/custom-field/lift UI after this API lands; visual defects only when assigned. AUTH-STAGING-8C deferred until remaining source batches complete. |
+| 6 | Open blocker / gate IDs | **RELEASE-001** runtime DB **VERIFIED** (Step 6A); production migrations **40/40** (Batch 10A migration **not applied**); **AUTH-STAGING-8C / ISSUE-105-QA** outstanding (deferred per owner until source completion); **POLICY-SUB-001** open. Provider activation / live sends / payments / DNS **not authorized**. **OPEN-014** primary domain **`webbxxl.com`** resolved; service subdomains open. |
+
+## 2026-11-23 — Batch 10A CRM company / custom fields / suppression lift (IN PR)
+
+- Completes remaining CRM HTTP named in Batch 16/17B: company GET/PATCH, scalar custom fields, same-account company–contact links, suppression lift that does **not** grant consent.
+- PR **#144** is **MERGED** (`2361ef9`); PR **#143** is **CLOSED** without merge. Checkpoint field 2 no longer describes those docs PRs as open.
+- Production migration apply, CRM flag enablement, and AUTH-STAGING-8C browser QA are **not** part of this batch.
 
 ## 2026-11-21 — RELEASE-001 Step 6A production verification (owner)
 
@@ -187,7 +193,8 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | Vercel production SHA (2026-11-13, PR #129) | DEPLOYED | GitHub deployment `7768203600` Production **success** @ `627f9d6cc52755730ec7de773d98307200dd7469`. SHA only. Not migration or activation |
 | Batch 7C public conversion + responsive UI | MERGED | [PR **#130**](https://github.com/Holagpt-ai/webxxl-website-system/pull/130) @ `8058565e11fed8927147c54e2b4ee0a58cc184bf` | [`BATCH7B-ADMIN-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH7B-ADMIN-UI-INTEGRATION-CONTRACT.md) (§ Batch 7C) |
 | Vercel production SHA (2026-11-13, PR #130) | DEPLOYED | GitHub deployment `7772915207` Production **success** @ `8058565e11fed8927147c54e2b4ee0a58cc184bf`. SHA only |
-| Batch 8A release baseline recovery | IN PR | `feat/batch8a-release-readiness` — INFRA/CRM/FOUND/SOCIAL-04A baselines + wallet `settle.at` | [`BATCH8A-RELEASE-READINESS.md`](BATCH8A-RELEASE-READINESS.md) |
+| Batch 8A release baseline recovery | MERGED | [PR **#131**](https://github.com/Holagpt-ai/webxxl-website-system/pull/131) @ `30746e513a990b37a63ced4973e80f704a92308c` — INFRA/CRM/FOUND/SOCIAL-04A baselines + wallet `settle.at` | [`BATCH8A-RELEASE-READINESS.md`](BATCH8A-RELEASE-READINESS.md) |
+| Batch 10A CRM company / custom fields / suppression lift | IN PR | [PR **#146**](https://github.com/Holagpt-ai/webxxl-website-system/pull/146) `feat/batch10a-crm-company-custom-fields` — company GET/PATCH, scalar customFields, same-account links, suppression lift without consent grant | [`BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md`](platform/docs/BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md) |
 | CONTINUITY-03 session closeout | MERGED | [PR #108](https://github.com/Holagpt-ai/webxxl-website-system/pull/108), `5d90c124b1c7a884f7a61f16e5b9d263f0c08081`, merge 2026-11-07. Issue **#107** **CLOSED**. `pnpm continuity:close` + CI reconcile |
 | Vercel production SHA (2026-11-07, PR #106) | DEPLOYED | Vercel `dpl_AzZVHN5Si3jShjcJf5Gtq1dCxdAb` **success** @ `e37f0a023dd289dc3a9b4e7484f6a1dd34b24276`. GitHub commit status via `vercel[bot]`, 2026-11-07T18:01:23Z. SHA only. Superseded for current production by PR #108 row |
 | Vercel production SHA (2026-11-07, PR #108) | DEPLOYED | Vercel `dpl_HR1qq83Cz2ARKUvaRf8URt2Piwpo` **success** @ `5d90c124b1c7a884f7a61f16e5b9d263f0c08081`. GitHub commit status via `vercel[bot]`, 2026-11-07T19:07:53Z. SHA only. Not migration or activation |

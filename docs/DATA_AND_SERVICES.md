@@ -80,6 +80,19 @@ Session-scoped `CustomerAccount`; gates via `requireCrmApiActor` (`CRM_BACKEND_E
 
 UI binding contract: [`platform/docs/BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md).
 
+## CRM company / custom fields / suppression lift (Batch 10A)
+
+Contract: [`platform/docs/BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md`](platform/docs/BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md). Flags unchanged. Migration `20261123120000_batch10a_crm_company_suppression_lift` in Git only.
+
+| Method | Path | Permission | Notes |
+|---|---|---|---|
+| GET | `/api/v1/crm/companies/[id]` | `crm.read` | Tenant-scoped company, linked contacts, recent deals |
+| PATCH | `/api/v1/crm/companies/[id]` | `crm.write` | Company fields + scalar `customFields` |
+| POST | `/api/v1/crm/companies/[id]/contacts` | `crm.write` | Same-account contact link; idempotent |
+| DELETE | `/api/v1/crm/companies/[id]/contacts/[contactId]` | `crm.write` | Unlink only |
+| PATCH | `/api/v1/crm/contacts/[id]` | `crm.write` | Also accepts `customFields` |
+| POST | `/api/v1/crm/contacts/[id]/suppression/lift` | `crm.consent.manage` | Deactivates suppression; does not grant consent |
+
 ## CRM data operations (Batch 23)
 
 Services: `lib/platform/crm/import-analysis.ts`, `import-export-service.ts`, `export-pagination.ts`, `segment-engine.ts`, `segment-service.ts`, `dedup-service.ts`. Flags unchanged (`CRM_IMPORT_ENABLED`, `CRM_EXPORT_ENABLED` default off).

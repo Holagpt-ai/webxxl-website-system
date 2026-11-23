@@ -107,3 +107,61 @@ export function parseSuppressionRecordInput(body: {
     },
   }
 }
+
+export function parseSuppressionLiftInput(body: {
+  suppressionId?: string
+  channel?: string
+  purpose?: string
+  reason?: string
+  source?: string
+  idempotencyKey?: string
+}): CrmResult<{
+  suppressionId?: string
+  channel?: CrmConsentChannel
+  purpose?: CrmConsentPurpose
+  reason: string
+  source: string
+  idempotencyKey?: string
+}> {
+  const suppressionId = body.suppressionId?.trim() || undefined
+  const hasChannel = Boolean(body.channel)
+  const hasPurpose = Boolean(body.purpose)
+  if (!suppressionId && (!hasChannel || !hasPurpose)) {
+    return {
+      ok: false,
+      code: 'VALIDATION_ERROR',
+      message: 'suppressionId or channel and purpose required',
+    }
+  }
+  if (!suppressionId) {
+    if (!body.channel || !isEnumValue(CRM_CONSENT_CHANNELS, body.channel)) {
+      return { ok: false, code: 'VALIDATION_ERROR', message: 'Invalid or missing channel' }
+    }
+    if (!body.purpose || !isEnumValue(CRM_CONSENT_PURPOSES, body.purpose)) {
+      return { ok: false, code: 'VALIDATION_ERROR', message: 'Invalid or missing purpose' }
+    }
+  } else if (hasChannel && body.channel && !isEnumValue(CRM_CONSENT_CHANNELS, body.channel)) {
+    return { ok: false, code: 'VALIDATION_ERROR', message: 'Invalid or missing channel' }
+  } else if (hasPurpose && body.purpose && !isEnumValue(CRM_CONSENT_PURPOSES, body.purpose)) {
+    return { ok: false, code: 'VALIDATION_ERROR', message: 'Invalid or missing purpose' }
+  }
+  if (!body.reason?.trim()) {
+    return { ok: false, code: 'VALIDATION_ERROR', message: 'reason required' }
+  }
+  if (!body.source?.trim()) {
+    return { ok: false, code: 'VALIDATION_ERROR', message: 'source required' }
+  }
+  return {
+    ok: true,
+    value: {
+      suppressionId,
+      channel:
+        body.channel && isEnumValue(CRM_CONSENT_CHANNELS, body.channel) ? body.channel : undefined,
+      purpose:
+        body.purpose && isEnumValue(CRM_CONSENT_PURPOSES, body.purpose) ? body.purpose : undefined,
+      reason: body.reason.trim(),
+      source: body.source.trim(),
+      idempotencyKey: body.idempotencyKey?.trim() || undefined,
+    },
+  }
+}

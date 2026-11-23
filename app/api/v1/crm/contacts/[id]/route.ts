@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getCrmContactForAccount, updateCrmContact } from '@/lib/platform/crm/contact-service'
+import { parseCrmCustomFields, type CrmCustomFields } from '@/lib/platform/crm/custom-fields'
 import { crmResultHttpStatus } from '@/lib/platform/crm/crm-api-map'
 import { requireCrmApiActor, CrmApiError } from '@/lib/platform/crm/route-auth'
 
@@ -26,8 +27,28 @@ export async function PATCH(request: Request, { params }: Params) {
   try {
     const { id } = await params
     const actor = await requireCrmApiActor('crm.write')
-    const body = (await request.json()) as { givenName?: string; familyName?: string; preferredName?: string; jobTitle?: string }
-    const updated = await updateCrmContact(id, actor.customerAccountId, body)
+    const body = (await request.json()) as {
+      givenName?: string
+      familyName?: string
+      preferredName?: string
+      jobTitle?: string
+      customFields?: unknown
+    }
+    let customFields: CrmCustomFields | null | undefined
+    if (body.customFields !== undefined) {
+      const parsed = parseCrmCustomFields(body.customFields)
+      if (!parsed.ok) {
+        return NextResponse.json({ code: parsed.code, message: parsed.message }, { status: crmResultHttpStatus(parsed.code) })
+      }
+      customFields = parsed.value
+    }
+    const updated = await updateCrmContact(id, actor.customerAccountId, {
+      givenName: body.givenName,
+      familyName: body.familyName,
+      preferredName: body.preferredName,
+      jobTitle: body.jobTitle,
+      customFields,
+    })
     if (!updated.ok) {
       return NextResponse.json({ code: updated.code, message: updated.message }, { status: crmResultHttpStatus(updated.code) })
     }
