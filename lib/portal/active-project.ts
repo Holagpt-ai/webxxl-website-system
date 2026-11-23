@@ -51,3 +51,8 @@ export async function setActiveProjectCookie(projectId: string): Promise<void> {
     path: '/',
   })
 }
+
+export async function clearActiveProjectCookie(): Promise<void> {
+  const store = await cookies()
+  store.delete(ACTIVE_PROJECT_COOKIE)
+}

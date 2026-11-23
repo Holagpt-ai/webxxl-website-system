@@ -1,10 +1,14 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { requireCustomerMembership, requireUser } from '@/lib/portal/authz'
 import { setActiveCustomerAccountCookie } from '@/lib/portal/active-customer-account'
-import { setActiveProjectCookie } from '@/lib/portal/active-project'
+import { clearActiveProjectCookie, setActiveProjectCookie } from '@/lib/portal/active-project'
+import {
+  clearActiveManagedSiteCookie,
+  setActiveManagedSiteCookie,
+} from '@/lib/portal/active-managed-site'
+import { revalidateCustomerDashboardLayouts } from '@/lib/portal/dashboard-revalidate'
 
 export type CustomerPortalActionResult = { ok: true } | { ok: false; error: string }
 
@@ -16,10 +20,9 @@ export async function switchCustomerAccountAction(customerAccountId: string): Pr
     })
     if (!membership) return { ok: false, error: 'unauthorized' }
     await setActiveCustomerAccountCookie(customerAccountId)
-    revalidatePath('/dashboard', 'layout')
-    revalidatePath('/es/dashboard', 'layout')
-    revalidatePath('/dashboard/crm', 'layout')
-    revalidatePath('/es/dashboard/crm', 'layout')
+    await clearActiveProjectCookie()
+    await clearActiveManagedSiteCookie()
+    revalidateCustomerDashboardLayouts()
     return { ok: true }
   } catch {
     return { ok: false, error: 'unauthorized' }
@@ -35,8 +38,23 @@ export async function switchCustomerProjectAction(projectId: string): Promise<Cu
     })
     if (!project) return { ok: false, error: 'unauthorized' }
     await setActiveProjectCookie(project.id)
-    revalidatePath('/dashboard', 'layout')
-    revalidatePath('/es/dashboard', 'layout')
+    revalidateCustomerDashboardLayouts()
+    return { ok: true }
+  } catch {
+    return { ok: false, error: 'unauthorized' }
+  }
+}
+
+export async function switchManagedSiteAction(managedSiteId: string): Promise<CustomerPortalActionResult> {
+  try {
+    const portal = await requireCustomerMembership()
+    const site = await prisma.managedSite.findFirst({
+      where: { id: managedSiteId, customerAccountId: portal.customerAccount.id },
+      select: { id: true },
+    })
+    if (!site) return { ok: false, error: 'unauthorized' }
+    await setActiveManagedSiteCookie(site.id)
+    revalidateCustomerDashboardLayouts()
     return { ok: true }
   } catch {
     return { ok: false, error: 'unauthorized' }

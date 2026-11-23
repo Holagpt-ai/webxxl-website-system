@@ -1,21 +1,25 @@
 # WebXXL — Session Handoff
 
-**Compiled:** 2026-11-23 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `2361ef9d014125cbdefe9ad96fddef78bbdcd7f0` · **PR #144 MERGED**; **PR #143 CLOSED** without merge · **PR #140 squash:** `197eb4f056c17e6e5547d221c8a3a3a2ca71690e`
+**Compiled:** 2026-11-23 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `142395b51f54a62d93a70e23d1a16eb3b62e8db0` · **PR #146 MERGED** (Batch 10A) · **PR #144 MERGED**; **PR #143 CLOSED** without merge · **PR #140 squash:** `197eb4f056c17e6e5547d221c8a3a3a2ca71690e`
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **RELEASE-001 Step 6A PASS** 2026-11-21: staff-authenticated Production `GET /api/v1/admin/operations/database-verification` → `VERIFIED_PRODUCTION`, migration ledger **40**, ADMIN dashboard operational on `https://www.webbxxl.com`. Evidence: [`RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md`](RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md). GitHub `main` **`2361ef9d014125cbdefe9ad96fddef78bbdcd7f0`** (PR **#144** MERGED; PR **#145** @ `ef5776e`; PR **#143** CLOSED without merge). Authenticated EN/ES customer matrix still **NOT VERIFIED** (**AUTH-STAGING-8C / ISSUE-105-QA**). |
-| 2 | GitHub SHA, branch, active PR | GitHub `main` **`2361ef9d014125cbdefe9ad96fddef78bbdcd7f0`**. Branch `feat/batch10a-crm-company-custom-fields` — [PR **#146**](https://github.com/Holagpt-ai/webxxl-website-system/pull/146) OPEN (Batch 10A CRM company / custom fields / suppression lift). Not merged. |
-| 3 | Production deployment | Last independently recorded GitHub Production deployment **`7952960484`** @ `ef5776e4129a835cc7df72ebc1d00d04092c00a2`, Vercel **success** 2026-11-20T21:29:14Z ([status](https://vercel.com/tone4real-7828s-projects/webxxl-website-system/NXefwAmMRYaXDEMPXJ5nVjoBxK75)). Post-#144 production SHA **UNVERIFIED**. Step 6A runtime DB identity **VERIFIED**; providers/flags/activation **not** verified. |
+| 1 | Last verified checkpoint | **RELEASE-001 Step 6A PASS** 2026-11-21: staff-authenticated Production `GET /api/v1/admin/operations/database-verification` → `VERIFIED_PRODUCTION`, migration ledger **40**, ADMIN dashboard operational on `https://www.webbxxl.com`. Evidence: [`RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md`](RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md). GitHub `main` **`142395b51f54a62d93a70e23d1a16eb3b62e8db0`** (PR **#146** MERGED; PR **#144** MERGED; PR **#143** CLOSED). Authenticated EN/ES customer matrix still **NOT VERIFIED** (**AUTH-STAGING-8C / ISSUE-105-QA**). |
+| 2 | GitHub SHA, branch, active PR | GitHub `main` **`142395b51f54a62d93a70e23d1a16eb3b62e8db0`**. Branch `feat/batch10b-customer-dashboard-integration` — Batch **10B** customer dashboard context — **IN PR**, not merged. |
+| 3 | Production deployment | Last independently recorded GitHub Production deployment **`7952960484`** @ `ef5776e4129a835cc7df72ebc1d00d04092c00a2`, Vercel **success** 2026-11-20T21:29:14Z ([status](https://vercel.com/tone4real-7828s-projects/webxxl-website-system/NXefwAmMRYaXDEMPXJ5nVjoBxK75)). Post-#146 production SHA **UNVERIFIED**. Step 6A runtime DB identity **VERIFIED**; providers/flags/activation **not** verified. |
 | 4 | Last updated | 2026-11-23 |
-| 5 | Next task / responsible platform | **Cursor:** Batch 10A CRM company detail, custom fields, and suppression lift — IN PR, unmerged. After merge: next unfinished source batch (not a docs-only PR). **v0.app:** CRM company/custom-field/lift UI after this API lands; visual defects only when assigned. AUTH-STAGING-8C deferred until remaining source batches complete. |
+| 5 | Next task / responsible platform | **Owner:** review Batch **10B** PR. **Cursor after merge:** next roadmap HTTP gap batch. **v0.app:** [`BATCH10B-V0-HANDOFF.md`](BATCH10B-V0-HANDOFF.md). AUTH-STAGING-8C deferred until source completion. |
 | 6 | Open blocker / gate IDs | **RELEASE-001** runtime DB **VERIFIED** (Step 6A); production migrations **40/40** (Batch 10A migration **not applied**); **AUTH-STAGING-8C / ISSUE-105-QA** outstanding (deferred per owner until source completion); **POLICY-SUB-001** open. Provider activation / live sends / payments / DNS **not authorized**. **OPEN-014** primary domain **`webbxxl.com`** resolved; service subdomains open. |
 
-## 2026-11-23 — Batch 10A CRM company / custom fields / suppression lift
+## 2026-11-23 — Batch 10B customer dashboard context (IN PR)
 
-Cursor implementation on `feat/batch10a-crm-company-custom-fields` — [PR **#146**](https://github.com/Holagpt-ai/webxxl-website-system/pull/146) OPEN, not merged. Completes company detail HTTP, scalar custom fields, same-account company–contact links, and suppression lift without consent grant. See [`BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md`](platform/docs/BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md). PR **#144** MERGED; PR **#143** CLOSED without merge.
+`GET /api/v1/portal/dashboard-context`, managed-site cookie, account-switch selection hygiene, module handoffs. [`BATCH10B-CUSTOMER-DASHBOARD-INTEGRATION.md`](platform/docs/BATCH10B-CUSTOMER-DASHBOARD-INTEGRATION.md).
+
+## 2026-11-23 — Batch 10A CRM company / custom fields / suppression lift (MERGED)
+
+[PR **#146**](https://github.com/Holagpt-ai/webxxl-website-system/pull/146) merged @ `142395b`. Company detail HTTP, scalar custom fields, links, suppression lift. [`BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md`](platform/docs/BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md).
 
 ## 2026-11-21 — AUTH-STAGING-8C / ISSUE-105-QA — Production sequence (deferred)
 
@@ -89,7 +93,7 @@ Owner directed remaining source implementation first. Authenticated customer mat
 
 ## Next assignment
 
-**Owner:** review and merge Batch 10A (unmerged). **Cursor after merge:** next unfinished source batch (dashboard/module handoffs, remaining integrations) without rebuilding merged CRM/marketing/admin batches. **v0.app:** company detail / custom fields / suppression-lift UI after APIs are on a reviewable PR. AUTH-STAGING-8C remains owner-gated and deferred until source completion.
+**Owner:** review Batch **10B** (unmerged). **Cursor after merge:** next unfinished HTTP/integration batch per roadmap. **v0.app:** optional dashboard-context wiring ([`BATCH10B-V0-HANDOFF.md`](BATCH10B-V0-HANDOFF.md)); CRM company UI when assigned. AUTH-STAGING-8C remains deferred until source completion.
 
 ## PENDING REPOSITORY SYNC
 

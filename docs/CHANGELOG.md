@@ -4,6 +4,7 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 
 | Date (UTC) | Event | Evidence | Release claim |
 |---|---|---|---|
+| 2026-11-23 | Batch 10A CRM company / custom fields / suppression lift | [PR #146](https://github.com/Holagpt-ai/webxxl-website-system/pull/146) MERGED @ `142395b` | Source on `main`; migration in Git only; flags off; not production migrate |
 | 2026-11-21 | RELEASE-001 Step 6A live runtime DB verification | Owner staff session on `www.webbxxl.com`; [`RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md`](RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md) | **`VERIFIED_PRODUCTION`**; migration ledger 40; **not** provider activation or full portal QA |
 | 2026-11-20 | RELEASE-001 staff runtime database verification API | [PR #145](https://github.com/Holagpt-ai/webxxl-website-system/pull/145) MERGED @ `ef5776e` | Staff-only diagnostic on `main`; Production deploy SHA evidence only until Step 6A |
 | 2026-11-19 | Final UI/UX responsive polish (owner squash merge) | [PR #140](https://github.com/Holagpt-ai/webxxl-website-system/pull/140) MERGED @ `197eb4f` from branch head `4a27473` | Presentation-only UI on `main`; authenticated portal/admin UI **not verified** (deferred to release stabilization) |

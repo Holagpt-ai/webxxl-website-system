@@ -80,9 +80,17 @@ Session-scoped `CustomerAccount`; gates via `requireCrmApiActor` (`CRM_BACKEND_E
 
 UI binding contract: [`platform/docs/BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md`](platform/docs/BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md).
 
+## Customer dashboard context (Batch 10B)
+
+Contract: [`platform/docs/BATCH10B-CUSTOMER-DASHBOARD-INTEGRATION.md`](platform/docs/BATCH10B-CUSTOMER-DASHBOARD-INTEGRATION.md). Services: `lib/platform/customer-dashboard/*`, `lib/portal/active-managed-site.ts`, `lib/portal/dashboard-revalidate.ts`.
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| GET | `/api/v1/portal/dashboard-context` | `requireCustomerMembership` | Module handoffs + active project/site selection; optional `customerAccountId` must match session |
+
 ## CRM company / custom fields / suppression lift (Batch 10A)
 
-Contract: [`platform/docs/BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md`](platform/docs/BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md). Flags unchanged. Migration `20261123120000_batch10a_crm_company_suppression_lift` in Git only.
+Contract: [`platform/docs/BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md`](platform/docs/BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md). **MERGED** PR #146 @ `142395b`. Flags unchanged. Migration `20261123120000_batch10a_crm_company_suppression_lift` in Git only.
 
 | Method | Path | Permission | Notes |
 |---|---|---|---|
