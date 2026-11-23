@@ -2,6 +2,8 @@ import type { PortalUser } from '@/lib/portal/authz'
 import { getActiveManagedSite, getActiveProject } from '@/lib/portal/authz'
 import { buildModuleHandoff } from '@/lib/platform/customer-dashboard/module-handoffs'
 import { MARKETING_STUDIO_WORKSPACES } from '@/lib/platform/marketing/list-handoffs'
+import { ANALYTICS_WORKSPACES } from '@/lib/platform/analytics/analytics-workspaces'
+import { COMMUNICATIONS_WORKSPACES } from '@/lib/platform/comms/comms-workspaces'
 import { LOCAL_SEO_WORKSPACES } from '@/lib/platform/seo/local-seo-workspaces'
 import {
   CUSTOMER_DASHBOARD_MODULES,
@@ -22,7 +24,10 @@ export async function getCustomerDashboardContext(portal: PortalUser): Promise<C
   const modules = CUSTOMER_DASHBOARD_MODULES.map((module) => {
     const access = dashboardModuleAccessResolvers[module](ctx as never)
     const readiness = readinessOrAvailable(access, now)
-    return buildModuleHandoff(module, readiness, { managedSiteId: activeManagedSite?.id ?? null })
+    return buildModuleHandoff(module, readiness, {
+      managedSiteId: activeManagedSite?.id ?? null,
+      customerAccountId: portal.customerAccount.id,
+    })
   })
 
   return {
@@ -53,6 +58,17 @@ export async function getCustomerDashboardContext(portal: PortalUser): Promise<C
         pages: LOCAL_SEO_WORKSPACES.pages,
         localMarket: LOCAL_SEO_WORKSPACES.localMarket,
         connections: LOCAL_SEO_WORKSPACES.connections,
+      },
+      analyticsWorkspaces: {
+        overview: ANALYTICS_WORKSPACES.overview,
+        traffic: ANALYTICS_WORKSPACES.traffic,
+        search: ANALYTICS_WORKSPACES.search,
+        local: ANALYTICS_WORKSPACES.local,
+        conversions: ANALYTICS_WORKSPACES.conversions,
+      },
+      communicationsWorkspaces: {
+        inbox: COMMUNICATIONS_WORKSPACES.inbox,
+        connections: COMMUNICATIONS_WORKSPACES.connections,
       },
     },
   }

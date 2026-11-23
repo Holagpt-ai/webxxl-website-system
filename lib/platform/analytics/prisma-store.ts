@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db'
 import { isStaffRole } from '@/lib/admin/roles'
 import type { AnalyticsDateRange } from '@/lib/platform/analytics/date-range'
+import { mapSeoDataStateToFreshness } from '@/lib/platform/analytics/normalize'
 import type { AnalyticsStore } from '@/lib/platform/analytics/store'
 import type { SeoAnalyticsProvider } from '@prisma/client'
 
@@ -117,6 +118,61 @@ export const prismaAnalyticsStore: AnalyticsStore = {
         isActive: true,
       },
       select: { id: true, publicId: true, key: true, displayName: true, isActive: true, sourceKind: true },
+    })
+  },
+  async listConversionDaily(input) {
+    const rows = await prisma.analyticsConversionObservation.findMany({
+      where: {
+        customerAccountId: input.customerAccountId,
+        managedSiteId: input.managedSiteId,
+        conversionKey: input.conversionKey,
+        periodDate: { gte: input.range.start, lte: input.range.end },
+      },
+      orderBy: { periodDate: 'asc' },
+      select: {
+        periodDate: true,
+        count: true,
+        uniqueCount: true,
+        dataState: true,
+        sourceProvider: true,
+        observedAt: true,
+        idempotencyKey: true,
+      },
+    })
+    return rows.map((row) => ({
+      periodDate: row.periodDate,
+      count: row.count,
+      uniqueCount: row.uniqueCount,
+      dataState: mapSeoDataStateToFreshness(row.dataState),
+      sourceProvider: row.sourceProvider,
+      observedAt: row.observedAt,
+      idempotencyKey: row.idempotencyKey,
+    }))
+  },
+  async listMetricMeasurements(input) {
+    return prisma.seoMetricObservation.findMany({
+      where: {
+        customerAccountId: input.customerAccountId,
+        managedSiteId: input.managedSiteId,
+        provider: input.provider,
+        metricDefinition: input.metricDefinition,
+        OR: [
+          { date: { gte: input.range.start, lte: input.range.end } },
+          { date: null, observedAt: { gte: input.range.start, lte: input.range.end } },
+        ],
+      },
+      orderBy: [{ date: 'asc' }, { observedAt: 'asc' }],
+      select: {
+        metricDefinition: true,
+        dimension: true,
+        dimensionValue: true,
+        value: true,
+        dataState: true,
+        date: true,
+        observedAt: true,
+        sourceRef: true,
+        idempotencyKey: true,
+      },
     })
   },
   async summarizeConversions(input) {

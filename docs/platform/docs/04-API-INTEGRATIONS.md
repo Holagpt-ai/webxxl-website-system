@@ -86,7 +86,10 @@ The server recomputes/validates all IDs from actor membership, not from user inp
 | `POST /api/v1/communications/intents` | `comms.intent.prepare` | channel, purpose, recipient, idempotency | immutable content hash + policy decision; **no dispatch** |
 | `GET /api/v1/communications/intents/{id}` | `comms.read` | — | intent status, recipients, dispatch attempts (metadata only) |
 | `GET /api/v1/communications/inboxes` | `comms.read` | — | all inbox mappings with visibility/sync state (no secrets) |
-| `GET /api/v1/communications/connections` | `comms.read` | — | Chatwoot configured/pending/revoked/stale summary; outbound flags honest |
+| `GET /api/v1/communications/inboxes/{inboxId}` | `comms.read` | — | one account-scoped inbox mapping row |
+| `GET /api/v1/communications/contacts/{contactId}/handoff` | `comms.read` | — | read-only CRM→comms prepare contract; `deliveryBlocked: true` |
+| `GET /api/v1/communications/connections` | `comms.read` | — | Chatwoot summary + `authorization` contract; outbound flags honest |
+| `POST /api/v1/marketing/follow-ups/{id}/prepare-outreach` | `marketing.followup.manage` | channel, contentVersion, idempotencyKey | guarded comms intent prep; no live send |
 | `GET /api/v1/communications/provider-readiness` | `comms.read` | — | Chatwoot + Twilio/Resend readiness (503 when `COMMS_INTEGRATION_GATES_ENABLED` off); no live dispatch |
 | `GET /api/v1/communications/conversations/{id}` | `comms.read` | — | account-scoped detail + CRM link; **metadata only** (`transcriptAvailable: false`) |
 | `POST /api/v1/communications/webhooks/chatwoot` | relay HMAC | signed body + idempotency | **503 until** `CHATWOOT_WEBHOOK_INGEST_ENABLED` + relay secret; quarantine unknown tenants |
@@ -104,6 +107,9 @@ The server recomputes/validates all IDs from actor membership, not from user inp
 | `GET /api/v1/seo/sites/{id}/pages` | `seo.read` | status, pagination | page inventory rows |
 | `GET /api/v1/seo/sites/{id}/findings` | `seo.read` | pagination | crawl/rule findings |
 | `GET /api/v1/seo/sites/{id}/opportunities` | `seo.read` | pagination | evidence-backed opportunities |
+| `GET /api/v1/analytics/accounts/{id}/acquisition` | `core.analytics` | `siteId`, `start`, `end` | GA4 acquisition rows from stored metrics |
+| `GET /api/v1/analytics/accounts/{id}/measurements` | `core.analytics` | `metric`, `siteId`, `start`, `end` | stored observation series + `sourceRef` provenance |
+| `GET /api/v1/analytics/accounts/{id}/conversions/{conversionKey}` | `core.analytics` | `siteId`, `start`, `end` | daily conversion aggregates + honest rate |
 | `GET /api/v1/seo/sites/{id}/connections` | `seo.read` | — | analytics connection metadata (no secrets) |
 | `GET /api/v1/seo/sites/{id}/performance` | `seo.read` | — | stored GSC aggregate + `limitations[]` (shared bundle with overview/keywords) |
 | `GET /api/v1/seo/sites/{id}/keywords` | `seo.read` | `take`, `cursor`, `q`/`search` | stored GSC query rows + aggregate context; no live Google fetch |

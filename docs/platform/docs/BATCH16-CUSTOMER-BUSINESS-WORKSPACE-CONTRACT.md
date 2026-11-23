@@ -346,7 +346,10 @@ These are gaps for a later Cursor batch. They are not v0 workarounds and not per
 | Live Postiz schedule dispatch, OAuth channel connect | DEFERRED — owner activation gates |
 | Per-query keyword intelligence, crawl status/result read, Google OAuth handoff contract, connections authorization | IMPLEMENTED (Batch 13) — still DISABLED by flags |
 | Live OAuth connect, crawl execution, opportunity execution, live rank / Places | DEFERRED — owner activation gates |
-| Stable `{ code, message }` for `AuthError` on CRM, Marketing, and SEO routes | PARTIAL |
+| Communications connections authorization, inbox detail, CRM contact handoff, marketing outreach prepare | IMPLEMENTED (Batch 14) — still DISABLED by flags |
+| Analytics acquisition, measurements provenance drill-down, conversion daily detail | IMPLEMENTED (Batch 14) — still DISABLED by flags |
+| Dashboard communications module API paths (`/api/v1/communications/*`) | IMPLEMENTED (Batch 14) |
+| Stable `{ code, message }` for `AuthError` on CRM, Marketing, SEO, and Communications routes | PARTIAL |
 | Social route does not apply the OPEN-001 `503` used by the other three families | PARTIAL |
 | `GET /api/v1/social/calendar` invalid date handling | IMPLEMENTED (Batch 12) |
 

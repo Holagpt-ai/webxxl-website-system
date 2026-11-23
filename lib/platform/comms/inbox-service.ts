@@ -15,6 +15,19 @@ export type CommsInboxRow = {
   syncStale: boolean
 }
 
+export async function getAccountInbox(input: {
+  customerAccountId: string
+  inboxMappingId: string
+}): Promise<CommsResult<{ inbox: CommsInboxRow }>> {
+  const listed = await listAccountInboxes({ customerAccountId: input.customerAccountId })
+  if (!listed.ok) return listed
+  const inbox = listed.value.inboxes.find((row) => row.id === input.inboxMappingId)
+  if (!inbox) {
+    return { ok: false, code: 'NOT_FOUND', message: 'Inbox mapping not found for account' }
+  }
+  return { ok: true, value: { inbox } }
+}
+
 export async function listAccountInboxes(input: { customerAccountId: string }): Promise<CommsResult<{ inboxes: CommsInboxRow[] }>> {
   const rows = await prisma.chatwootInboxMapping.findMany({
     where: { customerAccountId: input.customerAccountId },
