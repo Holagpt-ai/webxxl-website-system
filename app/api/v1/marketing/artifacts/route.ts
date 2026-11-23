@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { listMarketingArtifacts } from '@/lib/platform/marketing/artifact-list-service'
+import { MARKETING_STUDIO_WORKSPACES } from '@/lib/platform/marketing/list-handoffs'
 import { mktRouteError } from '@/lib/platform/marketing/api-response'
 import { mktResultHttpStatus } from '@/lib/platform/marketing/mkt-api-map'
 import { requireMktApiActor } from '@/lib/platform/marketing/route-auth'
@@ -27,8 +28,13 @@ export async function GET(request: Request) {
     if (!listed.ok) {
       return NextResponse.json({ code: listed.code, message: listed.message }, { status: mktResultHttpStatus(listed.code) })
     }
-    const body: { artifacts: typeof listed.value.artifacts; nextCursor?: string } = {
+    const body: {
+      artifacts: typeof listed.value.artifacts
+      nextCursor?: string
+      navigation: typeof MARKETING_STUDIO_WORKSPACES
+    } = {
       artifacts: listed.value.artifacts,
+      navigation: MARKETING_STUDIO_WORKSPACES,
     }
     if (listed.value.nextCursor) body.nextCursor = listed.value.nextCursor
     return NextResponse.json(body)

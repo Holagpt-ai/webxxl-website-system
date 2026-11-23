@@ -45,5 +45,10 @@ export type CustomerDashboardContextResponse = {
     customerOperations: string
     siteIntelligence: string
     businessCommandCenter: string
+    marketingWorkspaces: {
+      requests: string
+      deliverables: string
+      approvals: string
+    }
   }
 }

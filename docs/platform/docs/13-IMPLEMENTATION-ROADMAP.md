@@ -50,7 +50,9 @@ GitHub `main` at `2b7ec7be2aeadccfb595a2ab7edf59b775876efe` (PR #52) has moved p
 
 **Batch 10A:** CRM company detail, custom fields, and suppression lift — **MERGED** ([PR **#146**](https://github.com/Holagpt-ai/webxxl-website-system/pull/146) @ `142395b`; [`BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md`](BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md)). Migration in Git only (not applied).
 
-**Batch 10B:** Customer dashboard context and module handoffs — **IN PR** ([`BATCH10B-CUSTOMER-DASHBOARD-INTEGRATION.md`](BATCH10B-CUSTOMER-DASHBOARD-INTEGRATION.md)). `GET /api/v1/portal/dashboard-context`; account/site selection cookies; no shell UI edits.
+**Batch 10B:** Customer dashboard context and module handoffs — **MERGED** ([PR **#147**](https://github.com/Holagpt-ai/webxxl-website-system/pull/147) @ `b2e2d4a`; [`BATCH10B-CUSTOMER-DASHBOARD-INTEGRATION.md`](BATCH10B-CUSTOMER-DASHBOARD-INTEGRATION.md)).
+
+**Batch 11:** Marketing account-wide artifact + review list handoffs — **IN PR** ([`BATCH11-MARKETING-ARTIFACTS-REVIEWS.md`](BATCH11-MARKETING-ARTIFACTS-REVIEWS.md)). Extends Batch 18A list APIs + dashboard-context; no new schema.
 
 ---
 

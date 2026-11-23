@@ -20,6 +20,7 @@ export const BUSINESS_DESTINATIONS = {
   crmLead: (leadId: string) => dashboardPathWithQuery('/dashboard/crm/leads', { leadId }),
   crmContact: (contactId: string) => `/dashboard/crm/contacts/${encodeURIComponent(contactId)}`,
   marketingRequests: '/dashboard/marketing/requests',
+  marketingDeliverables: '/dashboard/marketing/deliverables',
   marketingRequest: (requestId: string) => `/dashboard/marketing/requests/${encodeURIComponent(requestId)}`,
   marketingApprovals: '/dashboard/marketing/approvals',
   marketingReview: (reviewId: string) => dashboardPathWithQuery('/dashboard/marketing/approvals', { reviewId }),

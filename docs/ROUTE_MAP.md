@@ -84,7 +84,9 @@ Batch 17A CRM extensions (backend merged; UI wired in Batch 17B/17C integration 
 
 Batch 10A CRM company / custom fields / suppression lift (MERGED @ `142395b`): `GET|PATCH /api/v1/crm/companies/[id]`, `POST /api/v1/crm/companies/[id]/contacts`, `DELETE /api/v1/crm/companies/[id]/contacts/[contactId]`, contact `PATCH` `customFields`, `POST /api/v1/crm/contacts/[id]/suppression/lift`. Contract: [`BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md`](platform/docs/BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md).
 
-Batch 10B customer dashboard context (IN PR): `GET /api/v1/portal/dashboard-context`; server actions `switchManagedSiteAction`; cookies `webxxl_active_managed_site`. Contract: [`BATCH10B-CUSTOMER-DASHBOARD-INTEGRATION.md`](platform/docs/BATCH10B-CUSTOMER-DASHBOARD-INTEGRATION.md).
+Batch 10B customer dashboard context (MERGED @ `b2e2d4a`): `GET /api/v1/portal/dashboard-context`; server actions `switchManagedSiteAction`; cookies `webxxl_active_managed_site`. Contract: [`BATCH10B-CUSTOMER-DASHBOARD-INTEGRATION.md`](platform/docs/BATCH10B-CUSTOMER-DASHBOARD-INTEGRATION.md).
+
+Batch 11 marketing list handoffs (IN PR): list rows `destination.path`; `navigation` on `GET /api/v1/marketing/artifacts` and `reviews`; dashboard-context `marketingWorkspaces`. Contract: [`BATCH11-MARKETING-ARTIFACTS-REVIEWS.md`](platform/docs/BATCH11-MARKETING-ARTIFACTS-REVIEWS.md).
 
 Batch 23 CRM data operations (backend; open PR): enriched `POST /api/v1/crm/imports/preview` and `POST /api/v1/crm/imports/commit` outcomes; stable `POST /api/v1/crm/exports` cursor pages; `GET|PATCH|DELETE /api/v1/crm/segments/[id]`; `GET|POST /api/v1/crm/merge-proposals` and `POST /api/v1/crm/merge-proposals/[id]` (`approve`/`reject`).
 | Communications and workflows | `/api/v1/communications/*` (incl. Batch 4 `GET /api/v1/communications/execution/summary`), `/api/v1/workflows/*` |

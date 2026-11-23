@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { isMktApprovalWorkflowEnabled } from '@/config/mkt-backend'
 import { listMarketingReviews } from '@/lib/platform/marketing/review-list-service'
+import { MARKETING_STUDIO_WORKSPACES } from '@/lib/platform/marketing/list-handoffs'
 import { mktRouteError } from '@/lib/platform/marketing/api-response'
 import { mktResultHttpStatus } from '@/lib/platform/marketing/mkt-api-map'
 import { hasMarketingPermission } from '@/lib/platform/marketing/permissions'
@@ -36,8 +37,13 @@ export async function GET(request: Request) {
     if (!listed.ok) {
       return NextResponse.json({ code: listed.code, message: listed.message }, { status: mktResultHttpStatus(listed.code) })
     }
-    const body: { reviews: typeof listed.value.reviews; nextCursor?: string } = {
+    const body: {
+      reviews: typeof listed.value.reviews
+      nextCursor?: string
+      navigation: typeof MARKETING_STUDIO_WORKSPACES
+    } = {
       reviews: listed.value.reviews,
+      navigation: MARKETING_STUDIO_WORKSPACES,
     }
     if (listed.value.nextCursor) body.nextCursor = listed.value.nextCursor
     return NextResponse.json(body)
