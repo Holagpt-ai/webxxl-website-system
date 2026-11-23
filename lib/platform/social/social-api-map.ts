@@ -10,6 +10,12 @@ export function socialResultHttpStatus(code: string): number {
     case 'CHANNEL_NOT_IN_SCOPE':
     case 'NO_REVISION':
     case 'NO_APPROVED_REVISION':
+    case 'APPROVAL_NOT_FOUND':
+    case 'APPROVAL_CLOSED':
+    case 'APPROVAL_ARTIFACT_MISMATCH':
+    case 'APPROVAL_EXPIRED':
+    case 'INVALID_STATE':
+    case 'INVALID_TRANSITION':
       return 400
     case 'QUOTA_EXCEEDED':
       return 429
@@ -20,7 +26,12 @@ export function socialResultHttpStatus(code: string): number {
     case 'INTEGRATION_NOT_AUTHORIZED':
     case 'BILLING_GROUP_NOT_AUTHORIZATION':
     case 'UNAUTHORIZED':
+    case 'UNAUTHORIZED_APPROVER':
+    case 'AGENT_IMPERSONATION_DENIED':
     case 'ENTITLEMENT_DISABLED':
+    case 'FORGED_APPROVAL':
+    case 'APPROVAL_INVALID':
+    case 'APPROVAL_EXHAUSTED':
       return 403
     case 'SOCIAL_MARKETING_DISABLED':
     case 'ENTITLEMENT_MISSING':
