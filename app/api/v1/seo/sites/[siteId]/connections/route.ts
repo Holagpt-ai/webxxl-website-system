@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { requireSeoApiActor, SeoApiError } from '@/lib/platform/seo/route-auth'
+import { buildSeoConnectionsAuthorizationContract } from '@/lib/platform/seo/connections-authorization-contract'
+import { seoRouteError } from '@/lib/platform/seo/http'
+import { requireSeoApiActor } from '@/lib/platform/seo/route-auth'
 
 type Params = { params: Promise<{ siteId: string }> }
 
@@ -21,12 +23,9 @@ export async function GET(_request: Request, { params }: Params) {
         revokedAt: true,
       },
     })
-    return NextResponse.json({ connections })
+    const authorization = buildSeoConnectionsAuthorizationContract(siteId, connections)
+    return NextResponse.json({ connections, authorization })
   } catch (error) {
-    if (error instanceof SeoApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    console.error('seo connections GET failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to load SEO connections' }, { status: 500 })
+    return seoRouteError(error)
   }
 }

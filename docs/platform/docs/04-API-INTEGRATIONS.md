@@ -110,7 +110,13 @@ The server recomputes/validates all IDs from actor membership, not from user inp
 | `GET /api/v1/seo/sites/{id}/competitors` | `seo.read` | — | markets + top competitor profiles |
 | `POST /api/v1/seo/sites/{id}/markets` | `seo.market.manage` | market definition | ranked competitor candidates (synthetic/live gated) |
 | `POST /api/v1/seo/sites/{id}/scan-previews` | `seo.scan.prepare` | idempotency key | crawl run **prepared/blocked** — not arbitrary URL crawl |
-| `POST /api/v1/seo/sites/{id}/connect/{source}` | `seo.configure` (future) | OAuth initiation | **not implemented in SEO-07** — contracts only |
+| `GET /api/v1/seo/sites/{id}/keywords/intelligence` | `seo.read` | `query`, optional `page`, `date` | per-query stored GSC observations (Batch 13) |
+| `GET /api/v1/seo/sites/{id}/competitors/{competitorId}` | `seo.read` | optional `take` | competitor profile + stored observations |
+| `GET /api/v1/seo/sites/{id}/crawl-runs` | `seo.read` | — | stored crawl run list (`liveCrawlOccurred: false`) |
+| `GET /api/v1/seo/sites/{id}/crawl-runs/{runId}` | `seo.read` | — | crawl status/result summary |
+| `GET /api/v1/seo/sites/{id}/google/oauth-handoff` | `seo.read` | — | OAuth handoff contract; `oauthConnectionEnabled: false` |
+| `GET /api/v1/seo/sites/{id}/connections` | `seo.read` | — | connections + `authorization` contract (Batch 13) |
+| `POST /api/v1/seo/sites/{id}/connect/{source}` | `seo.configure` (future) | OAuth initiation | **not implemented** — use oauth-handoff contract only |
 | `POST /api/v1/marketing/requests` | marketing user | deliverable, site, brief, locale | job and source-bound deliverable request |
 | `POST /api/v1/marketing/artifacts/{id}/approve` | approver | exact version, policy | AI handoff to PR/Postiz as appropriate |
 | `GET/POST /api/v1/agents/instances` | account AI administrator | template, site, limits | preview/config only while future SKU disabled |
