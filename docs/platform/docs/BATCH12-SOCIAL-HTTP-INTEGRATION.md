@@ -1,6 +1,6 @@
 # BATCH 12 — Social Marketing HTTP integration
 
-**Status:** IN PR · **Baseline:** Batch 11 branch (`feat/batch11-marketing-artifacts-reviews`) until PR **#148** merges to `main`.
+**Status:** IN PR [#149](https://github.com/Holagpt-ai/webxxl-website-system/pull/149) · **Baseline:** `main` @ `37d5477d7f43761cf52e11ca486150e7d7e3c444` (PR **#148** MERGED).
 
 ## Scope
 

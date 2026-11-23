@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-23 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `b2e2d4a3a93bfead122a41ce5c0194acb2f9de4a` · **PR #147 MERGED** (Batch 10B); **PR #146 MERGED** (Batch 10A); **PR #144 MERGED**; **PR #143 CLOSED**; **PR #140 squash:** `197eb4f`
+**Evidence review:** 2026-11-23 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `37d5477d7f43761cf52e11ca486150e7d7e3c444` · **PR #148 MERGED** (Batch 11); **PR #147 MERGED** (Batch 10B); **PR #146 MERGED** (Batch 10A); **PR #144 MERGED**; **PR #143 CLOSED**; **PR #140 squash:** `197eb4f`
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,21 +35,21 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **RELEASE-001 Step 6A PASS** 2026-11-21: staff-authenticated Production `GET /api/v1/admin/operations/database-verification` → `VERIFIED_PRODUCTION`, migration ledger **40**, ADMIN dashboard operational on `https://www.webbxxl.com`. Evidence: [`RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md`](RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md). GitHub `main` **`b2e2d4a3a93bfead122a41ce5c0194acb2f9de4a`** (PR **#147** MERGED Batch 10B; PR **#146** MERGED Batch 10A; PR **#144** MERGED). Authenticated EN/ES customer matrix still **NOT VERIFIED** (**AUTH-STAGING-8C / ISSUE-105-QA**). |
-| 2 | GitHub SHA, branch, active PR | GitHub `main` **`b2e2d4a3a93bfead122a41ce5c0194acb2f9de4a`**. PR **#148** Batch **11** — **OPEN** (merge SHA **UNVERIFIED**). Branch `feat/batch12-social-http-integration` — Batch **12** social HTTP — **IN PR** (stacks on #148 head). |
+| 1 | Last verified checkpoint | **RELEASE-001 Step 6A PASS** 2026-11-21: staff-authenticated Production `GET /api/v1/admin/operations/database-verification` → `VERIFIED_PRODUCTION`, migration ledger **40**, ADMIN dashboard operational on `https://www.webbxxl.com`. Evidence: [`RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md`](RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md). GitHub `main` **`37d5477d7f43761cf52e11ca486150e7d7e3c444`** (PR **#148** MERGED Batch 11; PR **#147** MERGED Batch 10B; PR **#146** MERGED Batch 10A). Authenticated EN/ES customer matrix still **NOT VERIFIED** (**AUTH-STAGING-8C / ISSUE-105-QA**). |
+| 2 | GitHub SHA, branch, active PR | GitHub `main` **`37d5477d7f43761cf52e11ca486150e7d7e3c444`**. PR **#149** Batch **12** social HTTP — **IN PR**, not merged (`feat/batch12-social-http-integration`, rebased on #148 merge). |
 | 3 | Production deployment | Last independently recorded GitHub Production deployment **`7952960484`** @ `ef5776e4129a835cc7df72ebc1d00d04092c00a2`, Vercel **success** 2026-11-20T21:29:14Z ([status](https://vercel.com/tone4real-7828s-projects/webxxl-website-system/NXefwAmMRYaXDEMPXJ5nVjoBxK75)). Post-#147 production SHA **UNVERIFIED**. Step 6A runtime DB identity **VERIFIED**; providers/flags/activation **not** verified. |
 | 4 | Last updated | 2026-11-23 |
-| 5 | Next task / responsible platform | **Owner:** review PR **#148** (Batch 11) then Batch **12** PR; record #148 merge SHA when verified. **Cursor after #148 merge:** rebase Batch 12 if needed; **Batch 13 — SEO Integration** (Batch 16 §7). **v0.app:** [`BATCH12-V0-HANDOFF.md`](BATCH12-V0-HANDOFF.md) social HTTP states; [`BATCH11-V0-HANDOFF.md`](BATCH11-V0-HANDOFF.md) marketing lists. |
+| 5 | Next task / responsible platform | **Owner:** review PR **#149** (Batch 12, unmerged). **Cursor after #149 merge:** **Batch 13 — SEO Integration** (Batch 16 §7). **v0.app:** [`BATCH12-V0-HANDOFF.md`](BATCH12-V0-HANDOFF.md) social HTTP states. |
 | 6 | Open blocker / gate IDs | **RELEASE-001** runtime DB **VERIFIED** (Step 6A); production migrations **40/40** (Batch 10A migration **not applied**); **AUTH-STAGING-8C / ISSUE-105-QA** outstanding (deferred per owner until source completion); **POLICY-SUB-001** open. Provider activation / live sends / payments / DNS **not authorized**. **OPEN-014** primary domain **`webbxxl.com`** resolved; service subdomains open. |
 
 ## 2026-11-23 — Batch 12 social marketing HTTP integration (IN PR)
 
 - Prisma-backed campaign approval submit/decide, guarded schedule persistence + status, connections authorization contract, marketing artifact social-handoff HTTP, calendar date validation.
-- Contract: [`BATCH12-SOCIAL-HTTP-INTEGRATION.md`](platform/docs/BATCH12-SOCIAL-HTTP-INTEGRATION.md). v0: [`BATCH12-V0-HANDOFF.md`](BATCH12-V0-HANDOFF.md). **PENDING:** PR **#148** merge SHA on `main` before declaring baseline aligned.
+- Contract: [`BATCH12-SOCIAL-HTTP-INTEGRATION.md`](platform/docs/BATCH12-SOCIAL-HTTP-INTEGRATION.md). v0: [`BATCH12-V0-HANDOFF.md`](BATCH12-V0-HANDOFF.md). Branch rebased on `main` @ #148 merge (`37d5477`).
 
-## 2026-11-23 — Batch 11 marketing artifact + review list handoffs (IN PR)
+## 2026-11-23 — Batch 11 marketing artifact + review list handoffs (MERGED)
 
-- Extends Batch 18A list APIs with per-row `destination.path`, list `navigation`, and dashboard-context `marketingWorkspaces`.
+- **MERGED** [PR **#148**](https://github.com/Holagpt-ai/webxxl-website-system/pull/148) @ `37d5477d7f43761cf52e11ca486150e7d7e3c444`. Extends Batch 18A list APIs with per-row `destination.path`, list `navigation`, and dashboard-context `marketingWorkspaces`.
 - Contract: [`BATCH11-MARKETING-ARTIFACTS-REVIEWS.md`](platform/docs/BATCH11-MARKETING-ARTIFACTS-REVIEWS.md). v0: [`BATCH11-V0-HANDOFF.md`](BATCH11-V0-HANDOFF.md).
 
 ## 2026-11-23 — Batch 10B customer dashboard context / module handoffs (MERGED)
