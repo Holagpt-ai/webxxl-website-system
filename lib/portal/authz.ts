@@ -11,6 +11,11 @@ import {
   pickActiveMembership,
   setActiveCustomerAccountCookie,
 } from '@/lib/portal/active-customer-account'
+import {
+  getActiveManagedSiteIdFromCookie,
+  pickActiveManagedSite,
+  setActiveManagedSiteCookie,
+} from '@/lib/portal/active-managed-site'
 import { getActiveProjectIdFromCookie, pickActiveProject, setActiveProjectCookie } from '@/lib/portal/active-project'
 
 export class AuthError extends Error {
@@ -156,4 +161,22 @@ export async function getActiveProject(customerAccountId: string): Promise<Proje
     }
   }
   return project
+}
+
+/** Selected managed site for this account; prefers the active project link when no valid site cookie. */
+export async function getActiveManagedSite(customerAccountId: string, preferredProjectId?: string | null) {
+  const sites = await prisma.managedSite.findMany({
+    where: { customerAccountId },
+    select: { id: true, name: true, projectId: true, updatedAt: true },
+  })
+  const cookieId = await getActiveManagedSiteIdFromCookie()
+  const { site, shouldRefreshCookie } = pickActiveManagedSite(sites, cookieId, preferredProjectId)
+  if (site && shouldRefreshCookie) {
+    try {
+      await setActiveManagedSiteCookie(site.id)
+    } catch {
+      // Cookie writes can be rejected during render. The chosen site still applies to this request.
+    }
+  }
+  return site
 }

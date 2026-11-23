@@ -1,7 +1,7 @@
 # Batch 10A — CRM company records, custom fields, and suppression lift
 
-**Status:** source implementation. Flags unchanged. No live CRM activation. Migration in Git only — **do not apply** without owner authorization.  
-**Baseline:** GitHub `main` `2361ef9d014125cbdefe9ad96fddef78bbdcd7f0` (PR #144 MERGED; PR #143 CLOSED without merge).  
+**Status:** **MERGED** [PR **#146**](https://github.com/Holagpt-ai/webxxl-website-system/pull/146) @ `142395b51f54a62d93a70e23d1a16eb3b62e8db0`. Flags unchanged. Migration in Git only — **do not apply** without owner authorization.  
+**Baseline:** GitHub `main` `142395b51f54a62d93a70e23d1a16eb3b62e8db0`.  
 **Date:** 2026-11-23. **Owner:** Cursor. **ADR:** not required. Applies existing CRM-05 / OPEN-001 / tenant isolation. Does not change POLICY-SUB-001.
 
 This batch implements the remaining CRM HTTP gaps named in [`BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md`](BATCH16-CUSTOMER-BUSINESS-WORKSPACE-CONTRACT.md) §7 and [`BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md`](BATCH17B-CRM-UI-INTEGRATION-CONTRACT.md) (deferred): company detail, custom fields, and suppression lift/deactivate. It does **not** rebuild contacts, pipelines, tasks, import/export, or OPEN-001 gates.

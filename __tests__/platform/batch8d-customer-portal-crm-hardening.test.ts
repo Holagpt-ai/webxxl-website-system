@@ -157,10 +157,12 @@ describe('Batch 8D customer portal + CRM release hardening', () => {
     expect(denied.renderWorkspace).toBe(false)
   })
 
-  it('revalidates CRM layouts when the active customer account switches', () => {
+  it('revalidates dashboard module layouts when the active customer account switches', () => {
     const actions = readFileSync(join(process.cwd(), 'lib/portal/customer-actions.ts'), 'utf8')
-    expect(actions).toContain("revalidatePath('/dashboard/crm', 'layout')")
-    expect(actions).toContain("revalidatePath('/es/dashboard/crm', 'layout')")
+    expect(actions).toContain('revalidateCustomerDashboardLayouts')
+    const paths = readFileSync(join(process.cwd(), 'lib/portal/dashboard-revalidate.ts'), 'utf8')
+    expect(paths).toContain("'/dashboard/crm'")
+    expect(paths).toContain("'/es/dashboard/crm'")
   })
 })
 
