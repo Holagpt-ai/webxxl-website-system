@@ -82,6 +82,8 @@ Batch 19B+19C Local SEO UI (MERGED PR #60): `/dashboard/seo`, `/dashboard/seo/ke
 
 Batch 17A CRM extensions (backend merged; UI wired in Batch 17B/17C integration PR): `GET /api/v1/crm/contacts` (`q`, `cursor`, `take`), `PATCH /api/v1/crm/deals/[id]/stage`, `PATCH /api/v1/crm/tasks/[id]`, `GET|POST /api/v1/crm/contacts/[id]/consent`, `POST /api/v1/crm/contacts/[id]/suppression`.
 
+Batch 10A CRM company / custom fields / suppression lift (IN PR): `GET|PATCH /api/v1/crm/companies/[id]`, `POST /api/v1/crm/companies/[id]/contacts`, `DELETE /api/v1/crm/companies/[id]/contacts/[contactId]`, contact `PATCH` `customFields`, `POST /api/v1/crm/contacts/[id]/suppression/lift`. Contract: [`BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md`](platform/docs/BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md).
+
 Batch 23 CRM data operations (backend; open PR): enriched `POST /api/v1/crm/imports/preview` and `POST /api/v1/crm/imports/commit` outcomes; stable `POST /api/v1/crm/exports` cursor pages; `GET|PATCH|DELETE /api/v1/crm/segments/[id]`; `GET|POST /api/v1/crm/merge-proposals` and `POST /api/v1/crm/merge-proposals/[id]` (`approve`/`reject`).
 | Communications and workflows | `/api/v1/communications/*` (incl. Batch 4 `GET /api/v1/communications/execution/summary`), `/api/v1/workflows/*` |
 | Customer AI | `/api/v1/customer-ai/accounts/[accountId]/*` |

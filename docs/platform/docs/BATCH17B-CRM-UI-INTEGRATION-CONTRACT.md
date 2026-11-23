@@ -110,4 +110,5 @@ New consent does **not** clear active suppression. No outbound send/connect UI.
 
 ## Deferred (not 17B)
 
-- Custom fields, company detail HTTP, suppression lift/deactivate API, live messaging, reminders, workers.
+- Live messaging, reminders, workers.
+- Custom fields, company detail HTTP, and suppression lift/deactivate API: implemented in Batch 10A backend (`BATCH10A-CRM-COMPANY-CUSTOM-FIELDS.md`); UI wiring remains v0.app.

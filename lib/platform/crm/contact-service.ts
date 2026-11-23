@@ -1,6 +1,7 @@
 import type { CrmChannelIdentityType, Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { assertSameCustomerAccount } from '@/lib/platform/crm/account-isolation'
+import { customFieldsWriteValue, type CrmCustomFields } from '@/lib/platform/crm/custom-fields'
 import { normalizeEmail, normalizePhone } from '@/lib/platform/crm/normalize'
 import type { CrmResult } from '@/lib/platform/crm/types'
 
@@ -97,10 +98,15 @@ export async function getCrmContactForAccount(
 export async function updateCrmContact(
   contactId: string,
   customerAccountId: string,
-  patch: Partial<Pick<CreateContactInput, 'givenName' | 'familyName' | 'preferredName' | 'jobTitle' | 'leadSource'>>,
+  patch: Partial<Pick<CreateContactInput, 'givenName' | 'familyName' | 'preferredName' | 'jobTitle' | 'leadSource'>> & {
+    customFields?: CrmCustomFields | null
+  },
 ): Promise<CrmResult<{ id: string }>> {
   const contact = await prisma.crmContact.findFirst({ where: { id: contactId, customerAccountId } })
   if (!contact) return { ok: false, code: 'NOT_FOUND', message: 'Contact not found' }
+  if (contact.status === 'MERGED') {
+    return { ok: false, code: 'VALIDATION_ERROR', message: 'Contact is merged and cannot receive updates' }
+  }
   await prisma.crmContact.update({
     where: { id: contactId },
     data: {
@@ -109,6 +115,7 @@ export async function updateCrmContact(
       preferredName: patch.preferredName,
       jobTitle: patch.jobTitle,
       leadSource: patch.leadSource,
+      customFields: patch.customFields === undefined ? undefined : customFieldsWriteValue(patch.customFields),
     },
   })
   return { ok: true, value: { id: contactId } }

@@ -3114,17 +3114,21 @@ model ContactConsentEvidence {
 }
 
 model ContactSuppression {
-  id                String            @id @default(cuid())
-  customerAccountId String
-  contactId         String
-  channel           CrmConsentChannel
-  purpose           CrmConsentPurpose
-  reason            String
-  source            String
-  active            Boolean           @default(true)
-  idempotencyKey    String?           @unique
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  id                 String            @id @default(cuid())
+  customerAccountId  String
+  contactId          String
+  channel            CrmConsentChannel
+  purpose            CrmConsentPurpose
+  reason             String
+  source             String
+  active             Boolean           @default(true)
+  idempotencyKey     String?           @unique
+  liftedAt           DateTime?
+  liftedByUserId     String?
+  liftReason         String?
+  liftIdempotencyKey String?           @unique
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
 
   customerAccount CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
   contact         CrmContact      @relation(fields: [contactId], references: [id], onDelete: Restrict)

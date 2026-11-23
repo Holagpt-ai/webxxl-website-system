@@ -106,9 +106,92 @@ export async function recordContactSuppression(input: {
   return { ok: true, value: { id: row.id } }
 }
 
+const IMPORT_SUPPRESSION_SOURCES = new Set(['crm.import', 'import.csv'])
+
 /** CSV/import paths must never grant marketing consent. */
 export function importMustNotGrantConsent(): CrmResult<true> {
   return { ok: true, value: true }
+}
+
+/** CSV/import paths must never lift opt-outs. */
+export function importMustNotLiftSuppression(): CrmResult<true> {
+  return { ok: true, value: true }
+}
+
+export async function liftContactSuppression(input: {
+  customerAccountId: string
+  contactId: string
+  actorUserId: string
+  reason: string
+  source: string
+  suppressionId?: string
+  channel?: CrmConsentChannel
+  purpose?: CrmConsentPurpose
+  idempotencyKey?: string
+}): Promise<CrmResult<{ id: string; alreadyLifted: boolean; consentUnchanged: true }>> {
+  const owned = await assertCrmContactOwnedByAccount(input.contactId, input.customerAccountId)
+  if (!owned.ok) return owned
+
+  if (IMPORT_SUPPRESSION_SOURCES.has(input.source.trim())) {
+    return { ok: false, code: 'FORBIDDEN', message: 'Import paths cannot lift suppression' }
+  }
+
+  if (input.idempotencyKey) {
+    const existingLift = await prisma.contactSuppression.findUnique({
+      where: { liftIdempotencyKey: input.idempotencyKey },
+    })
+    if (existingLift) {
+      if (
+        existingLift.customerAccountId !== input.customerAccountId ||
+        existingLift.contactId !== input.contactId
+      ) {
+        return { ok: false, code: 'CONFLICT', message: 'Suppression lift idempotency key conflict' }
+      }
+      return { ok: true, value: { id: existingLift.id, alreadyLifted: true, consentUnchanged: true } }
+    }
+  }
+
+  const active = input.suppressionId
+    ? await prisma.contactSuppression.findFirst({
+        where: {
+          id: input.suppressionId,
+          customerAccountId: input.customerAccountId,
+          contactId: input.contactId,
+        },
+      })
+    : await prisma.contactSuppression.findFirst({
+        where: {
+          customerAccountId: input.customerAccountId,
+          contactId: input.contactId,
+          channel: input.channel,
+          purpose: input.purpose,
+          active: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+
+  if (!active) {
+    return { ok: false, code: 'NOT_FOUND', message: 'Active suppression not found' }
+  }
+  if (active.customerAccountId !== input.customerAccountId || active.contactId !== input.contactId) {
+    return { ok: false, code: 'CROSS_ACCOUNT_DENIED', message: 'Suppression belongs to another account' }
+  }
+  if (!active.active) {
+    return { ok: true, value: { id: active.id, alreadyLifted: true, consentUnchanged: true } }
+  }
+
+  const liftedAt = new Date()
+  await prisma.contactSuppression.update({
+    where: { id: active.id },
+    data: {
+      active: false,
+      liftedAt,
+      liftedByUserId: input.actorUserId,
+      liftReason: input.reason.trim(),
+      liftIdempotencyKey: input.idempotencyKey,
+    },
+  })
+  return { ok: true, value: { id: active.id, alreadyLifted: false, consentUnchanged: true } }
 }
 
 export async function listContactConsentAndSuppression(
