@@ -1,16 +1,16 @@
 # WebXXL — Session Handoff
 
-**Compiled:** 2026-11-24 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `2c770628d5355463a88f9752a9948e9400e0e09f` · **PR #152 MERGED** (Batch 15) · consolidated **10A–14** v0 UI **IN PR**
+**Compiled:** 2026-11-24 · **Repository:** `Holagpt-ai/webxxl-website-system` · **`main`:** `2c770628d5355463a88f9752a9948e9400e0e09f` · **PR #152 MERGED** (Batch 15); **PR #151 MERGED** (Batch 14); **PR #153** owner review (consolidated 10A–14 UI)
 
 ## Canonical checkpoint (six-field)
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **RELEASE-001 Step 6A PASS** 2026-11-21: staff-authenticated Production `GET /api/v1/admin/operations/database-verification` → `VERIFIED_PRODUCTION`, migration ledger **40**, ADMIN dashboard operational on `https://www.webbxxl.com`. Evidence: [`RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md`](RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md). GitHub `main` **`2c770628d5355463a88f9752a9948e9400e0e09f`** (PR **#152** MERGED). Consolidated v0 Batches **10A–14** UI on integration branch — **IN PR**. **AUTH-STAGING-8C** still **NOT VERIFIED**. |
-| 2 | GitHub SHA, branch, active PR | GitHub `main` **`2c770628d5355463a88f9752a9948e9400e0e09f`**. [PR **#153**](https://github.com/Holagpt-ai/webxxl-website-system/pull/153) branch `feat/consolidated-batch-10-14-ui-integration` — consolidated customer UI — **IN PR**. |
-| 3 | Production deployment | Last independently recorded GitHub Production deployment **`7952960484`** @ `ef5776e4129a835cc7df72ebc1d00d04092c00a2`, Vercel **success** 2026-11-20T21:29:14Z. Post-#152 production SHA **UNVERIFIED**. Step 6A runtime DB **VERIFIED**; providers/flags **not** verified. |
+| 1 | Last verified checkpoint | **RELEASE-001 Step 6A PASS** 2026-11-21: staff-authenticated Production `GET /api/v1/admin/operations/database-verification` → `VERIFIED_PRODUCTION`, migration ledger **40**, ADMIN dashboard operational on `https://www.webbxxl.com`. Evidence: [`RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md`](RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md). GitHub `main` **`2c770628d5355463a88f9752a9948e9400e0e09f`** (PR **#152** MERGED Batch 15; PR **#151** MERGED Batch 14). Consolidated Batches **10A–14** customer UI delivered on `v0/batch-10-14-ui` — **IN PR** (Cursor integration). Authenticated EN/ES customer matrix still **NOT VERIFIED** (**AUTH-STAGING-8C** deferred). |
+| 2 | GitHub SHA, branch, active PR | GitHub `main` **`2c770628d5355463a88f9752a9948e9400e0e09f`**. [PR **#153**](https://github.com/Holagpt-ai/webxxl-website-system/pull/153) branch `feat/consolidated-batch-10-14-ui-integration` — consolidated v0 Batches **10A–14** UI — **IN PR**. |
+| 3 | Production deployment | Last independently recorded GitHub Production deployment **`7952960484`** @ `ef5776e4129a835cc7df72ebc1d00d04092c00a2`, Vercel **success** 2026-11-20T21:29:14Z ([status](https://vercel.com/tone4real-7828s-projects/webxxl-website-system/NXefwAmMRYaXDEMPXJ5nVjoBxK75)). Post-#152 production SHA **UNVERIFIED**. Step 6A runtime DB identity **VERIFIED**; providers/flags/activation **not** verified. |
 | 4 | Last updated | 2026-11-24 |
-| 5 | Next task / responsible platform | **Owner:** review consolidated **10A–14** UI PR. **After merge:** **AUTH-STAGING-8C** final acceptance (Production EN/ES matrix). |
+| 5 | Next task / responsible platform | **Owner:** review consolidated **10A–14** UI integration PR (do not merge without authorization). **After merge:** **AUTH-STAGING-8C** final acceptance prep on updated `main`. |
 | 6 | Open blocker / gate IDs | **RELEASE-001** runtime DB **VERIFIED** (Step 6A); production migrations **40/40** (Batch 10A migration **not applied**); **AUTH-STAGING-8C / ISSUE-105-QA** outstanding (deferred per owner until source completion); **POLICY-SUB-001** open. Provider activation / live sends / payments / DNS **not authorized**. **OPEN-014** primary domain **`webbxxl.com`** resolved; service subdomains open. |
 
 ## 2026-11-24 — Consolidated Batches 10A–14 customer UI (IN PR)
