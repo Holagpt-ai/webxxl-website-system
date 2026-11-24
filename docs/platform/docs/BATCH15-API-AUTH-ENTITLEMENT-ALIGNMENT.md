@@ -1,6 +1,6 @@
 # BATCH 15 — API authorization & entitlement alignment
 
-**Status:** IN PR · **Baseline:** `main` @ `061113b203779784674bf05b852361d71f388f08` (PR **#151** MERGED Batch 14).
+**Status:** IN PR [PR **#152**](https://github.com/Holagpt-ai/webxxl-website-system/pull/152) @ `e81cce870f44cd6c97a2061e9a4f42f6ac3e4dce` · **Baseline:** `main` @ `061113b203779784674bf05b852361d71f388f08` (PR **#151** MERGED Batch 14).
 
 ## Scope
 

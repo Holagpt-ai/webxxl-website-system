@@ -36,7 +36,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 | # | Field | Value |
 |---|---|---|
 | 1 | Last verified checkpoint | **RELEASE-001 Step 6A PASS** 2026-11-21: staff-authenticated Production `GET /api/v1/admin/operations/database-verification` → `VERIFIED_PRODUCTION`, migration ledger **40**, ADMIN dashboard operational on `https://www.webbxxl.com`. Evidence: [`RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md`](RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md). GitHub `main` **`061113b203779784674bf05b852361d71f388f08`** (PR **#151** MERGED Batch 14; PR **#150** MERGED Batch 13). Authenticated EN/ES customer matrix still **NOT VERIFIED** (**AUTH-STAGING-8C** deferred). |
-| 2 | GitHub SHA, branch, active PR | GitHub `main` **`061113b203779784674bf05b852361d71f388f08`**. Branch `feat/batch15-api-auth-entitlement-alignment` — Batch **15** API auth alignment — **IN PR**. |
+| 2 | GitHub SHA, branch, active PR | GitHub `main` **`061113b203779784674bf05b852361d71f388f08`**. [PR **#152**](https://github.com/Holagpt-ai/webxxl-website-system/pull/152) branch `feat/batch15-api-auth-entitlement-alignment` @ `e81cce870f44cd6c97a2061e9a4f42f6ac3e4dce` — Batch **15** — **IN PR**. |
 | 3 | Production deployment | Last independently recorded GitHub Production deployment **`7952960484`** @ `ef5776e4129a835cc7df72ebc1d00d04092c00a2`, Vercel **success** 2026-11-20T21:29:14Z ([status](https://vercel.com/tone4real-7828s-projects/webxxl-website-system/NXefwAmMRYaXDEMPXJ5nVjoBxK75)). Post-#147 production SHA **UNVERIFIED**. Step 6A runtime DB identity **VERIFIED**; providers/flags/activation **not** verified. |
 | 4 | Last updated | 2026-11-23 |
 | 5 | Next task / responsible platform | **Owner:** review Batch **15** PR (do not merge without authorization). **After merge:** AUTH-STAGING-8C prep or next roadmap batch per owner assignment. |
@@ -44,7 +44,7 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 ## 2026-11-23 — Batch 15 API auth & entitlement alignment (IN PR)
 
-[`BATCH15-API-AUTH-ENTITLEMENT-ALIGNMENT.md`](platform/docs/BATCH15-API-AUTH-ENTITLEMENT-ALIGNMENT.md).
+[PR **#152**](https://github.com/Holagpt-ai/webxxl-website-system/pull/152) @ `e81cce870f44cd6c97a2061e9a4f42f6ac3e4dce`. [`BATCH15-API-AUTH-ENTITLEMENT-ALIGNMENT.md`](platform/docs/BATCH15-API-AUTH-ENTITLEMENT-ALIGNMENT.md).
 
 ## 2026-11-23 — Batch 14 communications & analytics HTTP (MERGED)
 
