@@ -85,7 +85,7 @@ Included FREE software for **website subscribers** at account scope. Page entitl
 | **A2** | Managed-site / account switcher (Batch 10B) | ✓ | ✓ | ✓ | Switcher visible when sites exist; no cross-account leak |
 | **B1** | CRM OPEN-001 — subscriber | ✓ | ✓ | ✓ | `/dashboard/crm` eligible or honest locked state; company detail route |
 | **B2** | CRM OPEN-001 — non-subscriber | ✓ | ✓ | — | Locked UI; API `FREE_SOFTWARE_NOT_ELIGIBLE` / 403 |
-| **B3** | Tenant isolation | ✓ | — | — | No cross-`CustomerAccount` data via API paste或 UI |
+| **B3** | Tenant isolation | ✓ | — | — | No cross-`CustomerAccount` data via API paste or UI |
 | **C1** | Marketing / SEO / Comms workspaces | ✓ | ✓ | spot | Navigation + drill-down panels load or show 503/unavailable honestly |
 | **D1** | Analytics drill-downs (Batch 14 UI) | ✓ | ✓ | — | Acquisition/measurement/conversion tabs without false live claims |
 | **E1** | Project approvals / owner-review | ✓ | ✓ | — | Read-only unless owner package enabled |
