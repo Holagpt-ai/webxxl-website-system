@@ -4,7 +4,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 
 | Date (UTC) | Event | Evidence | Release claim |
 |---|---|---|---|
-| 2026-11-24 | Consolidated v0 UI Batches 10A–14 | IN PR [#153](https://github.com/Holagpt-ai/webxxl-website-system/pull/153) | Customer dashboard UI; not merged |
+| 2026-11-24 | Final release stabilization record | [`FINAL-RELEASE-STABILIZATION-2026-11-24.md`](FINAL-RELEASE-STABILIZATION-2026-11-24.md) | Acceptance matrix + Batch 10A migrate readiness; no migrate |
+| 2026-11-24 | Consolidated v0 UI Batches 10A–14 | [PR #153](https://github.com/Holagpt-ai/webxxl-website-system/pull/153) MERGED @ `f52ed8f` | Production deploy `8036279476` success |
 | 2026-11-24 | Batch 15 API auth & entitlement alignment | [PR #152](https://github.com/Holagpt-ai/webxxl-website-system/pull/152) MERGED @ `2c77062` | AuthError 401 + OPEN-001 social order on APIs |
 | 2026-11-23 | Batch 14 communications & analytics HTTP completion | [PR #151](https://github.com/Holagpt-ai/webxxl-website-system/pull/151) MERGED @ `061113b` | Dashboard handoffs, drill-down routes |
 | 2026-11-23 | Batch 13 SEO & local intelligence HTTP | [PR #150](https://github.com/Holagpt-ai/webxxl-website-system/pull/150) MERGED @ `e7f51fe` | Stored intelligence routes; not production deploy proof |

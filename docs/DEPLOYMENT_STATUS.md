@@ -1,9 +1,10 @@
 # Deployment and Activation Register
 
-**Reviewed:** 2026-11-21. Update a row only when the evidence changes. Each production row is a separate SHA record. A later row does not replace the October 21 evidence.
+**Reviewed:** 2026-11-24. Update a row only when the evidence changes. Each production row is a separate SHA record. A later row does not replace prior evidence.
 
 | Surface | Source | Deployed SHA | Migrations | Flags / providers | Verification |
 |---|---|---|---|---|---|
+| WebXXL app, 2026-11-24 PR #153 | `f52ed8f724d54ab0384d62da1030b212126e74ff` | DEPLOYED. GitHub deployment **`8036279476`**, `vercel[bot]`, environment Production, state **success**, 2026-11-24T17:56:27Z | **40/40** (Batch 10A **not applied**) | UNVERIFIED | SHA deploy only. Consolidated v0 UI Batches 10A–14 on `main`. Not migration, flags, or AUTH-STAGING-8C customer verification |
 | WebXXL app, 2026-10-21 | `c0a21db93d730c838fc58d9b862ed547927bd72f` | DEPLOYED. GitHub deployment `7233002736`, `vercel[bot]`, environment Production, state success, 2026-10-21T17:41:12Z. Target URL on that status: `https://webxxl-website-system-iy1c0lju7-tone4real-7828s-projects.vercel.app` | UNVERIFIED | UNVERIFIED | Preserved SHA deploy only. `www.webbxxl.com` was not re-probed for SHA equality in this review |
 | WebXXL app, 2026-10-25 PR #50 | `622b352592f2cdcb359034e1c6462cb62130b1d1` | DEPLOYED. GitHub deployment `7319600836`, `vercel[bot]`, environment Production, state success, 2026-10-25T21:42:28Z. Target URL on that status: `https://webxxl-website-system-803ak7g4j-tone4real-7828s-projects.vercel.app` | UNVERIFIED | UNVERIFIED | SHA deploy only. Not a migration or activation |
 | WebXXL app, 2026-10-25 PR #51 | `f315e897218a48bfac44a0d50724c91d32b6c9c9` | DEPLOYED. GitHub deployment `7319975513`, `vercel[bot]`, environment Production, state success, 2026-10-25T22:16:18Z. Target URL on that status: `https://webxxl-website-system-8m0swbeto-tone4real-7828s-projects.vercel.app` | UNVERIFIED | UNVERIFIED | SHA deploy only. Not a migration or activation. `www.webbxxl.com` was not re-probed |
