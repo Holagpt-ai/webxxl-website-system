@@ -324,6 +324,13 @@ export const marketingStudioEs: MarketingStudioCopy = {
     reject: 'Rechazar',
     deciding: 'Guardando decisión…',
     decided: 'Decisión registrada.',
+    handoffTitle: 'Preparar entrega a redes sociales',
+    handoffBody:
+      'Registra que esta revisión aprobada puede usarse en una campaña social. No se programa ni se publica nada, y la publicación en vivo sigue desactivada.',
+    handoffSubmit: 'Preparar entrega',
+    handoffPending: 'Preparando…',
+    handoffPrepared: 'Entrega preparada. La programación sigue sin estar permitida.',
+    handoffBlocked: 'La entrega a redes sociales está desactivada para esta cuenta, así que no se preparó nada.',
   },
   campaigns: {
     title: 'Campañas y entregas a redes',

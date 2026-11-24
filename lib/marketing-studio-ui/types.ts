@@ -10,6 +10,7 @@ export const MKT_API = {
   artifact: (id: string) => `/api/v1/marketing/artifacts/${enc(id)}`,
   revisions: (id: string) => `/api/v1/marketing/artifacts/${enc(id)}/revisions`,
   submitReview: (id: string) => `/api/v1/marketing/artifacts/${enc(id)}/submit-review`,
+  socialHandoff: (id: string) => `/api/v1/marketing/artifacts/${enc(id)}/social-handoff`,
   decide: (reviewId: string) => `/api/v1/marketing/reviews/${enc(reviewId)}/decide`,
   artifacts: '/api/v1/marketing/artifacts',
   reviews: '/api/v1/marketing/reviews',

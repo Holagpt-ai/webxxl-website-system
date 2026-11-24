@@ -312,6 +312,13 @@ export const marketingStudioEn = {
     reject: 'Reject',
     deciding: 'Saving decision…',
     decided: 'Decision recorded.',
+    handoffTitle: 'Prepare social handoff',
+    handoffBody:
+      'Records that this approved revision may be used for a social campaign. Nothing is scheduled or published, and live publishing stays off.',
+    handoffSubmit: 'Prepare handoff',
+    handoffPending: 'Preparing…',
+    handoffPrepared: 'Handoff prepared. Scheduling is still not allowed.',
+    handoffBlocked: 'Social handoff is turned off for this account, so nothing was prepared.',
   },
   campaigns: {
     title: 'Campaigns and social handoffs',

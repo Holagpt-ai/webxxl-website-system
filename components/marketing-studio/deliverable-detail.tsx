@@ -112,7 +112,53 @@ export function MarketingDeliverableDetail({ accountId, locale, copy, base, arti
       />
 
       <DecideForm reviewId={reviewId} setReviewId={setReviewId} copy={copy} onDecided={() => detail.mutate()} />
+
+      {artifact.reviewStatus === 'APPROVED' && <SocialHandoffForm artifact={artifact} copy={copy} />}
     </div>
+  )
+}
+
+type SocialHandoffResult = { handoffState: 'PREPARED' | 'BLOCKED'; schedulingAllowed: false }
+
+function SocialHandoffForm({ artifact, copy }: { artifact: MarketingArtifact; copy: MarketingViewProps['copy'] }) {
+  const d = copy.deliverable
+  const [channel, setChannel] = useState('')
+  const action = useAction<SocialHandoffResult>()
+  const state = action.data?.handoffState
+
+  return (
+    <Section title={d.handoffTitle} description={d.handoffBody}>
+      <form
+        className="flex flex-col gap-4"
+        onSubmit={async (e) => {
+          e.preventDefault()
+          await action.run(() =>
+            workspaceSend<SocialHandoffResult>(MKT_API.socialHandoff(artifact.id), {
+              revisionHash: artifact.revisionHash,
+              allowedChannel: channel.trim() || null,
+            }),
+          )
+        }}
+      >
+        <TextField label={d.allowedChannel} value={channel} onChange={setChannel} />
+        {state === 'PREPARED' && <SuccessNote>{d.handoffPrepared}</SuccessNote>}
+        {state === 'BLOCKED' && <EmptyNote>{d.handoffBlocked}</EmptyNote>}
+        {action.error && (
+          <WorkspaceState
+            error={action.error}
+            kit={copy.kit}
+            workspace={copy.name}
+            body={flagBody(action.error, copy.flags.approval)}
+            compact
+          />
+        )}
+        <FormActions>
+          <Button type="submit" variant="outline" disabled={action.pending}>
+            {action.pending ? d.handoffPending : d.handoffSubmit}
+          </Button>
+        </FormActions>
+      </form>
+    </Section>
   )
 }
 
