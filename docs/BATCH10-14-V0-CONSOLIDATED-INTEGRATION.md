@@ -1,6 +1,6 @@
 # Batches 10A–14 — consolidated v0 customer UI integration
 
-**Status:** IN PR · **Source branch:** `v0/batch-10-14-ui` @ `1f15968092e1d0b9be79466a0614b21c0b66a105` · **Baseline `main`:** `2c770628d5355463a88f9752a9948e9400e0e09f` (PR **#152** MERGED Batch 15).
+**Status:** IN PR [PR **#153**](https://github.com/Holagpt-ai/webxxl-website-system/pull/153) · **Source branch:** `v0/batch-10-14-ui` @ `1f15968092e1d0b9be79466a0614b21c0b66a105` · **Baseline `main`:** `2c770628d5355463a88f9752a9948e9400e0e09f` (PR **#152** MERGED Batch 15).
 
 ## Scope (preserved from v0, not redesigned)
 
