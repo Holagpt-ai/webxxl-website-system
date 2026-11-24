@@ -17,6 +17,21 @@ import type {
   AnalyticsTrendSeriesDto,
 } from '@/lib/platform/analytics/dto'
 import type { AnalyticsFreshnessState, AnalyticsProviderKey } from '@/lib/platform/analytics/types'
+import type {
+  AnalyticsMeasurementPointDto,
+  AnalyticsMeasurementsDto,
+} from '@/lib/platform/analytics/measurements-read-service'
+import type {
+  AnalyticsConversionDailyPoint,
+  AnalyticsConversionDetailDto,
+} from '@/lib/platform/analytics/conversion-detail-service'
+
+export type {
+  AnalyticsMeasurementPointDto,
+  AnalyticsMeasurementsDto,
+  AnalyticsConversionDailyPoint,
+  AnalyticsConversionDetailDto,
+}
 
 export type {
   AnalyticsAcquisitionRowDto,
@@ -105,7 +120,18 @@ export type AnalyticsFilters = {
   siteId: string
 }
 
-type Endpoint = 'overview' | 'traffic' | 'search' | 'local' | 'conversions' | 'trends' | 'properties' | 'sync-status'
+type Endpoint =
+  | 'overview'
+  | 'traffic'
+  | 'search'
+  | 'local'
+  | 'conversions'
+  | 'trends'
+  | 'properties'
+  | 'sync-status'
+  | 'acquisition'
+  | 'measurements'
+  | `conversions/${string}`
 
 const RANGELESS: Endpoint[] = ['properties', 'sync-status']
 
@@ -161,6 +187,33 @@ export function useAnalyticsLocal(accountId: string, filters: AnalyticsFilters) 
 
 export function useAnalyticsConversions(accountId: string, filters: AnalyticsFilters) {
   return useAnalytics<AnalyticsConversionSummaryRowDto[]>(analyticsUrl(accountId, 'conversions', filters))
+}
+
+export function useAnalyticsAcquisition(accountId: string, filters: AnalyticsFilters, enabled = true) {
+  return useAnalytics<AnalyticsAcquisitionRowDto[]>(enabled ? analyticsUrl(accountId, 'acquisition', filters) : null)
+}
+
+/** Metrics with stored observations in BATCH-14 (`metric-catalog.ts`). Acquisition channels use `ga4.acquisition.*`. */
+export const MEASUREMENT_METRICS = [
+  'ga4.sessions',
+  'ga4.activeUsers',
+  'ga4.conversions',
+  'gbp.businessProfileViews',
+  'gbp.businessSearchQueries',
+  'gbp.businessActions',
+] as const
+export type MeasurementMetric = (typeof MEASUREMENT_METRICS)[number]
+
+export function useAnalyticsMeasurements(accountId: string, filters: AnalyticsFilters, metric: string, enabled = true) {
+  return useAnalytics<AnalyticsMeasurementsDto>(
+    enabled && metric ? analyticsUrl(accountId, 'measurements', filters, { metric }) : null,
+  )
+}
+
+export function useAnalyticsConversionDetail(accountId: string, filters: AnalyticsFilters, conversionKey: string | null) {
+  return useAnalytics<AnalyticsConversionDetailDto>(
+    conversionKey ? analyticsUrl(accountId, `conversions/${encodeURIComponent(conversionKey)}`, filters) : null,
+  )
 }
 
 export function useAnalyticsProperties(accountId: string, filters: AnalyticsFilters, allSites: boolean) {
