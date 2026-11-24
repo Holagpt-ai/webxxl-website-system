@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { useQueryRecordFocus } from '@/lib/crm-ui/deep-link'
 import { focusRecordElement } from '@/components/dashboard/record-query-focus'
 import Link from 'next/link'
+import { localizeWorkspacePath } from '@/components/dashboard/use-dashboard-context'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { EmptyNote, LoadingRows, StatusPill } from '@/components/commerce/ui'
@@ -261,7 +262,14 @@ function ReviewCard({
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
         <div className="flex flex-wrap gap-4 text-sm">
-          <Link href={`${base}/deliverables/${review.marketingArtifactId}`} className="text-primary underline-offset-4 hover:underline">
+          <Link
+            href={
+              review.destination
+                ? localizeWorkspacePath(locale, review.destination.path)
+                : `${base}/deliverables/${review.marketingArtifactId}`
+            }
+            className="text-primary underline-offset-4 hover:underline"
+          >
             {a.openArtifact}
           </Link>
           <Link href={`${base}/requests/${review.marketingRequestId}`} className="text-primary underline-offset-4 hover:underline">
