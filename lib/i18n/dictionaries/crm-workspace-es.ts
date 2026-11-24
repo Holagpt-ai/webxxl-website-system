@@ -62,6 +62,10 @@ export const workspaceKitEs: WorkspaceKitCopy = {
       title: 'Límite alcanzado',
       body: 'Esta solicitud supera el límite actual. Acótala e inténtalo de nuevo.',
     },
+    UNAVAILABLE: {
+      title: 'No disponible por ahora',
+      body: 'Este servicio no responde en este momento. No se cambió nada. Inténtalo más tarde.',
+    },
     VALIDATION: {
       title: 'Revisa los datos',
       body: 'Faltan datos o algunos no son válidos.',

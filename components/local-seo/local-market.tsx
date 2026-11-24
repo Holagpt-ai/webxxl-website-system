@@ -24,6 +24,8 @@ import {
 } from '@/lib/local-seo-ui/types'
 import type { SeoViewProps } from '@/lib/local-seo-ui/server'
 import { SiteBar, useSelectedSite } from './shared'
+import { CompetitorDetailToggle } from './integration-panels'
+import { seoIntegrationCopy } from '@/lib/integration-ui/seo-copy'
 
 export function SeoLocalMarketView({ accountId, locale, copy, sites }: SeoViewProps) {
   const siteId = useSelectedSite(sites)
@@ -63,13 +65,25 @@ export function SeoLocalMarketView({ accountId, locale, copy, sites }: SeoViewPr
             {!res.data.competitors.length ? (
               <EmptyNote>{l.noCompetitors}</EmptyNote>
             ) : (
-              <PlainTable label={l.competitorsTitle} headers={[l.competitor, l.score, l.source, l.evidence]}>
+              <PlainTable
+                label={l.competitorsTitle}
+                headers={[l.competitor, l.score, l.source, l.evidence, seoIntegrationCopy(locale).competitor.signals]}
+              >
                 {res.data.competitors.map((c) => (
                   <tr key={c.id}>
                     <td className={td}>{c.displayName}</td>
                     <td className={td}>{formatNumber(c.rankScore, locale, 2)}</td>
                     <td className={td}>{c.source}</td>
                     <td className={`${td} break-all`}>{c.evidenceRef ?? DASH}</td>
+                    <td className={td}>
+                      {siteId && (
+                        <CompetitorDetailToggle
+                          competitorId={c.id}
+                          {...{ siteId, accountId, locale, kit }}
+                          workspace={copy.name}
+                        />
+                      )}
+                    </td>
                   </tr>
                 ))}
               </PlainTable>

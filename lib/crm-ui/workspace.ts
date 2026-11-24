@@ -12,6 +12,7 @@ export const WORKSPACE_STATE_KINDS = [
   'NOT_FOUND',
   'UNAUTHORIZED',
   'QUOTA_EXCEEDED',
+  'UNAVAILABLE',
   'VALIDATION',
   'ERROR',
 ] as const
@@ -47,6 +48,7 @@ export function classifyWorkspaceError(status: number, body: unknown): Workspace
   // CRM import/export flags answer `403 FORBIDDEN` with "CRM import disabled" / "CRM export disabled".
   else if (status === 403) kind = message && /\bdisabled$/i.test(message) ? 'NOT_CONFIGURED' : 'FORBIDDEN'
   else if (status === 404 || code === 'NOT_FOUND') kind = 'NOT_FOUND'
+  else if (status === 503 || code === 'UNAVAILABLE' || code === 'SERVICE_UNAVAILABLE') kind = 'UNAVAILABLE'
   else if (status === 409 || code === 'CONFLICT') kind = 'ERROR'
   else if (status === 400 || code === 'VALIDATION' || code === 'VALIDATION_ERROR') kind = 'VALIDATION'
   else kind = 'ERROR'

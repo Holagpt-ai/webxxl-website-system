@@ -62,6 +62,10 @@ export const workspaceKitEn: WorkspaceKitCopy = {
       title: 'Limit reached',
       body: 'This request is over the current limit. Narrow it down and try again.',
     },
+    UNAVAILABLE: {
+      title: 'Temporarily unavailable',
+      body: 'This service is not responding right now. Nothing was changed. Try again later.',
+    },
     VALIDATION: {
       title: 'Check the details',
       body: 'Some details are missing or invalid.',
