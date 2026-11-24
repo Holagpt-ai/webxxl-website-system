@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { seoRouteError } from '@/lib/platform/seo/http'
 import { isGoogleProviderReadinessEnabled } from '@/config/google-integration'
 import { loadGoogleConnectionsForAccount } from '@/lib/platform/google/prisma-load'
 import { assessGoogleSiteReadiness } from '@/lib/platform/google/readiness-assess'
@@ -41,10 +42,6 @@ export async function GET(_request: Request, { params }: Params) {
     })
     return NextResponse.json(dto)
   } catch (error) {
-    if (error instanceof SeoApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    console.error('seo google readiness GET failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to assess Google readiness' }, { status: 500 })
+    return seoRouteError(error)
   }
 }

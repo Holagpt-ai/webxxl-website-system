@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { crmRouteError } from '@/lib/platform/crm/http'
 import { prisma } from '@/lib/db'
 import { createCrmTask } from '@/lib/platform/crm/task-service'
 import { crmResultHttpStatus } from '@/lib/platform/crm/crm-api-map'
@@ -14,10 +15,7 @@ export async function GET() {
     })
     return NextResponse.json({ tasks })
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to load tasks' }, { status: 500 })
+    return crmRouteError(error)
   }
 }
 
@@ -39,9 +37,6 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ id: created.value.id }, { status: 201 })
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to create task' }, { status: 500 })
+    return crmRouteError(error)
   }
 }

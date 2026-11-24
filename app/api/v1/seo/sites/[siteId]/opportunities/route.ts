@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { seoRouteError } from '@/lib/platform/seo/http'
 import { listSeoOpportunitiesForSite } from '@/lib/platform/seo/opportunity-list-service'
 import { requireSeoApiActor, SeoApiError } from '@/lib/platform/seo/route-auth'
 import { seoResultHttpStatus } from '@/lib/platform/seo/seo-api-map'
@@ -35,10 +36,6 @@ export async function GET(request: Request, { params }: Params) {
     if (listed.value.nextCursor) body.nextCursor = listed.value.nextCursor
     return NextResponse.json(body)
   } catch (error) {
-    if (error instanceof SeoApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    console.error('seo opportunities GET failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to load SEO opportunities' }, { status: 500 })
+    return seoRouteError(error)
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { crmRouteError } from '@/lib/platform/crm/http'
 import { getCrmContactForAccount, updateCrmContact } from '@/lib/platform/crm/contact-service'
 import { parseCrmCustomFields, type CrmCustomFields } from '@/lib/platform/crm/custom-fields'
 import { crmResultHttpStatus } from '@/lib/platform/crm/crm-api-map'
@@ -16,10 +17,7 @@ export async function GET(_request: Request, { params }: Params) {
     }
     return NextResponse.json({ contact: contact.value })
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to load contact' }, { status: 500 })
+    return crmRouteError(error)
   }
 }
 
@@ -54,9 +52,6 @@ export async function PATCH(request: Request, { params }: Params) {
     }
     return NextResponse.json({ id: updated.value.id })
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to update contact' }, { status: 500 })
+    return crmRouteError(error)
   }
 }

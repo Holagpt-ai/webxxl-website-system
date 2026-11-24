@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { crmRouteError } from '@/lib/platform/crm/http'
 import { prisma } from '@/lib/db'
 import { createDynamicSegment, evaluateSegmentForAccount } from '@/lib/platform/crm/segment-service'
 import { crmResultHttpStatus } from '@/lib/platform/crm/crm-api-map'
@@ -11,10 +12,7 @@ export async function GET() {
     const segments = await prisma.crmSegment.findMany({ where: { customerAccountId: actor.customerAccountId } })
     return NextResponse.json({ segments })
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to load segments' }, { status: 500 })
+    return crmRouteError(error)
   }
 }
 
@@ -44,9 +42,6 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ id: created.value.id }, { status: 201 })
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to save segment' }, { status: 500 })
+    return crmRouteError(error)
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { seoRouteError } from '@/lib/platform/seo/http'
 import { seoResultHttpStatus } from '@/lib/platform/seo/seo-api-map'
 import { createCompetitorMarket } from '@/lib/platform/seo/market-service'
 import { requireSeoApiActor, SeoApiError } from '@/lib/platform/seo/route-auth'
@@ -35,10 +36,6 @@ export async function POST(request: Request, { params }: Params) {
     }
     return NextResponse.json(created.value, { status: 201 })
   } catch (error) {
-    if (error instanceof SeoApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    console.error('seo markets POST failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to create SEO market' }, { status: 500 })
+    return seoRouteError(error)
   }
 }

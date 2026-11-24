@@ -1,6 +1,6 @@
 # WebXXL Project Memory
 
-**Evidence review:** 2026-11-23 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `e7f51fe261d24220549a96a58a93d81100e74f3c` · **PR #150 MERGED** (Batch 13); **PR #149 MERGED** (Batch 12); **PR #148 MERGED** (Batch 11)
+**Evidence review:** 2026-11-23 · **Repo:** `Holagpt-ai/webxxl-website-system` · **`main`:** `061113b203779784674bf05b852361d71f388f08` · **PR #151 MERGED** (Batch 14); **PR #150 MERGED** (Batch 13)
 
 This file is the operating index. The approved product contract remains [`docs/platform/docs/01-MASTER-TAD.md`](platform/docs/01-MASTER-TAD.md) and ADR-001 through ADR-017 in [`docs/platform/docs/15-DECISIONS-CHANGELOG.md`](platform/docs/15-DECISIONS-CHANGELOG.md).
 
@@ -35,16 +35,20 @@ Merged code is not an activated service. A production deployment of a SHA is not
 
 | # | Field | Value |
 |---|---|---|
-| 1 | Last verified checkpoint | **RELEASE-001 Step 6A PASS** 2026-11-21: staff-authenticated Production `GET /api/v1/admin/operations/database-verification` → `VERIFIED_PRODUCTION`, migration ledger **40**, ADMIN dashboard operational on `https://www.webbxxl.com`. Evidence: [`RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md`](RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md). GitHub `main` **`e7f51fe261d24220549a96a58a93d81100e74f3c`** (PR **#150** MERGED Batch 13; PR **#149** MERGED Batch 12). Authenticated EN/ES customer matrix still **NOT VERIFIED** (**AUTH-STAGING-8C** deferred). |
-| 2 | GitHub SHA, branch, active PR | GitHub `main` **`e7f51fe261d24220549a96a58a93d81100e74f3c`**. Branch `feat/batch14-comms-analytics-http-integration` — Batch **14** comms/analytics HTTP — **IN PR**. |
+| 1 | Last verified checkpoint | **RELEASE-001 Step 6A PASS** 2026-11-21: staff-authenticated Production `GET /api/v1/admin/operations/database-verification` → `VERIFIED_PRODUCTION`, migration ledger **40**, ADMIN dashboard operational on `https://www.webbxxl.com`. Evidence: [`RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md`](RELEASE-001-STEP6A-LIVE-VERIFICATION-RESULT.md). GitHub `main` **`061113b203779784674bf05b852361d71f388f08`** (PR **#151** MERGED Batch 14; PR **#150** MERGED Batch 13). Authenticated EN/ES customer matrix still **NOT VERIFIED** (**AUTH-STAGING-8C** deferred). |
+| 2 | GitHub SHA, branch, active PR | GitHub `main` **`061113b203779784674bf05b852361d71f388f08`**. Branch `feat/batch15-api-auth-entitlement-alignment` — Batch **15** API auth alignment — **IN PR**. |
 | 3 | Production deployment | Last independently recorded GitHub Production deployment **`7952960484`** @ `ef5776e4129a835cc7df72ebc1d00d04092c00a2`, Vercel **success** 2026-11-20T21:29:14Z ([status](https://vercel.com/tone4real-7828s-projects/webxxl-website-system/NXefwAmMRYaXDEMPXJ5nVjoBxK75)). Post-#147 production SHA **UNVERIFIED**. Step 6A runtime DB identity **VERIFIED**; providers/flags/activation **not** verified. |
 | 4 | Last updated | 2026-11-23 |
-| 5 | Next task / responsible platform | **Owner:** review Batch **14** PR (do not merge without authorization). **v0.app:** [`BATCH14-V0-HANDOFF.md`](BATCH14-V0-HANDOFF.md). **Cursor after merge:** AUTH-STAGING-8C prep or CRM/Marketing/SEO AuthError hardening per Batch 16 §7. |
+| 5 | Next task / responsible platform | **Owner:** review Batch **15** PR (do not merge without authorization). **After merge:** AUTH-STAGING-8C prep or next roadmap batch per owner assignment. |
 | 6 | Open blocker / gate IDs | **RELEASE-001** runtime DB **VERIFIED** (Step 6A); production migrations **40/40** (Batch 10A migration **not applied**); **AUTH-STAGING-8C / ISSUE-105-QA** outstanding (deferred per owner until source completion); **POLICY-SUB-001** open. Provider activation / live sends / payments / DNS **not authorized**. **OPEN-014** primary domain **`webbxxl.com`** resolved; service subdomains open. |
 
-## 2026-11-23 — Batch 14 communications & analytics HTTP (IN PR)
+## 2026-11-23 — Batch 15 API auth & entitlement alignment (IN PR)
 
-[`BATCH14-COMMS-ANALYTICS-HTTP.md`](platform/docs/BATCH14-COMMS-ANALYTICS-HTTP.md). v0: [`BATCH14-V0-HANDOFF.md`](BATCH14-V0-HANDOFF.md).
+[`BATCH15-API-AUTH-ENTITLEMENT-ALIGNMENT.md`](platform/docs/BATCH15-API-AUTH-ENTITLEMENT-ALIGNMENT.md).
+
+## 2026-11-23 — Batch 14 communications & analytics HTTP (MERGED)
+
+[PR **#151**](https://github.com/Holagpt-ai/webxxl-website-system/pull/151) @ `061113b203779784674bf05b852361d71f388f08`. [`BATCH14-COMMS-ANALYTICS-HTTP.md`](platform/docs/BATCH14-COMMS-ANALYTICS-HTTP.md). v0: [`BATCH14-V0-HANDOFF.md`](BATCH14-V0-HANDOFF.md).
 
 ## 2026-11-23 — Batch 13 SEO & local intelligence HTTP (MERGED)
 

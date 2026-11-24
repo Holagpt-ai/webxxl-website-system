@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { socialRouteError } from '@/lib/platform/social/http'
 import { prisma } from '@/lib/db'
 import { createSocialCampaignWithQuota } from '@/lib/platform/social/campaign-create-service'
 import { requireSocialApiActor, SocialApiError } from '@/lib/platform/social/route-auth'
@@ -14,11 +15,7 @@ export async function GET() {
     })
     return NextResponse.json({ campaigns })
   } catch (error) {
-    if (error instanceof SocialApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    console.error('social campaigns GET failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to load campaigns' }, { status: 500 })
+    return socialRouteError(error)
   }
 }
 
@@ -53,10 +50,6 @@ export async function POST(request: Request) {
     const campaign = await prisma.socialCampaign.findUnique({ where: { id: created.value.id } })
     return NextResponse.json({ campaign }, { status: 201 })
   } catch (error) {
-    if (error instanceof SocialApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    console.error('social campaigns POST failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to create campaign' }, { status: 500 })
+    return socialRouteError(error)
   }
 }

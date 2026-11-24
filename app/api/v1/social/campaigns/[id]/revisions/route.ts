@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { socialRouteError } from '@/lib/platform/social/http'
 import { createSocialCampaignRevisionPersist } from '@/lib/platform/social/revision-create-service'
 import { requireSocialApiActor, SocialApiError } from '@/lib/platform/social/route-auth'
 import { socialResultHttpStatus } from '@/lib/platform/social/social-api-map'
@@ -39,10 +40,6 @@ export async function POST(request: Request, { params }: Params) {
     }
     return NextResponse.json({ revision }, { status: 201 })
   } catch (error) {
-    if (error instanceof SocialApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    console.error('social campaign revision POST failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to create revision' }, { status: 500 })
+    return socialRouteError(error)
   }
 }

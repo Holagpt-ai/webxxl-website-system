@@ -3,6 +3,7 @@ import {
   decideSocialCampaignApprovalPersist,
   submitSocialCampaignApprovalPersist,
 } from '@/lib/platform/social/approval-persist-service'
+import { socialRouteError } from '@/lib/platform/social/http'
 import { requireSocialApiActor, SocialApiError } from '@/lib/platform/social/route-auth'
 import { socialResultHttpStatus } from '@/lib/platform/social/social-api-map'
 
@@ -64,13 +65,9 @@ export async function POST(request: Request, { params }: Params) {
 
     return NextResponse.json({ code: 'INVALID_BODY', message: 'action must be submit or decide' }, { status: 400 })
   } catch (error) {
-    if (error instanceof SocialApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
     if (error instanceof SyntaxError) {
       return NextResponse.json({ code: 'INVALID_BODY', message: 'Invalid JSON body' }, { status: 400 })
     }
-    console.error('social campaign approve POST failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to process approval' }, { status: 500 })
+    return socialRouteError(error)
   }
 }

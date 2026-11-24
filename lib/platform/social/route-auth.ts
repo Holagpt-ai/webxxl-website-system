@@ -18,13 +18,13 @@ export class SocialApiError extends Error {
 }
 
 export async function requireSocialApiActor() {
-  if (!isSocialMarketingEnabled()) {
-    throw new SocialApiError(403, 'Social Marketing Studio backend is disabled', 'SOCIAL_MARKETING_DISABLED')
-  }
   const portal = await requireIncludedFreeSoftwareMembershipKeys(
     SOCIAL_INCLUDED_FREE_ENTITLEMENT_KEYS,
     SocialApiError,
   )
+  if (!isSocialMarketingEnabled()) {
+    throw new SocialApiError(403, 'Social Marketing Studio backend is disabled', 'SOCIAL_MARKETING_DISABLED')
+  }
   return {
     userId: portal.id,
     customerAccountId: portal.customerAccount.id,

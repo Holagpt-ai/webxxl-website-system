@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { commsRouteError } from '@/lib/platform/comms/http'
 import { buildChatwootIntegrationReadiness } from '@/lib/platform/comms/chatwoot-readiness-service'
 import { buildMessagingProviderReadiness } from '@/lib/platform/comms/messaging-provider-readiness'
 import { requireCommsApiActor, CommsApiError } from '@/lib/platform/comms/route-auth'
@@ -23,9 +24,6 @@ export async function GET() {
       messaging: messaging.value,
     })
   } catch (error) {
-    if (error instanceof CommsApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'UNAUTHORIZED', message: 'Unauthorized' }, { status: 401 })
+    return commsRouteError(error)
   }
 }

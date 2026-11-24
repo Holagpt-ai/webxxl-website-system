@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { seoRouteError } from '@/lib/platform/seo/http'
 import { loadGscStoredSiteBundle } from '@/lib/platform/seo/gsc-site-read'
 import { requireSeoApiActor, SeoApiError } from '@/lib/platform/seo/route-auth'
 import { seoResultHttpStatus } from '@/lib/platform/seo/seo-api-map'
@@ -18,10 +19,6 @@ export async function GET(_request: Request, { params }: Params) {
     }
     return NextResponse.json({ gsc: bundle.value.performance, limitations: bundle.value.limitations })
   } catch (error) {
-    if (error instanceof SeoApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    console.error('seo performance GET failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to load SEO performance' }, { status: 500 })
+    return seoRouteError(error)
   }
 }

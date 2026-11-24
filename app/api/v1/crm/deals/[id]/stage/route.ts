@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { crmRouteError } from '@/lib/platform/crm/http'
 import { prisma } from '@/lib/db'
 import { moveDealStage } from '@/lib/platform/crm/pipeline-service'
 import { crmResultHttpStatus } from '@/lib/platform/crm/crm-api-map'
@@ -29,9 +30,6 @@ export async function PATCH(request: Request, { params }: Params) {
     })
     return NextResponse.json({ deal })
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to update deal stage' }, { status: 500 })
+    return crmRouteError(error)
   }
 }

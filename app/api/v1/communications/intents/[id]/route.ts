@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { commsRouteError } from '@/lib/platform/comms/http'
 import { prisma } from '@/lib/db'
 import { requireCommsApiActor, CommsApiError } from '@/lib/platform/comms/route-auth'
 
@@ -32,10 +33,6 @@ export async function GET(_request: Request, { params }: Params) {
       },
     })
   } catch (error) {
-    if (error instanceof CommsApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    console.error('communications intent GET failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to load intent' }, { status: 500 })
+    return commsRouteError(error)
   }
 }

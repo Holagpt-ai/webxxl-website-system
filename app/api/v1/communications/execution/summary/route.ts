@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { AuthError, requireCustomerMembership } from '@/lib/portal/authz'
+import { requireCustomerMembership } from '@/lib/portal/authz'
+import { commsRouteError } from '@/lib/platform/comms/http'
 import { getCommunicationsExecutionSummary } from '@/lib/platform/comms-execution/service'
 
 export const dynamic = 'force-dynamic'
@@ -25,13 +26,6 @@ export async function GET(request: Request) {
     }
     return NextResponse.json({ summary: summary.value })
   } catch (error) {
-    if (error instanceof AuthError) {
-      return NextResponse.json({ code: 'UNAUTHORIZED', message: 'Unauthorized' }, { status: 401 })
-    }
-    console.error('communications execution summary GET failed', error)
-    return NextResponse.json(
-      { code: 'ERROR', message: 'Unable to load communications execution summary' },
-      { status: 500 },
-    )
+    return commsRouteError(error)
   }
 }

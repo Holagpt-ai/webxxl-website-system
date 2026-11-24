@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { AuthError, requireCustomerMembership } from '@/lib/portal/authz'
+import { requireCustomerMembership } from '@/lib/portal/authz'
+import { mktRouteError } from '@/lib/platform/marketing/api-response'
 import { getMarketingExecutionSummary } from '@/lib/platform/marketing-execution/service'
 
 export const dynamic = 'force-dynamic'
@@ -25,10 +26,6 @@ export async function GET(request: Request) {
     }
     return NextResponse.json({ summary: summary.value })
   } catch (error) {
-    if (error instanceof AuthError) {
-      return NextResponse.json({ code: 'UNAUTHORIZED', message: 'Unauthorized' }, { status: 401 })
-    }
-    console.error('marketing execution summary GET failed', error)
-    return NextResponse.json({ code: 'ERROR', message: 'Unable to load marketing execution summary' }, { status: 500 })
+    return mktRouteError(error)
   }
 }

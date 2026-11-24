@@ -5,6 +5,7 @@ import {
   runBoundedGoogleReadinessOperation,
 } from '@/lib/platform/google/readiness-operation'
 import { validateGoogleReadinessClientRequestKey } from '@/lib/platform/google/readiness-request-validate'
+import { seoRouteError } from '@/lib/platform/seo/http'
 import { requireSeoApiActor, SeoApiError } from '@/lib/platform/seo/route-auth'
 import { requireManagedSiteInAccount } from '@/lib/platform/seo/site-scope'
 
@@ -67,13 +68,9 @@ export async function POST(request: Request, { params }: Params) {
     }
     return NextResponse.json({ outcomes: result.value.outcomes })
   } catch (error) {
-    if (error instanceof SeoApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
     if (error instanceof Error && error.message.startsWith('Missing SEO permission:')) {
       return NextResponse.json({ code: 'FORBIDDEN', message: error.message }, { status: 403 })
     }
-    console.error('seo google readiness assess POST failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to run Google readiness operation' }, { status: 500 })
+    return seoRouteError(error)
   }
 }

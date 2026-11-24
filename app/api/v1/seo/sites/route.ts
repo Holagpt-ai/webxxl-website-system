@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { seoRouteError } from '@/lib/platform/seo/http'
 import { listManagedSitesForAccount } from '@/lib/managed-sites/queries'
 import { requireSeoApiActor, SeoApiError } from '@/lib/platform/seo/route-auth'
 
@@ -16,10 +17,6 @@ export async function GET() {
       })),
     })
   } catch (error) {
-    if (error instanceof SeoApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    console.error('seo sites GET failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to load SEO sites' }, { status: 500 })
+    return seoRouteError(error)
   }
 }
