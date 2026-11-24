@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { commsRouteError } from '@/lib/platform/comms/http'
 import { listAccountInboxes } from '@/lib/platform/comms/inbox-service'
 import { commsResultHttpStatus } from '@/lib/platform/comms/comms-api-map'
 import { requireCommsApiActor, CommsApiError } from '@/lib/platform/comms/route-auth'
@@ -12,10 +13,6 @@ export async function GET() {
     }
     return NextResponse.json({ inboxes: result.value.inboxes })
   } catch (error) {
-    if (error instanceof CommsApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    console.error('communications inboxes GET failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to load inboxes' }, { status: 500 })
+    return commsRouteError(error)
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { seoRouteError } from '@/lib/platform/seo/http'
 import { SEO_LIST_DEFAULT_TAKE, SEO_LIST_MAX_TAKE } from '@/config/seo-backend'
 import { prisma } from '@/lib/db'
 import { requireSeoApiActor, SeoApiError } from '@/lib/platform/seo/route-auth'
@@ -18,10 +19,6 @@ export async function GET(request: Request, { params }: Params) {
     })
     return NextResponse.json({ findings })
   } catch (error) {
-    if (error instanceof SeoApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    console.error('seo findings GET failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to load SEO findings' }, { status: 500 })
+    return seoRouteError(error)
   }
 }

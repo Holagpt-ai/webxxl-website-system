@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { crmRouteError } from '@/lib/platform/crm/http'
 import { previewCrmImport } from '@/lib/platform/crm/import-export-service'
 import { crmResultHttpStatus } from '@/lib/platform/crm/crm-api-map'
 import { requireCrmApiActor, CrmApiError } from '@/lib/platform/crm/route-auth'
@@ -26,9 +27,6 @@ export async function POST(request: Request) {
     }
     return NextResponse.json(preview.value, { status: 201 })
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Import preview failed' }, { status: 500 })
+    return crmRouteError(error)
   }
 }

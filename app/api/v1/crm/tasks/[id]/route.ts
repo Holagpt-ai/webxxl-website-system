@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { crmRouteError } from '@/lib/platform/crm/http'
 import { prisma } from '@/lib/db'
 import { updateCrmTask } from '@/lib/platform/crm/task-service'
 import { parseTaskUpdateBody } from '@/lib/platform/crm/crm-task-input'
@@ -32,9 +33,6 @@ export async function PATCH(request: Request, { params }: Params) {
     })
     return NextResponse.json({ task })
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to update task' }, { status: 500 })
+    return crmRouteError(error)
   }
 }

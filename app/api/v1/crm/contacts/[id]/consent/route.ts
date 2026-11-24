@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { crmRouteError } from '@/lib/platform/crm/http'
 import {
   listContactConsentAndSuppression,
   recordContactConsentWithEvidence,
@@ -19,10 +20,7 @@ export async function GET(_request: Request, { params }: Params) {
     }
     return NextResponse.json(state.value)
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to load consent state' }, { status: 500 })
+    return crmRouteError(error)
   }
 }
 
@@ -45,9 +43,6 @@ export async function POST(request: Request, { params }: Params) {
     }
     return NextResponse.json({ id: recorded.value.id }, { status: 201 })
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to record consent' }, { status: 500 })
+    return crmRouteError(error)
   }
 }

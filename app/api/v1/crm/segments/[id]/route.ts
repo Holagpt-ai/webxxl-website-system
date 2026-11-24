@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { crmRouteError } from '@/lib/platform/crm/http'
 import { crmResultHttpStatus } from '@/lib/platform/crm/crm-api-map'
 import {
   deleteDynamicSegment,
@@ -20,10 +21,7 @@ export async function GET(_request: Request, context: RouteContext) {
     }
     return NextResponse.json(evaluated.value)
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to evaluate segment' }, { status: 500 })
+    return crmRouteError(error)
   }
 }
 
@@ -43,10 +41,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
     return NextResponse.json(updated.value)
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to update segment' }, { status: 500 })
+    return crmRouteError(error)
   }
 }
 
@@ -60,9 +55,6 @@ export async function DELETE(_request: Request, context: RouteContext) {
     }
     return NextResponse.json({ ok: true })
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to delete segment' }, { status: 500 })
+    return crmRouteError(error)
   }
 }

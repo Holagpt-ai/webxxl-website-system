@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { AuthError } from '@/lib/portal/authz'
 import { mktResultHttpStatus } from '@/lib/platform/marketing/mkt-api-map'
 import { MktApiError } from '@/lib/platform/marketing/mkt-api-error'
 import type { MktResult } from '@/lib/platform/marketing/types'
@@ -6,6 +7,9 @@ import type { MktResult } from '@/lib/platform/marketing/types'
 export function mktRouteError(error: unknown) {
   if (error instanceof MktApiError) {
     return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
+  }
+  if (error instanceof AuthError) {
+    return NextResponse.json({ code: 'UNAUTHORIZED', message: 'Unauthorized' }, { status: 401 })
   }
   console.error('marketing API failed', error)
   return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Marketing request failed' }, { status: 500 })

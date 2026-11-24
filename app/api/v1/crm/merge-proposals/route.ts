@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { crmRouteError } from '@/lib/platform/crm/http'
 import { crmResultHttpStatus } from '@/lib/platform/crm/crm-api-map'
 import { listMergeProposals, proposeContactMerge } from '@/lib/platform/crm/dedup-service'
 import { requireCrmApiActor, CrmApiError } from '@/lib/platform/crm/route-auth'
@@ -11,10 +12,7 @@ export async function GET(request: Request) {
     const proposals = await listMergeProposals(actor.customerAccountId, status)
     return NextResponse.json({ proposals })
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to load merge proposals' }, { status: 500 })
+    return crmRouteError(error)
   }
 }
 
@@ -43,9 +41,6 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ id: created.value.id }, { status: 201 })
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to create merge proposal' }, { status: 500 })
+    return crmRouteError(error)
   }
 }

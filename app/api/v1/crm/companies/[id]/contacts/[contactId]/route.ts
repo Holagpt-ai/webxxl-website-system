@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { crmRouteError } from '@/lib/platform/crm/http'
 import { unlinkContactFromCompany } from '@/lib/platform/crm/company-service'
 import { crmResultHttpStatus } from '@/lib/platform/crm/crm-api-map'
 import { requireCrmApiActor, CrmApiError } from '@/lib/platform/crm/route-auth'
@@ -22,9 +23,6 @@ export async function DELETE(_request: Request, { params }: Params) {
     }
     return NextResponse.json({ id: unlinked.value.id })
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to unlink contact from company' }, { status: 500 })
+    return crmRouteError(error)
   }
 }

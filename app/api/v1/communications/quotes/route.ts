@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { commsRouteError } from '@/lib/platform/comms/http'
 import { prepareCommunicationQuote } from '@/lib/platform/comms/quote-service'
 import { commsResultHttpStatus } from '@/lib/platform/comms/comms-api-map'
 import { requireCommsApiActor, CommsApiError } from '@/lib/platform/comms/route-auth'
@@ -30,10 +31,6 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ quote: result.value })
   } catch (error) {
-    if (error instanceof CommsApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    console.error('communications quotes POST failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to prepare quote' }, { status: 500 })
+    return commsRouteError(error)
   }
 }

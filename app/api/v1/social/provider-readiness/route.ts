@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { socialRouteError } from '@/lib/platform/social/http'
 import { buildPostizProviderReadiness } from '@/lib/platform/social/postiz-provider-readiness'
 import { requireSocialApiActor, SocialApiError } from '@/lib/platform/social/route-auth'
 
@@ -14,9 +15,6 @@ export async function GET() {
     }
     return NextResponse.json(readiness.value)
   } catch (error) {
-    if (error instanceof SocialApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'UNAUTHORIZED', message: 'Unauthorized' }, { status: 401 })
+    return socialRouteError(error)
   }
 }

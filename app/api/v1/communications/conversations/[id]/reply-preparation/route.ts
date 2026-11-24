@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { commsRouteError } from '@/lib/platform/comms/http'
 import { commsResultHttpStatus } from '@/lib/platform/comms/comms-api-map'
 import {
   getConversationReplyContext,
@@ -22,11 +23,7 @@ export async function GET(_request: Request, { params }: Params) {
     }
     return NextResponse.json({ context: result.value })
   } catch (error) {
-    if (error instanceof CommsApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    console.error('communications reply-preparation GET failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to load reply preparation context' }, { status: 500 })
+    return commsRouteError(error)
   }
 }
 
@@ -55,10 +52,6 @@ export async function POST(request: Request, { params }: Params) {
     }
     return NextResponse.json(result.value)
   } catch (error) {
-    if (error instanceof CommsApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    console.error('communications reply-preparation POST failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to prepare reply intent' }, { status: 500 })
+    return commsRouteError(error)
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { crmRouteError } from '@/lib/platform/crm/http'
 import { prisma } from '@/lib/db'
 import { createCrmDeal, ensureDefaultPipeline } from '@/lib/platform/crm/pipeline-service'
 import { crmResultHttpStatus } from '@/lib/platform/crm/crm-api-map'
@@ -14,10 +15,7 @@ export async function GET() {
     })
     return NextResponse.json({ deals })
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to load deals' }, { status: 500 })
+    return crmRouteError(error)
   }
 }
 
@@ -45,9 +43,6 @@ export async function POST(request: Request) {
     const deal = await prisma.crmDeal.findUnique({ where: { id: created.value.id } })
     return NextResponse.json({ deal }, { status: 201 })
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to create deal' }, { status: 500 })
+    return crmRouteError(error)
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { socialRouteError } from '@/lib/platform/social/http'
 import { prisma } from '@/lib/db'
 import { requireSocialApiActor, SocialApiError } from '@/lib/platform/social/route-auth'
 
@@ -32,10 +33,6 @@ export async function GET(request: Request) {
     })
     return NextResponse.json({ from: from.toISOString(), to: to.toISOString(), campaigns })
   } catch (error) {
-    if (error instanceof SocialApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    console.error('social calendar GET failed', error)
-    return NextResponse.json({ code: 'UNAUTHORIZED', message: 'Unauthorized' }, { status: 401 })
+    return socialRouteError(error)
   }
 }

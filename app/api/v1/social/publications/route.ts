@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { socialRouteError } from '@/lib/platform/social/http'
 import { prisma } from '@/lib/db'
 import { requireSocialApiActor, SocialApiError } from '@/lib/platform/social/route-auth'
 
@@ -12,9 +13,6 @@ export async function GET() {
     })
     return NextResponse.json({ publications })
   } catch (error) {
-    if (error instanceof SocialApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'UNAUTHORIZED', message: 'Unauthorized' }, { status: 401 })
+    return socialRouteError(error)
   }
 }

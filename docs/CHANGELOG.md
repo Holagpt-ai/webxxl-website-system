@@ -4,7 +4,8 @@ Merged and approved source events only. Plans stay in [`PROJECT_MEMORY.md`](PROJ
 
 | Date (UTC) | Event | Evidence | Release claim |
 |---|---|---|---|
-| 2026-11-23 | Batch 14 communications & analytics HTTP completion | IN PR `feat/batch14-comms-analytics-http-integration` | Dashboard handoffs, drill-down routes; not merged |
+| 2026-11-23 | Batch 15 API auth & entitlement alignment | IN PR [#152](https://github.com/Holagpt-ai/webxxl-website-system/pull/152) | AuthError 401 + OPEN-001 social order; not merged |
+| 2026-11-23 | Batch 14 communications & analytics HTTP completion | [PR #151](https://github.com/Holagpt-ai/webxxl-website-system/pull/151) MERGED @ `061113b` | Dashboard handoffs, drill-down routes |
 | 2026-11-23 | Batch 13 SEO & local intelligence HTTP | [PR #150](https://github.com/Holagpt-ai/webxxl-website-system/pull/150) MERGED @ `e7f51fe` | Stored intelligence routes; not production deploy proof |
 | 2026-11-23 | Batch 10B customer dashboard context and module handoffs | [PR #147](https://github.com/Holagpt-ai/webxxl-website-system/pull/147) MERGED @ `b2e2d4a` | Dashboard context API on `main`; not production deploy proof |
 | 2026-11-23 | Batch 10A CRM company / custom fields / suppression lift | [PR #146](https://github.com/Holagpt-ai/webxxl-website-system/pull/146) MERGED @ `142395b` | Source on `main`; migration in Git only; flags off; not production migrate |

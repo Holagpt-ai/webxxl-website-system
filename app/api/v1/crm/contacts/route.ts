@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { crmRouteError } from '@/lib/platform/crm/http'
 import { createCrmContact } from '@/lib/platform/crm/contact-service'
 import { listCrmContacts } from '@/lib/platform/crm/contact-list-service'
 import { crmResultHttpStatus } from '@/lib/platform/crm/crm-api-map'
@@ -25,11 +26,7 @@ export async function GET(request: Request) {
     if (listed.value.nextCursor) body.nextCursor = listed.value.nextCursor
     return NextResponse.json(body)
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    console.error('crm contacts GET failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to load contacts' }, { status: 500 })
+    return crmRouteError(error)
   }
 }
 
@@ -64,10 +61,6 @@ export async function POST(request: Request) {
     })
     return NextResponse.json({ contact }, { status: 201 })
   } catch (error) {
-    if (error instanceof CrmApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    console.error('crm contacts POST failed', error)
-    return NextResponse.json({ code: 'INTERNAL_ERROR', message: 'Unable to create contact' }, { status: 500 })
+    return crmRouteError(error)
   }
 }

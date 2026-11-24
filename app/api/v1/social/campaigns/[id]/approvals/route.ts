@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { socialRouteError } from '@/lib/platform/social/http'
 import { listSocialCampaignApprovalsPersist } from '@/lib/platform/social/approval-persist-service'
 import { requireSocialApiActor, SocialApiError } from '@/lib/platform/social/route-auth'
 import { socialResultHttpStatus } from '@/lib/platform/social/social-api-map'
@@ -21,9 +22,6 @@ export async function GET(_request: Request, { params }: Params) {
     }
     return NextResponse.json({ campaignId, approvals: listed.value })
   } catch (error) {
-    if (error instanceof SocialApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
-    return NextResponse.json({ code: 'UNAUTHORIZED', message: 'Unauthorized' }, { status: 401 })
+    return socialRouteError(error)
   }
 }

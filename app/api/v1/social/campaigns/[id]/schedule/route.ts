@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { isPostizLivePublishingEnabled, isSocialExecutionGatesEnabled } from '@/config/social-marketing'
 import { prepareGuardedSchedulingIntentPersist } from '@/lib/platform/social/prepare-guarded-scheduling-persist'
+import { socialRouteError } from '@/lib/platform/social/http'
 import { requireSocialApiActor, SocialApiError } from '@/lib/platform/social/route-auth'
 import { socialResultHttpStatus } from '@/lib/platform/social/social-api-map'
 
@@ -77,12 +78,9 @@ export async function POST(request: Request, { params }: Params) {
       { status: 202 },
     )
   } catch (error) {
-    if (error instanceof SocialApiError) {
-      return NextResponse.json({ code: error.code, message: error.message }, { status: error.status })
-    }
     if (error instanceof SyntaxError) {
       return NextResponse.json({ code: 'INVALID_BODY', message: 'Invalid JSON body' }, { status: 400 })
     }
-    return NextResponse.json({ code: 'UNAUTHORIZED', message: 'Unauthorized' }, { status: 401 })
+    return socialRouteError(error)
   }
 }
