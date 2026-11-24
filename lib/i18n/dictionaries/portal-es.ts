@@ -147,6 +147,8 @@ export const dashboardLocaleEs = {
     CLOSED: 'Cerrada',
   },
   selectProject: 'Proyecto',
+  selectManagedSite: 'Sitio web',
+  switchManagedSiteError: 'No se pudo cambiar el sitio web. Inténtalo de nuevo.',
   websitePreviewTitle: 'Vista previa del sitio',
   websitePreviewEmptyTitle: 'Aún no hay vista previa',
   websitePreviewEmptyBody:

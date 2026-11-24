@@ -147,6 +147,8 @@ export const dashboardLocaleEn = {
     CLOSED: 'Closed',
   },
   selectProject: 'Project',
+  selectManagedSite: 'Website',
+  switchManagedSiteError: 'Could not switch website. Try again.',
   websitePreviewTitle: 'Website preview',
   websitePreviewEmptyTitle: 'No website preview yet',
   websitePreviewEmptyBody:
