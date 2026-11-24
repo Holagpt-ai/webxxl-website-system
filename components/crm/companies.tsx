@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { CrmWorkspaceCopy } from '@/lib/i18n/dictionaries/crm-workspace-en'
@@ -23,7 +24,7 @@ import {
 
 type Props = { accountId: string; locale: string; copy: CrmWorkspaceCopy; base: string }
 
-export function CrmCompanies({ accountId, locale, copy }: Props) {
+export function CrmCompanies({ accountId, locale, copy, base }: Props) {
   const list = useWorkspace<{ companies: CrmCompany[] }>(CRM_API.companies, accountId)
   const [formOpen, setFormOpen] = useState(false)
   const [createdNote, setCreatedNote] = useState(false)
@@ -72,7 +73,7 @@ export function CrmCompanies({ accountId, locale, copy }: Props) {
       )}
 
       <Section title={t.listLabel}>
-        <GapNotice title={kit.notAvailable} body={t.noDetail} />
+        <p className="mb-3 text-xs leading-relaxed text-muted-foreground">{t.listCap}</p>
         {list.isLoading ? (
           <LoadingRows label={kit.loading} rows={4} />
         ) : list.error ? (
@@ -83,7 +84,14 @@ export function CrmCompanies({ accountId, locale, copy }: Props) {
           <PlainTable label={t.listLabel} headers={[f.name, f.website, f.industry, f.created]}>
             {list.data.companies.map((company) => (
               <tr key={company.id}>
-                <td className={`${td} font-medium text-foreground`}>{company.name}</td>
+                <td className={`${td} font-medium text-foreground`}>
+                  <Link
+                    href={`${base}/companies/${encodeURIComponent(company.id)}`}
+                    className="break-words underline-offset-4 hover:underline"
+                  >
+                    {company.name}
+                  </Link>
+                </td>
                 <td className={td}>{company.websiteDomain ?? DASH}</td>
                 <td className={td}>{company.industry ?? DASH}</td>
                 <td className={`${td} whitespace-nowrap text-muted-foreground`}>{formatDate(company.createdAt, locale)}</td>

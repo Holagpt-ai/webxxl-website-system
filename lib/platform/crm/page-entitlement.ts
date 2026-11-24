@@ -28,6 +28,7 @@ export const CRM_DASHBOARD_PAGE_PATHS = [
   '/dashboard/crm/leads',
   '/dashboard/crm/leads/funnel',
   '/dashboard/crm/companies',
+  '/dashboard/crm/companies/[companyId]',
   '/dashboard/crm/pipeline',
   '/dashboard/crm/tasks',
   '/dashboard/crm/segments',

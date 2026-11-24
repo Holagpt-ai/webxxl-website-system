@@ -1,12 +1,23 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { ShieldCheck } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import type { CrmWorkspaceCopy } from '@/lib/i18n/dictionaries/crm-workspace-en'
-import { useWorkspace } from '@/lib/crm-ui/use-workspace'
-import { DASH, enumLabel, formatDateTime } from '@/lib/crm-ui/workspace'
-import { CRM_API, type CrmConsent, type CrmConsentState } from '@/lib/crm-ui/types'
-import { EmptyNote, LoadingRows, Section, StatusPill, WorkspaceState } from './workspace-kit'
+import { useAction, useWorkspace } from '@/lib/crm-ui/use-workspace'
+import { DASH, enumLabel, formatDateTime, newIdempotencyKey, workspaceSend } from '@/lib/crm-ui/workspace'
+import { CRM_API, type CrmConsent, type CrmConsentState, type CrmSuppressionLiftResult } from '@/lib/crm-ui/types'
+import {
+  EmptyNote,
+  FormActions,
+  LoadingRows,
+  Section,
+  StatusPill,
+  SuccessNote,
+  TextField,
+  WorkspaceState,
+} from './workspace-kit'
 
 type Props = {
   accountId: string
@@ -49,9 +60,17 @@ export function ContactConsentPanel({ accountId, contactId, locale, copy, base, 
                       {channelPurpose(s.channel, s.purpose)}
                       <StatusPill label={t.suppressionsTitle} tone="danger" />
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="break-words text-xs text-muted-foreground">
                       {t.reason}: {s.reason} · {t.source}: {s.source} · {t.since} {formatDateTime(s.createdAt, locale)}
                     </span>
+                    {canManage && (
+                      <SuppressionLift
+                        contactId={contactId}
+                        suppressionId={s.id}
+                        copy={copy}
+                        onLifted={() => state.mutate()}
+                      />
+                    )}
                   </li>
                 ))}
               </ul>
@@ -75,7 +94,7 @@ export function ContactConsentPanel({ accountId, contactId, locale, copy, base, 
             <p className="flex items-start gap-2">
               <ShieldCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
               <span>
-                {t.importNote} {t.readOnly}
+                {t.importNote} {canManage ? t.liftBody : t.readOnly}
               </span>
             </p>
             {canManage && (
@@ -87,6 +106,75 @@ export function ContactConsentPanel({ accountId, contactId, locale, copy, base, 
         </div>
       )}
     </Section>
+  )
+}
+
+function SuppressionLift({
+  contactId,
+  suppressionId,
+  copy,
+  onLifted,
+}: {
+  contactId: string
+  suppressionId: string
+  copy: CrmWorkspaceCopy
+  onLifted: () => void
+}) {
+  const t = copy.contact.consent
+  const [open, setOpen] = useState(false)
+  const [reason, setReason] = useState('')
+  const [source, setSource] = useState('')
+  const [idempotencyKey] = useState(newIdempotencyKey)
+  const action = useAction<CrmSuppressionLiftResult>()
+
+  if (action.data) {
+    return <SuccessNote>{action.data.alreadyLifted ? t.alreadyLifted : t.lifted}</SuccessNote>
+  }
+
+  if (!open) {
+    return (
+      <Button variant="outline" size="sm" className="mt-1 min-h-11 self-start sm:min-h-9" onClick={() => setOpen(true)}>
+        {t.lift}
+      </Button>
+    )
+  }
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault()
+    const result = await action.run(() =>
+      workspaceSend<CrmSuppressionLiftResult>(CRM_API.suppressionLift(contactId), {
+        suppressionId,
+        reason: reason.trim(),
+        source: source.trim(),
+        idempotencyKey,
+      }),
+    )
+    if (result.ok) onLifted()
+  }
+
+  return (
+    <form onSubmit={submit} className="mt-2 flex flex-col gap-3 rounded-md border bg-muted/40 p-3" aria-label={t.liftTitle}>
+      <p className="text-sm font-semibold text-foreground">{t.liftTitle}</p>
+      <p className="text-xs leading-relaxed text-muted-foreground">{t.liftBody}</p>
+      <TextField label={t.liftReason} value={reason} onChange={setReason} required />
+      <TextField label={t.liftSource} value={source} onChange={setSource} hint={t.liftSourceHint} required />
+      {action.error &&
+        (action.error.kind === 'FORBIDDEN' ? (
+          <p role="alert" className="text-sm text-destructive">
+            {t.liftOwnerOnly}
+          </p>
+        ) : (
+          <WorkspaceState error={action.error} kit={copy.kit} workspace={copy.name} compact />
+        ))}
+      <FormActions>
+        <Button type="submit" disabled={action.pending || !reason.trim() || !source.trim()}>
+          {t.liftConfirm}
+        </Button>
+        <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+          {t.liftCancel}
+        </Button>
+      </FormActions>
+    </form>
   )
 }
 
