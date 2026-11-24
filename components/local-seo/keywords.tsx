@@ -21,6 +21,7 @@ import type { SeoViewProps } from '@/lib/local-seo-ui/server'
 import { formatDay } from '@/lib/local-seo-ui/format'
 import { useCursorPages, useRecoverInvalidCursor, useSeoList } from '@/lib/local-seo-ui/use-seo-list'
 import { DATA_TONE, GscPanel, Pager, SiteBar, useDebounced, useSelectedSite } from './shared'
+import { KeywordLookupPanel } from './integration-panels'
 
 const TAKE = 50
 
@@ -140,6 +141,9 @@ export function SeoKeywordsView({ accountId, locale, copy, sites, base }: SeoVie
           )}
         </>
       ) : null}
+      {siteId && (
+        <KeywordLookupPanel key={siteId} {...{ siteId, accountId, locale, kit }} workspace={copy.name} />
+      )}
     </SiteBar>
   )
 }

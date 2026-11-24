@@ -3,13 +3,14 @@
 import { useId, useState } from 'react'
 import {
   TREND_METRICS,
-  useAnalyticsOverview,
+  useAnalyticsAcquisition,
   useAnalyticsTraffic,
   useAnalyticsTrend,
   type TrendMetric,
 } from '@/lib/analytics-ui/client'
 import { selectClass } from '@/components/ai-employees/ui'
 import { TrendChart } from '@/components/analytics/trend-chart'
+import { MeasurementDetail } from '@/components/analytics/measurement-detail'
 import {
   AnalyticsState,
   ChangeIndicator,
@@ -33,7 +34,7 @@ export function TrafficTab({ accountId, filters, locale, copy, loginHref }: TabP
   const traffic = useAnalyticsTraffic(accountId, filters)
   const connected = Boolean(traffic.data && !UNCONNECTED_STATES.includes(traffic.data.dataState))
   const trend = useAnalyticsTrend(accountId, filters, metric, connected)
-  const overview = useAnalyticsOverview(accountId, filters, connected)
+  const acquisitionQuery = useAnalyticsAcquisition(accountId, filters, connected)
 
   if (traffic.error && !traffic.data) {
     return <AnalyticsState error={traffic.error} copy={copy} onRetry={() => traffic.mutate()} loginHref={loginHref} />
@@ -54,7 +55,7 @@ export function TrafficTab({ accountId, filters, locale, copy, loginHref }: TabP
   }
 
   const metricLabel = copy.trendMetrics[metric]
-  const acquisition = [...(overview.data?.acquisition ?? [])].sort((a, b) => (b.sessions ?? -1) - (a.sessions ?? -1))
+  const acquisition = [...(acquisitionQuery.data ?? [])].sort((a, b) => (b.sessions ?? -1) - (a.sessions ?? -1))
   const reportedTotal = acquisition.reduce((sum, r) => sum + (r.sessions ?? 0), 0)
 
   return (
@@ -136,9 +137,9 @@ export function TrafficTab({ accountId, filters, locale, copy, loginHref }: TabP
       </Section>
 
       <Section title={copy.traffic.acquisitionTitle} description={copy.traffic.acquisitionDescription}>
-        {overview.error && !overview.data ? (
-          <AnalyticsState error={overview.error} copy={copy} onRetry={() => overview.mutate()} />
-        ) : !overview.data ? (
+        {acquisitionQuery.error && !acquisitionQuery.data ? (
+          <AnalyticsState error={acquisitionQuery.error} copy={copy} onRetry={() => acquisitionQuery.mutate()} />
+        ) : !acquisitionQuery.data ? (
           <LoadingRows rows={3} label={copy.common.loading} />
         ) : acquisition.length === 0 ? (
           <EmptyNote>{copy.traffic.acquisitionEmpty}</EmptyNote>
@@ -169,6 +170,8 @@ export function TrafficTab({ accountId, filters, locale, copy, loginHref }: TabP
           </TableFrame>
         )}
       </Section>
+
+      <MeasurementDetail accountId={accountId} filters={filters} locale={locale} copy={copy} loginHref={loginHref} />
     </>
   )
 }

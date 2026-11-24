@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { localizeWorkspacePath } from '@/components/dashboard/use-dashboard-context'
 import { Button } from '@/components/ui/button'
 import { EmptyNote, LoadingRows, StatusPill, td } from '@/components/commerce/ui'
 import { GapNotice, PlainTable, SectionHeading, SelectField, WorkspaceState } from '@/components/crm/workspace-kit'
@@ -126,7 +127,10 @@ export function MarketingDeliverables(props: MarketingViewProps) {
             {rows.map((a) => (
               <tr key={a.id}>
                 <td className={`${td} font-medium text-foreground`}>
-                  <Link href={`${base}/deliverables/${a.id}`} className="underline-offset-4 hover:underline">
+                  <Link
+                    href={a.destination ? localizeWorkspacePath(locale, a.destination.path) : `${base}/deliverables/${a.id}`}
+                    className="underline-offset-4 hover:underline"
+                  >
                     {enumLabel(copy.enums.artifactType, a.artifactType)}
                   </Link>
                 </td>

@@ -33,6 +33,36 @@ export type CrmCompany = {
   createdAt: string
 }
 
+/** Batch 10A: only scalar values are accepted by `PATCH /api/v1/crm/companies/{id}`. */
+export type CrmCustomFieldValue = string | number | boolean | null
+
+export type CrmCompanyDetail = CrmCompany & {
+  phone: string | null
+  email: string | null
+  updatedAt: string
+  customFields: Record<string, unknown> | null
+  contacts: {
+    relationshipId: string
+    contactId: string
+    roleTitle: string | null
+    isPrimary: boolean
+    givenName: string | null
+    familyName: string | null
+    preferredName: string | null
+    jobTitle?: string | null
+    status?: string | null
+  }[]
+  deals: {
+    id: string
+    title: string
+    status: string
+    amountMinorUnits: number | null
+    currencyCode: string | null
+  }[]
+}
+
+export type CrmSuppressionLiftResult = { id: string; alreadyLifted: boolean; consentUnchanged: boolean }
+
 export type CrmPipelineStage = { id: string; name: string; sortOrder: number; probabilityBps: number | null }
 
 export type CrmPipeline = { id: string; name: string; isDefault: boolean; stages: CrmPipelineStage[] }
@@ -244,6 +274,8 @@ export const CRM_API = {
   timeline: (id: string) => `/api/v1/crm/contacts/${encodeURIComponent(id)}/timeline`,
   consent: (id: string) => `/api/v1/crm/contacts/${encodeURIComponent(id)}/consent`,
   companies: '/api/v1/crm/companies',
+  company: (id: string) => `/api/v1/crm/companies/${encodeURIComponent(id)}`,
+  suppressionLift: (id: string) => `/api/v1/crm/contacts/${encodeURIComponent(id)}/suppression/lift`,
   pipelines: '/api/v1/crm/pipelines',
   deals: '/api/v1/crm/deals',
   dealStage: (id: string) => `/api/v1/crm/deals/${encodeURIComponent(id)}/stage`,

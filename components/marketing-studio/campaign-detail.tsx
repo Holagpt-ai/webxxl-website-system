@@ -20,6 +20,7 @@ import { DASH, asStringArray, enumLabel, fill, formatDateTime, workspaceSend } f
 import { MKT_API, type SocialCampaign, type SocialConnection } from '@/lib/marketing-studio-ui/types'
 import type { MarketingViewProps } from '@/lib/marketing-studio-ui/server'
 import { campaignDates } from './campaigns'
+import { CampaignApprovalTimeline, CampaignSchedulingStatus } from './campaign-timeline'
 import { CAMPAIGN_TONE, flagBody } from './shared'
 
 /** There is no single-campaign GET yet, so the detail reads from the account's campaign list. */
@@ -101,6 +102,15 @@ export function MarketingCampaignDetail({ accountId, locale, copy, base, campaig
           <UnavailableAction label={c.schedule} reason={copy.flags.scheduleSocial} icon={CalendarClock} />
         </div>
       </Section>
+
+      <CampaignApprovalTimeline accountId={accountId} locale={locale} copy={copy} campaignId={campaign.id} />
+      <CampaignSchedulingStatus
+        accountId={accountId}
+        locale={locale}
+        copy={copy}
+        campaignId={campaign.id}
+        connections={connections.data?.connections ?? []}
+      />
 
       <Section title={c.revisionTitle} description={c.revisionBody}>
         {connections.isLoading ? (

@@ -21,6 +21,7 @@ import {
   WorkspaceState,
 } from './workspace-kit'
 import { ContactConsentPanel } from './contact-consent'
+import { ContactCommsHandoff } from './contact-comms-handoff'
 
 type Props = { accountId: string; locale: string; copy: CrmWorkspaceCopy; base: string; contactId: string; canManage?: boolean }
 
@@ -172,6 +173,13 @@ export function CrmContactDetail({ accountId, locale, copy, base, contactId, can
             copy={copy}
             base={base}
             canManage={canManage}
+          />
+
+          <ContactCommsHandoff
+            accountId={accountId}
+            contactId={contactId}
+            copy={copy}
+            communicationsHref={`${base.replace(/\/crm$/, '')}/communications/connections`}
           />
         </div>
       </div>

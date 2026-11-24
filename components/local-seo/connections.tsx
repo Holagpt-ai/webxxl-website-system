@@ -15,6 +15,7 @@ import { DASH, enumLabel, formatDateTime } from '@/lib/crm-ui/workspace'
 import { SEO_API, type SeoConnection } from '@/lib/local-seo-ui/types'
 import type { SeoViewProps } from '@/lib/local-seo-ui/server'
 import { DATA_TONE, SiteBar, useSelectedSite } from './shared'
+import { CrawlRunsPanel, GoogleHandoffPanel } from './integration-panels'
 
 export function SeoConnectionsView({ accountId, locale, copy, sites }: SeoViewProps) {
   const siteId = useSelectedSite(sites)
@@ -49,6 +50,12 @@ export function SeoConnectionsView({ accountId, locale, copy, sites }: SeoViewPr
           </PlainTable>
         )}
       </Section>
+      {siteId && (
+        <>
+          <GoogleHandoffPanel key={`g-${siteId}`} {...{ siteId, accountId, locale, kit }} workspace={copy.name} />
+          <CrawlRunsPanel key={`c-${siteId}`} {...{ siteId, accountId, locale, kit }} workspace={copy.name} />
+        </>
+      )}
     </SiteBar>
   )
 }

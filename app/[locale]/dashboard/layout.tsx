@@ -7,6 +7,7 @@ import { buildMetadata } from '@/lib/seo'
 import { DashboardShell } from '@/components/dashboard/shell'
 import { requireCustomerMembership } from '@/lib/portal/authz'
 import { getActiveProjectIdFromCookie, pickActiveProject } from '@/lib/portal/active-project'
+import { getActiveManagedSiteIdFromCookie, pickActiveManagedSite } from '@/lib/portal/active-managed-site'
 import { getDashboardNavModules } from '@/lib/portal/modules'
 import { hasOwnerReviewPackage } from '@/lib/owner-approval-checklist'
 import { prisma } from '@/lib/db'
@@ -60,6 +61,16 @@ export default async function DashboardLayout({ params, children }: Props) {
     orderBy: { name: 'asc' },
   })
   const activeProject = pickActiveProject(projects, await getActiveProjectIdFromCookie()).project
+  const managedSites = await prisma.managedSite.findMany({
+    where: { customerAccountId: portal.customerAccount.id },
+    select: { id: true, name: true, projectId: true, updatedAt: true },
+    orderBy: { name: 'asc' },
+  })
+  const activeManagedSite = pickActiveManagedSite(
+    managedSites,
+    await getActiveManagedSiteIdFromCookie(),
+    activeProject?.id,
+  ).site
 
   let navModules = getDashboardNavModules()
   if (activeProject && hasOwnerReviewPackage(activeProject.id)) {
@@ -82,6 +93,8 @@ export default async function DashboardLayout({ params, children }: Props) {
       activeAccountId={portal.customerAccount.id}
       projectOptions={projects.map((project) => ({ id: project.id, name: project.name }))}
       activeProjectId={activeProject?.id}
+      managedSiteOptions={managedSites.map((site) => ({ id: site.id, name: site.name }))}
+      activeManagedSiteId={activeManagedSite?.id}
     >
       {children}
     </DashboardShell>

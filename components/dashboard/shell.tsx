@@ -12,6 +12,8 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { CustomerAccountSwitcher } from '@/components/dashboard/account-switcher'
 import { CustomerProjectSwitcher } from '@/components/dashboard/project-switcher'
+import { ManagedSiteSwitcher } from '@/components/dashboard/managed-site-switcher'
+import { useDashboardContextGuard } from '@/components/dashboard/use-dashboard-context'
 import { LanguageSwitcher } from '@/components/site/language-switcher'
 import type { Locale } from '@/lib/i18n/config'
 
@@ -26,6 +28,8 @@ type Props = {
   activeAccountId?: string
   projectOptions?: { id: string; name: string }[]
   activeProjectId?: string
+  managedSiteOptions?: { id: string; name: string }[]
+  activeManagedSiteId?: string
   children: React.ReactNode
 }
 
@@ -86,10 +90,22 @@ export function DashboardShell({
   activeAccountId,
   projectOptions,
   activeProjectId,
+  managedSiteOptions,
+  activeManagedSiteId,
   children,
 }: Props) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  useDashboardContextGuard(activeAccountId)
+  const siteSwitcher =
+    managedSiteOptions && activeManagedSiteId ? (
+      <ManagedSiteSwitcher
+        sites={managedSiteOptions}
+        activeSiteId={activeManagedSiteId}
+        label={dict.selectManagedSite}
+        errorLabel={dict.switchManagedSiteError}
+      />
+    ) : null
 
   return (
     <div className="flex min-h-[calc(100dvh-0px)] bg-muted/40">
@@ -105,6 +121,7 @@ export function DashboardShell({
         {projectOptions && activeProjectId ? (
           <CustomerProjectSwitcher projects={projectOptions} activeProjectId={activeProjectId} label={dict.selectProject} />
         ) : null}
+        {siteSwitcher}
         <NavLinks locale={locale} dict={dict} navModules={navModules} pathname={pathname} />
         <div className="mt-auto flex flex-col gap-3 border-t pt-4">
           <LanguageSwitcher locale={locale as Locale} label={languageLabel} persist />
@@ -145,6 +162,7 @@ export function DashboardShell({
                     <CustomerProjectSwitcher projects={projectOptions} activeProjectId={activeProjectId} label={dict.selectProject} />
                   </div>
                 ) : null}
+                {siteSwitcher ? <div className="mb-4">{siteSwitcher}</div> : null}
                 <NavLinks
                   locale={locale}
                   dict={dict}
@@ -161,7 +179,9 @@ export function DashboardShell({
             </form>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 md:px-8">{children}</main>
+        <main key={activeAccountId ?? 'account'} className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 md:px-8">
+          {children}
+        </main>
       </div>
     </div>
   )

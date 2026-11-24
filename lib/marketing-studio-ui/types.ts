@@ -10,6 +10,7 @@ export const MKT_API = {
   artifact: (id: string) => `/api/v1/marketing/artifacts/${enc(id)}`,
   revisions: (id: string) => `/api/v1/marketing/artifacts/${enc(id)}/revisions`,
   submitReview: (id: string) => `/api/v1/marketing/artifacts/${enc(id)}/submit-review`,
+  socialHandoff: (id: string) => `/api/v1/marketing/artifacts/${enc(id)}/social-handoff`,
   decide: (reviewId: string) => `/api/v1/marketing/reviews/${enc(reviewId)}/decide`,
   artifacts: '/api/v1/marketing/artifacts',
   reviews: '/api/v1/marketing/reviews',
@@ -20,6 +21,8 @@ export const MKT_API = {
   brandContext: (siteId: string) => `/api/v1/marketing/sites/${enc(siteId)}/brand-context`,
   campaigns: '/api/v1/social/campaigns',
   campaignRevisions: (id: string) => `/api/v1/social/campaigns/${enc(id)}/revisions`,
+  campaignApprovals: (id: string) => `/api/v1/social/campaigns/${enc(id)}/approvals`,
+  campaignScheduling: (id: string) => `/api/v1/social/campaigns/${enc(id)}/scheduling`,
   calendar: '/api/v1/social/calendar',
   publications: '/api/v1/social/publications',
   connections: '/api/v1/social/connections',
@@ -246,12 +249,39 @@ export type MarketingArtifactListItem = {
   locale: string
   safetyClass: string
   createdAt: string
+  /** Batch 11: server-built, locale-neutral dashboard path. Absent on older deployments. */
+  destination?: { path: string }
+}
+
+/** `GET /api/v1/social/campaigns/{id}/approvals` (Batch 12). */
+export type SocialCampaignApproval = {
+  id: string
+  status: string
+  revisionId: string
+  approverUserId: string | null
+  decidedAt: string | null
+  expiresAt: string
+  createdAt: string
+}
+
+/** `GET /api/v1/social/campaigns/{id}/scheduling` (Batch 12). */
+export type SocialSchedulingIntent = {
+  id: string
+  status: string
+  channelId: string
+  scheduledAt: string
+  approvalId: string
+  publicationId: string | null
+  publicationStatus: string | null
+  dispatchBlockedCode: string | null
 }
 
 export type MarketingArtifactListResponse = { artifacts: MarketingArtifactListItem[]; nextCursor?: string }
 
 export type MarketingReview = {
   id: string
+  /** Batch 11: server-built deliverable path focused on this review. Absent on older deployments. */
+  destination?: { path: string }
   marketingArtifactId: string
   marketingRequestId: string
   managedSiteId: string | null

@@ -10,7 +10,42 @@ export const COMMS_API = {
   intent: (id: string) => `/api/v1/communications/intents/${encodeURIComponent(id)}`,
   inboxes: '/api/v1/communications/inboxes',
   connections: '/api/v1/communications/connections',
+  contactHandoff: (contactId: string) => `/api/v1/communications/contacts/${encodeURIComponent(contactId)}/handoff`,
+  providerReadiness: '/api/v1/communications/provider-readiness',
 } as const
+
+export type CrmContactCommsHandoff = {
+  contactId: string
+  deliveryBlocked: true
+  liveDispatchAllowed: false
+  integrationGatesEnabled: boolean
+  outboundModuleEnabled: boolean
+  supportedChannels: Array<'EMAIL' | 'SMS' | 'WHATSAPP'>
+  identitiesPresent: { email: boolean; phone: boolean; whatsapp: boolean }
+  limitations: string[]
+}
+
+export type MessagingSenderReadiness = {
+  senderIdentityId: string
+  channel: string
+  displayName: string
+  verificationState: string
+  domainVerified?: boolean
+  dispatchAllowed: boolean
+  blockReason?: string
+}
+
+export type CommsProviderReadiness = {
+  assessedAt: string
+  messaging: {
+    twilioAdapterEnabled: boolean
+    resendTransportEnabled: boolean
+    smsSendEnabled: boolean
+    emailSendEnabled: boolean
+    senders: MessagingSenderReadiness[]
+    liveDispatchBlocked: true
+  }
+}
 
 export type ConversationReplyContext = {
   conversationId: string

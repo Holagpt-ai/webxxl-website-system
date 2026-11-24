@@ -26,6 +26,7 @@ import {
 } from '@/lib/comms-ui/types'
 import type { CommsViewProps } from '@/lib/comms-ui/server'
 import { CONNECTION_TONE, CommsGate, SyncCell, VISIBILITY_TONE, isCommsGate } from './shared'
+import { CommsProviderReadinessPanel } from './provider-readiness'
 
 export function CommsConnections({ accountId, locale, copy, base }: CommsViewProps) {
   const conn = useComms<Connections>(COMMS_API.connections, accountId)
@@ -78,6 +79,8 @@ export function CommsConnections({ accountId, locale, copy, base }: CommsViewPro
           ) : null}
         </Section>
       </div>
+
+      <CommsProviderReadinessPanel accountId={accountId} locale={locale} copy={copy} />
 
       {inboxes.data && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

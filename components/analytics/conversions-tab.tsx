@@ -1,6 +1,9 @@
 'use client'
 
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
 import { useAnalyticsConversions } from '@/lib/analytics-ui/client'
+import { ConversionDetail } from '@/components/analytics/conversion-detail'
 import {
   AnalyticsState,
   DataStatePill,
@@ -20,12 +23,14 @@ import {
 
 export function ConversionsTab({ accountId, filters, locale, copy, loginHref }: TabProps) {
   const { data, error, mutate } = useAnalyticsConversions(accountId, filters)
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
 
   if (error && !data) return <AnalyticsState error={error} copy={copy} onRetry={() => mutate()} loginHref={loginHref} />
   if (!data) return <LoadingRows rows={4} label={copy.common.loading} />
 
   const rows = [...data].sort((a, b) => b.count - a.count)
   const total = rows.reduce((sum, r) => sum + r.count, 0)
+  const selectedRow = rows.find((r) => r.conversionKey === selectedKey) ?? null
 
   return (
     <>
@@ -49,6 +54,9 @@ export function ConversionsTab({ accountId, filters, locale, copy, loginHref }: 
                   <th scope="col" className={`${th} text-right`}>{copy.conversions.rate}</th>
                   <th scope="col" className={th}>{copy.conversions.source}</th>
                   <th scope="col" className={th}>{copy.conversions.status}</th>
+                  <th scope="col" className={th}>
+                    <span className="sr-only">{copy.drilldown.viewDaily}</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -70,11 +78,34 @@ export function ConversionsTab({ accountId, filters, locale, copy, loginHref }: 
                     <td className={td}>
                       <DataStatePill state={row.dataState} copy={copy} />
                     </td>
+                    <td className={`${td} text-right`}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        aria-expanded={selectedKey === row.conversionKey}
+                        aria-controls={selectedKey === row.conversionKey ? `conversion-detail-${row.conversionKey}` : undefined}
+                        onClick={() => setSelectedKey((k) => (k === row.conversionKey ? null : row.conversionKey))}
+                      >
+                        {selectedKey === row.conversionKey ? copy.drilldown.hideDaily : copy.drilldown.viewDaily}
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </TableFrame>
             {rows.some((r) => r.rate == null) && <EmptyNote>{copy.conversions.rateNote}</EmptyNote>}
+            {selectedRow && (
+              <ConversionDetail
+                key={selectedRow.conversionKey}
+                accountId={accountId}
+                filters={filters}
+                locale={locale}
+                copy={copy}
+                loginHref={loginHref}
+                conversionKey={selectedRow.conversionKey}
+                displayName={selectedRow.displayName}
+              />
+            )}
           </div>
         )}
       </Section>

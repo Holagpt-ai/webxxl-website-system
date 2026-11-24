@@ -42,6 +42,7 @@ const STATE_ICONS: Record<WorkspaceStateKind, typeof AlertCircle> = {
   NOT_FOUND: FileQuestion,
   UNAUTHORIZED: LogIn,
   QUOTA_EXCEEDED: Gauge,
+  UNAVAILABLE: Clock,
   VALIDATION: AlertCircle,
   ERROR: AlertCircle,
 }

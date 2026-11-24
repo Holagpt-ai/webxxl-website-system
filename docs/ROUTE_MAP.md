@@ -32,7 +32,9 @@ All of these exist as `app/[locale]/dashboard/**/page.tsx`. They are authenticat
 
 `/dashboard`, `/dashboard/project`, `/dashboard/sites`, `/dashboard/sites/[siteId]`, `/dashboard/files`, `/dashboard/messages`, `/dashboard/approvals`, `/dashboard/requests`, `/dashboard/review`, `/dashboard/support`, `/dashboard/services`, `/dashboard/marketplace`, `/dashboard/billing`, `/dashboard/analytics`, `/dashboard/ai-employees`, `/dashboard/notifications`, `/dashboard/settings/notifications`, `/dashboard/infrastructure`, `/dashboard/infrastructure/domains`, `/dashboard/infrastructure/email`, `/dashboard/infrastructure/hosting`.
 
-**Batch 16 customer workspaces (MERGED on `main`, PR #54):** 25 locked routes under `/dashboard/crm/**` (9 pages), `/dashboard/marketing/**` (10 pages), and `/dashboard/seo/**` (6 pages). English unprefixed and Spanish `/es/dashboard/...` variants resolve via `app/[locale]/dashboard/`. Dynamic segments: `/dashboard/crm/contacts/[contactId]`, `/dashboard/marketing/requests/[requestId]`, `/dashboard/marketing/deliverables/[artifactId]`, `/dashboard/marketing/campaigns/[campaignId]`. `/dashboard/social` is not part of Batch 16. **Batch 28C:** `/dashboard/crm/leads` (Lead Inbox UI). **Batch 30C:** `/dashboard/crm/leads/funnel` (Lead Funnel reporting UI; EN unprefixed, ES `/es/dashboard/crm/leads/funnel`). CRM workspace subnav: Website Leads → Lead Funnel.
+**Batch 16 customer workspaces (MERGED on `main`, PR #54):** 25 locked routes under `/dashboard/crm/**` (9 pages), `/dashboard/marketing/**` (10 pages), and `/dashboard/seo/**` (6 pages). English unprefixed and Spanish `/es/dashboard/...` variants resolve via `app/[locale]/dashboard/`. Dynamic segments: `/dashboard/crm/contacts/[contactId]`, `/dashboard/crm/companies/[companyId]` (**Batch 10A UI**, IN PR consolidated v0), `/dashboard/marketing/requests/[requestId]`, `/dashboard/marketing/deliverables/[artifactId]`, `/dashboard/marketing/campaigns/[campaignId]`. `/dashboard/social` is not part of Batch 16. **Batch 28C:** `/dashboard/crm/leads` (Lead Inbox UI). **Batch 30C:** `/dashboard/crm/leads/funnel` (Lead Funnel reporting UI; EN unprefixed, ES `/es/dashboard/crm/leads/funnel`). CRM workspace subnav: Website Leads → Lead Funnel.
+
+**Consolidated v0 UI Batches 10A–14 (IN PR, `feat/consolidated-batch-10-14-ui-integration`):** Dashboard shell **managed-site switcher** (Batch 10B); CRM company detail + custom fields + suppression lift UI (10A); marketing artifact/review/campaign handoffs (11–12); SEO intelligence panels + Google readiness (13); communications provider readiness + contact handoff + analytics acquisition/measurement/conversion drill-downs on `/dashboard/analytics` (14). Shared entitlement: `CRM_DASHBOARD_PAGE_PATHS` includes `/dashboard/crm/companies/[companyId]`. Record: [`BATCH10-14-V0-CONSOLIDATED-INTEGRATION.md`](BATCH10-14-V0-CONSOLIDATED-INTEGRATION.md).
 
 **Batch 24B CRM workflow UI (MERGED PR #68):** `/dashboard/crm/merges` (merge review); Contacts links to merges. Import and Segments pages extended for Batch 23 API contracts (v0 @ `bc531bb`).
 
@@ -78,7 +80,7 @@ Batch 18A Marketing extensions (backend; UI in Batch 18B): `GET /api/v1/marketin
 
 Batch 19A SEO extensions (backend MERGED PR #59): `GET /api/v1/seo/sites/[siteId]/keywords` (stored GSC per-query rows, cursor + search); overview and performance reuse `loadGscStoredSiteBundle`; opportunities list adds cursor and optional `state`/`severity`/`confidence` filters.
 
-Batch 13 SEO intelligence (IN PR): `GET .../keywords/intelligence`, `GET .../competitors/[competitorId]`, `GET .../crawl-runs`, `GET .../crawl-runs/[runId]`, `GET .../google/oauth-handoff`; connections GET adds `authorization` contract.
+Batch 13 SEO intelligence (MERGED PR #150): `GET .../keywords/intelligence`, `GET .../competitors/[competitorId]`, `GET .../crawl-runs`, `GET .../crawl-runs/[runId]`, `GET .../google/oauth-handoff`; connections GET adds `authorization` contract. UI panels: consolidated v0 PR.
 
 Batch 19B+19C Local SEO UI (MERGED PR #60): `/dashboard/seo`, `/dashboard/seo/keywords`, `/dashboard/seo/opportunities` wired to 19A APIs via `lib/local-seo-ui/**` and `components/local-seo/**` (v0 commit `59315094`).
 
@@ -88,7 +90,7 @@ Batch 10A CRM company / custom fields / suppression lift (MERGED @ `142395b`): `
 
 Batch 10B customer dashboard context (MERGED @ `b2e2d4a`): `GET /api/v1/portal/dashboard-context`; server actions `switchManagedSiteAction`; cookies `webxxl_active_managed_site`. Contract: [`BATCH10B-CUSTOMER-DASHBOARD-INTEGRATION.md`](platform/docs/BATCH10B-CUSTOMER-DASHBOARD-INTEGRATION.md).
 
-Batch 11 marketing list handoffs (IN PR): list rows `destination.path`; `navigation` on `GET /api/v1/marketing/artifacts` and `reviews`; dashboard-context `marketingWorkspaces`. Contract: [`BATCH11-MARKETING-ARTIFACTS-REVIEWS.md`](platform/docs/BATCH11-MARKETING-ARTIFACTS-REVIEWS.md).
+Batch 11 marketing list handoffs (MERGED PR #148): list rows `destination.path`; `navigation` on `GET /api/v1/marketing/artifacts` and `reviews`; dashboard-context `marketingWorkspaces`. UI wiring: consolidated v0 PR. Contract: [`BATCH11-MARKETING-ARTIFACTS-REVIEWS.md`](platform/docs/BATCH11-MARKETING-ARTIFACTS-REVIEWS.md).
 
 Batch 23 CRM data operations (backend; open PR): enriched `POST /api/v1/crm/imports/preview` and `POST /api/v1/crm/imports/commit` outcomes; stable `POST /api/v1/crm/exports` cursor pages; `GET|PATCH|DELETE /api/v1/crm/segments/[id]`; `GET|POST /api/v1/crm/merge-proposals` and `POST /api/v1/crm/merge-proposals/[id]` (`approve`/`reject`).
 | Communications and workflows | `/api/v1/communications/*` (incl. Batch 4 `GET /api/v1/communications/execution/summary`), `/api/v1/workflows/*` |
